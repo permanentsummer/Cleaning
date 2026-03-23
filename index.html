@@ -493,9 +493,21 @@ const saveB   = () => localStorage.setItem('ps_bk',  JSON.stringify(bookings));
 const saveCfg = () => localStorage.setItem('ps_cfg', JSON.stringify(cfg));
 const today   = () => new Date().toISOString().slice(0,10);
 
+// Normalise any date string to YYYY-MM-DD
+function normaliseDate(str) {
+  if (!str || str === '—') return '';
+  str = str.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  try {
+    const d = new Date(str);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
+  } catch(e) { return ''; }
+}
 function fmt(str, opts) {
-  if (!str) return '—';
-  return new Date(str+'T12:00:00').toLocaleDateString('pt-PT', opts);
+  const clean = normaliseDate(str);
+  if (!clean) return '—';
+  return new Date(clean + 'T12:00:00').toLocaleDateString('pt-PT', opts);
 }
 const fmtShort  = s => fmt(s, {day:'2-digit', month:'short'});
 const fmtWday   = s => fmt(s, {weekday:'short'});
@@ -536,14 +548,23 @@ async function syncSheet() {
     const rows = parseCSV(text).filter(r => r.length > 1);
     if (rows.length < 2) return;
     // skip header row (row 0)
-    const sheetBks = rows.slice(1).filter(r => r[0]).map(r => ({
+    // Helper: clean a guests value - strip any Google metadata garbage
+    const cleanGuests = v => {
+      if (!v) return '';
+      const s = v.trim();
+      // If it looks like a plain number, keep it
+      if (/^\d+$/.test(s)) return s;
+      // Otherwise discard (Google metadata / formula bleed)
+      return '';
+    };
+    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
       id:      r[0].trim(),
       apt:     (r[1]||'a').trim().toLowerCase(),
       source:  (r[2]||'direct').trim().toLowerCase(),
-      checkin: (r[3]||'').trim(),
-      checkout:(r[4]||'').trim(),
-      clean:   (r[5]||r[4]||'').trim(),
-      guests:  (r[6]||'').trim(),
+      checkin: normaliseDate((r[3]||'').trim()),
+      checkout:normaliseDate((r[4]||'').trim()),
+      clean:   normaliseDate((r[5]||r[4]||'').trim()),
+      guests:  cleanGuests(r[6]),
       notes:   (r[7]||'').trim(),
       paid:    (r[8]||'unpaid').trim().toLowerCase(),
     }));
