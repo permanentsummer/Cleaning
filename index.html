@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Limpezas – Gestão de Apartamentos</title>
+<title>Limpezas – Permanent Summer</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -19,581 +19,398 @@
     --apt-a-light: #ede9fe;
     --apt-b: #0ea5e9;
     --apt-b-light: #e0f2fe;
-    --bg: #f8fafc;
+    --bg: #f1f5f9;
     --card: #ffffff;
     --text: #1e293b;
     --muted: #64748b;
     --border: #e2e8f0;
-    --radius: 16px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 18px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
     font-family: 'Nunito', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding-bottom: 80px;
+    padding-bottom: 100px;
   }
 
-  /* ── HEADER ── */
   header {
-    background: #1e293b;
+    background: #0f172a;
     color: white;
     padding: 18px 20px 14px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.25);
   }
-  .header-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .header-title .icon { font-size: 26px; }
-  .header-title h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
-  .header-title p { font-size: 12px; color: #94a3b8; font-weight: 600; margin-top: 1px; }
-  #adminToggleBtn {
-    background: rgba(255,255,255,0.12);
-    border: none;
-    color: white;
-    font-size: 22px;
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon {
     width: 42px; height: 42px;
-    border-radius: 50%;
-    cursor: pointer;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header-title h1 { font-size: 19px; font-weight: 900; letter-spacing: -0.3px; }
+  .header-title p { font-size: 11px; color: #94a3b8; font-weight: 600; margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .hbtn {
+    background: rgba(255,255,255,0.1); border: none; color: white;
+    font-size: 17px; width: 38px; height: 38px; border-radius: 50%;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
   }
-  #adminToggleBtn:hover { background: rgba(255,255,255,0.22); }
+  .hbtn:hover { background: rgba(255,255,255,0.2); }
+  #syncBtn.spinning { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── FILTER TABS ── */
+  .admin-pill {
+    display: none; background: #fef3c7; color: #92400e;
+    font-size: 12px; font-weight: 800; padding: 6px 14px;
+    margin: 10px 16px 0; border-radius: 999px;
+    align-items: center; gap: 6px;
+  }
+  .admin-pill.visible { display: flex; }
+
+  .setup-banner {
+    margin: 12px 16px 0; background: #1e293b;
+    border-radius: var(--radius); padding: 14px 16px;
+    color: white; font-size: 13px; font-weight: 600;
+    line-height: 1.5; display: none;
+  }
+  .setup-banner.visible { display: block; }
+  .setup-banner strong { color: #fbbf24; }
+
   .filter-bar {
-    display: flex;
-    gap: 8px;
-    padding: 14px 16px 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    display: flex; gap: 8px; padding: 14px 16px 10px;
+    overflow-x: auto; scrollbar-width: none;
   }
   .filter-bar::-webkit-scrollbar { display: none; }
   .filter-btn {
-    flex-shrink: 0;
-    padding: 8px 18px;
-    border-radius: 999px;
-    border: 2px solid var(--border);
-    background: white;
-    font-family: 'Nunito', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
+    flex-shrink: 0; padding: 8px 16px; border-radius: 999px;
+    border: 2px solid var(--border); background: white;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
   }
-  .filter-btn.active {
-    background: #1e293b;
-    border-color: #1e293b;
-    color: white;
-  }
-  .filter-btn.apt-a.active { background: var(--apt-a); border-color: var(--apt-a); }
-  .filter-btn.apt-b.active { background: var(--apt-b); border-color: var(--apt-b); }
+  .filter-btn.active { background: #0f172a; border-color: #0f172a; color: white; }
+  .filter-btn.apt-a.active { background: var(--apt-a); border-color: var(--apt-a); color: white; }
+  .filter-btn.apt-b.active { background: var(--apt-b); border-color: var(--apt-b); color: white; }
 
-  /* ── TODAY BANNER ── */
   .today-banner {
     margin: 0 16px 10px;
     background: linear-gradient(135deg, #f59e0b, #ef4444);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    color: white;
-    font-weight: 800;
-    font-size: 15px;
-    display: none;
+    border-radius: var(--radius); padding: 16px 18px;
+    color: white; display: none; align-items: center; gap: 14px;
   }
-  .today-banner.visible { display: block; }
-  .today-banner p { font-size: 13px; font-weight: 600; opacity: 0.9; margin-top: 4px; }
+  .today-banner.visible { display: flex; }
+  .today-banner .ti { font-size: 34px; }
+  .today-banner h3 { font-size: 16px; font-weight: 900; }
+  .today-banner p { font-size: 13px; font-weight: 600; opacity: 0.9; margin-top: 2px; }
 
-  /* ── BOOKING CARDS ── */
-  .bookings-list {
-    padding: 0 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  .section-label {
+    font-size: 11px; font-weight: 900; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1.2px;
+    padding: 0 16px; margin: 18px 0 8px;
   }
+
+  .bookings-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
 
   .booking-card {
-    background: var(--card);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    border: 2px solid transparent;
-    transition: transform 0.15s, box-shadow 0.15s;
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+    border: 2px solid transparent; transition: transform 0.15s;
+    animation: fadeIn 0.3s ease;
   }
-  .booking-card:active { transform: scale(0.99); }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .booking-card.past { opacity: 0.5; }
+  .booking-card.today-card { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15), var(--shadow); }
 
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px 10px;
-    border-bottom: 1px solid var(--border);
+  .card-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
   }
   .apt-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 800;
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    font-size: 13px; font-weight: 800;
   }
   .apt-badge.a { background: var(--apt-a-light); color: var(--apt-a); }
   .apt-badge.b { background: var(--apt-b-light); color: var(--apt-b); }
 
-  .cleaning-date-badge {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--muted);
-    background: var(--bg);
-    padding: 4px 10px;
-    border-radius: 8px;
+  .source-badge {
+    font-size: 11px; font-weight: 800; padding: 4px 10px;
+    border-radius: 8px; background: var(--bg); color: var(--muted);
   }
-  .cleaning-date-badge.today { background: var(--yellow-light); color: var(--yellow); }
+  .source-badge.airbnb { background: #fff0eb; color: #ff5a5f; }
+  .source-badge.booking { background: #e8f0fe; color: #003580; }
+  .source-badge.direct { background: #f0fdf4; color: #16a34a; }
 
-  .card-body {
-    padding: 12px 16px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+  .card-dates {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center; padding: 14px 16px 10px; gap: 8px;
   }
-  .info-block { display: flex; flex-direction: column; gap: 2px; }
-  .info-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .info-value { font-size: 15px; font-weight: 800; color: var(--text); }
+  .date-block { display: flex; flex-direction: column; gap: 2px; }
+  .date-block.right { text-align: right; }
+  .date-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+  .date-value { font-size: 17px; font-weight: 900; color: var(--text); }
+  .date-sub { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .date-arrow { font-size: 20px; color: #cbd5e1; }
 
-  .guests-row {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+  .card-clean {
+    margin: 0 14px 12px; background: var(--bg);
+    border-radius: 10px; padding: 8px 12px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .guest-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #cbd5e1;
-    display: inline-block;
-  }
+  .clean-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; }
+  .clean-value { font-size: 13px; font-weight: 800; color: var(--text); }
+  .clean-value.today-clean { color: var(--yellow); }
 
-  .notes-row {
-    grid-column: 1 / -1;
-    background: #f8fafc;
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.4;
+  .card-info-row {
+    display: flex; align-items: center; gap: 8px; padding: 0 14px 10px;
   }
-  .notes-row.empty { display: none; }
+  .guests-chip {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--bg); border-radius: 8px; padding: 5px 10px;
+    font-size: 13px; font-weight: 800;
+  }
+  .notes-chip {
+    flex: 1; background: var(--bg); border-radius: 8px; padding: 5px 10px;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
   .card-footer {
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-top: 1px solid var(--border);
   }
+  .payment-btn {
+    flex: 1; padding: 10px; border-radius: 12px; border: none;
+    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .payment-btn.paid { background: var(--green-light); color: #15803d; }
+  .payment-btn.unpaid { background: var(--red-light); color: #dc2626; }
+  .payment-btn:active { transform: scale(0.97); }
 
-  /* ── PAYMENT TOGGLE ── */
-  .payment-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: none;
-    font-family: 'Nunito', sans-serif;
-    font-size: 15px;
-    font-weight: 800;
-    transition: all 0.2s;
-    flex: 1;
-    justify-content: center;
-  }
-  .payment-toggle.paid {
-    background: var(--green-light);
-    color: #16a34a;
-  }
-  .payment-toggle.unpaid {
-    background: var(--red-light);
-    color: #dc2626;
-  }
-  .payment-toggle .toggle-icon { font-size: 18px; }
-
-  /* ── ADMIN ACTIONS ── */
-  .admin-actions {
-    display: none;
-    gap: 8px;
-    margin-left: 10px;
-  }
+  .admin-actions { display: none; gap: 6px; }
   .admin-actions.visible { display: flex; }
-  .action-btn {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 15px;
+  .icon-btn {
+    width: 38px; height: 38px; border-radius: 10px; border: none;
+    cursor: pointer; font-size: 15px;
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s;
   }
-  .action-btn:active { transform: scale(0.9); }
+  .icon-btn:active { transform: scale(0.9); }
   .edit-btn { background: var(--blue-light); color: var(--blue); }
   .delete-btn { background: var(--red-light); color: var(--red); }
 
-  /* ── FAB ADD BUTTON ── */
   #fabAdd {
-    position: fixed;
-    bottom: 24px;
-    right: 20px;
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    background: #1e293b;
-    color: white;
-    font-size: 30px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.15s, background 0.15s;
-    z-index: 200;
+    position: fixed; bottom: 24px; right: 20px;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: #0f172a; color: white; font-size: 28px;
+    border: none; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    display: none; align-items: center; justify-content: center;
+    transition: transform 0.15s; z-index: 200;
   }
   #fabAdd.visible { display: flex; }
   #fabAdd:active { transform: scale(0.92); }
 
-  /* ── WHATSAPP FAB ── */
   #fabWA {
-    position: fixed;
-    bottom: 24px;
-    left: 20px;
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    background: #25d366;
-    color: white;
-    font-size: 26px;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(37,211,102,0.4);
+    position: fixed; bottom: 24px; left: 20px;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: #25d366; color: white; font-size: 24px;
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 18px rgba(37,211,102,0.45);
     display: flex; align-items: center; justify-content: center;
-    text-decoration: none;
-    z-index: 200;
+    text-decoration: none; z-index: 200; transition: transform 0.15s;
   }
+  #fabWA:active { transform: scale(0.92); }
 
-  /* ── MODAL ── */
+  .empty-state { text-align: center; padding: 60px 24px; }
+  .empty-state .emoji { font-size: 56px; margin-bottom: 14px; }
+  .empty-state h3 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
+  .empty-state p { font-size: 15px; color: var(--muted); font-weight: 600; }
+
   .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 300;
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-    padding: 0;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 300; display: none; align-items: flex-end; justify-content: center;
   }
   .modal-overlay.open { display: flex; }
-
   .modal {
-    background: white;
-    border-radius: 24px 24px 0 0;
-    padding: 24px 20px 36px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 92vh;
-    overflow-y: auto;
-    animation: slideUp 0.25s ease;
+    background: white; border-radius: 24px 24px 0 0;
+    padding: 20px 20px 40px; width: 100%; max-width: 500px;
+    max-height: 92vh; overflow-y: auto; animation: slideUp 0.25s ease;
   }
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .modal-handle {
-    width: 40px; height: 4px;
-    background: #e2e8f0;
-    border-radius: 999px;
-    margin: 0 auto 20px;
+    width: 40px; height: 4px; background: #e2e8f0;
+    border-radius: 999px; margin: 0 auto 18px;
   }
-  .modal h2 {
-    font-size: 20px;
-    font-weight: 900;
-    margin-bottom: 20px;
-    color: var(--text);
-  }
+  .modal h2 { font-size: 20px; font-weight: 900; margin-bottom: 18px; }
 
-  .form-group { margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
   .form-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
+    display: block; font-size: 11px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
   }
   .form-group input,
   .form-group select,
   .form-group textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text);
-    background: white;
-    outline: none;
-    transition: border-color 0.15s;
-    -webkit-appearance: none;
+    width: 100%; padding: 12px 14px;
+    border: 2px solid var(--border); border-radius: 12px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 600;
+    color: var(--text); background: white; outline: none;
+    transition: border-color 0.15s; -webkit-appearance: none;
   }
   .form-group input:focus,
   .form-group select:focus,
-  .form-group textarea:focus {
-    border-color: #1e293b;
-  }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group textarea:focus { border-color: #0f172a; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  .btn-save {
-    width: 100%;
-    padding: 16px;
-    background: #1e293b;
-    color: white;
-    border: none;
-    border-radius: 14px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 17px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: background 0.15s;
-    margin-top: 4px;
+  .btn-primary {
+    width: 100%; padding: 15px; background: #0f172a; color: white;
+    border: none; border-radius: 14px; font-family: 'Nunito', sans-serif;
+    font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 4px;
   }
-  .btn-save:active { background: #334155; }
-
-  .btn-cancel {
-    width: 100%;
-    padding: 14px;
-    background: transparent;
-    color: var(--muted);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 10px;
+  .btn-secondary {
+    width: 100%; padding: 13px; background: transparent; color: var(--muted);
+    border: 2px solid var(--border); border-radius: 14px;
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 8px;
   }
 
-  /* ── ADMIN PIN MODAL ── */
   .pin-modal {
-    background: white;
-    border-radius: 24px 24px 0 0;
-    padding: 30px 24px 40px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    animation: slideUp 0.25s ease;
+    background: white; border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px; width: 100%; max-width: 360px;
+    text-align: center; animation: slideUp 0.25s ease;
   }
-  .pin-modal h2 { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
-  .pin-modal p { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
-  .pin-display {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
+  .pin-modal h2 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
+  .pin-modal p { color: var(--muted); font-size: 14px; margin-bottom: 22px; font-weight: 600; }
+  .pin-display { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
   .pin-dot {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    background: transparent;
-    transition: all 0.15s;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent; transition: all 0.15s;
   }
-  .pin-dot.filled { background: #1e293b; border-color: #1e293b; }
-  .pin-keypad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    max-width: 280px;
-    margin: 0 auto;
-  }
+  .pin-dot.filled { background: #0f172a; border-color: #0f172a; }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; max-width: 260px; margin: 0 auto; }
   .pin-key {
-    padding: 16px;
-    background: var(--bg);
-    border: 2px solid var(--border);
-    border-radius: 14px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    cursor: pointer;
-    transition: all 0.1s;
+    padding: 15px; background: var(--bg); border: 2px solid var(--border);
+    border-radius: 14px; font-family: 'Nunito', sans-serif;
+    font-size: 22px; font-weight: 800; cursor: pointer; transition: all 0.1s;
   }
-  .pin-key:active { background: #1e293b; color: white; border-color: #1e293b; transform: scale(0.95); }
-  .pin-key.delete { font-size: 18px; }
-  .pin-error { color: var(--red); font-size: 14px; font-weight: 700; margin-top: 16px; min-height: 20px; }
+  .pin-key:active { background: #0f172a; color: white; border-color: #0f172a; transform: scale(0.94); }
+  .pin-error { color: var(--red); font-size: 13px; font-weight: 700; margin-top: 14px; min-height: 18px; }
 
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
+  .cfg-hint {
+    background: #f8fafc; border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 14px; font-size: 13px; font-weight: 600;
+    color: var(--muted); line-height: 1.6;
   }
-  .empty-state .emoji { font-size: 60px; margin-bottom: 16px; }
-  .empty-state h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--text); }
-  .empty-state p { font-size: 15px; }
-
-  /* ── SECTION LABEL ── */
-  .section-label {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 0 16px;
-    margin: 16px 0 8px;
-  }
-
-  /* ── PAST card dimming ── */
-  .booking-card.past { opacity: 0.6; }
-
-  /* ── ADMIN indicator ── */
-  .admin-pill {
-    display: none;
-    background: #fef3c7;
-    color: #b45309;
-    font-size: 12px;
-    font-weight: 800;
-    padding: 4px 12px;
-    border-radius: 999px;
-    margin: 10px 16px 0;
-    align-items: center;
-    gap: 6px;
-  }
-  .admin-pill.visible { display: flex; }
+  .cfg-hint strong { color: var(--text); }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
-  <div class="header-title">
-    <span class="icon">🧹</span>
-    <div>
+  <div class="header-left">
+    <div class="header-icon">🧹</div>
+    <div class="header-title">
       <h1>As Limpezas</h1>
-      <p id="headerSub">Vista da equipa</p>
+      <p id="headerSub">Permanent Summer</p>
     </div>
   </div>
-  <button id="adminToggleBtn" title="Admin">⚙️</button>
+  <div class="header-right">
+    <button class="hbtn" id="syncBtn" title="Sincronizar">🔄</button>
+    <button class="hbtn" id="adminToggleBtn" title="Admin">⚙️</button>
+  </div>
 </header>
 
-<!-- ADMIN INDICATOR -->
 <div class="admin-pill" id="adminPill">🔐 Modo Administrador</div>
+<div class="setup-banner" id="setupBanner">
+  <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️) e mantenha premido para configurar o Google Sheet e WhatsApp.
+</div>
 
-<!-- FILTER BAR -->
 <div class="filter-bar">
   <button class="filter-btn active" data-filter="all">Todos</button>
-  <button class="filter-btn apt-a" data-filter="a">🏠 Apt. A</button>
-  <button class="filter-btn apt-b" data-filter="b">🏡 Apt. B</button>
+  <button class="filter-btn apt-a" data-filter="a">🏠 Saramago</button>
+  <button class="filter-btn apt-b" data-filter="b">🏡 Al-Paranaguá</button>
   <button class="filter-btn" data-filter="today">📅 Hoje</button>
   <button class="filter-btn" data-filter="unpaid">🔴 Por Pagar</button>
 </div>
 
-<!-- TODAY BANNER -->
 <div class="today-banner" id="todayBanner">
-  🌅 <span id="todayCount"></span>
-  <p id="todayApts"></p>
+  <div class="ti">🌅</div>
+  <div>
+    <h3 id="todayCount"></h3>
+    <p id="todayApts"></p>
+  </div>
 </div>
 
-<!-- BOOKINGS LIST -->
 <div id="bookingsList" class="bookings-list"></div>
 
-<!-- FAB ADD -->
-<button id="fabAdd" class="visible" style="display:none" title="Adicionar reserva">+</button>
+<button id="fabAdd" title="Nova reserva">+</button>
+<a id="fabWA" href="#" target="_blank">💬</a>
 
-<!-- WHATSAPP FAB -->
-<a id="fabWA" href="https://wa.me/351912345678" target="_blank" title="Contactar">💬</a>
-
-<!-- ── ADMIN PIN MODAL ── -->
+<!-- PIN -->
 <div class="modal-overlay" id="pinOverlay">
   <div class="pin-modal">
     <div class="modal-handle"></div>
     <h2>🔐 Acesso Admin</h2>
-    <p>Introduza o seu PIN para continuar</p>
+    <p>PIN de 4 dígitos</p>
     <div class="pin-display" id="pinDisplay">
-      <div class="pin-dot" id="d0"></div>
-      <div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div>
-      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
     </div>
     <div class="pin-keypad">
-      <button class="pin-key" data-n="1">1</button>
-      <button class="pin-key" data-n="2">2</button>
-      <button class="pin-key" data-n="3">3</button>
-      <button class="pin-key" data-n="4">4</button>
-      <button class="pin-key" data-n="5">5</button>
-      <button class="pin-key" data-n="6">6</button>
-      <button class="pin-key" data-n="7">7</button>
-      <button class="pin-key" data-n="8">8</button>
-      <button class="pin-key" data-n="9">9</button>
-      <button class="pin-key delete" data-n="del">⌫</button>
+      <button class="pin-key" data-n="1">1</button><button class="pin-key" data-n="2">2</button><button class="pin-key" data-n="3">3</button>
+      <button class="pin-key" data-n="4">4</button><button class="pin-key" data-n="5">5</button><button class="pin-key" data-n="6">6</button>
+      <button class="pin-key" data-n="7">7</button><button class="pin-key" data-n="8">8</button><button class="pin-key" data-n="9">9</button>
+      <button class="pin-key" data-n="del" style="font-size:18px">⌫</button>
       <button class="pin-key" data-n="0">0</button>
-      <button class="pin-key delete" data-n="cancel" style="font-size:14px;font-weight:800;color:var(--muted)">Sair</button>
+      <button class="pin-key" data-n="cancel" style="font-size:13px;font-weight:800;color:var(--muted)">Sair</button>
     </div>
     <div class="pin-error" id="pinError"></div>
   </div>
 </div>
 
-<!-- ── ADD/EDIT BOOKING MODAL ── -->
+<!-- ADD/EDIT -->
 <div class="modal-overlay" id="bookingOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2 id="modalTitle">➕ Nova Reserva</h2>
     <input type="hidden" id="editId">
-
     <div class="form-group">
       <label>Apartamento</label>
       <select id="fApt">
-        <option value="a">🏠 Apartamento A</option>
-        <option value="b">🏡 Apartamento B</option>
+        <option value="a">🏠 1-Praceta Jose Saramago</option>
+        <option value="b">🏡 2-Al-Paranagua</option>
       </select>
     </div>
-
+    <div class="form-group">
+      <label>Origem</label>
+      <select id="fSource">
+        <option value="airbnb">Airbnb</option>
+        <option value="booking">Booking.com</option>
+        <option value="direct">Direto / Pingotel</option>
+      </select>
+    </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Check-in</label>
-        <input type="date" id="fCheckin">
-      </div>
-      <div class="form-group">
-        <label>Check-out</label>
-        <input type="date" id="fCheckout">
-      </div>
+      <div class="form-group"><label>Check-in</label><input type="date" id="fCheckin"></div>
+      <div class="form-group"><label>Check-out</label><input type="date" id="fCheckout"></div>
     </div>
-
+    <div class="form-row">
+      <div class="form-group"><label>Hóspedes</label><input type="number" id="fGuests" min="1" max="20" value="2"></div>
+      <div class="form-group"><label>Data Limpeza</label><input type="date" id="fClean"></div>
+    </div>
     <div class="form-group">
-      <label>Nº de Hóspedes</label>
-      <input type="number" id="fGuests" min="1" max="20" value="2">
+      <label>Notas</label>
+      <textarea id="fNotes" rows="2" placeholder="Pedidos especiais, chaves..."></textarea>
     </div>
-
-    <div class="form-group">
-      <label>Data de Limpeza</label>
-      <input type="date" id="fClean">
-    </div>
-
-    <div class="form-group">
-      <label>Notas / Pedidos especiais</label>
-      <textarea id="fNotes" rows="3" placeholder="Ex: Deixar toalhas extras, não limpar quarto 2..."></textarea>
-    </div>
-
     <div class="form-group">
       <label>Pagamento</label>
       <select id="fPaid">
@@ -601,356 +418,389 @@
         <option value="paid">🟢 Pago</option>
       </select>
     </div>
+    <button class="btn-primary" id="saveBtn">💾 Guardar</button>
+    <button class="btn-secondary" id="cancelBtn">Cancelar</button>
+  </div>
+</div>
 
-    <button class="btn-save" id="saveBtn">💾 Guardar</button>
-    <button class="btn-cancel" id="cancelBtn">Cancelar</button>
+<!-- CONFIG -->
+<div class="modal-overlay" id="configOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>⚙️ Configurações</h2>
+    <div class="cfg-hint">
+      <strong>Google Sheet CSV:</strong><br>
+      Folha → Ficheiro → Partilhar → Publicar na web → CSV → Copiar link
+    </div>
+    <div class="form-group">
+      <label>Link Google Sheet (CSV)</label>
+      <input type="url" id="cfgSheet" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+    </div>
+    <div class="cfg-hint" style="margin-top:8px">
+      <strong>CallMeBot WhatsApp:</strong><br>
+      Guarde +34 644 74 42 88 e envie "I allow callmebot to send me messages" pelo WhatsApp. Receberá a API key.
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nº Empregada (351...)</label><input type="text" id="cfgWaN" placeholder="351912345678"></div>
+      <div class="form-group"><label>API Key Empregada</label><input type="text" id="cfgWaK" placeholder="123456"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Nº Admin (351...)</label><input type="text" id="cfgAdmN" placeholder="351924477353"></div>
+      <div class="form-group"><label>API Key Admin</label><input type="text" id="cfgAdmK" placeholder="654321"></div>
+    </div>
+    <button class="btn-primary" id="saveCfgBtn">💾 Guardar</button>
+    <button class="btn-secondary" id="cancelCfgBtn">Cancelar</button>
   </div>
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-const ADMIN_PIN = "2302";          // ← CHANGE THIS PIN
-const WHATSAPP_NUMBER = "351924477353";  // ← CHANGE TO YOUR NUMBER
-const APT_A_NAME = "1-Praceta Jose Saramago";     // ← OPTIONAL: real names
-const APT_B_NAME = "2-Al-Paranagua";
+// ── CONFIG ──────────────────────────────────
+const ADMIN_PIN   = "2302";
+const APT_A_NAME  = "1-Praceta Jose Saramago";
+const APT_B_NAME  = "2-Al-Paranagua";
+const APT_A_SHORT = "Saramago";
+const APT_B_SHORT = "Al-Paranaguá";
+const ADMIN_WA_DEFAULT = "351924477353";
 
-// ── STATE ───────────────────────────────────────────────
-let bookings = JSON.parse(localStorage.getItem('limpezas_bookings') || '[]');
-let isAdmin = false;
-let currentFilter = 'all';
-let pinBuffer = '';
+// ── STATE ────────────────────────────────────
+let cfg      = JSON.parse(localStorage.getItem('ps_cfg')  || '{}');
+let bookings = JSON.parse(localStorage.getItem('ps_bk')   || '[]');
+let isAdmin  = false;
+let filter   = 'all';
+let pinBuf   = '';
 
-// ── SEED DATA (demo) ─────────────────────────────────────
-if (bookings.length === 0) {
-  const today = new Date();
-  const fmt = d => d.toISOString().slice(0,10);
-  const add = (days) => { const d = new Date(today); d.setDate(d.getDate()+days); return fmt(d); };
-  bookings = [
-    { id: uid(), apt: 'a', checkin: add(-1), checkout: add(0), clean: add(0), guests: 4, notes: '', paid: 'unpaid' },
-    { id: uid(), apt: 'b', checkin: add(1), checkout: add(3), clean: add(3), guests: 2, notes: 'Cama extra no quarto 2', paid: 'paid' },
-    { id: uid(), apt: 'a', checkin: add(5), checkout: add(8), clean: add(8), guests: 3, notes: '', paid: 'unpaid' },
-    { id: uid(), apt: 'b', checkin: add(10), checkout: add(13), clean: add(13), guests: 5, notes: 'Chegam tarde — chaves na caixa', paid: 'unpaid' },
-    { id: uid(), apt: 'a', checkin: add(-10), checkout: add(-7), clean: add(-7), guests: 2, notes: '', paid: 'paid' },
-  ];
-  save();
-}
+// ── UTILS ────────────────────────────────────
+const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+const saveB   = () => localStorage.setItem('ps_bk',  JSON.stringify(bookings));
+const saveCfg = () => localStorage.setItem('ps_cfg', JSON.stringify(cfg));
+const today   = () => new Date().toISOString().slice(0,10);
 
-// ── UTILS ────────────────────────────────────────────────
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function save() { localStorage.setItem('limpezas_bookings', JSON.stringify(bookings)); }
-
-function fmtDate(str) {
+function fmt(str, opts) {
   if (!str) return '—';
-  const d = new Date(str + 'T12:00:00');
-  return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(str+'T12:00:00').toLocaleDateString('pt-PT', opts);
 }
-function fmtDay(str) {
-  if (!str) return '—';
-  const d = new Date(str + 'T12:00:00');
-  return d.toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short' });
-}
+const fmtShort  = s => fmt(s, {day:'2-digit', month:'short'});
+const fmtWday   = s => fmt(s, {weekday:'short'});
+const fmtFull   = s => fmt(s, {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
 
-function todayStr() { return new Date().toISOString().slice(0,10); }
-
-function isToday(str) { return str === todayStr(); }
-
-function isPast(b) {
-  return b.clean < todayStr();
+// ── WHATSAPP ─────────────────────────────────
+function sendWA(phone, key, msg) {
+  if (!phone || !key) return;
+  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(msg)}&apikey=${key}`;
+  fetch(url).catch(()=>{});
 }
 
-// ── WHATSAPP ─────────────────────────────────────────────
-document.getElementById('fabWA').href = 'https://wa.me/' + WHATSAPP_NUMBER;
+function notifyNew(b) {
+  const apt = b.apt === 'a' ? APT_A_NAME : APT_B_NAME;
+  const guests = b.guests ? `\n👥 Hóspedes: ${b.guests}` : '';
+  const notes  = b.notes  ? `\n📝 ${b.notes}` : '';
+  const msg =
+    `🧹 *Nova limpeza!*\n🏠 ${apt}\n📥 Check-in: ${fmtFull(b.checkin)}\n📤 Limpeza: ${fmtFull(b.checkout)}${guests}${notes}\n\n👉 cleaning.permanentsummer.co`;
+  sendWA(cfg.waN, cfg.waK, msg);
+}
 
-// ── RENDER ───────────────────────────────────────────────
-function render() {
-  const today = todayStr();
-  const sorted = [...bookings].sort((a,b) => (a.clean||a.checkout) > (b.clean||b.checkout) ? 1 : -1);
-
-  // Today banner
-  const todayCleans = sorted.filter(b => b.clean === today);
-  const banner = document.getElementById('todayBanner');
-  if (todayCleans.length > 0) {
-    banner.classList.add('visible');
-    document.getElementById('todayCount').textContent =
-      todayCleans.length === 1 ? '1 limpeza hoje!' : `${todayCleans.length} limpezas hoje!`;
-    document.getElementById('todayApts').textContent =
-      todayCleans.map(b => b.apt === 'a' ? APT_A_NAME : APT_B_NAME).join(' · ');
-  } else {
-    banner.classList.remove('visible');
-  }
-
-  // Filter
-  let filtered = sorted;
-  if (currentFilter === 'a') filtered = sorted.filter(b => b.apt === 'a');
-  else if (currentFilter === 'b') filtered = sorted.filter(b => b.apt === 'b');
-  else if (currentFilter === 'today') filtered = sorted.filter(b => b.clean === today);
-  else if (currentFilter === 'unpaid') filtered = sorted.filter(b => b.paid === 'unpaid');
-
-  const container = document.getElementById('bookingsList');
-  container.innerHTML = '';
-
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty-state">
-      <div class="emoji">✨</div>
-      <h3>Sem limpezas aqui</h3>
-      <p>Nenhuma reserva neste filtro.</p>
-    </div>`;
+// ── GOOGLE SHEETS SYNC ───────────────────────
+/*  Sheet columns:
+    A=id  B=apt(a/b)  C=source  D=checkin(YYYY-MM-DD)
+    E=checkout  F=clean  G=guests  H=notes  I=paid(paid/unpaid)
+*/
+async function syncSheet() {
+  if (!cfg.sheetUrl) {
+    document.getElementById('setupBanner').classList.add('visible');
     return;
   }
+  document.getElementById('setupBanner').classList.remove('visible');
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('spinning');
+  try {
+    const res  = await fetch(cfg.sheetUrl + '&cachebust=' + Date.now());
+    const text = await res.text();
+    const rows = parseCSV(text).filter(r => r.length > 1);
+    if (rows.length < 2) return;
+    // skip header row (row 0)
+    const sheetBks = rows.slice(1).filter(r => r[0]).map(r => ({
+      id:      r[0].trim(),
+      apt:     (r[1]||'a').trim().toLowerCase(),
+      source:  (r[2]||'direct').trim().toLowerCase(),
+      checkin: (r[3]||'').trim(),
+      checkout:(r[4]||'').trim(),
+      clean:   (r[5]||r[4]||'').trim(),
+      guests:  (r[6]||'').trim(),
+      notes:   (r[7]||'').trim(),
+      paid:    (r[8]||'unpaid').trim().toLowerCase(),
+    }));
 
-  // Separate upcoming/today from past
-  const upcoming = filtered.filter(b => (b.clean || b.checkout) >= today);
-  const past = filtered.filter(b => (b.clean || b.checkout) < today);
+    // Detect new arrivals → notify
+    const existIds = new Set(bookings.map(b => b.id));
+    sheetBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
 
-  if (upcoming.length > 0) {
-    const lbl = document.createElement('div');
-    lbl.className = 'section-label';
-    lbl.textContent = '📅 Próximas & Hoje';
-    container.appendChild(lbl);
-    upcoming.forEach(b => container.appendChild(buildCard(b, false)));
-  }
-  if (past.length > 0) {
-    const lbl = document.createElement('div');
-    lbl.className = 'section-label';
-    lbl.textContent = '📁 Anteriores';
-    container.appendChild(lbl);
-    past.forEach(b => container.appendChild(buildCard(b, true)));
-  }
-}
-
-function buildCard(b, isPastCard) {
-  const card = document.createElement('div');
-  card.className = 'booking-card' + (isPastCard ? ' past' : '');
-  card.dataset.id = b.id;
-
-  const aptClass = b.apt === 'a' ? 'a' : 'b';
-  const aptLabel = b.apt === 'a' ? APT_A_NAME : APT_B_NAME;
-  const aptEmoji = b.apt === 'a' ? '🏠' : '🏡';
-  const cleanToday = isToday(b.clean);
-  const paidClass = b.paid === 'paid' ? 'paid' : 'unpaid';
-  const paidLabel = b.paid === 'paid' ? '✅ Pago' : '❌ Por Pagar';
-
-  // Guests dots (max 8 shown)
-  const gCount = Math.min(parseInt(b.guests)||0, 8);
-  const dots = Array(gCount).fill('<span class="guest-dot"></span>').join('');
-
-  const notesHTML = b.notes
-    ? `<div class="notes-row">📝 ${b.notes}</div>`
-    : `<div class="notes-row empty"></div>`;
-
-  card.innerHTML = `
-    <div class="card-header">
-      <div class="apt-badge ${aptClass}">${aptEmoji} ${aptLabel}</div>
-      <div class="cleaning-date-badge ${cleanToday ? 'today' : ''}">
-        ${cleanToday ? '🧹 HOJE' : '🧹 ' + fmtDay(b.clean)}
-      </div>
-    </div>
-    <div class="card-body">
-      <div class="info-block">
-        <span class="info-label">Check-in</span>
-        <span class="info-value">📥 ${fmtDate(b.checkin)}</span>
-      </div>
-      <div class="info-block">
-        <span class="info-label">Check-out</span>
-        <span class="info-value">📤 ${fmtDate(b.checkout)}</span>
-      </div>
-      <div class="info-block">
-        <span class="info-label">Hóspedes</span>
-        <span class="info-value"><span class="guests-row">👥 ${b.guests || '—'} ${dots}</span></span>
-      </div>
-      ${notesHTML}
-    </div>
-    <div class="card-footer">
-      <button class="payment-toggle ${paidClass}" data-id="${b.id}">
-        <span class="toggle-icon">${b.paid === 'paid' ? '✅' : '❌'}</span>
-        ${paidLabel}
-      </button>
-      <div class="admin-actions ${isAdmin ? 'visible' : ''}">
-        <button class="action-btn edit-btn" data-id="${b.id}" title="Editar">✏️</button>
-        <button class="action-btn delete-btn" data-id="${b.id}" title="Apagar">🗑️</button>
-      </div>
-    </div>
-  `;
-
-  // Payment toggle
-  card.querySelector('.payment-toggle').addEventListener('click', (e) => {
-    const id = e.currentTarget.dataset.id;
-    const idx = bookings.findIndex(x => x.id === id);
-    if (idx !== -1) {
-      bookings[idx].paid = bookings[idx].paid === 'paid' ? 'unpaid' : 'paid';
-      save(); render();
-    }
-  });
-
-  // Edit
-  const editBtn = card.querySelector('.edit-btn');
-  if (editBtn) editBtn.addEventListener('click', () => openEdit(b.id));
-
-  // Delete
-  const delBtn = card.querySelector('.delete-btn');
-  if (delBtn) delBtn.addEventListener('click', () => {
-    if (confirm('Apagar esta reserva?')) {
-      bookings = bookings.filter(x => x.id !== b.id);
-      save(); render();
-    }
-  });
-
-  return card;
-}
-
-// ── FILTER BUTTONS ───────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
+    // Merge: sheet rows + local-only rows
+    const localOnly = bookings.filter(b => b._local);
+    bookings = [...sheetBks, ...localOnly];
+    saveB();
     render();
-  });
-});
-
-// ── ADD/EDIT MODAL ───────────────────────────────────────
-function openAdd() {
-  document.getElementById('modalTitle').textContent = '➕ Nova Reserva';
-  document.getElementById('editId').value = '';
-  document.getElementById('fApt').value = 'a';
-  document.getElementById('fCheckin').value = '';
-  document.getElementById('fCheckout').value = '';
-  document.getElementById('fClean').value = '';
-  document.getElementById('fGuests').value = 2;
-  document.getElementById('fNotes').value = '';
-  document.getElementById('fPaid').value = 'unpaid';
-  document.getElementById('bookingOverlay').classList.add('open');
-}
-
-function openEdit(id) {
-  const b = bookings.find(x => x.id === id);
-  if (!b) return;
-  document.getElementById('modalTitle').textContent = '✏️ Editar Reserva';
-  document.getElementById('editId').value = b.id;
-  document.getElementById('fApt').value = b.apt;
-  document.getElementById('fCheckin').value = b.checkin;
-  document.getElementById('fCheckout').value = b.checkout;
-  document.getElementById('fClean').value = b.clean;
-  document.getElementById('fGuests').value = b.guests;
-  document.getElementById('fNotes').value = b.notes || '';
-  document.getElementById('fPaid').value = b.paid;
-  document.getElementById('bookingOverlay').classList.add('open');
-}
-
-// Auto-fill clean date when checkout changes
-document.getElementById('fCheckout').addEventListener('change', function() {
-  if (!document.getElementById('fClean').value) {
-    document.getElementById('fClean').value = this.value;
+  } catch(e) {
+    console.error('Sync error', e);
+  } finally {
+    btn.classList.remove('spinning');
   }
-});
+}
 
-document.getElementById('saveBtn').addEventListener('click', () => {
-  const id = document.getElementById('editId').value;
-  const data = {
-    apt: document.getElementById('fApt').value,
-    checkin: document.getElementById('fCheckin').value,
-    checkout: document.getElementById('fCheckout').value,
-    clean: document.getElementById('fClean').value,
-    guests: parseInt(document.getElementById('fGuests').value) || 1,
-    notes: document.getElementById('fNotes').value.trim(),
-    paid: document.getElementById('fPaid').value,
+function parseCSV(text) {
+  return text.split('\n').map(line => {
+    const cols = []; let cur = ''; let q = false;
+    for (const c of line) {
+      if (c==='"') { q=!q; }
+      else if (c===',' && !q) { cols.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+// ── RENDER ───────────────────────────────────
+function render() {
+  const t = today();
+  const sorted = [...bookings].sort((a,b)=>
+    (a.clean||a.checkout) > (b.clean||b.checkout) ? 1 : -1);
+
+  // Today banner
+  const todayBks = sorted.filter(b=>(b.clean||b.checkout)===t);
+  const tb = document.getElementById('todayBanner');
+  if (todayBks.length) {
+    tb.classList.add('visible');
+    document.getElementById('todayCount').textContent =
+      todayBks.length===1 ? '1 limpeza hoje!' : `${todayBks.length} limpezas hoje!`;
+    document.getElementById('todayApts').textContent =
+      todayBks.map(b=>b.apt==='a'?APT_A_SHORT:APT_B_SHORT).join(' · ');
+  } else tb.classList.remove('visible');
+
+  // Apply filter
+  let list = sorted;
+  if (filter==='a')      list = sorted.filter(b=>b.apt==='a');
+  else if (filter==='b') list = sorted.filter(b=>b.apt==='b');
+  else if (filter==='today') list = sorted.filter(b=>(b.clean||b.checkout)===t);
+  else if (filter==='unpaid') list = sorted.filter(b=>b.paid!=='paid');
+
+  const c = document.getElementById('bookingsList');
+  c.innerHTML = '';
+  if (!list.length) {
+    c.innerHTML=`<div class="empty-state"><div class="emoji">✨</div><h3>Tudo limpo!</h3><p>Sem reservas neste filtro.</p></div>`;
+    return;
+  }
+  const up   = list.filter(b=>(b.clean||b.checkout)>=t);
+  const past = list.filter(b=>(b.clean||b.checkout)<t);
+  if (up.length) {
+    const l=document.createElement('div'); l.className='section-label'; l.textContent='📅 Próximas & Hoje'; c.appendChild(l);
+    up.forEach(b=>c.appendChild(card(b,false)));
+  }
+  if (past.length) {
+    const l=document.createElement('div'); l.className='section-label'; l.textContent='📁 Anteriores'; c.appendChild(l);
+    past.forEach(b=>c.appendChild(card(b,true)));
+  }
+}
+
+function card(b, isPast) {
+  const el = document.createElement('div');
+  const cleanD = b.clean||b.checkout;
+  const isT = cleanD===today();
+  el.className='booking-card'+(isPast?' past':'')+(isT?' today-card':'');
+
+  const srcLabel = {airbnb:'Airbnb',booking:'Booking.com',direct:'Direto'}[b.source]||'Direto';
+  const paidCls  = b.paid==='paid'?'paid':'unpaid';
+  const paidLbl  = b.paid==='paid'?'✅ Pago':'❌ Por Pagar';
+
+  el.innerHTML=`
+    <div class="card-top">
+      <div class="apt-badge ${b.apt==='a'?'a':'b'}">${b.apt==='a'?'🏠':'🏡'} ${b.apt==='a'?APT_A_SHORT:APT_B_SHORT}</div>
+      <div class="source-badge ${b.source||'direct'}">${srcLabel}</div>
+    </div>
+    <div class="card-dates">
+      <div class="date-block">
+        <span class="date-label">Check-in</span>
+        <span class="date-value">${fmtShort(b.checkin)}</span>
+        <span class="date-sub">${fmtWday(b.checkin)}</span>
+      </div>
+      <div class="date-arrow">→</div>
+      <div class="date-block right">
+        <span class="date-label">Check-out</span>
+        <span class="date-value">${fmtShort(b.checkout)}</span>
+        <span class="date-sub">${fmtWday(b.checkout)}</span>
+      </div>
+    </div>
+    <div class="card-clean">
+      <span class="clean-label">🧹 Limpeza</span>
+      <span class="clean-value${isT?' today-clean':''}">${isT?'⚡ HOJE':fmtFull(cleanD)}</span>
+    </div>
+    ${(b.guests||b.notes)?`<div class="card-info-row">${b.guests?`<div class="guests-chip">👥 ${b.guests}</div>`:''} ${b.notes?`<div class="notes-chip">📝 ${b.notes}</div>`:''}</div>`:''}
+    <div class="card-footer">
+      <button class="payment-btn ${paidCls}" data-id="${b.id}">${paidLbl}</button>
+      <div class="admin-actions${isAdmin?' visible':''}">
+        <button class="icon-btn edit-btn" data-id="${b.id}">✏️</button>
+        <button class="icon-btn delete-btn" data-id="${b.id}">🗑️</button>
+      </div>
+    </div>`;
+
+  el.querySelector('.payment-btn').onclick = e => {
+    const idx=bookings.findIndex(x=>x.id===e.currentTarget.dataset.id);
+    if(idx!==-1){ bookings[idx].paid=bookings[idx].paid==='paid'?'unpaid':'paid'; saveB(); render(); }
   };
-  if (!data.checkin || !data.checkout) {
-    alert('Por favor preencha as datas de check-in e check-out.'); return;
-  }
-  if (id) {
-    const idx = bookings.findIndex(x => x.id === id);
-    if (idx !== -1) { bookings[idx] = { ...bookings[idx], ...data }; }
-  } else {
-    bookings.push({ id: uid(), ...data });
-  }
-  save(); render();
-  document.getElementById('bookingOverlay').classList.remove('open');
-});
-
-document.getElementById('cancelBtn').addEventListener('click', () => {
-  document.getElementById('bookingOverlay').classList.remove('open');
-});
-
-document.getElementById('fabAdd').addEventListener('click', openAdd);
-
-// ── ADMIN PIN ────────────────────────────────────────────
-document.getElementById('adminToggleBtn').addEventListener('click', () => {
-  if (isAdmin) {
-    // Logout
-    isAdmin = false;
-    updateAdminUI();
-  } else {
-    pinBuffer = '';
-    updatePinDots();
-    document.getElementById('pinError').textContent = '';
-    document.getElementById('pinOverlay').classList.add('open');
-  }
-});
-
-document.querySelectorAll('.pin-key').forEach(k => {
-  k.addEventListener('click', () => {
-    const n = k.dataset.n;
-    if (n === 'cancel') {
-      document.getElementById('pinOverlay').classList.remove('open');
-      return;
-    }
-    if (n === 'del') {
-      pinBuffer = pinBuffer.slice(0,-1);
-      updatePinDots();
-      return;
-    }
-    if (pinBuffer.length >= 4) return;
-    pinBuffer += n;
-    updatePinDots();
-    if (pinBuffer.length === 4) {
-      setTimeout(() => {
-        if (pinBuffer === ADMIN_PIN) {
-          isAdmin = true;
-          document.getElementById('pinOverlay').classList.remove('open');
-          updateAdminUI();
-        } else {
-          document.getElementById('pinError').textContent = '❌ PIN incorreto. Tente novamente.';
-          pinBuffer = '';
-          updatePinDots();
-        }
-      }, 200);
-    }
-  });
-});
-
-function updatePinDots() {
-  for (let i=0;i<4;i++) {
-    document.getElementById('d'+i).classList.toggle('filled', i < pinBuffer.length);
-  }
+  const eb=el.querySelector('.edit-btn');
+  if(eb) eb.onclick=()=>openEdit(b.id);
+  const db=el.querySelector('.delete-btn');
+  if(db) db.onclick=()=>{ if(confirm('Apagar reserva?')){ bookings=bookings.filter(x=>x.id!==b.id); saveB(); render(); } };
+  return el;
 }
 
-function updateAdminUI() {
-  const fab = document.getElementById('fabAdd');
-  const pill = document.getElementById('adminPill');
-  const sub = document.getElementById('headerSub');
-  const btn = document.getElementById('adminToggleBtn');
+// ── FILTERS ──────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); filter=btn.dataset.filter; render();
+  };
+});
 
-  if (isAdmin) {
-    fab.classList.add('visible');
-    fab.style.display = 'flex';
+// ── ADD/EDIT MODAL ────────────────────────────
+function openAdd(){
+  document.getElementById('modalTitle').textContent='➕ Nova Reserva';
+  ['editId','fCheckin','fCheckout','fClean','fNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fApt').value='a';
+  document.getElementById('fSource').value='direct';
+  document.getElementById('fGuests').value=2;
+  document.getElementById('fPaid').value='unpaid';
+  document.getElementById('bookingOverlay').classList.add('open');
+}
+function openEdit(id){
+  const b=bookings.find(x=>x.id===id); if(!b) return;
+  document.getElementById('modalTitle').textContent='✏️ Editar';
+  document.getElementById('editId').value=b.id;
+  document.getElementById('fApt').value=b.apt;
+  document.getElementById('fSource').value=b.source||'direct';
+  document.getElementById('fCheckin').value=b.checkin;
+  document.getElementById('fCheckout').value=b.checkout;
+  document.getElementById('fClean').value=b.clean||b.checkout;
+  document.getElementById('fGuests').value=b.guests||2;
+  document.getElementById('fNotes').value=b.notes||'';
+  document.getElementById('fPaid').value=b.paid||'unpaid';
+  document.getElementById('bookingOverlay').classList.add('open');
+}
+document.getElementById('fCheckout').onchange=function(){ if(!document.getElementById('fClean').value) document.getElementById('fClean').value=this.value; };
+document.getElementById('saveBtn').onclick=()=>{
+  const id=document.getElementById('editId').value;
+  const d={
+    apt:document.getElementById('fApt').value,
+    source:document.getElementById('fSource').value,
+    checkin:document.getElementById('fCheckin').value,
+    checkout:document.getElementById('fCheckout').value,
+    clean:document.getElementById('fClean').value,
+    guests:document.getElementById('fGuests').value,
+    notes:document.getElementById('fNotes').value.trim(),
+    paid:document.getElementById('fPaid').value,
+    _local:true,
+  };
+  if(!d.checkin||!d.checkout){alert('Preencha as datas.');return;}
+  if(id){
+    const i=bookings.findIndex(x=>x.id===id);
+    if(i!==-1) bookings[i]={...bookings[i],...d};
+  } else {
+    const nb={id:uid(),...d}; bookings.push(nb); notifyNew(nb);
+  }
+  saveB(); render(); document.getElementById('bookingOverlay').classList.remove('open');
+};
+document.getElementById('cancelBtn').onclick=()=>document.getElementById('bookingOverlay').classList.remove('open');
+document.getElementById('fabAdd').onclick=openAdd;
+
+// ── CONFIG MODAL ──────────────────────────────
+function openConfig(){
+  document.getElementById('cfgSheet').value=cfg.sheetUrl||'';
+  document.getElementById('cfgWaN').value=cfg.waN||'';
+  document.getElementById('cfgWaK').value=cfg.waK||'';
+  document.getElementById('cfgAdmN').value=cfg.admN||ADMIN_WA_DEFAULT;
+  document.getElementById('cfgAdmK').value=cfg.admK||'';
+  document.getElementById('configOverlay').classList.add('open');
+}
+document.getElementById('saveCfgBtn').onclick=()=>{
+  cfg.sheetUrl=document.getElementById('cfgSheet').value.trim();
+  cfg.waN=document.getElementById('cfgWaN').value.trim();
+  cfg.waK=document.getElementById('cfgWaK').value.trim();
+  cfg.admN=document.getElementById('cfgAdmN').value.trim();
+  cfg.admK=document.getElementById('cfgAdmK').value.trim();
+  saveCfg(); document.getElementById('configOverlay').classList.remove('open');
+  if(cfg.sheetUrl) syncSheet();
+};
+document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
+
+// ── PIN ───────────────────────────────────────
+document.getElementById('adminToggleBtn').onclick=()=>{
+  if(isAdmin){isAdmin=false;updateAdminUI();return;}
+  pinBuf=''; updDots(); document.getElementById('pinError').textContent='';
+  document.getElementById('pinOverlay').classList.add('open');
+};
+document.querySelectorAll('.pin-key').forEach(k=>{
+  k.onclick=()=>{
+    const n=k.dataset.n;
+    if(n==='cancel'){document.getElementById('pinOverlay').classList.remove('open');return;}
+    if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}
+    if(pinBuf.length>=4) return;
+    pinBuf+=n; updDots();
+    if(pinBuf.length===4) setTimeout(()=>{
+      if(pinBuf===ADMIN_PIN){
+        isAdmin=true; document.getElementById('pinOverlay').classList.remove('open'); updateAdminUI();
+      } else {
+        document.getElementById('pinError').textContent='❌ PIN incorreto.';
+        pinBuf=''; updDots();
+      }
+    },200);
+  };
+});
+function updDots(){ for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length); }
+
+// Long-press ⚙️ while admin → open config
+let pt;
+const abtn=document.getElementById('adminToggleBtn');
+abtn.addEventListener('mousedown',()=>{ pt=setTimeout(()=>{if(isAdmin)openConfig();},700); });
+abtn.addEventListener('touchstart',()=>{ pt=setTimeout(()=>{if(isAdmin)openConfig();},700); },{passive:true});
+['mouseup','touchend','mouseleave'].forEach(e=>abtn.addEventListener(e,()=>clearTimeout(pt)));
+
+function updateAdminUI(){
+  const fab=document.getElementById('fabAdd');
+  const pill=document.getElementById('adminPill');
+  if(isAdmin){
+    fab.classList.add('visible'); fab.style.display='flex';
     pill.classList.add('visible');
-    sub.textContent = 'Administrador';
-    btn.textContent = '🔓';
-    btn.title = 'Sair do modo admin';
+    document.getElementById('headerSub').textContent='Administrador';
+    document.getElementById('adminToggleBtn').textContent='🔓';
   } else {
-    fab.classList.remove('visible');
-    fab.style.display = 'none';
+    fab.classList.remove('visible'); fab.style.display='none';
     pill.classList.remove('visible');
-    sub.textContent = 'Vista da equipa';
-    btn.textContent = '⚙️';
-    btn.title = 'Admin';
+    document.getElementById('headerSub').textContent='Permanent Summer';
+    document.getElementById('adminToggleBtn').textContent='⚙️';
   }
-  render(); // re-render to show/hide action buttons
+  render();
 }
 
-// ── INIT ─────────────────────────────────────────────────
+// ── WA FAB ───────────────────────────────────
+document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAULT);
+
+// ── SYNC BTN ─────────────────────────────────
+document.getElementById('syncBtn').onclick=syncSheet;
+
+// ── DEMO DATA ────────────────────────────────
+if(!cfg.sheetUrl && bookings.length===0){
+  const add=d=>{const dt=new Date();dt.setDate(dt.getDate()+d);return dt.toISOString().slice(0,10);};
+  bookings=[
+    {id:uid(),apt:'a',source:'airbnb',checkin:add(1),checkout:add(4),clean:add(4),guests:'3',notes:'',paid:'unpaid',_local:true},
+    {id:uid(),apt:'b',source:'booking',checkin:add(2),checkout:add(5),clean:add(5),guests:'2',notes:'Chegam tarde',paid:'paid',_local:true},
+    {id:uid(),apt:'a',source:'direct',checkin:add(0),checkout:add(0),clean:add(0),guests:'4',notes:'Cama extra no quarto 2',paid:'unpaid',_local:true},
+  ];
+  saveB();
+}
+
+// ── INIT ─────────────────────────────────────
 render();
+syncSheet();
+setInterval(syncSheet, 10*60*1000);
 </script>
 </body>
 </html>
