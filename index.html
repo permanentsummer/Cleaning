@@ -567,7 +567,7 @@ async function syncSheet() {
           v.includes('JspbFormat') || v.length > 300) return '';
       return v;
     };
-    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim() && !String(r[7]||'').includes('CLOSED') && !String(r[8]||'').includes('CLOSED') && !String(r[2]||'').toLowerCase().includes('closed')).map(r => ({
+    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
       id:      r[0].trim(),
       apt:     (r[1]||'a').trim().toLowerCase(),
       source:  (r[2]||'direct').trim().toLowerCase(),
@@ -579,13 +579,14 @@ async function syncSheet() {
       paid:    (r[8]||'unpaid').trim().toLowerCase(),
     }));
 
-    // Remove CLOSED/blocked/invalid entries
-    const validBks = sheetBks.filter(b =>
-      b.checkin && b.checkout &&
-      !b.notes.toLowerCase().includes('closed') &&
-      !b.notes.toLowerCase().includes('not available') &&
-      !b.source.includes('closed')
-    );
+    // Only filter out entries with no valid dates or obvious technical garbage
+    const validBks = sheetBks.filter(b => {
+      if (!b.checkin || !b.checkout) return false;
+      const notesLow = b.notes.toLowerCase();
+      // Only reject actual technical garbage, not booking platform labels
+      const garbage = ['objectimageurlpath', 'embed/oimg', 'accesscapabilities', 'jspbformat'];
+      return !garbage.some(w => notesLow.includes(w));
+    });
 
     // Detect new arrivals → notify (ignore demo/local data)
     const existIds = new Set(bookings.filter(b=>!b._local).map(b => b.id));
