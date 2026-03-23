@@ -494,11 +494,22 @@ const saveB   = () => localStorage.setItem('ps_bk',  JSON.stringify(bookings));
 const saveCfg = () => localStorage.setItem('ps_cfg', JSON.stringify(cfg));
 const today   = () => new Date().toISOString().slice(0,10);
 
-// Normalise any date string to YYYY-MM-DD
+// Normalise any date string/number to YYYY-MM-DD
 function normaliseDate(str) {
   if (!str || str === '—') return '';
-  str = str.trim();
+  str = String(str).trim();
+  // Already YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // Excel/Google Sheets serial number (e.g. 46279)
+  // Serial 1 = Jan 1 1900, but Excel has a leap year bug so offset is 25569 from Unix epoch
+  if (/^\d{4,6}$/.test(str)) {
+    const serial = parseInt(str);
+    // Convert: (serial - 25569) days from Unix epoch
+    const ms = (serial - 25569) * 86400 * 1000;
+    const d = new Date(ms);
+    if (!isNaN(d)) return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
+  }
+  // ISO timestamp like 2026-07-03T23:00:00.000Z
   try {
     const d = new Date(str);
     if (isNaN(d)) return '';
