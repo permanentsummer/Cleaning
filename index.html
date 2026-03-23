@@ -557,6 +557,15 @@ async function syncSheet() {
       // Otherwise discard (Google metadata / formula bleed)
       return '';
     };
+    // Strip Google metadata garbage from notes field
+    const cleanNotes = v => {
+      if (!v) return '';
+      // Reject if it contains known Google/embed garbage patterns
+      if (v.includes('objectImageUrlPath') || v.includes('embed/oimg') ||
+          v.includes('U+') || v.includes('accessCapabilities') ||
+          v.includes('JspbFormat') || v.length > 300) return '';
+      return v;
+    };
     const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
       id:      r[0].trim(),
       apt:     (r[1]||'a').trim().toLowerCase(),
@@ -565,16 +574,16 @@ async function syncSheet() {
       checkout:normaliseDate((r[4]||'').trim()),
       clean:   normaliseDate((r[5]||r[4]||'').trim()),
       guests:  cleanGuests(r[6]),
-      notes:   (r[7]||'').trim(),
+      notes:   cleanNotes((r[7]||'').trim()),
       paid:    (r[8]||'unpaid').trim().toLowerCase(),
     }));
 
-    // Detect new arrivals → notify
-    const existIds = new Set(bookings.map(b => b.id));
+    // Detect new arrivals → notify (ignore demo/local data)
+    const existIds = new Set(bookings.filter(b=>!b._local).map(b => b.id));
     sheetBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
 
-    // Merge: sheet rows + local-only rows
-    const localOnly = bookings.filter(b => b._local);
+    // Sheet is source of truth — keep local manually-added bookings but drop demo data
+    const localOnly = bookings.filter(b => b._local && !b._demo);
     bookings = [...sheetBks, ...localOnly];
     saveB();
     render();
@@ -820,14 +829,18 @@ document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAU
 // ── SYNC BTN ─────────────────────────────────
 document.getElementById('syncBtn').onclick=syncSheet;
 
-// ── DEMO DATA ────────────────────────────────
+// ── DEMO DATA (only if no sheet configured AND no bookings yet) ──
 if(!cfg.sheetUrl && bookings.length===0){
   const add=d=>{const dt=new Date();dt.setDate(dt.getDate()+d);return dt.toISOString().slice(0,10);};
   bookings=[
-    {id:uid(),apt:'a',source:'airbnb',checkin:add(1),checkout:add(4),clean:add(4),guests:'3',notes:'',paid:'unpaid',_local:true},
-    {id:uid(),apt:'b',source:'booking',checkin:add(2),checkout:add(5),clean:add(5),guests:'2',notes:'Chegam tarde',paid:'paid',_local:true},
-    {id:uid(),apt:'a',source:'direct',checkin:add(0),checkout:add(0),clean:add(0),guests:'4',notes:'Cama extra no quarto 2',paid:'unpaid',_local:true},
+    {id:uid(),apt:'a',source:'airbnb',checkin:add(1),checkout:add(4),clean:add(4),guests:'3',notes:'',paid:'unpaid',_local:true,_demo:true},
+    {id:uid(),apt:'b',source:'booking',checkin:add(2),checkout:add(5),clean:add(5),guests:'2',notes:'Chegam tarde',paid:'paid',_local:true,_demo:true},
+    {id:uid(),apt:'a',source:'direct',checkin:add(0),checkout:add(0),clean:add(0),guests:'4',notes:'Cama extra no quarto 2',paid:'unpaid',_local:true,_demo:true},
   ];
+  saveB();
+} else if(cfg.sheetUrl) {
+  // Sheet is configured — clear any demo data that may be lingering
+  bookings = bookings.filter(b => !b._demo);
   saveB();
 }
 
