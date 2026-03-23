@@ -306,6 +306,20 @@
   .pin-key:active { background: #0f172a; color: white; border-color: #0f172a; transform: scale(0.94); }
   .pin-error { color: var(--red); font-size: 13px; font-weight: 700; margin-top: 14px; min-height: 18px; }
 
+  .admin-bar {
+    display: none; align-items: center; justify-content: space-between;
+    background: #fef3c7; padding: 10px 16px; margin: 10px 16px 0;
+    border-radius: 14px; border: 2px solid #fde68a;
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-bar span { font-size: 13px; font-weight: 800; color: #92400e; }
+  .admin-bar button {
+    background: #0f172a; color: white; border: none;
+    padding: 8px 16px; border-radius: 10px;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+    cursor: pointer;
+  }
+
   .cfg-hint {
     background: #f8fafc; border-radius: 12px; padding: 12px 14px;
     margin-bottom: 14px; font-size: 13px; font-weight: 600;
@@ -330,9 +344,12 @@
   </div>
 </header>
 
-<div class="admin-pill" id="adminPill">🔐 Modo Administrador</div>
+<div class="admin-bar" id="adminBar">
+  <span>🔐 Administrador</span>
+  <button id="openCfgBtn">⚙️ Configurações</button>
+</div>
 <div class="setup-banner" id="setupBanner">
-  <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️) e mantenha premido para configurar o Google Sheet e WhatsApp.
+  <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️ no canto superior direito) e depois toque em "Configurações" para adicionar o Google Sheet e WhatsApp.
 </div>
 
 <div class="filter-bar">
@@ -461,6 +478,7 @@ const APT_B_NAME  = "2-Al-Paranagua";
 const APT_A_SHORT = "Saramago";
 const APT_B_SHORT = "Al-Paranaguá";
 const ADMIN_WA_DEFAULT = "351924477353";
+const ADMIN_KEY_DEFAULT = "7950168";
 
 // ── STATE ────────────────────────────────────
 let cfg      = JSON.parse(localStorage.getItem('ps_cfg')  || '{}');
@@ -717,7 +735,7 @@ function openConfig(){
   document.getElementById('cfgWaN').value=cfg.waN||'';
   document.getElementById('cfgWaK').value=cfg.waK||'';
   document.getElementById('cfgAdmN').value=cfg.admN||ADMIN_WA_DEFAULT;
-  document.getElementById('cfgAdmK').value=cfg.admK||'';
+  document.getElementById('cfgAdmK').value=cfg.admK||ADMIN_KEY_DEFAULT;
   document.getElementById('configOverlay').classList.add('open');
 }
 document.getElementById('saveCfgBtn').onclick=()=>{
@@ -756,24 +774,19 @@ document.querySelectorAll('.pin-key').forEach(k=>{
 });
 function updDots(){ for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length); }
 
-// Long-press ⚙️ while admin → open config
-let pt;
-const abtn=document.getElementById('adminToggleBtn');
-abtn.addEventListener('mousedown',()=>{ pt=setTimeout(()=>{if(isAdmin)openConfig();},700); });
-abtn.addEventListener('touchstart',()=>{ pt=setTimeout(()=>{if(isAdmin)openConfig();},700); },{passive:true});
-['mouseup','touchend','mouseleave'].forEach(e=>abtn.addEventListener(e,()=>clearTimeout(pt)));
+document.getElementById('openCfgBtn').onclick = openConfig;
 
 function updateAdminUI(){
-  const fab=document.getElementById('fabAdd');
-  const pill=document.getElementById('adminPill');
+  const fab  = document.getElementById('fabAdd');
+  const bar  = document.getElementById('adminBar');
   if(isAdmin){
     fab.classList.add('visible'); fab.style.display='flex';
-    pill.classList.add('visible');
+    bar.classList.add('visible');
     document.getElementById('headerSub').textContent='Administrador';
     document.getElementById('adminToggleBtn').textContent='🔓';
   } else {
     fab.classList.remove('visible'); fab.style.display='none';
-    pill.classList.remove('visible');
+    bar.classList.remove('visible');
     document.getElementById('headerSub').textContent='Permanent Summer';
     document.getElementById('adminToggleBtn').textContent='⚙️';
   }
