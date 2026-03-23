@@ -467,6 +467,7 @@
     </div>
     <button class="btn-primary" id="saveCfgBtn">💾 Guardar</button>
     <button class="btn-secondary" id="cancelCfgBtn">Cancelar</button>
+    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:16px">🗑️ Apagar todos os dados locais</button>
   </div>
 </div>
 
@@ -566,7 +567,7 @@ async function syncSheet() {
           v.includes('JspbFormat') || v.length > 300) return '';
       return v;
     };
-    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
+    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim() && !String(r[7]||'').includes('CLOSED') && !String(r[8]||'').includes('CLOSED') && !String(r[2]||'').toLowerCase().includes('closed')).map(r => ({
       id:      r[0].trim(),
       apt:     (r[1]||'a').trim().toLowerCase(),
       source:  (r[2]||'direct').trim().toLowerCase(),
@@ -578,13 +579,21 @@ async function syncSheet() {
       paid:    (r[8]||'unpaid').trim().toLowerCase(),
     }));
 
+    // Remove CLOSED/blocked/invalid entries
+    const validBks = sheetBks.filter(b =>
+      b.checkin && b.checkout &&
+      !b.notes.toLowerCase().includes('closed') &&
+      !b.notes.toLowerCase().includes('not available') &&
+      !b.source.includes('closed')
+    );
+
     // Detect new arrivals → notify (ignore demo/local data)
     const existIds = new Set(bookings.filter(b=>!b._local).map(b => b.id));
-    sheetBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
+    validBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
 
-    // Sheet is source of truth — keep local manually-added bookings but drop demo data
+    // Sheet is source of truth — keep locally-added manual bookings, drop demo
     const localOnly = bookings.filter(b => b._local && !b._demo);
-    bookings = [...sheetBks, ...localOnly];
+    bookings = [...validBks, ...localOnly];
     saveB();
     render();
   } catch(e) {
@@ -778,6 +787,15 @@ document.getElementById('saveCfgBtn').onclick=()=>{
   if(cfg.sheetUrl) syncSheet();
 };
 document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
+document.getElementById('clearAllBtn').onclick=()=>{
+  if(confirm('Apagar todos os dados locais? Os dados do Google Sheet serão recarregados automaticamente.')){
+    localStorage.removeItem('ps_bk');
+    bookings=[];
+    document.getElementById('configOverlay').classList.remove('open');
+    render();
+    syncSheet();
+  }
+};
 
 // ── PIN ───────────────────────────────────────
 document.getElementById('adminToggleBtn').onclick=()=>{
