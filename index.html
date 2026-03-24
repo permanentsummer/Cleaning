@@ -452,6 +452,7 @@
     <div class="form-group">
       <label>Link Google Sheet (CSV)</label>
       <input type="url" id="cfgSheet" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+      <small id="cfgSheetStatus" style="font-size:12px;font-weight:700;margin-top:4px;display:block"></small>
     </div>
     <div class="cfg-hint" style="margin-top:8px">
       <strong>CallMeBot WhatsApp:</strong><br>
@@ -787,6 +788,9 @@ function openConfig(){
   document.getElementById('cfgWaK').value=cfg.waK||'';
   document.getElementById('cfgAdmN').value=cfg.admN||ADMIN_WA_DEFAULT;
   document.getElementById('cfgAdmK').value=cfg.admK||ADMIN_KEY_DEFAULT;
+  const status = document.getElementById('cfgSheetStatus');
+  if(status) status.textContent = cfg.sheetUrl ? '✅ URL guardada' : '⚠️ Nenhum URL configurado';
+  if(status) status.style.color = cfg.sheetUrl ? '#16a34a' : '#dc2626';
   document.getElementById('configOverlay').classList.add('open');
 }
 document.getElementById('saveCfgBtn').onclick=()=>{
@@ -795,17 +799,24 @@ document.getElementById('saveCfgBtn').onclick=()=>{
   cfg.waK=document.getElementById('cfgWaK').value.trim();
   cfg.admN=document.getElementById('cfgAdmN').value.trim();
   cfg.admK=document.getElementById('cfgAdmK').value.trim();
-  saveCfg(); document.getElementById('configOverlay').classList.remove('open');
-  if(cfg.sheetUrl) syncSheet();
+  saveCfg();
+  // Verify it was actually saved
+  const saved = JSON.parse(localStorage.getItem('ps_cfg')||'{}');
+  if(saved.sheetUrl !== cfg.sheetUrl) {
+    alert('Erro ao guardar! Tente novamente.');
+    return;
+  }
+  document.getElementById('configOverlay').classList.remove('open');
+  if(cfg.sheetUrl){ bookings=bookings.filter(b=>!b._demo); saveB(); syncSheet(); }
 };
 document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
 document.getElementById('clearAllBtn').onclick=()=>{
-  if(confirm('Apagar todos os dados locais? Os dados do Google Sheet serão recarregados automaticamente.')){
+  if(confirm('Apagar reservas locais? As configurações são mantidas e o Google Sheet será recarregado.')){
     localStorage.removeItem('ps_bk');
     bookings=[];
     document.getElementById('configOverlay').classList.remove('open');
     render();
-    syncSheet();
+    setTimeout(syncSheet, 300);
   }
 };
 
