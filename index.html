@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Tideline – Permanent Summer</title>
+<title>SummerClean – Permanent Summer</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -338,6 +338,90 @@
   }
   .lang-btn.active { background: white; color: #0f172a; }
 
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; gap: 8px; padding: 0 16px 10px;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .stats-bar::-webkit-scrollbar { display: none; }
+  .stat-chip {
+    flex: 1; min-width: 70px; background: white; border-radius: 14px;
+    padding: 10px 8px; text-align: center; cursor: pointer;
+    box-shadow: var(--shadow); border: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .stat-chip:active { transform: scale(0.96); }
+  .stat-chip.apt-a-stat { border-color: var(--apt-a-light); }
+  .stat-chip.apt-b-stat { border-color: var(--apt-b-light); }
+  .stat-chip.unpaid-stat { border-color: var(--red-light); }
+  .stat-num { display: block; font-size: 22px; font-weight: 900; color: var(--text); }
+  .stat-chip.apt-a-stat .stat-num { color: var(--apt-a); }
+  .stat-chip.apt-b-stat .stat-num { color: var(--apt-b); }
+  .stat-chip.unpaid-stat .stat-num { color: var(--red); }
+  .stat-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* VIEW TOGGLE */
+  .view-toggle {
+    display: flex; gap: 6px; padding: 0 16px 12px;
+  }
+  .view-btn {
+    flex: 1; padding: 9px; border-radius: 12px;
+    border: 2px solid var(--border); background: white;
+    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .view-btn.active { background: #0f172a; border-color: #0f172a; color: white; }
+
+  /* CALENDAR */
+  .cal-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .cal-nav-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 2px solid var(--border); background: white;
+    font-size: 20px; font-weight: 800; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text);
+  }
+  .cal-month-label { font-size: 17px; font-weight: 900; color: var(--text); }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px; background: var(--border); border-radius: 14px;
+    overflow: hidden; border: 2px solid var(--border);
+  }
+  .cal-day-header {
+    background: #0f172a; color: white; text-align: center;
+    font-size: 10px; font-weight: 800; padding: 6px 2px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cal-day {
+    background: white; min-height: 52px; padding: 4px;
+    position: relative; cursor: default;
+  }
+  .cal-day.other-month { background: #f8fafc; }
+  .cal-day.is-today { background: #fef3c7; }
+  .cal-day-num {
+    font-size: 12px; font-weight: 800; color: var(--text);
+    display: block; margin-bottom: 2px;
+  }
+  .cal-day.other-month .cal-day-num { color: #cbd5e1; }
+  .cal-day.is-today .cal-day-num { color: var(--yellow); }
+  .cal-event {
+    display: block; border-radius: 4px; padding: 1px 3px;
+    font-size: 9px; font-weight: 800; margin-bottom: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: white;
+  }
+  .cal-event.a { background: var(--apt-a); }
+  .cal-event.b { background: var(--apt-b); }
+  .cal-event.checkout-day { opacity: 0.6; }
+  .cal-legend {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 4px 0; font-size: 12px; font-weight: 700; color: var(--muted);
+  }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
   .cfg-section-title {
     font-size: 11px; font-weight: 900; color: var(--muted);
     text-transform: uppercase; letter-spacing: 1px;
@@ -374,7 +458,7 @@
   <div class="header-left">
     <div class="header-icon">🧹</div>
     <div class="header-title">
-      <h1>Tideline</h1>
+      <h1>SummerClean</h1>
       <p id="headerSub">Permanent Summer</p>
     </div>
   </div>
@@ -415,6 +499,46 @@
   <button class="filter-btn apt-b" data-filter="b">🏡 Al-Paranaguá</button>
   <button class="filter-btn" data-filter="today">📅 Hoje</button>
   <button class="filter-btn" data-filter="unpaid">🔴 Por Pagar</button>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-chip" data-filter-stat="all">
+    <span class="stat-num" id="stat-all">0</span>
+    <span class="stat-label" id="stat-all-label">Total</span>
+  </div>
+  <div class="stat-chip apt-a-stat" data-filter-stat="a">
+    <span class="stat-num" id="stat-a">0</span>
+    <span class="stat-label">Saramago</span>
+  </div>
+  <div class="stat-chip apt-b-stat" data-filter-stat="b">
+    <span class="stat-num" id="stat-b">0</span>
+    <span class="stat-label">Al-Paranaguá</span>
+  </div>
+  <div class="stat-chip unpaid-stat" data-filter-stat="unpaid">
+    <span class="stat-num" id="stat-unpaid">0</span>
+    <span class="stat-label" id="stat-unpaid-label">Unpaid</span>
+  </div>
+</div>
+
+<!-- VIEW TOGGLE -->
+<div class="view-toggle">
+  <button class="view-btn active" id="viewListBtn">☰ <span id="vl-label">List</span></button>
+  <button class="view-btn" id="viewCalBtn">📅 <span id="vc-label">Calendar</span></button>
+</div>
+
+<!-- CALENDAR VIEW -->
+<div id="calendarView" style="display:none;padding:0 16px 16px">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" id="calPrev">‹</button>
+    <span class="cal-month-label" id="calMonthLabel"></span>
+    <button class="cal-nav-btn" id="calNext">›</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="cal-legend">
+    <span class="leg-dot" style="background:var(--apt-a)"></span><span id="leg-a">Saramago</span>
+    <span class="leg-dot" style="background:var(--apt-b)"></span><span id="leg-b">Al-Paranaguá</span>
+  </div>
 </div>
 
 <div class="today-banner" id="todayBanner">
@@ -585,6 +709,7 @@ const T = {
       numLabel:'Número (351...)',keyLabel:'API Key',
       permPayment:'Alternar estado de pagamento',permNotes:'Ver notas',
       save:'Guardar Configurações',cancel:'Cancelar',clear:'Apagar dados locais'},
+    msg:{sheetEmpty:'Ligação OK — sem reservas ainda.',sheetError:'Erro ao aceder ao Sheet. Verifique o link.',sheetHtml:'O Sheet não está publicado como CSV.',clearConfirm:'Apagar reservas locais? As configurações são mantidas.',deleteConfirm:'Apagar esta reserva?',savedOk:'Configurações guardadas!',fillDates:'Por favor preencha as datas.'},
   },
   en: {
     appSub:'Cleaning Manager',
@@ -609,6 +734,7 @@ const T = {
       numLabel:'Number (351...)',keyLabel:'API Key',
       permPayment:'Toggle payment status',permNotes:'View notes',
       save:'Save Settings',cancel:'Cancel',clear:'Clear local data'},
+    msg:{sheetEmpty:'Connection OK — no bookings yet.',sheetError:'Cannot reach the Sheet. Check the link.',sheetHtml:'Sheet is not published as CSV.',clearConfirm:'Clear local bookings? Settings will be kept.',deleteConfirm:'Delete this booking?',savedOk:'Settings saved!',fillDates:'Please fill in the dates.'},
   },
   fr: {
     appSub:"Gestion du Ménage",
@@ -633,6 +759,7 @@ const T = {
       numLabel:"Numéro (351...)",keyLabel:"Clé API",
       permPayment:"Changer le statut du paiement",permNotes:"Voir les notes",
       save:"Enregistrer",cancel:"Annuler",clear:"Effacer les données locales"},
+    msg:{sheetEmpty:"Connexion OK — aucune réservation encore.",sheetError:"Impossible d'accéder au Sheet. Vérifiez le lien.",sheetHtml:"Le Sheet n'est pas publié en CSV.",clearConfirm:"Effacer les réservations locales? Les paramètres sont conservés.",deleteConfirm:"Supprimer cette réservation?",savedOk:"Paramètres enregistrés!",fillDates:"Veuillez remplir les dates."},
   }
 };
 let lang = localStorage.getItem('ps_lang') || 'pt';
@@ -680,6 +807,12 @@ function normaliseDate(str) {
     if (isNaN(d)) return '';
     return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
   } catch(e) { return ''; }
+}
+function subtractDay(dateStr) {
+  if (!dateStr) return dateStr;
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() - 1);
+  return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
 }
 function fmt(str, opts) {
   const clean = normaliseDate(str);
@@ -751,22 +884,22 @@ async function syncSheet() {
     try {
       res = await fetch(cfg.sheetUrl + '&cachebust=' + Date.now());
     } catch(fetchErr) {
-      showSyncError('Não foi possível aceder ao Google Sheet. Verifique se está publicado corretamente.');
+      showSyncError(t().msg.sheetError);
       return;
     }
     if (!res.ok) {
-      showSyncError('Erro ' + res.status + ' ao aceder ao Google Sheet. Verifique o link nas configurações.');
+      showSyncError(t().msg.sheetError + ' (' + res.status + ')');
       return;
     }
     const text = await res.text();
     // Check if response is HTML (means sheet is not public)
     if (text.trim().startsWith('<')) {
-      showSyncError('O Google Sheet não está publicado como CSV. Vá a Ficheiro → Partilhar → Publicar na web → CSV.');
+      showSyncError(t().msg.sheetHtml);
       return;
     }
     const rows = parseCSV(text).filter(r => r.length > 1);
     if (rows.length < 2) {
-      showSyncSuccess('Folha ligada mas sem reservas ainda.');
+      showSyncSuccess(t().msg.sheetEmpty);
       return;
     }
     // skip header row (row 0)
@@ -845,7 +978,7 @@ async function syncSheet() {
     showSyncSuccess(t().syncOk + ' ' + dedupedBks.length + ' ' + t().reservations);
   } catch(e) {
     console.error('Sync error', e);
-    showSyncError('Erro inesperado: ' + e.message);
+    showSyncError((t().msg.sheetError||'Error') + ': ' + e.message);
   } finally {
     btn.classList.remove('spinning');
   }
@@ -862,6 +995,70 @@ function parseCSV(text) {
     cols.push(cur.trim());
     return cols;
   });
+}
+
+// ── CALENDAR STATE ───────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let viewMode = 'list'; // 'list' or 'calendar'
+
+// ── STATS ─────────────────────────────────────
+function updateStats() {
+  const tod = today();
+  const future = bookings.filter(b => (b.clean||b.checkout) >= tod);
+  document.getElementById('stat-all').textContent    = future.length;
+  document.getElementById('stat-a').textContent      = future.filter(b=>b.apt==='a').length;
+  document.getElementById('stat-b').textContent      = future.filter(b=>b.apt==='b').length;
+  document.getElementById('stat-unpaid').textContent = future.filter(b=>b.paid!=='paid').length;
+}
+
+// ── CALENDAR RENDER ───────────────────────────
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  const label = document.getElementById('calMonthLabel');
+  const months = t().months;
+  const wdays  = t().weekdays;
+  label.textContent = months[calMonth].charAt(0).toUpperCase() + months[calMonth].slice(1) + ' ' + calYear;
+
+  // Day headers
+  const headers = wdays.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+
+  // First day of month
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
+  const todStr = today();
+
+  let cells = '';
+  // Prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    cells += `<div class="cal-day other-month"><span class="cal-day-num">${daysInPrev - i}</span></div>`;
+  }
+  // Current month days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const isToday = dateStr === todStr;
+    // Find bookings that cover this day
+    const dayBookings = bookings.filter(b => {
+      if (!b.checkin || !b.checkout) return false;
+      return b.checkin <= dateStr && b.checkout >= dateStr;
+    });
+    const events = dayBookings.map(b => {
+      const isCheckout = b.checkout === dateStr;
+      const isCheckin  = b.checkin  === dateStr;
+      const label = isCheckin ? '↓in' : isCheckout ? '↑out' : '·';
+      return `<span class="cal-event ${b.apt}${isCheckout?' checkout-day':''}" title="${b.apt==='a'?'Saramago':'Al-Paranaguá'}">${label}</span>`;
+    }).join('');
+    cells += `<div class="cal-day${isToday?' is-today':''}">
+      <span class="cal-day-num">${d}</span>${events}</div>`;
+  }
+  // Next month padding to complete grid
+  const totalCells = firstDay + daysInMonth;
+  const remaining  = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 1; i <= remaining; i++) {
+    cells += `<div class="cal-day other-month"><span class="cal-day-num">${i}</span></div>`;
+  }
+  grid.innerHTML = headers + cells;
 }
 
 // ── RENDER ───────────────────────────────────
@@ -904,6 +1101,7 @@ function render() {
     const l=document.createElement('div'); l.className='section-label'; l.textContent=t().past; c.appendChild(l);
     past.forEach(b=>c.appendChild(card(b,true)));
   }
+  updateStats();
 }
 
 function card(b, isPast) {
@@ -956,7 +1154,7 @@ function card(b, isPast) {
   const eb=el.querySelector('.edit-btn');
   if(eb) eb.onclick=()=>openEdit(b.id);
   const db=el.querySelector('.delete-btn');
-  if(db) db.onclick=()=>{ if(confirm('Apagar reserva?')){ bookings=bookings.filter(x=>x.id!==b.id); saveB(); render(); } };
+  if(db) db.onclick=()=>{ if(confirm(t().msg.deleteConfirm)){ bookings=bookings.filter(x=>x.id!==b.id); saveB(); render(); } };
   return el;
 }
 
@@ -1006,7 +1204,7 @@ document.getElementById('saveBtn').onclick=()=>{
     paid:document.getElementById('fPaid').value,
     _local:true,
   };
-  if(!d.checkin||!d.checkout){alert('Preencha as datas.');return;}
+  if(!d.checkin||!d.checkout){alert(t().msg.fillDates);return;}
   if(id){
     const i=bookings.findIndex(x=>x.id===id);
     if(i!==-1) bookings[i]={...bookings[i],...d};
@@ -1071,7 +1269,7 @@ document.getElementById('testSheetBtn').onclick=async()=>{
   }
 };
 document.getElementById('clearAllBtn').onclick=()=>{
-  if(confirm('Apagar reservas locais? As configurações são mantidas e o Google Sheet será recarregado.')){
+  if(confirm(t().msg.clearConfirm)){
     localStorage.removeItem('ps_bk');
     bookings=[];
     document.getElementById('configOverlay').classList.remove('open');
@@ -1113,12 +1311,12 @@ function updateAdminUI(){
   if(isAdmin){
     fab.classList.add('visible'); fab.style.display='flex';
     bar.classList.add('visible');
-    document.getElementById('headerSub').textContent='Administrador';
+    document.getElementById('headerSub').textContent=t().adminMode;
     document.getElementById('adminToggleBtn').textContent='🔓';
   } else {
     fab.classList.remove('visible'); fab.style.display='none';
     bar.classList.remove('visible');
-    document.getElementById('headerSub').textContent='Permanent Summer';
+    document.getElementById('headerSub').textContent=t().appSub||'Permanent Summer';
     document.getElementById('adminToggleBtn').textContent='⚙️';
   }
   render();
@@ -1165,6 +1363,16 @@ function applyLang() {
   setText('cfg-save-label', c.save);
   setText('cfg-cancel-label', c.cancel);
   setText('cfg-clear-label', c.clear);
+  // Stats labels
+  setText('stat-all-label', t().all || 'Total');
+  setText('stat-unpaid-label', t().unpaidF || 'Unpaid');
+  // View buttons
+  setText('vl-label', lang==='pt'?'Lista':lang==='fr'?'Liste':'List');
+  setText('vc-label', lang==='pt'?'Calendário':lang==='fr'?'Calendrier':'Calendar');
+  // Calendar legend
+  setText('leg-a', 'Saramago');
+  setText('leg-b', 'Al-Paranaguá');
+  if(viewMode==='calendar') renderCalendar();
   render();
 }
 function setText(id, val) {
@@ -1181,6 +1389,30 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 
 // ── WA FAB ───────────────────────────────────
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAULT);
+
+// ── VIEW TOGGLE ──────────────────────────────
+document.getElementById('viewListBtn').onclick = () => {
+  viewMode = 'list';
+  document.getElementById('viewListBtn').classList.add('active');
+  document.getElementById('viewCalBtn').classList.remove('active');
+  document.getElementById('bookingsList').style.display = 'flex';
+  document.getElementById('calendarView').style.display = 'none';
+  render();
+};
+document.getElementById('viewCalBtn').onclick = () => {
+  viewMode = 'calendar';
+  document.getElementById('viewCalBtn').classList.add('active');
+  document.getElementById('viewListBtn').classList.remove('active');
+  document.getElementById('bookingsList').style.display = 'none';
+  document.getElementById('calendarView').style.display = 'block';
+  renderCalendar();
+};
+document.getElementById('calPrev').onclick = () => {
+  calMonth--; if(calMonth < 0){ calMonth=11; calYear--; } renderCalendar();
+};
+document.getElementById('calNext').onclick = () => {
+  calMonth++; if(calMonth > 11){ calMonth=0; calYear++; } renderCalendar();
+};
 
 // ── SYNC BTN ─────────────────────────────────
 document.getElementById('syncBtn').onclick=syncSheet;
