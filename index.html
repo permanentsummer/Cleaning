@@ -483,7 +483,6 @@
     <button class="btn-secondary" id="testSheetBtn" style="color:#3b82f6;border-color:#bfdbfe;margin-top:8px">🔍 Testar ligação ao Sheet</button>
     <pre id="debugOutput" style="margin-top:12px;background:#f1f5f9;border-radius:10px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;display:none;max-height:200px;overflow-y:auto"></pre>
     <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:8px">🗑️ Apagar todos os dados locais</button>
-    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:16px">🗑️ Apagar todos os dados locais</button>
   </div>
 </div>
 
@@ -625,17 +624,21 @@ async function syncSheet() {
           v.includes('JspbFormat') || v.length > 300) return '';
       return v;
     };
-    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
-      id:      r[0].trim(),
-      apt:     (r[1]||'a').trim().toLowerCase(),
-      source:  (r[2]||'direct').trim().toLowerCase(),
-      checkin: normaliseDate((r[3]||'').trim()),
-      checkout:normaliseDate((r[4]||'').trim()),
-      clean:   normaliseDate((r[5]||r[4]||'').trim()),
-      guests:  cleanGuests(r[6]),
-      notes:   cleanNotes((r[7]||'').trim()),
-      paid:    (r[8]||'unpaid').trim().toLowerCase(),
-    }));
+    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => {
+      const checkout = normaliseDate((r[4]||'').trim());
+      const checkin  = normaliseDate((r[3]||'').trim()) || checkout; // fallback to checkout if empty
+      return {
+        id:      r[0].trim(),
+        apt:     (r[1]||'a').trim().toLowerCase(), // normalise A→a, B→b
+        source:  (r[2]||'direct').trim().toLowerCase(),
+        checkin,
+        checkout,
+        clean:   normaliseDate((r[5]||'').trim()) || checkout,
+        guests:  cleanGuests(r[6]),
+        notes:   cleanNotes((r[7]||'').trim()),
+        paid:    (r[8]||'unpaid').trim().toLowerCase(),
+      };
+    });
 
     // Only filter out entries with no valid dates or obvious technical garbage
     const validBks = sheetBks.filter(b => {
