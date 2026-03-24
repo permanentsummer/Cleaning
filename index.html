@@ -480,6 +480,9 @@
     </div>
     <button class="btn-primary" id="saveCfgBtn">💾 Guardar</button>
     <button class="btn-secondary" id="cancelCfgBtn">Cancelar</button>
+    <button class="btn-secondary" id="testSheetBtn" style="color:#3b82f6;border-color:#bfdbfe;margin-top:8px">🔍 Testar ligação ao Sheet</button>
+    <pre id="debugOutput" style="margin-top:12px;background:#f1f5f9;border-radius:10px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;display:none;max-height:200px;overflow-y:auto"></pre>
+    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:8px">🗑️ Apagar todos os dados locais</button>
     <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:16px">🗑️ Apagar todos os dados locais</button>
   </div>
 </div>
@@ -855,6 +858,25 @@ document.getElementById('saveCfgBtn').onclick=()=>{
   if(cfg.sheetUrl){ bookings=bookings.filter(b=>!b._demo); saveB(); syncSheet(); }
 };
 document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
+document.getElementById('testSheetBtn').onclick=async()=>{
+  const url = document.getElementById('cfgSheet').value.trim();
+  const dbg = document.getElementById('debugOutput');
+  dbg.style.display='block';
+  dbg.textContent='A carregar...';
+  if(!url){ dbg.textContent='❌ Nenhum URL introduzido.'; return; }
+  try {
+    const res = await fetch(url + '&t=' + Date.now());
+    const text = await res.text();
+    if(text.trim().startsWith('<')){
+      dbg.textContent='❌ O sheet devolveu HTML, não CSV.\nO URL está errado ou o sheet não está publicado como CSV.\n\nPrimeiras 300 chars:\n' + text.slice(0,300);
+      return;
+    }
+    const lines = text.trim().split('\n');
+    dbg.textContent='✅ CSV recebido! ' + (lines.length-1) + ' linha(s) de dados.\n\n' + lines.slice(0, 6).join('\n');
+  } catch(e) {
+    dbg.textContent='❌ Erro: ' + e.message;
+  }
+};
 document.getElementById('clearAllBtn').onclick=()=>{
   if(confirm('Apagar reservas locais? As configurações são mantidas e o Google Sheet será recarregado.')){
     localStorage.removeItem('ps_bk');
