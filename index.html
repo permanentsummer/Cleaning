@@ -351,6 +351,18 @@
 <div class="setup-banner" id="setupBanner">
   <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️ no canto superior direito) e depois toque em "Configurações" para adicionar o Google Sheet e WhatsApp.
 </div>
+<div class="setup-banner" id="syncError" style="background:#fee2e2;color:#991b1b;display:none">
+  <strong>❌ Erro de sincronização:</strong> <span id="syncErrorMsg"></span>
+</div>
+<div class="setup-banner" id="syncSuccess" style="background:#dcfce7;color:#166534;display:none">
+  ✅ <span id="syncSuccessMsg"></span>
+</div>
+<div class="setup-banner" id="syncError" style="background:#fee2e2;color:#991b1b;display:none">
+  <strong>❌ Erro de sincronização:</strong> <span id="syncErrorMsg"></span>
+</div>
+<div class="setup-banner" id="syncSuccess" style="background:#dcfce7;color:#166534;display:none">
+  ✅ <span id="syncSuccessMsg"></span>
+</div>
 
 <div class="filter-bar">
   <button class="filter-btn active" data-filter="all">Todos</button>
@@ -547,6 +559,19 @@ function notifyNew(b) {
     A=id  B=apt(a/b)  C=source  D=checkin(YYYY-MM-DD)
     E=checkout  F=clean  G=guests  H=notes  I=paid(paid/unpaid)
 */
+function showSyncError(msg) {
+  document.getElementById('syncError').style.display='block';
+  document.getElementById('syncErrorMsg').textContent=msg;
+  document.getElementById('syncSuccess').style.display='none';
+  setTimeout(()=>document.getElementById('syncError').style.display='none', 8000);
+}
+function showSyncSuccess(msg) {
+  document.getElementById('syncSuccess').style.display='block';
+  document.getElementById('syncSuccessMsg').textContent=msg;
+  document.getElementById('syncError').style.display='none';
+  setTimeout(()=>document.getElementById('syncSuccess').style.display='none', 5000);
+}
+
 async function syncSheet() {
   if (!cfg.sheetUrl) {
     document.getElementById('setupBanner').classList.add('visible');
@@ -556,10 +581,28 @@ async function syncSheet() {
   const btn = document.getElementById('syncBtn');
   btn.classList.add('spinning');
   try {
-    const res  = await fetch(cfg.sheetUrl + '&cachebust=' + Date.now());
+    let res;
+    try {
+      res = await fetch(cfg.sheetUrl + '&cachebust=' + Date.now());
+    } catch(fetchErr) {
+      showSyncError('Não foi possível aceder ao Google Sheet. Verifique se está publicado corretamente.');
+      return;
+    }
+    if (!res.ok) {
+      showSyncError('Erro ' + res.status + ' ao aceder ao Google Sheet. Verifique o link nas configurações.');
+      return;
+    }
     const text = await res.text();
+    // Check if response is HTML (means sheet is not public)
+    if (text.trim().startsWith('<')) {
+      showSyncError('O Google Sheet não está publicado como CSV. Vá a Ficheiro → Partilhar → Publicar na web → CSV.');
+      return;
+    }
     const rows = parseCSV(text).filter(r => r.length > 1);
-    if (rows.length < 2) return;
+    if (rows.length < 2) {
+      showSyncSuccess('Folha ligada mas sem reservas ainda.');
+      return;
+    }
     // skip header row (row 0)
     // Helper: clean a guests value - strip any Google metadata garbage
     const cleanGuests = v => {
@@ -609,8 +652,10 @@ async function syncSheet() {
     bookings = [...validBks, ...localOnly];
     saveB();
     render();
+    showSyncSuccess('Sincronizado: ' + validBks.length + ' reservas carregadas.');
   } catch(e) {
     console.error('Sync error', e);
+    showSyncError('Erro inesperado: ' + e.message);
   } finally {
     btn.classList.remove('spinning');
   }
