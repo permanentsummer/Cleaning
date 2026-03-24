@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Limpezas – Permanent Summer</title>
+<title>Tideline – Permanent Summer</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -338,6 +338,16 @@
   }
   .lang-btn.active { background: white; color: #0f172a; }
 
+  .cfg-section-title {
+    font-size: 11px; font-weight: 900; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin: 20px 0 10px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .cfg-subsection-title {
+    font-size: 13px; font-weight: 800; color: var(--text);
+    margin: 12px 0 8px;
+  }
   .perm-row {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px; background: #f8fafc; border-radius: 12px;
@@ -364,7 +374,7 @@
   <div class="header-left">
     <div class="header-icon">🧹</div>
     <div class="header-title">
-      <h1>As Limpezas</h1>
+      <h1>Tideline</h1>
       <p id="headerSub">Permanent Summer</p>
     </div>
   </div>
@@ -491,44 +501,52 @@
 <div class="modal-overlay" id="configOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2>⚙️ Configurações</h2>
-    <div class="cfg-hint">
-      <strong>Google Sheet CSV:</strong><br>
-      Folha → Ficheiro → Partilhar → Publicar na web → CSV → Copiar link
+    <h2 id="cfg-title">⚙️ Settings</h2>
+
+    <!-- SECTION 1: DATA -->
+    <div class="cfg-section-title" id="cfg-s1">📊 Data Source</div>
+    <div class="cfg-hint" id="cfg-sheet-hint">
+      Google Sheet → File → Share → Publish to web → CSV → Copy link
     </div>
     <div class="form-group">
-      <label>Link Google Sheet (CSV)</label>
+      <label id="cfg-sheet-label">Google Sheet CSV Link</label>
       <input type="url" id="cfgSheet" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
       <small id="cfgSheetStatus" style="font-size:12px;font-weight:700;margin-top:4px;display:block"></small>
     </div>
-    <div class="cfg-hint" style="margin-top:8px">
-      <strong>CallMeBot WhatsApp:</strong><br>
-      Guarde +34 644 74 42 88 e envie "I allow callmebot to send me messages" pelo WhatsApp. Receberá a API key.
+    <button class="btn-secondary" id="testSheetBtn" style="color:#3b82f6;border-color:#bfdbfe">🔍 <span id="cfg-test-btn">Test connection</span></button>
+    <pre id="debugOutput" style="margin-top:12px;background:#f1f5f9;border-radius:10px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;display:none;max-height:180px;overflow-y:auto"></pre>
+
+    <!-- SECTION 2: WHATSAPP -->
+    <div class="cfg-section-title" id="cfg-s2">💬 WhatsApp Notifications</div>
+    <div class="cfg-hint" id="cfg-wa-hint">
+      Save +34 644 91 07 79 and send "I allow callmebot to send me messages" on WhatsApp to get your API key.
     </div>
+    <div class="cfg-subsection-title" id="cfg-cleaner-label">🧹 Cleaner</div>
     <div class="form-row">
-      <div class="form-group"><label>Nº Empregada (351...)</label><input type="text" id="cfgWaN" placeholder="351912345678"></div>
-      <div class="form-group"><label>API Key Empregada</label><input type="text" id="cfgWaK" placeholder="123456"></div>
+      <div class="form-group"><label id="cfg-wa-num-label">Number (351...)</label><input type="text" id="cfgWaN" placeholder="351912345678"></div>
+      <div class="form-group"><label id="cfg-wa-key-label">API Key</label><input type="text" id="cfgWaK" placeholder="123456"></div>
     </div>
+    <div class="cfg-subsection-title" id="cfg-admin-label">👤 Admin (you)</div>
     <div class="form-row">
-      <div class="form-group"><label>Nº Admin (351...)</label><input type="text" id="cfgAdmN" placeholder="351924477353"></div>
-      <div class="form-group"><label>API Key Admin</label><input type="text" id="cfgAdmK" placeholder="654321"></div>
+      <div class="form-group"><label id="cfg-adm-num-label">Number (351...)</label><input type="text" id="cfgAdmN" placeholder="351924477353"></div>
+      <div class="form-group"><label id="cfg-adm-key-label">API Key</label><input type="text" id="cfgAdmK" placeholder="654321"></div>
     </div>
-    <div class="cfg-hint" style="margin-top:8px">
-      <strong id="t-permissions">Permissões da empregada:</strong>
-    </div>
+
+    <!-- SECTION 3: PERMISSIONS -->
+    <div class="cfg-section-title" id="cfg-s3">🔐 Cleaner Permissions</div>
     <div class="perm-row">
-      <span id="t-perm-payment">Marcar pagamento pago/não pago</span>
+      <span id="t-perm-payment">Toggle payment status</span>
       <label class="toggle-switch"><input type="checkbox" id="permPayment" checked><span class="toggle-track"></span></label>
     </div>
     <div class="perm-row">
-      <span id="t-perm-notes">Ver notas</span>
+      <span id="t-perm-notes">View notes</span>
       <label class="toggle-switch"><input type="checkbox" id="permNotes" checked><span class="toggle-track"></span></label>
     </div>
-    <button class="btn-primary" id="saveCfgBtn">💾 Guardar</button>
-    <button class="btn-secondary" id="cancelCfgBtn">Cancelar</button>
-    <button class="btn-secondary" id="testSheetBtn" style="color:#3b82f6;border-color:#bfdbfe;margin-top:8px">🔍 Testar ligação ao Sheet</button>
-    <pre id="debugOutput" style="margin-top:12px;background:#f1f5f9;border-radius:10px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;display:none;max-height:200px;overflow-y:auto"></pre>
-    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:8px">🗑️ Apagar todos os dados locais</button>
+
+    <!-- ACTIONS -->
+    <button class="btn-primary" id="saveCfgBtn" style="margin-top:20px">💾 <span id="cfg-save-label">Save Settings</span></button>
+    <button class="btn-secondary" id="cancelCfgBtn"><span id="cfg-cancel-label">Cancel</span></button>
+    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:8px">🗑️ <span id="cfg-clear-label">Clear all local data</span></button>
   </div>
 </div>
 
@@ -545,52 +563,76 @@ const ADMIN_KEY_DEFAULT = "7950168";
 // ── TRANSLATIONS ─────────────────────────────
 const T = {
   pt: {
+    appSub:'Gestão de Limpezas',
     upcoming:'📅 Próximas & Hoje', past:'📁 Anteriores',
     today:'limpeza hoje!', todays:'limpezas hoje!',
     checkin:'Check-in', checkout:'Check-out', cleaning:'Limpeza',
     paid:'✅ Pago', unpaid:'❌ Por Pagar',
     all:'Todos', aptA:'🏠 Saramago', aptB:'🏡 Al-Paranaguá',
     todayF:'📅 Hoje', unpaidF:'🔴 Por Pagar',
-    empty:'Sem reservas neste filtro.',
-    emptyTitle:'Tudo limpo!',
+    empty:'Sem reservas neste filtro.', emptyTitle:'Tudo limpo!',
     syncOk:'Sincronizado:', reservations:'reservas.',
     adminMode:'Administrador', normalMode:'Permanent Summer',
     settings:'⚙️ Configurações', todayBadge:'⚡ HOJE',
     source:{airbnb:'Airbnb',booking:'Booking.com',direct:'Direto'},
     weekdays:['dom','seg','ter','qua','qui','sex','sáb'],
     months:['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'],
+    cfg:{title:'⚙️ Configurações',s1:'📊 Fonte de dados',s2:'💬 Notificações WhatsApp',
+      s3:'🔐 Permissões da Empregada',
+      sheetHint:'Folha Google → Ficheiro → Partilhar → Publicar na web → CSV → Copiar link',
+      sheetLabel:'Link Google Sheet (CSV)',testBtn:'Testar ligação',
+      cleaner:'🧹 Empregada',admin:'👤 Admin (você)',
+      numLabel:'Número (351...)',keyLabel:'API Key',
+      permPayment:'Alternar estado de pagamento',permNotes:'Ver notas',
+      save:'Guardar Configurações',cancel:'Cancelar',clear:'Apagar dados locais'},
   },
   en: {
+    appSub:'Cleaning Manager',
     upcoming:'📅 Upcoming & Today', past:'📁 Previous',
     today:'cleaning today!', todays:'cleanings today!',
     checkin:'Check-in', checkout:'Check-out', cleaning:'Cleaning',
     paid:'✅ Paid', unpaid:'❌ Unpaid',
     all:'All', aptA:'🏠 Saramago', aptB:'🏡 Al-Paranaguá',
     todayF:'📅 Today', unpaidF:'🔴 Unpaid',
-    empty:'No bookings in this filter.',
-    emptyTitle:'All clean!',
+    empty:'No bookings in this filter.', emptyTitle:'All clean!',
     syncOk:'Synced:', reservations:'bookings.',
     adminMode:'Administrator', normalMode:'Permanent Summer',
     settings:'⚙️ Settings', todayBadge:'⚡ TODAY',
     source:{airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'},
     weekdays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    cfg:{title:'⚙️ Settings',s1:'📊 Data Source',s2:'💬 WhatsApp Notifications',
+      s3:'🔐 Cleaner Permissions',
+      sheetHint:'Google Sheet → File → Share → Publish to web → CSV → Copy link',
+      sheetLabel:'Google Sheet CSV Link',testBtn:'Test connection',
+      cleaner:'🧹 Cleaner',admin:'👤 Admin (you)',
+      numLabel:'Number (351...)',keyLabel:'API Key',
+      permPayment:'Toggle payment status',permNotes:'View notes',
+      save:'Save Settings',cancel:'Cancel',clear:'Clear local data'},
   },
   fr: {
+    appSub:"Gestion du Ménage",
     upcoming:"📅 À venir & Aujourd'hui", past:"📁 Précédentes",
     today:"nettoyage aujourd'hui!", todays:"nettoyages aujourd'hui!",
     checkin:"Arrivée", checkout:"Départ", cleaning:"Nettoyage",
     paid:"✅ Payé", unpaid:"❌ Non payé",
     all:"Tous", aptA:"🏠 Saramago", aptB:"🏡 Al-Paranaguá",
     todayF:"📅 Aujourd'hui", unpaidF:"🔴 Non payé",
-    empty:"Aucune réservation dans ce filtre.",
-    emptyTitle:"Tout est propre!",
+    empty:"Aucune réservation dans ce filtre.", emptyTitle:"Tout est propre!",
     syncOk:"Synchronisé:", reservations:"réservations.",
     adminMode:"Administrateur", normalMode:"Permanent Summer",
     settings:"⚙️ Paramètres", todayBadge:"⚡ AUJOURD'HUI",
     source:{airbnb:"Airbnb",booking:"Booking.com",direct:"Direct"},
     weekdays:["dim","lun","mar","mer","jeu","ven","sam"],
     months:["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"],
+    cfg:{title:"⚙️ Paramètres",s1:"📊 Source de données",s2:"💬 Notifications WhatsApp",
+      s3:"🔐 Permissions de la femme de ménage",
+      sheetHint:"Google Sheet → Fichier → Partager → Publier sur le web → CSV → Copier le lien",
+      sheetLabel:"Lien Google Sheet (CSV)",testBtn:"Tester la connexion",
+      cleaner:"🧹 Femme de ménage",admin:"👤 Admin (vous)",
+      numLabel:"Numéro (351...)",keyLabel:"Clé API",
+      permPayment:"Changer le statut du paiement",permNotes:"Voir les notes",
+      save:"Enregistrer",cancel:"Annuler",clear:"Effacer les données locales"},
   }
 };
 let lang = localStorage.getItem('ps_lang') || 'pt';
@@ -824,12 +866,12 @@ function parseCSV(text) {
 
 // ── RENDER ───────────────────────────────────
 function render() {
-  const t = today();
+  const tod = today();
   const sorted = [...bookings].sort((a,b)=>
     (a.clean||a.checkout) > (b.clean||b.checkout) ? 1 : -1);
 
   // Today banner
-  const todayBks = sorted.filter(b=>(b.clean||b.checkout)===t);
+  const todayBks = sorted.filter(b=>(b.clean||b.checkout)===tod);
   const tb = document.getElementById('todayBanner');
   if (todayBks.length) {
     tb.classList.add('visible');
@@ -843,7 +885,7 @@ function render() {
   let list = sorted;
   if (filter==='a')      list = sorted.filter(b=>b.apt==='a');
   else if (filter==='b') list = sorted.filter(b=>b.apt==='b');
-  else if (filter==='today') list = sorted.filter(b=>(b.clean||b.checkout)===t);
+  else if (filter==='today') list = sorted.filter(b=>(b.clean||b.checkout)===tod);
   else if (filter==='unpaid') list = sorted.filter(b=>b.paid!=='paid');
 
   const c = document.getElementById('bookingsList');
@@ -852,8 +894,8 @@ function render() {
     c.innerHTML=`<div class="empty-state"><div class="emoji">✨</div><h3>${t().emptyTitle}</h3><p>${t().empty}</p></div>`;
     return;
   }
-  const up   = list.filter(b=>(b.clean||b.checkout)>=t);
-  const past = list.filter(b=>(b.clean||b.checkout)<t);
+  const up   = list.filter(b=>(b.clean||b.checkout)>=tod);
+  const past = list.filter(b=>(b.clean||b.checkout)<tod);
   if (up.length) {
     const l=document.createElement('div'); l.className='section-label'; l.textContent=t().upcoming; c.appendChild(l);
     up.forEach(b=>c.appendChild(card(b,false)));
@@ -867,7 +909,7 @@ function render() {
 function card(b, isPast) {
   const el = document.createElement('div');
   const cleanD = b.clean||b.checkout;
-  const isT = cleanD===today();
+  const isT = cleanD===today(); // uses global today()
   el.className='booking-card'+(isPast?' past':'')+(isT?' today-card':'');
 
   const srcLabel = (t().source[b.source]) || t().source.direct;
@@ -1087,17 +1129,47 @@ function applyLang() {
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
-  // Update filter buttons
+  // Header subtitle (non-admin mode)
+  if(!isAdmin) {
+    const sub = document.getElementById('headerSub');
+    if(sub) sub.textContent = t().appSub || 'Permanent Summer';
+  }
+  // Filter buttons
   const fb = document.querySelectorAll('.filter-btn');
   if(fb[0]) fb[0].textContent = t().all;
   if(fb[1]) fb[1].textContent = t().aptA;
   if(fb[2]) fb[2].textContent = t().aptB;
   if(fb[3]) fb[3].textContent = t().todayF;
   if(fb[4]) fb[4].textContent = t().unpaidF;
-  // Update settings button
+  // Admin bar settings button
   const cfgBtn = document.querySelector('#adminBar button');
   if(cfgBtn) cfgBtn.textContent = t().settings;
+  // Settings modal labels
+  const c = t().cfg;
+  if(!c) { render(); return; }
+  setText('cfg-title', c.title);
+  setText('cfg-s1', c.s1);
+  setText('cfg-s2', c.s2);
+  setText('cfg-s3', c.s3);
+  setText('cfg-sheet-hint', c.sheetHint);
+  setText('cfg-sheet-label', c.sheetLabel);
+  setText('cfg-test-btn', c.testBtn);
+  setText('cfg-cleaner-label', c.cleaner);
+  setText('cfg-admin-label', c.admin);
+  const numLabels = document.querySelectorAll('[id^="cfg-wa-num-label"],[id^="cfg-adm-num-label"]');
+  numLabels.forEach(el => el.textContent = c.numLabel);
+  const keyLabels = document.querySelectorAll('[id^="cfg-wa-key-label"],[id^="cfg-adm-key-label"]');
+  keyLabels.forEach(el => el.textContent = c.keyLabel);
+  setText('t-perm-payment', c.permPayment);
+  setText('t-perm-notes', c.permNotes);
+  setText('cfg-save-label', c.save);
+  setText('cfg-cancel-label', c.cancel);
+  setText('cfg-clear-label', c.clear);
   render();
+}
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if(el && val) el.textContent = val;
 }
 document.querySelectorAll('.lang-btn').forEach(btn => {
   btn.addEventListener('click', () => {
