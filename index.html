@@ -967,14 +967,17 @@ async function syncSheet() {
     }
 
     // Detect genuinely new arrivals → notify
+    const sheetIds = new Set(dedupedBks.map(b => b.id));
     const existIds = new Set(bookings.filter(b=>!b._local).map(b => b.id));
     dedupedBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
 
-    // Sheet is full source of truth — replace sheet bookings, keep manual local ones
+    // Merge strategy: sheet rows replace old sheet rows, manual local bookings are kept
+    // This preserves both apt A and apt B since the sheet contains all of them
     const localOnly = bookings.filter(b => b._local && !b._demo);
     bookings = [...dedupedBks, ...localOnly];
     saveB();
     render();
+    if(viewMode==='calendar') renderCalendar();
     showSyncSuccess(t().syncOk + ' ' + dedupedBks.length + ' ' + t().reservations);
   } catch(e) {
     console.error('Sync error', e);
@@ -1006,10 +1009,21 @@ let viewMode = 'list'; // 'list' or 'calendar'
 function updateStats() {
   const tod = today();
   const future = bookings.filter(b => (b.clean||b.checkout) >= tod);
-  document.getElementById('stat-all').textContent    = future.length;
-  document.getElementById('stat-a').textContent      = future.filter(b=>b.apt==='a').length;
-  document.getElementById('stat-b').textContent      = future.filter(b=>b.apt==='b').length;
-  document.getElementById('stat-unpaid').textContent = future.filter(b=>b.paid!=='paid').length;
+  const nAll    = future.length;
+  const nA      = future.filter(b=>b.apt==='a').length;
+  const nB      = future.filter(b=>b.apt==='b').length;
+  const nUnpaid = future.filter(b=>b.paid!=='paid').length;
+  document.getElementById('stat-all').textContent    = nAll;
+  document.getElementById('stat-a').textContent      = nA;
+  document.getElementById('stat-b').textContent      = nB;
+  document.getElementById('stat-unpaid').textContent = nUnpaid;
+  // Update filter button labels with counts
+  const fb = document.querySelectorAll('.filter-btn');
+  if(fb[0]) fb[0].textContent = `${t().all} (${nAll})`;
+  if(fb[1]) fb[1].textContent = `${t().aptA} (${nA})`;
+  if(fb[2]) fb[2].textContent = `${t().aptB} (${nB})`;
+  if(fb[3]) fb[3].textContent = t().todayF;
+  if(fb[4]) fb[4].textContent = `${t().unpaidF} (${nUnpaid})`;
 }
 
 // ── CALENDAR RENDER ───────────────────────────
@@ -1038,9 +1052,11 @@ function renderCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     const isToday = dateStr === todStr;
-    // Find bookings that cover this day
+    // Find bookings that cover this day (respects current filter)
     const dayBookings = bookings.filter(b => {
       if (!b.checkin || !b.checkout) return false;
+      if (filter === 'a' && b.apt !== 'a') return false;
+      if (filter === 'b' && b.apt !== 'b') return false;
       return b.checkin <= dateStr && b.checkout >= dateStr;
     });
     const events = dayBookings.map(b => {
@@ -1332,13 +1348,7 @@ function applyLang() {
     const sub = document.getElementById('headerSub');
     if(sub) sub.textContent = t().appSub || 'Permanent Summer';
   }
-  // Filter buttons
-  const fb = document.querySelectorAll('.filter-btn');
-  if(fb[0]) fb[0].textContent = t().all;
-  if(fb[1]) fb[1].textContent = t().aptA;
-  if(fb[2]) fb[2].textContent = t().aptB;
-  if(fb[3]) fb[3].textContent = t().todayF;
-  if(fb[4]) fb[4].textContent = t().unpaidF;
+  // Filter buttons updated via updateStats() which is called from render()
   // Admin bar settings button
   const cfgBtn = document.querySelector('#adminBar button');
   if(cfgBtn) cfgBtn.textContent = t().settings;
@@ -1389,6 +1399,20 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 
 // ── WA FAB ───────────────────────────────────
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAULT);
+
+// ── STATS CHIPS ──────────────────────────────
+document.querySelectorAll('.stat-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const f = chip.dataset.filterStat;
+    filter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    const map = {all:0, a:1, b:2, unpaid:4};
+    const idx = map[f];
+    if(idx !== undefined) document.querySelectorAll('.filter-btn')[idx]?.classList.add('active');
+    render();
+    if(viewMode==='calendar') renderCalendar();
+  });
+});
 
 // ── VIEW TOGGLE ──────────────────────────────
 document.getElementById('viewListBtn').onclick = () => {
