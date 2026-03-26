@@ -588,21 +588,8 @@
     <div class="modal-handle"></div>
     <h2 id="cfg-title">⚙️ Settings</h2>
 
-    <!-- SECTION 1: DATA -->
-    <div class="cfg-section-title" id="cfg-s1">📊 Data Source</div>
-    <div class="cfg-hint" id="cfg-sheet-hint">
-      Google Sheet → File → Share → Publish to web → CSV → Copy link
-    </div>
-    <div class="form-group">
-      <label id="cfg-sheet-label">Google Sheet CSV Link</label>
-      <input type="url" id="cfgSheet" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
-      <small id="cfgSheetStatus" style="font-size:12px;font-weight:700;margin-top:4px;display:block"></small>
-    </div>
-    <button class="btn-secondary" id="testSheetBtn" style="color:#3b82f6;border-color:#bfdbfe">🔍 <span id="cfg-test-btn">Test connection</span></button>
-    <pre id="debugOutput" style="margin-top:12px;background:#f1f5f9;border-radius:10px;padding:12px;font-size:11px;overflow-x:auto;white-space:pre-wrap;display:none;max-height:180px;overflow-y:auto"></pre>
-
-    <!-- SECTION 2: WHATSAPP -->
-    <div class="cfg-section-title" id="cfg-s2">💬 WhatsApp Notifications</div>
+    <!-- SECTION 1: WHATSAPP -->
+    <div class="cfg-section-title" id="cfg-s1">💬 WhatsApp Notifications</div>
     <div class="cfg-hint" id="cfg-wa-hint">
       Save +34 644 91 07 79 and send "I allow callmebot to send me messages" on WhatsApp to get your API key.
     </div>
@@ -618,7 +605,7 @@
     </div>
 
     <!-- SECTION 3: PERMISSIONS -->
-    <div class="cfg-section-title" id="cfg-s3">🔐 Cleaner Permissions</div>
+    <div class="cfg-section-title" id="cfg-s2">🔐 Cleaner Permissions</div>
     <div class="perm-row">
       <span id="t-perm-payment">Toggle payment status</span>
       <label class="toggle-switch"><input type="checkbox" id="permPayment" checked><span class="toggle-track"></span></label>
@@ -1189,20 +1176,15 @@ document.getElementById('fabAdd').onclick=openAdd;
 
 // ── CONFIG MODAL ──────────────────────────────
 function openConfig(){
-  document.getElementById('cfgSheet').value=cfg.sheetUrl||'';
   document.getElementById('cfgWaN').value=cfg.waN||'';
   document.getElementById('cfgWaK').value=cfg.waK||'';
   document.getElementById('cfgAdmN').value=cfg.admN||ADMIN_WA_DEFAULT;
   document.getElementById('cfgAdmK').value=cfg.admK||ADMIN_KEY_DEFAULT;
-  const status = document.getElementById('cfgSheetStatus');
-  if(status) status.textContent = cfg.sheetUrl ? '✅ URL guardada' : '⚠️ Nenhum URL configurado';
-  if(status) status.style.color = cfg.sheetUrl ? '#16a34a' : '#dc2626';
   document.getElementById('permPayment').checked = cfg.permPayment !== false;
   document.getElementById('permNotes').checked   = cfg.permNotes   !== false;
   document.getElementById('configOverlay').classList.add('open');
 }
 document.getElementById('saveCfgBtn').onclick=()=>{
-  cfg.sheetUrl=document.getElementById('cfgSheet').value.trim();
   cfg.waN=document.getElementById('cfgWaN').value.trim();
   cfg.waK=document.getElementById('cfgWaK').value.trim();
   cfg.admN=document.getElementById('cfgAdmN').value.trim();
@@ -1220,25 +1202,7 @@ document.getElementById('saveCfgBtn').onclick=()=>{
   if(cfg.sheetUrl){ bookings=bookings.filter(b=>!b._demo); saveB(); syncSheet(); }
 };
 document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
-document.getElementById('testSheetBtn').onclick=async()=>{
-  const url = document.getElementById('cfgSheet').value.trim();
-  const dbg = document.getElementById('debugOutput');
-  dbg.style.display='block';
-  dbg.textContent='A carregar...';
-  if(!url){ dbg.textContent='❌ Nenhum URL introduzido.'; return; }
-  try {
-    const res = await fetch(url + '&t=' + Date.now());
-    const text = await res.text();
-    if(text.trim().startsWith('<')){
-      dbg.textContent='❌ O sheet devolveu HTML, não CSV.\nO URL está errado ou o sheet não está publicado como CSV.\n\nPrimeiras 300 chars:\n' + text.slice(0,300);
-      return;
-    }
-    const lines = text.trim().split('\n');
-    dbg.textContent='✅ CSV recebido! ' + (lines.length-1) + ' linha(s) de dados.\n\n' + lines.slice(0, 6).join('\n');
-  } catch(e) {
-    dbg.textContent='❌ Erro: ' + e.message;
-  }
-};
+// Test sheet button removed (sheet sync disabled)
 document.getElementById('clearAllBtn').onclick=()=>{
   if(confirm(t().msg.clearConfirm)){
     localStorage.removeItem('ps_bk');
@@ -1311,12 +1275,8 @@ function applyLang() {
   const c = t().cfg;
   if(!c) { render(); return; }
   setText('cfg-title', c.title);
-  setText('cfg-s1', c.s1);
-  setText('cfg-s2', c.s2);
-  setText('cfg-s3', c.s3);
-  setText('cfg-sheet-hint', c.sheetHint);
-  setText('cfg-sheet-label', c.sheetLabel);
-  setText('cfg-test-btn', c.testBtn);
+  setText('cfg-s1', c.s2);
+  setText('cfg-s2', c.s3);
   setText('cfg-cleaner-label', c.cleaner);
   setText('cfg-admin-label', c.admin);
   const numLabels = document.querySelectorAll('[id^="cfg-wa-num-label"],[id^="cfg-adm-num-label"]');
@@ -1396,168 +1356,133 @@ if(!cfg.sheetUrl && bookings.length===0){
 }
 
 // ── IMPORT LOGIC ─────────────────────────────
-let importedBookings = [];
+// Pre-load SheetJS for XLS support
+function loadSheetJS(cb) {
+  if (typeof XLSX !== 'undefined') { if(cb) cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = () => { if(cb) cb(); };
+  document.head.appendChild(s);
+}
 
-document.getElementById('openImportBtn').onclick = () => {
-  document.getElementById('importPreview').style.display = 'none';
-  document.getElementById('importConfirmBtn').style.display = 'none';
+// Open modal
+document.getElementById('openImportBtn').onclick = function() {
   document.getElementById('importFile').value = '';
-  document.getElementById('importSummary').textContent = '';
-  document.getElementById('importWarnings').textContent = '';
-  importedBookings = [];
+  document.getElementById('importStatus').style.display = 'none';
   document.getElementById('importOverlay').classList.add('open');
+  loadSheetJS();
 };
-document.getElementById('cancelImportBtn').onclick = () => {
+
+// Cancel — close modal
+document.getElementById('cancelImportBtn').onclick = function() {
   document.getElementById('importOverlay').classList.remove('open');
 };
 
-document.getElementById('importParseBtn').onclick = () => {
+// Import Now button
+document.getElementById('importDoBtn').onclick = function() {
   const file = document.getElementById('importFile').files[0];
-  if (!file) { alert('Please select a file first.'); return; }
-  const apt = document.getElementById('importApt').value;
+  if (!file) { showImportStatus('Please select a file first.', 'warn'); return; }
+  const apt    = document.getElementById('importApt').value;
   const source = document.getElementById('importSource').value;
-
-  const fname = file.name.toLowerCase();
-  const isXLS = fname.endsWith('.xls') || fname.endsWith('.xlsx');
-  const isCSV = fname.endsWith('.csv');
-
-  if (!isXLS && !isCSV) {
-    alert('Only CSV and XLS/XLSX files are supported.');
-    return;
-  }
+  const fname  = file.name.toLowerCase();
+  const isXLS  = fname.endsWith('.xls') || fname.endsWith('.xlsx');
 
   if (isXLS) {
-    // XLS: read as binary ArrayBuffer, convert to CSV-like text via SheetJS
+    if (typeof XLSX === 'undefined') {
+      showImportStatus('Loading XLS parser, please try again in 2 seconds...', 'warn');
+      loadSheetJS(); return;
+    }
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = function(e) {
       try {
-        const data = e.target.result;
-        // Parse XLS using SheetJS (loaded from CDN)
-        if (typeof XLSX === 'undefined') {
-          alert('Loading spreadsheet parser... please try again in a moment.');
-          loadSheetJS(() => document.getElementById('importParseBtn').click());
-          return;
-        }
-        const wb = XLSX.read(data, {type:'array'});
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const csvText = XLSX.utils.sheet_to_csv(ws);
-        runParse(csvText, source, apt, file.name);
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        doImport(csv, source, apt);
       } catch(err) {
-        alert('Could not read XLS file: ' + err.message);
+        showImportStatus('XLS read error: ' + err.message, 'error');
       }
     };
     reader.readAsArrayBuffer(file);
   } else {
-    // CSV: try UTF-8 first, then latin-1
     const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        runParse(e.target.result, source, apt, file.name);
-      } catch(err) {
-        alert('Could not read CSV: ' + err.message);
-      }
+    reader.onload = function(e) {
+      doImport(e.target.result, source, apt);
     };
     reader.readAsText(file, 'UTF-8');
   }
 };
 
-function loadSheetJS(cb) {
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-  s.onload = cb;
-  document.head.appendChild(s);
+function showImportStatus(msg, type) {
+  const el = document.getElementById('importStatus');
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.background = type === 'error' ? '#fee2e2' : type === 'warn' ? '#fef3c7' : '#dcfce7';
+  el.style.color = type === 'error' ? '#991b1b' : type === 'warn' ? '#92400e' : '#166534';
 }
 
-// Pre-load SheetJS on import modal open
-document.getElementById('openImportBtn').addEventListener('click', () => {
-  if (typeof XLSX === 'undefined') loadSheetJS(() => {});
-}, true);
-
-function runParse(text, source, apt, filename) {
+function doImport(text, source, apt) {
   let result;
   try {
     if (source === 'booking') result = parseBookingCSV(text, apt);
     else if (source === 'airbnb') result = parseAirbnbCSV(text, apt);
     else result = parseDirectCSV(text, apt);
   } catch(err) {
-    alert('Parse error: ' + err.message + '\n\nMake sure you selected the correct Source (Booking/Airbnb/Direct).');
+    showImportStatus('Error: ' + err.message, 'error');
     return;
   }
-  importedBookings = result.bookings;
-  const summary = document.getElementById('importSummary');
-  summary.innerHTML = importedBookings.length > 0
-    ? `✅ <strong>${importedBookings.length}</strong> bookings ready to import` +
-      (result.skipped > 0 ? ` · ${result.skipped} skipped (cancelled/closed)` : '')
-    : `⚠️ No valid bookings found. Check the source selection.`;
-  summary.style.background = importedBookings.length > 0 ? '#dcfce7' : '#fef3c7';
-  summary.style.color = importedBookings.length > 0 ? '#166534' : '#92400e';
-  document.getElementById('importWarnings').textContent = result.warnings.join(' ');
-  document.getElementById('importPreview').style.display = 'block';
-  document.getElementById('importConfirmBtn').style.display = importedBookings.length ? 'block' : 'none';
-}
 
-document.getElementById('importConfirmBtn').onclick = () => {
-  let added = 0, replaced = 0, dupeSkipped = 0;
+  if (!result.bookings.length) {
+    showImportStatus('No valid bookings found. Check the Source selection matches your file.', 'warn');
+    return;
+  }
 
-  for (const nb of importedBookings) {
-    // Find any overlapping booking for same apt
+  let added = 0, replaced = 0, skippedDupe = 0;
+  for (const nb of result.bookings) {
+    // Find overlapping booking for same apt
     const overlapIdx = bookings.findIndex(x =>
       x.apt === nb.apt && x.id !== nb.id &&
       x.checkin && nb.checkin && x.checkout && nb.checkout &&
       x.checkin < nb.checkout && nb.checkin < x.checkout
     );
-
     if (overlapIdx !== -1) {
       const existing = bookings[overlapIdx];
-      // Direct booking always wins over platform bookings
-      const newIsDirect = nb.source === 'direct';
-      const existingIsDirect = existing.source === 'direct';
-      if (newIsDirect && !existingIsDirect) {
-        // Replace platform booking with direct booking
-        bookings[overlapIdx] = nb;
-        replaced++;
-      } else if (!newIsDirect && existingIsDirect) {
-        // Keep direct, skip platform duplicate
-        dupeSkipped++;
+      const newIsPlatform = nb.source === 'booking' || nb.source === 'airbnb';
+      const exIsPlatform  = existing.source === 'booking' || existing.source === 'airbnb';
+      // Platform wins over direct
+      if (newIsPlatform && !exIsPlatform) {
+        bookings[overlapIdx] = nb; replaced++;
+      } else if (!newIsPlatform && exIsPlatform) {
+        skippedDupe++; // keep platform, skip direct
       } else {
-        // Same priority — keep the one with more info (guest name)
-        if (nb.notes && !existing.notes) {
-          bookings[overlapIdx] = nb;
-          replaced++;
-        } else {
-          dupeSkipped++;
-        }
+        // Same type — keep one with more info
+        if (nb.notes && !existing.notes) { bookings[overlapIdx] = nb; replaced++; }
+        else skippedDupe++;
       }
       continue;
     }
-
-    // Check exact ID match — update existing
+    // Exact ID match → update
     const exactIdx = bookings.findIndex(x => x.id === nb.id);
-    if (exactIdx !== -1) {
-      bookings[exactIdx] = {...bookings[exactIdx], ...nb};
-      replaced++;
-    } else {
-      bookings.push(nb);
-      added++;
-    }
+    if (exactIdx !== -1) { bookings[exactIdx] = {...bookings[exactIdx], ...nb}; replaced++; }
+    else { bookings.push(nb); added++; }
   }
 
   saveB(); render();
   if (viewMode === 'calendar') renderCalendar();
   document.getElementById('importOverlay').classList.remove('open');
-  const msg = `Import done: ${added} added` +
-    (replaced > 0 ? `, ${replaced} updated` : '') +
-    (dupeSkipped > 0 ? `, ${dupeSkipped} duplicates removed` : '');
+  const msg = '✅ Import done: ' + added + ' added' +
+    (replaced > 0 ? ', ' + replaced + ' updated' : '') +
+    (result.skipped > 0 ? ', ' + result.skipped + ' skipped (cancelled)' : '') +
+    (skippedDupe > 0 ? ', ' + skippedDupe + ' duplicates removed' : '');
   showSyncSuccess(msg);
-};
+}
 
 // ── CSV PARSERS ───────────────────────────────
-function parseCSVRows(text) {
-  // Handle both comma and semicolon separators
+function splitCSV(text) {
   const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim());
   if (!lines.length) return [];
-  // Detect separator
-  const sep = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
+  const firstLine = lines[0];
+  const sep = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
   return lines.map(line => {
     const cols = []; let cur = ''; let q = false;
     for (const c of line) {
@@ -1570,198 +1495,143 @@ function parseCSVRows(text) {
   });
 }
 
-function toISODate(str) {
+function toISO(str) {
   if (!str) return '';
-  str = String(str).trim().replace(/&nbsp;/g,'').replace(/\u00a0/g,'');
-  if (!str || str === '0' || str.length < 6) return '';
-  // YYYY-MM-DD
+  str = String(str).trim().replace(/[\u00a0&]|nbsp;/g,'').trim();
+  if (!str || str.length < 6) return '';
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0,10);
-  // DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
-    const [d,m,y] = str.split('/');
-    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    const [a,b,y] = str.split('/');
+    // Detect DD/MM vs MM/DD: if first part > 12, must be DD
+    if (parseInt(a) > 12) return y+'-'+b.padStart(2,'0')+'-'+a.padStart(2,'0');
+    return y+'-'+a.padStart(2,'0')+'-'+b.padStart(2,'0');
   }
-  // MM/DD/YYYY
-  if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str)) {
-    const parts = str.split('/');
-    if (parseInt(parts[0]) > 12) { // must be DD/MM
-      return `${parts[2].length===2?'20'+parts[2]:parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-    }
+  // Excel serial
+  const n = parseInt(str);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const d = new Date((n - 25569) * 86400000);
+    return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Lisbon'});
   }
-  // Excel serial number
-  if (/^\d{4,6}$/.test(str)) {
-    const serial = parseInt(str);
-    if (serial > 40000 && serial < 60000) {
-      const ms = (serial - 25569) * 86400 * 1000;
-      const d = new Date(ms);
-      return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
-    }
-  }
-  // Try native parse
   try {
     const d = new Date(str);
-    if (!isNaN(d) && d.getFullYear() > 2020) {
-      return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
-    }
-  } catch(e) {}
+    if (!isNaN(d) && d.getFullYear() > 2020)
+      return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Lisbon'});
+  } catch(e){}
   return '';
 }
 
-function findCol(headers, ...keys) {
+function colIdx(headers, ...keys) {
   for (const k of keys) {
-    const i = headers.findIndex(h =>
-      h.toLowerCase().replace(/[^a-z]/g,'').includes(k.toLowerCase().replace(/[^a-z]/g,''))
-    );
+    const kn = k.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const i = headers.findIndex(h => h.toLowerCase().replace(/[^a-z0-9]/g,'').includes(kn));
     if (i !== -1) return i;
   }
   return -1;
 }
 
 function parseBookingCSV(text, apt) {
-  const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('File appears empty');
-  const headers = rows[0];
-  const iCheckin  = findCol(headers,'checkin','arrivée','arrival','arrivee');
-  const iCheckout = findCol(headers,'checkout','départ','departure','depart');
-  const iGuest    = findCol(headers,'guestname','nomduclient','clientname','bookedby');
-  const iPersons  = findCol(headers,'persons','personnes','guests','people');
-  const iStatus   = findCol(headers,'status','statut');
-  const iCancel   = findCol(headers,'cancellation','annulation');
-  const iBookNum  = findCol(headers,'booknumber','numéroréservation','numeroreservation','bookid');
-
-  if (iCheckin === -1 || iCheckout === -1) {
-    throw new Error('Could not find check-in/check-out columns. Make sure Source = Booking.com');
-  }
-
-  const result = []; let skipped = 0;
+  const rows = splitCSV(text);
+  if (rows.length < 2) throw new Error('File is empty');
+  const h = rows[0];
+  const iIn   = colIdx(h,'checkin','arriv','arrivée');
+  const iOut  = colIdx(h,'checkout','départ','depart','departure');
+  const iName = colIdx(h,'guestname','nomduclient','clientname');
+  const iPers = colIdx(h,'persons','personnes');
+  const iStat = colIdx(h,'status','statut');
+  const iCanc = colIdx(h,'cancellation','annulation');
+  const iNum  = colIdx(h,'booknumber','numéroréservation','bookid','reservation');
+  if (iIn === -1 || iOut === -1) throw new Error('Cannot find date columns. Is Source set to Booking.com?');
+  const out = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (!r[0] || r.length < 3) continue;
-    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase().trim() : 'ok';
-    const cancel = iCancel >= 0 ? (r[iCancel]||'').trim() : '';
-    // Skip cancelled, closed, no_show
-    if (cancel || status.includes('cancel') || status.includes('annul') ||
-        status.includes('no_show') || status.includes('closed') || status === 'c') {
-      skipped++; continue;
-    }
-    const checkin  = toISODate(r[iCheckin]);
-    const checkout = toISODate(r[iCheckout]);
-    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
-    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : '';
-    const persons   = iPersons >= 0 ? (r[iPersons]||'').trim() : '';
-    const bookNum   = iBookNum >= 0 ? (r[iBookNum]||'').trim() : uid();
-    result.push({
-      id: 'bk_' + (bookNum || uid()),
-      apt, source: 'booking',
-      checkin, checkout, clean: checkout,
-      guests: persons, notes: guestName,
-      paid: 'unpaid', _local: true
-    });
+    if (!r[0] || r.join('').trim() === '') continue;
+    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : 'ok';
+    const canc = iCanc>=0 ? (r[iCanc]||'').trim() : '';
+    if (canc || stat.includes('cancel') || stat.includes('annul') || stat === 'c') { skipped++; continue; }
+    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
+    if (!ci || !co || ci >= co) { skipped++; continue; }
+    const num = iNum>=0 ? r[iNum].trim() : uid();
+    out.push({ id:'bk_'+num, apt, source:'booking', checkin:ci, checkout:co, clean:co,
+      guests: iPers>=0 ? r[iPers].trim() : '',
+      notes:  iName>=0 ? r[iName].trim() : '',
+      paid:'unpaid', _local:true });
   }
-  return { bookings: result, skipped, source: 'Booking.com', warnings: [] };
+  return { bookings:out, skipped, source:'Booking.com', warnings:[] };
 }
 
 function parseAirbnbCSV(text, apt) {
-  const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('File appears empty');
-  const headers = rows[0];
-  const iCode    = findCol(headers,'code','confirmation');
-  const iStatus  = findCol(headers,'statut','status');
-  const iGuest   = findCol(headers,'voyageur','guestname','nom');
-  const iAdults  = findCol(headers,'adultes','adults');
-  const iChildren= findCol(headers,'enfants','children');
-  const iStart   = findCol(headers,'début','debutdate','startdate','checkin','datededébut','datefin');
-  const iEnd     = findCol(headers,'fin','enddate','checkout','datefin','datedefin');
-
-  // Airbnb CSV: columns are "Date de début" and "Date de fin"
-  // Re-try with exact French names
-  const hLow = headers.map(h => h.toLowerCase().trim());
-  const iStartFr = hLow.findIndex(h => h.includes('début') || h.includes('début') || h === 'date de début');
-  const iEndFr   = hLow.findIndex(h => h.includes('fin') && h.includes('date'));
-  const ciStart  = iStartFr !== -1 ? iStartFr : iStart;
-  const ciEnd    = iEndFr !== -1 ? iEndFr : iEnd;
-
-  if (ciStart === -1 || ciEnd === -1) {
-    throw new Error('Could not find date columns. Make sure Source = Airbnb');
-  }
-
-  const result = []; let skipped = 0;
+  const rows = splitCSV(text);
+  if (rows.length < 2) throw new Error('File is empty');
+  const h = rows[0];
+  // Airbnb uses French: "Date de début", "Date de fin", "Nom du voyageur"
+  const iCode = colIdx(h,'code','confirmation');
+  const iStat = colIdx(h,'statut','status');
+  const iName = colIdx(h,'voyageur','guestname','nom');
+  const iAdu  = colIdx(h,'adultes','adults');
+  const iChi  = colIdx(h,'enfants','children');
+  // Date cols — try multiple names
+  let iIn = -1, iOut = -1;
+  h.forEach((col,i) => {
+    const c = col.toLowerCase();
+    if (iIn  === -1 && (c.includes('début') || c.includes('debut') || c.includes('start') || c.includes('check-in') || c.includes('checkin'))) iIn = i;
+    if (iOut === -1 && (c.includes('fin') || c.includes('end') || c.includes('check-out') || c.includes('checkout') || c.includes('depart'))) iOut = i;
+  });
+  if (iIn === -1 || iOut === -1) throw new Error('Cannot find date columns. Is Source set to Airbnb?');
+  const out = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (!r[0] || r.length < 3) continue;
-    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : 'confirm';
-    if (!status.includes('confirm')) { skipped++; continue; }
-    const checkin  = toISODate(r[ciStart]);
-    const checkout = toISODate(r[ciEnd]);
-    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
-    const adults   = iAdults >= 0 ? parseInt(r[iAdults]||0)||0 : 0;
-    const children = iChildren >= 0 ? parseInt(r[iChildren]||0)||0 : 0;
-    const guests   = (adults + children) > 0 ? String(adults + children) : '';
-    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : '';
-    const code     = iCode >= 0 ? (r[iCode]||uid()).trim() : uid();
-    result.push({
-      id: 'ab_' + code,
-      apt, source: 'airbnb',
-      checkin, checkout, clean: checkout,
-      guests, notes: guestName,
-      paid: 'unpaid', _local: true
-    });
+    if (!r[0] || r.join('').trim() === '') continue;
+    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : 'confirm';
+    if (!stat.includes('confirm')) { skipped++; continue; }
+    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
+    if (!ci || !co || ci >= co) { skipped++; continue; }
+    const adults = iAdu>=0 ? parseInt(r[iAdu])||0 : 0;
+    const kids   = iChi>=0 ? parseInt(r[iChi])||0 : 0;
+    const code   = iCode>=0 ? r[iCode].trim() : uid();
+    out.push({ id:'ab_'+code, apt, source:'airbnb', checkin:ci, checkout:co, clean:co,
+      guests: (adults+kids)>0 ? String(adults+kids) : '',
+      notes:  iName>=0 ? r[iName].trim() : '',
+      paid:'unpaid', _local:true });
   }
-  return { bookings: result, skipped, source: 'Airbnb', warnings: [] };
+  return { bookings:out, skipped, source:'Airbnb', warnings:[] };
 }
 
 function parseDirectCSV(text, apt) {
-  const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('File appears empty');
-  const headers = rows[0];
-  // Pingotel format
-  const iCode     = findCol(headers,'code');
-  const iStatus   = findCol(headers,'status','statut');
-  const iStart    = findCol(headers,'startdate','start','checkin','arrivée','arrival');
-  const iEnd      = findCol(headers,'enddate','end','checkout','départ','departure');
-  const iEmail    = findCol(headers,'email');
-  const iResource = findCol(headers,'resources','resource','apartment','appartement','logement');
-  const iGuest    = findCol(headers,'guest','nom','name','client');
-  const iPersons  = findCol(headers,'persons','personnes','guests','adults');
-
-  if (iStart === -1 || iEnd === -1) {
-    throw new Error('Could not find date columns. Check the file format.');
-  }
-
-  const result = []; let skipped = 0;
+  const rows = splitCSV(text);
+  if (rows.length < 2) throw new Error('File is empty');
+  const h = rows[0];
+  const iCode = colIdx(h,'code');
+  const iStat = colIdx(h,'status','statut');
+  const iIn   = colIdx(h,'startdate','start','checkin','arrivée','arrival');
+  const iOut  = colIdx(h,'enddate','end','checkout','départ','departure');
+  const iRes  = colIdx(h,'resources','resource','apartment','logement');
+  const iName = colIdx(h,'guest','nom','name','client');
+  const iMail = colIdx(h,'email');
+  const iPers = colIdx(h,'persons','personnes','adults','adultes');
+  if (iIn===-1 || iOut===-1) throw new Error('Cannot find date columns. Check the file format.');
+  const out = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (!r[0] || r.length < 2) continue;
-    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : '';
-    if (status.includes('cancel') || status.includes('refund')) { skipped++; continue; }
-    const checkin  = toISODate(r[iStart]);
-    const checkout = toISODate(r[iEnd]);
-    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
-
-    // Auto-detect apt from resource
-    let detectedApt = apt;
-    if (iResource >= 0) {
-      const res = (r[iResource]||'').toLowerCase();
-      if (res.includes('300') || res.includes('beach')) detectedApt = 'b';
-      else if (res.includes('800') || res.includes('ocean')) detectedApt = 'a';
+    if (!r[0] || r.join('').trim() === '') continue;
+    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : '';
+    if (stat.includes('cancel') || stat.includes('refund')) { skipped++; continue; }
+    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
+    if (!ci || !co || ci >= co) { skipped++; continue; }
+    let detApt = apt;
+    if (iRes>=0) {
+      const res = (r[iRes]||'').toLowerCase();
+      if (res.includes('300') || res.includes('beach')) detApt = 'b';
+      else if (res.includes('800') || res.includes('ocean')) detApt = 'a';
     }
-
-    const code      = iCode >= 0 ? (r[iCode]||uid()).trim() : uid();
-    const email     = iEmail >= 0 ? (r[iEmail]||'').trim() : '';
-    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : email;
-    const persons   = iPersons >= 0 ? (r[iPersons]||'').trim() : '';
-    const isPaid    = status.includes('paid') || status.includes('confirm');
-
-    result.push({
-      id: 'dir_' + code,
-      apt: detectedApt, source: 'direct',
-      checkin, checkout, clean: checkout,
-      guests: persons, notes: guestName || email,
-      paid: isPaid ? 'paid' : 'unpaid',
-      _local: true
-    });
+    const code  = iCode>=0 ? r[iCode].trim() : uid();
+    const name  = iName>=0 ? r[iName].trim() : (iMail>=0 ? r[iMail].trim() : '');
+    const isPaid = stat.includes('paid') || stat.includes('confirm');
+    out.push({ id:'dir_'+code, apt:detApt, source:'direct', checkin:ci, checkout:co, clean:co,
+      guests: iPers>=0 ? r[iPers].trim() : '',
+      notes: name,
+      paid: isPaid ? 'paid' : 'unpaid', _local:true });
   }
-  return { bookings: result, skipped, source: 'Direct / Pingotel', warnings: [] };
+  return { bookings:out, skipped, source:'Direct / Pingotel', warnings:[] };
 }
 
 // ── INIT ─────────────────────────────────────
@@ -1775,7 +1645,6 @@ applyLang();
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>📥 Import Bookings</h2>
-
     <div class="form-group">
       <label>Source</label>
       <select id="importSource">
@@ -1785,7 +1654,7 @@ applyLang();
       </select>
     </div>
     <div class="form-group">
-      <label>Apartment (default if not auto-detected)</label>
+      <label>Apartment</label>
       <select id="importApt">
         <option value="a">🏠 1-Praceta Jose Saramago</option>
         <option value="b">🏡 2-Al-Paranagua</option>
@@ -1795,19 +1664,15 @@ applyLang();
       <label>File (CSV or XLS/XLSX)</label>
       <input type="file" id="importFile" accept=".csv,.xls,.xlsx" style="padding:10px 14px;font-size:14px;width:100%;border:2px solid var(--border);border-radius:12px">
     </div>
-    <div class="cfg-hint" style="font-size:12px;margin-bottom:12px">
-      💡 <strong>Booking.com:</strong> Reservations → Export → all columns CSV or XLS<br>
-      💡 <strong>Airbnb:</strong> Reservations → Export to CSV<br>
-      💡 <strong>Direct:</strong> Pingotel → Bookings → Export CSV<br>
-      ⚠️ Duplicates are auto-removed. Direct bookings always win over platform bookings.
+    <div class="cfg-hint" style="font-size:12px;margin-bottom:14px">
+      💡 <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
+      💡 <strong>Airbnb:</strong> Reservations → All → Export CSV<br>
+      💡 <strong>Direct/Pingotel:</strong> Bookings → Export CSV<br>
+      ⚠️ Platform bookings (Booking/Airbnb) win over direct duplicates.
     </div>
-    <div id="importPreview" style="display:none;margin-bottom:12px">
-      <div class="cfg-hint" id="importSummary"></div>
-      <div id="importWarnings" style="font-size:12px;color:#dc2626;font-weight:700;margin-top:6px"></div>
-    </div>
-    <button class="btn-primary" id="importParseBtn">🔍 Preview</button>
-    <button class="btn-primary" id="importConfirmBtn" style="display:none;background:#16a34a;margin-top:8px">✅ Confirm Import</button>
-    <button class="btn-secondary" id="cancelImportBtn">Cancel</button>
+    <div id="importStatus" style="display:none;padding:12px 14px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:12px"></div>
+    <button class="btn-primary" id="importDoBtn">📥 Import Now</button>
+    <button class="btn-secondary" id="cancelImportBtn" style="margin-top:8px">Cancel</button>
   </div>
 </div>
 
