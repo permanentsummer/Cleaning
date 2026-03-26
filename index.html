@@ -1402,6 +1402,8 @@ document.getElementById('openImportBtn').onclick = () => {
   document.getElementById('importPreview').style.display = 'none';
   document.getElementById('importConfirmBtn').style.display = 'none';
   document.getElementById('importFile').value = '';
+  document.getElementById('importSummary').textContent = '';
+  document.getElementById('importWarnings').textContent = '';
   importedBookings = [];
   document.getElementById('importOverlay').classList.add('open');
 };
@@ -1411,159 +1413,248 @@ document.getElementById('cancelImportBtn').onclick = () => {
 
 document.getElementById('importParseBtn').onclick = () => {
   const file = document.getElementById('importFile').files[0];
-  if (!file) { alert('Please select a file.'); return; }
+  if (!file) { alert('Please select a file first.'); return; }
   const apt = document.getElementById('importApt').value;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const text = e.target.result;
-      const result = parseImportFile(file.name, text, apt);
-      importedBookings = result.bookings;
-      document.getElementById('importSummary').innerHTML =
-        `✅ Found <strong>${result.bookings.length}</strong> valid bookings from ${result.source}` +
-        (result.skipped > 0 ? ` (${result.skipped} skipped: cancelled/invalid)` : '');
-      document.getElementById('importWarnings').textContent = result.warnings.join(' ');
-      document.getElementById('importPreview').style.display = 'block';
-      document.getElementById('importConfirmBtn').style.display = importedBookings.length ? 'block' : 'none';
-    } catch(err) {
-      alert('Parse error: ' + err.message);
-    }
-  };
-  reader.readAsText(file, 'UTF-8');
+  const source = document.getElementById('importSource').value;
+
+  const fname = file.name.toLowerCase();
+  const isXLS = fname.endsWith('.xls') || fname.endsWith('.xlsx');
+  const isCSV = fname.endsWith('.csv');
+
+  if (!isXLS && !isCSV) {
+    alert('Only CSV and XLS/XLSX files are supported.');
+    return;
+  }
+
+  if (isXLS) {
+    // XLS: read as binary ArrayBuffer, convert to CSV-like text via SheetJS
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = e.target.result;
+        // Parse XLS using SheetJS (loaded from CDN)
+        if (typeof XLSX === 'undefined') {
+          alert('Loading spreadsheet parser... please try again in a moment.');
+          loadSheetJS(() => document.getElementById('importParseBtn').click());
+          return;
+        }
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const csvText = XLSX.utils.sheet_to_csv(ws);
+        runParse(csvText, source, apt, file.name);
+      } catch(err) {
+        alert('Could not read XLS file: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    // CSV: try UTF-8 first, then latin-1
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        runParse(e.target.result, source, apt, file.name);
+      } catch(err) {
+        alert('Could not read CSV: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
 };
 
+function loadSheetJS(cb) {
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+// Pre-load SheetJS on import modal open
+document.getElementById('openImportBtn').addEventListener('click', () => {
+  if (typeof XLSX === 'undefined') loadSheetJS(() => {});
+}, true);
+
+function runParse(text, source, apt, filename) {
+  let result;
+  try {
+    if (source === 'booking') result = parseBookingCSV(text, apt);
+    else if (source === 'airbnb') result = parseAirbnbCSV(text, apt);
+    else result = parseDirectCSV(text, apt);
+  } catch(err) {
+    alert('Parse error: ' + err.message + '\n\nMake sure you selected the correct Source (Booking/Airbnb/Direct).');
+    return;
+  }
+  importedBookings = result.bookings;
+  const summary = document.getElementById('importSummary');
+  summary.innerHTML = importedBookings.length > 0
+    ? `✅ <strong>${importedBookings.length}</strong> bookings ready to import` +
+      (result.skipped > 0 ? ` · ${result.skipped} skipped (cancelled/closed)` : '')
+    : `⚠️ No valid bookings found. Check the source selection.`;
+  summary.style.background = importedBookings.length > 0 ? '#dcfce7' : '#fef3c7';
+  summary.style.color = importedBookings.length > 0 ? '#166534' : '#92400e';
+  document.getElementById('importWarnings').textContent = result.warnings.join(' ');
+  document.getElementById('importPreview').style.display = 'block';
+  document.getElementById('importConfirmBtn').style.display = importedBookings.length ? 'block' : 'none';
+}
+
 document.getElementById('importConfirmBtn').onclick = () => {
-  let added = 0, updated = 0;
-  const existingIds = new Set(bookings.map(b => b.id));
+  let added = 0, replaced = 0, dupeSkipped = 0;
+
   for (const nb of importedBookings) {
-    // Check for overlap with existing bookings for same apt
-    const overlap = bookings.find(x =>
+    // Find any overlapping booking for same apt
+    const overlapIdx = bookings.findIndex(x =>
       x.apt === nb.apt && x.id !== nb.id &&
       x.checkin && nb.checkin && x.checkout && nb.checkout &&
       x.checkin < nb.checkout && nb.checkin < x.checkout
     );
-    if (overlap) {
-      // Replace if new one has a guest name and old one doesn't
-      if (nb.notes && !overlap.notes) {
-        const idx = bookings.indexOf(overlap);
-        bookings[idx] = nb;
-        updated++;
+
+    if (overlapIdx !== -1) {
+      const existing = bookings[overlapIdx];
+      // Direct booking always wins over platform bookings
+      const newIsDirect = nb.source === 'direct';
+      const existingIsDirect = existing.source === 'direct';
+      if (newIsDirect && !existingIsDirect) {
+        // Replace platform booking with direct booking
+        bookings[overlapIdx] = nb;
+        replaced++;
+      } else if (!newIsDirect && existingIsDirect) {
+        // Keep direct, skip platform duplicate
+        dupeSkipped++;
+      } else {
+        // Same priority — keep the one with more info (guest name)
+        if (nb.notes && !existing.notes) {
+          bookings[overlapIdx] = nb;
+          replaced++;
+        } else {
+          dupeSkipped++;
+        }
       }
-      // else skip duplicate
       continue;
     }
-    if (existingIds.has(nb.id)) {
-      // Update existing
-      const idx = bookings.findIndex(x => x.id === nb.id);
-      if (idx !== -1) { bookings[idx] = {...bookings[idx], ...nb}; updated++; }
+
+    // Check exact ID match — update existing
+    const exactIdx = bookings.findIndex(x => x.id === nb.id);
+    if (exactIdx !== -1) {
+      bookings[exactIdx] = {...bookings[exactIdx], ...nb};
+      replaced++;
     } else {
       bookings.push(nb);
       added++;
     }
   }
+
   saveB(); render();
-  if(viewMode==='calendar') renderCalendar();
+  if (viewMode === 'calendar') renderCalendar();
   document.getElementById('importOverlay').classList.remove('open');
-  showSyncSuccess(`Import done: ${added} added, ${updated} updated.`);
+  const msg = `Import done: ${added} added` +
+    (replaced > 0 ? `, ${replaced} updated` : '') +
+    (dupeSkipped > 0 ? `, ${dupeSkipped} duplicates removed` : '');
+  showSyncSuccess(msg);
 };
 
-function parseImportFile(filename, text, apt) {
-  const fn = filename.toLowerCase();
-  // Detect format by content / filename
-  if (fn.endsWith('.csv')) {
-    const firstLine = text.split('\n')[0];
-    if (firstLine.includes('Code de confirmation') || firstLine.includes('Nom du voyageur')) {
-      return parseAirbnbCSV(text, apt);
-    }
-    if (firstLine.includes('code') && firstLine.includes('startDate')) {
-      return parsePingotelCSV(text, apt);
-    }
-    // Try booking.com CSV
-    if (firstLine.includes('Book number') || firstLine.includes('Guest name')) {
-      return parseBookingCSV(text, apt, 'en');
-    }
-    throw new Error('Unknown CSV format. Expected Airbnb, Pingotel, or Booking.com CSV.');
-  }
-  if (fn.endsWith('.xls') || fn.endsWith('.xlsx')) {
-    // XLS content parsed as text (libreoffice isn't available in browser)
-    // We ask user to save as CSV first — but actually we can parse the raw bytes
-    // For browser: we'll parse it as CSV after the filename hint
-    if (fn.includes('stay') || fn.includes('sejour') || fn.includes('s_jour')) {
-      // Booking.com XLS exported as text - try to detect language
-      const isEN = text.includes('Check-in') || text.includes('Guest name');
-      return parseBookingCSV(text, apt, isEN ? 'en' : 'fr');
-    }
-    throw new Error('For XLS files: in Booking.com, use "Export as CSV" option, or open in Excel/Google Sheets and save as CSV first.');
-  }
-  throw new Error('Unsupported file format.');
-}
-
+// ── CSV PARSERS ───────────────────────────────
 function parseCSVRows(text) {
-  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  // Handle both comma and semicolon separators
+  const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  // Detect separator
+  const sep = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
   return lines.map(line => {
     const cols = []; let cur = ''; let q = false;
     for (const c of line) {
-      if (c==='"') { q=!q; }
-      else if (c===',' && !q) { cols.push(cur.trim()); cur=''; }
+      if (c === '"') { q = !q; }
+      else if (c === sep && !q) { cols.push(cur.trim().replace(/^"|"$/g,'')); cur = ''; }
       else cur += c;
     }
-    cols.push(cur.trim());
+    cols.push(cur.trim().replace(/^"|"$/g,''));
     return cols;
   });
 }
 
-function isoDate(str) {
+function toISODate(str) {
   if (!str) return '';
-  str = str.trim().replace(/&nbsp;/g,'');
-  // DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-    const [d,m,y] = str.split('/');
-    return `${y}-${m}-${d}`;
-  }
-  // YYYY-MM-DD already
+  str = String(str).trim().replace(/&nbsp;/g,'').replace(/\u00a0/g,'');
+  if (!str || str === '0' || str.length < 6) return '';
+  // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0,10);
+  // DD/MM/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    const [d,m,y] = str.split('/');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  // MM/DD/YYYY
+  if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str)) {
+    const parts = str.split('/');
+    if (parseInt(parts[0]) > 12) { // must be DD/MM
+      return `${parts[2].length===2?'20'+parts[2]:parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    }
+  }
+  // Excel serial number
+  if (/^\d{4,6}$/.test(str)) {
+    const serial = parseInt(str);
+    if (serial > 40000 && serial < 60000) {
+      const ms = (serial - 25569) * 86400 * 1000;
+      const d = new Date(ms);
+      return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
+    }
+  }
+  // Try native parse
+  try {
+    const d = new Date(str);
+    if (!isNaN(d) && d.getFullYear() > 2020) {
+      return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
+    }
+  } catch(e) {}
   return '';
 }
 
-function parseBookingCSV(text, apt, lang) {
+function findCol(headers, ...keys) {
+  for (const k of keys) {
+    const i = headers.findIndex(h =>
+      h.toLowerCase().replace(/[^a-z]/g,'').includes(k.toLowerCase().replace(/[^a-z]/g,''))
+    );
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+
+function parseBookingCSV(text, apt) {
   const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('Empty file');
-  const headers = rows[0].map(h => h.toLowerCase().trim().replace(/&nbsp;/g,''));
-  const find = (...keys) => {
-    for (const k of keys) {
-      const i = headers.findIndex(h => h.includes(k.toLowerCase()));
-      if (i !== -1) return i;
-    }
-    return -1;
-  };
-  const iCheckin  = find('check-in','arriv','arrivée');
-  const iCheckout = find('check-out','depart','départ');
-  const iGuest    = find('guest name','nom du client','boosted by','booked by');
-  const iPersons  = find('persons','personnes');
-  const iStatus   = find('status','statut');
-  const iCancel   = find('cancellation','annulation');
-  const iBookNum  = find('book number','numéro de réservation','réservation');
+  if (rows.length < 2) throw new Error('File appears empty');
+  const headers = rows[0];
+  const iCheckin  = findCol(headers,'checkin','arrivée','arrival','arrivee');
+  const iCheckout = findCol(headers,'checkout','départ','departure','depart');
+  const iGuest    = findCol(headers,'guestname','nomduclient','clientname','bookedby');
+  const iPersons  = findCol(headers,'persons','personnes','guests','people');
+  const iStatus   = findCol(headers,'status','statut');
+  const iCancel   = findCol(headers,'cancellation','annulation');
+  const iBookNum  = findCol(headers,'booknumber','numéroréservation','numeroreservation','bookid');
+
+  if (iCheckin === -1 || iCheckout === -1) {
+    throw new Error('Could not find check-in/check-out columns. Make sure Source = Booking.com');
+  }
 
   const result = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (r.length < 3) continue;
-    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : 'ok';
+    if (!r[0] || r.length < 3) continue;
+    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase().trim() : 'ok';
     const cancel = iCancel >= 0 ? (r[iCancel]||'').trim() : '';
-    if (status === 'cancelled' || status === 'annulé' || cancel) { skipped++; continue; }
-    if (status !== 'ok' && status !== 'confirmée' && status !== 'confirmed' && status) { skipped++; continue; }
-    const checkin  = isoDate(iCheckin>=0 ? r[iCheckin] : '');
-    const checkout = isoDate(iCheckout>=0 ? r[iCheckout] : '');
-    if (!checkin || !checkout) { skipped++; continue; }
-    const guestName = iGuest>=0 ? (r[iGuest]||'').trim() : '';
-    const persons   = iPersons>=0 ? (r[iPersons]||'').trim() : '';
-    const bookNum   = iBookNum>=0 ? (r[iBookNum]||'').trim() : uid();
+    // Skip cancelled, closed, no_show
+    if (cancel || status.includes('cancel') || status.includes('annul') ||
+        status.includes('no_show') || status.includes('closed') || status === 'c') {
+      skipped++; continue;
+    }
+    const checkin  = toISODate(r[iCheckin]);
+    const checkout = toISODate(r[iCheckout]);
+    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
+    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : '';
+    const persons   = iPersons >= 0 ? (r[iPersons]||'').trim() : '';
+    const bookNum   = iBookNum >= 0 ? (r[iBookNum]||'').trim() : uid();
     result.push({
-      id: 'bkcom_' + bookNum,
-      apt, source:'booking',
+      id: 'bk_' + (bookNum || uid()),
+      apt, source: 'booking',
       checkin, checkout, clean: checkout,
-      guests: persons,
-      notes: guestName,
+      guests: persons, notes: guestName,
       paid: 'unpaid', _local: true
     });
   }
@@ -1572,121 +1663,149 @@ function parseBookingCSV(text, apt, lang) {
 
 function parseAirbnbCSV(text, apt) {
   const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('Empty file');
-  const headers = rows[0].map(h => h.toLowerCase().trim());
-  const find = (...keys) => {
-    for (const k of keys) {
-      const i = headers.findIndex(h => h.includes(k.toLowerCase()));
-      if (i !== -1) return i;
-    }
-    return -1;
-  };
-  const iCode    = find('code','confirmation');
-  const iStatus  = find('statut','status');
-  const iGuest   = find('voyageur','guest','nom');
-  const iAdults  = find('adultes','adults');
-  const iChildren= find('enfants','children');
-  const iStart   = find('début','start','check-in','date de début');
-  const iEnd     = find('fin','end','check-out','date de fin');
+  if (rows.length < 2) throw new Error('File appears empty');
+  const headers = rows[0];
+  const iCode    = findCol(headers,'code','confirmation');
+  const iStatus  = findCol(headers,'statut','status');
+  const iGuest   = findCol(headers,'voyageur','guestname','nom');
+  const iAdults  = findCol(headers,'adultes','adults');
+  const iChildren= findCol(headers,'enfants','children');
+  const iStart   = findCol(headers,'début','debutdate','startdate','checkin','datededébut','datefin');
+  const iEnd     = findCol(headers,'fin','enddate','checkout','datefin','datedefin');
+
+  // Airbnb CSV: columns are "Date de début" and "Date de fin"
+  // Re-try with exact French names
+  const hLow = headers.map(h => h.toLowerCase().trim());
+  const iStartFr = hLow.findIndex(h => h.includes('début') || h.includes('début') || h === 'date de début');
+  const iEndFr   = hLow.findIndex(h => h.includes('fin') && h.includes('date'));
+  const ciStart  = iStartFr !== -1 ? iStartFr : iStart;
+  const ciEnd    = iEndFr !== -1 ? iEndFr : iEnd;
+
+  if (ciStart === -1 || ciEnd === -1) {
+    throw new Error('Could not find date columns. Make sure Source = Airbnb');
+  }
 
   const result = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (r.length < 3) continue;
-    const status = iStatus>=0 ? (r[iStatus]||'').toLowerCase() : '';
-    if (status && !status.includes('confirm')) { skipped++; continue; }
-    const checkin  = isoDate(iStart>=0 ? r[iStart] : '');
-    const checkout = isoDate(iEnd>=0 ? r[iEnd] : '');
-    if (!checkin || !checkout) { skipped++; continue; }
-    const adults   = iAdults>=0 ? parseInt(r[iAdults]||0) : 0;
-    const children = iChildren>=0 ? parseInt(r[iChildren]||0) : 0;
-    const guests   = adults + children > 0 ? String(adults+children) : '';
-    const guestName = iGuest>=0 ? (r[iGuest]||'').trim() : '';
-    const code     = iCode>=0 ? (r[iCode]||uid()).trim() : uid();
+    if (!r[0] || r.length < 3) continue;
+    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : 'confirm';
+    if (!status.includes('confirm')) { skipped++; continue; }
+    const checkin  = toISODate(r[ciStart]);
+    const checkout = toISODate(r[ciEnd]);
+    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
+    const adults   = iAdults >= 0 ? parseInt(r[iAdults]||0)||0 : 0;
+    const children = iChildren >= 0 ? parseInt(r[iChildren]||0)||0 : 0;
+    const guests   = (adults + children) > 0 ? String(adults + children) : '';
+    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : '';
+    const code     = iCode >= 0 ? (r[iCode]||uid()).trim() : uid();
     result.push({
-      id: 'airbnb_' + code,
-      apt, source:'airbnb',
+      id: 'ab_' + code,
+      apt, source: 'airbnb',
       checkin, checkout, clean: checkout,
-      guests,
-      notes: guestName,
+      guests, notes: guestName,
       paid: 'unpaid', _local: true
     });
   }
   return { bookings: result, skipped, source: 'Airbnb', warnings: [] };
 }
 
-function parsePingotelCSV(text, apt) {
+function parseDirectCSV(text, apt) {
   const rows = parseCSVRows(text);
-  if (rows.length < 2) throw new Error('Empty file');
-  const headers = rows[0].map(h => h.toLowerCase().trim());
-  const find = k => headers.findIndex(h => h.includes(k.toLowerCase()));
-  const iCode     = find('code');
-  const iStatus   = find('status');
-  const iStart    = find('startdate');
-  const iEnd      = find('enddate');
-  const iEmail    = find('email');
-  const iResource = find('resources');
+  if (rows.length < 2) throw new Error('File appears empty');
+  const headers = rows[0];
+  // Pingotel format
+  const iCode     = findCol(headers,'code');
+  const iStatus   = findCol(headers,'status','statut');
+  const iStart    = findCol(headers,'startdate','start','checkin','arrivée','arrival');
+  const iEnd      = findCol(headers,'enddate','end','checkout','départ','departure');
+  const iEmail    = findCol(headers,'email');
+  const iResource = findCol(headers,'resources','resource','apartment','appartement','logement');
+  const iGuest    = findCol(headers,'guest','nom','name','client');
+  const iPersons  = findCol(headers,'persons','personnes','guests','adults');
+
+  if (iStart === -1 || iEnd === -1) {
+    throw new Error('Could not find date columns. Check the file format.');
+  }
 
   const result = []; let skipped = 0;
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (r.length < 3) continue;
-    const status = iStatus>=0 ? (r[iStatus]||'').toLowerCase() : '';
-    if (status.includes('cancel')) { skipped++; continue; }
-    const checkin  = isoDate(iStart>=0 ? r[iStart] : '');
-    const checkout = isoDate(iEnd>=0 ? r[iEnd] : '');
-    if (!checkin || !checkout) { skipped++; continue; }
-    // Auto-detect apt from resource name
-    const resource = iResource>=0 ? (r[iResource]||'').toLowerCase() : '';
-    const detectedApt = resource.includes('300') || resource.includes('beach') ? 'b' :
-                        resource.includes('800') || resource.includes('ocean') ? 'a' : apt;
-    const email = iEmail>=0 ? (r[iEmail]||'').trim() : '';
-    const code  = iCode>=0 ? (r[iCode]||uid()).trim() : uid();
+    if (!r[0] || r.length < 2) continue;
+    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : '';
+    if (status.includes('cancel') || status.includes('refund')) { skipped++; continue; }
+    const checkin  = toISODate(r[iStart]);
+    const checkout = toISODate(r[iEnd]);
+    if (!checkin || !checkout || checkin >= checkout) { skipped++; continue; }
+
+    // Auto-detect apt from resource
+    let detectedApt = apt;
+    if (iResource >= 0) {
+      const res = (r[iResource]||'').toLowerCase();
+      if (res.includes('300') || res.includes('beach')) detectedApt = 'b';
+      else if (res.includes('800') || res.includes('ocean')) detectedApt = 'a';
+    }
+
+    const code      = iCode >= 0 ? (r[iCode]||uid()).trim() : uid();
+    const email     = iEmail >= 0 ? (r[iEmail]||'').trim() : '';
+    const guestName = iGuest >= 0 ? (r[iGuest]||'').trim() : email;
+    const persons   = iPersons >= 0 ? (r[iPersons]||'').trim() : '';
+    const isPaid    = status.includes('paid') || status.includes('confirm');
+
     result.push({
-      id: 'ping_' + code,
-      apt: detectedApt, source:'direct',
+      id: 'dir_' + code,
+      apt: detectedApt, source: 'direct',
       checkin, checkout, clean: checkout,
-      guests: '',
-      notes: email,
-      paid: status.includes('paid') ? 'paid' : 'unpaid',
+      guests: persons, notes: guestName || email,
+      paid: isPaid ? 'paid' : 'unpaid',
       _local: true
     });
   }
-  return { bookings: result, skipped, source: 'Pingotel', warnings: result.length ? [] : ['No valid bookings found.'] };
+  return { bookings: result, skipped, source: 'Direct / Pingotel', warnings: [] };
 }
 
 // ── INIT ─────────────────────────────────────
 applyLang();
-syncSheet();
-setInterval(syncSheet, 10*60*1000);
+// Auto-sync disabled — use CSV/XLS import instead
+// syncSheet();
+// setInterval(syncSheet, 10*60*1000);
 </script>
 <!-- IMPORT MODAL -->
 <div class="modal-overlay" id="importOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>📥 Import Bookings</h2>
-    <div class="cfg-hint">
-      Supported formats:<br>
-      • <strong>Booking.com</strong> — XLS export (FR or EN)<br>
-      • <strong>Airbnb</strong> — CSV export (reservations.csv)<br>
-      • <strong>Pingotel</strong> — CSV export (bookings-*.csv)<br>
+
+    <div class="form-group">
+      <label>Source</label>
+      <select id="importSource">
+        <option value="booking">Booking.com</option>
+        <option value="airbnb">Airbnb</option>
+        <option value="direct">Direct / Pingotel</option>
+      </select>
     </div>
     <div class="form-group">
-      <label>Apartment</label>
+      <label>Apartment (default if not auto-detected)</label>
       <select id="importApt">
         <option value="a">🏠 1-Praceta Jose Saramago</option>
         <option value="b">🏡 2-Al-Paranagua</option>
       </select>
     </div>
     <div class="form-group">
-      <label>File (XLS or CSV)</label>
-      <input type="file" id="importFile" accept=".csv,.xls,.xlsx" style="padding:10px 14px;font-size:14px">
+      <label>File (CSV or XLS/XLSX)</label>
+      <input type="file" id="importFile" accept=".csv,.xls,.xlsx" style="padding:10px 14px;font-size:14px;width:100%;border:2px solid var(--border);border-radius:12px">
+    </div>
+    <div class="cfg-hint" style="font-size:12px;margin-bottom:12px">
+      💡 <strong>Booking.com:</strong> Reservations → Export → all columns CSV or XLS<br>
+      💡 <strong>Airbnb:</strong> Reservations → Export to CSV<br>
+      💡 <strong>Direct:</strong> Pingotel → Bookings → Export CSV<br>
+      ⚠️ Duplicates are auto-removed. Direct bookings always win over platform bookings.
     </div>
     <div id="importPreview" style="display:none;margin-bottom:12px">
-      <div class="cfg-hint" id="importSummary" style="background:#dcfce7;color:#166534"></div>
+      <div class="cfg-hint" id="importSummary"></div>
       <div id="importWarnings" style="font-size:12px;color:#dc2626;font-weight:700;margin-top:6px"></div>
     </div>
-    <button class="btn-primary" id="importParseBtn">🔍 Preview Import</button>
+    <button class="btn-primary" id="importParseBtn">🔍 Preview</button>
     <button class="btn-primary" id="importConfirmBtn" style="display:none;background:#16a34a;margin-top:8px">✅ Confirm Import</button>
     <button class="btn-secondary" id="cancelImportBtn">Cancel</button>
   </div>
