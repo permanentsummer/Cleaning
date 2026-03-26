@@ -338,28 +338,6 @@
   }
   .lang-btn.active { background: white; color: #0f172a; }
 
-  /* STATS BAR */
-  .stats-bar {
-    display: flex; gap: 8px; padding: 0 16px 10px;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  .stats-bar::-webkit-scrollbar { display: none; }
-  .stat-chip {
-    flex: 1; min-width: 70px; background: white; border-radius: 14px;
-    padding: 10px 8px; text-align: center; cursor: pointer;
-    box-shadow: var(--shadow); border: 2px solid transparent;
-    transition: all 0.15s;
-  }
-  .stat-chip:active { transform: scale(0.96); }
-  .stat-chip.apt-a-stat { border-color: var(--apt-a-light); }
-  .stat-chip.apt-b-stat { border-color: var(--apt-b-light); }
-  .stat-chip.unpaid-stat { border-color: var(--red-light); }
-  .stat-num { display: block; font-size: 22px; font-weight: 900; color: var(--text); }
-  .stat-chip.apt-a-stat .stat-num { color: var(--apt-a); }
-  .stat-chip.apt-b-stat .stat-num { color: var(--apt-b); }
-  .stat-chip.unpaid-stat .stat-num { color: var(--red); }
-  .stat-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
   /* VIEW TOGGLE */
   .view-toggle {
     display: flex; gap: 6px; padding: 0 16px 12px;
@@ -475,7 +453,10 @@
 
 <div class="admin-bar" id="adminBar">
   <span>🔐 Administrador</span>
-  <button id="openCfgBtn">⚙️ Configurações</button>
+  <div style="display:flex;gap:6px">
+    <button id="openImportBtn">📥 Import</button>
+    <button id="openCfgBtn">⚙️ Settings</button>
+  </div>
 </div>
 <div class="setup-banner" id="setupBanner">
   <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️ no canto superior direito) e depois toque em "Configurações" para adicionar o Google Sheet e WhatsApp.
@@ -499,26 +480,6 @@
   <button class="filter-btn apt-b" data-filter="b">🏡 Al-Paranaguá</button>
   <button class="filter-btn" data-filter="today">📅 Hoje</button>
   <button class="filter-btn" data-filter="unpaid">🔴 Por Pagar</button>
-</div>
-
-<!-- STATS BAR -->
-<div class="stats-bar" id="statsBar">
-  <div class="stat-chip" data-filter-stat="all">
-    <span class="stat-num" id="stat-all">0</span>
-    <span class="stat-label" id="stat-all-label">Total</span>
-  </div>
-  <div class="stat-chip apt-a-stat" data-filter-stat="a">
-    <span class="stat-num" id="stat-a">0</span>
-    <span class="stat-label">Saramago</span>
-  </div>
-  <div class="stat-chip apt-b-stat" data-filter-stat="b">
-    <span class="stat-num" id="stat-b">0</span>
-    <span class="stat-label">Al-Paranaguá</span>
-  </div>
-  <div class="stat-chip unpaid-stat" data-filter-stat="unpaid">
-    <span class="stat-num" id="stat-unpaid">0</span>
-    <span class="stat-label" id="stat-unpaid-label">Unpaid</span>
-  </div>
 </div>
 
 <!-- VIEW TOGGLE -->
@@ -1013,10 +974,6 @@ function updateStats() {
   const nA      = future.filter(b=>b.apt==='a').length;
   const nB      = future.filter(b=>b.apt==='b').length;
   const nUnpaid = future.filter(b=>b.paid!=='paid').length;
-  document.getElementById('stat-all').textContent    = nAll;
-  document.getElementById('stat-a').textContent      = nA;
-  document.getElementById('stat-b').textContent      = nB;
-  document.getElementById('stat-unpaid').textContent = nUnpaid;
   // Update filter button labels with counts
   const fb = document.querySelectorAll('.filter-btn');
   if(fb[0]) fb[0].textContent = `${t().all} (${nAll})`;
@@ -1150,10 +1107,7 @@ function card(b, isPast) {
         <span class="date-sub">${fmtWday(b.checkout)}</span>
       </div>
     </div>
-    <div class="card-clean">
-      <span class="clean-label">🧹 ${t().cleaning}</span>
-      <span class="clean-value${isT?' today-clean':''}">${isT?t().todayBadge:fmtFull(cleanD)}</span>
-    </div>
+    ${isT?`<div class="card-clean"><span class="clean-label">🧹 ${t().cleaning}</span><span class="clean-value today-clean">${t().todayBadge}</span></div>`:''}
     ${(b.guests||(b.notes&&canSeeN))?`<div class="card-info-row">${b.guests?`<div class="guests-chip">👥 ${b.guests}</div>`:''} ${(b.notes&&canSeeN)?`<div class="notes-chip">📝 ${b.notes}</div>`:''}</div>`:''}
     <div class="card-footer">
       <button class="payment-btn ${paidCls}" data-id="${b.id}" ${canPay?'':'style="pointer-events:none;opacity:0.6"'}>${paidLbl}</button>
@@ -1179,6 +1133,7 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.onclick=()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active'); filter=btn.dataset.filter; render();
+    if(viewMode==='calendar') renderCalendar();
   };
 });
 
@@ -1373,9 +1328,7 @@ function applyLang() {
   setText('cfg-save-label', c.save);
   setText('cfg-cancel-label', c.cancel);
   setText('cfg-clear-label', c.clear);
-  // Stats labels
-  setText('stat-all-label', t().all || 'Total');
-  setText('stat-unpaid-label', t().unpaidF || 'Unpaid');
+
   // View buttons
   setText('vl-label', lang==='pt'?'Lista':lang==='fr'?'Liste':'List');
   setText('vc-label', lang==='pt'?'Calendário':lang==='fr'?'Calendrier':'Calendar');
@@ -1399,20 +1352,6 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
 
 // ── WA FAB ───────────────────────────────────
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAULT);
-
-// ── STATS CHIPS ──────────────────────────────
-document.querySelectorAll('.stat-chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    const f = chip.dataset.filterStat;
-    filter = f;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    const map = {all:0, a:1, b:2, unpaid:4};
-    const idx = map[f];
-    if(idx !== undefined) document.querySelectorAll('.filter-btn')[idx]?.classList.add('active');
-    render();
-    if(viewMode==='calendar') renderCalendar();
-  });
-});
 
 // ── VIEW TOGGLE ──────────────────────────────
 document.getElementById('viewListBtn').onclick = () => {
@@ -1456,10 +1395,302 @@ if(!cfg.sheetUrl && bookings.length===0){
   saveB();
 }
 
+// ── IMPORT LOGIC ─────────────────────────────
+let importedBookings = [];
+
+document.getElementById('openImportBtn').onclick = () => {
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  document.getElementById('importFile').value = '';
+  importedBookings = [];
+  document.getElementById('importOverlay').classList.add('open');
+};
+document.getElementById('cancelImportBtn').onclick = () => {
+  document.getElementById('importOverlay').classList.remove('open');
+};
+
+document.getElementById('importParseBtn').onclick = () => {
+  const file = document.getElementById('importFile').files[0];
+  if (!file) { alert('Please select a file.'); return; }
+  const apt = document.getElementById('importApt').value;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = e.target.result;
+      const result = parseImportFile(file.name, text, apt);
+      importedBookings = result.bookings;
+      document.getElementById('importSummary').innerHTML =
+        `✅ Found <strong>${result.bookings.length}</strong> valid bookings from ${result.source}` +
+        (result.skipped > 0 ? ` (${result.skipped} skipped: cancelled/invalid)` : '');
+      document.getElementById('importWarnings').textContent = result.warnings.join(' ');
+      document.getElementById('importPreview').style.display = 'block';
+      document.getElementById('importConfirmBtn').style.display = importedBookings.length ? 'block' : 'none';
+    } catch(err) {
+      alert('Parse error: ' + err.message);
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+};
+
+document.getElementById('importConfirmBtn').onclick = () => {
+  let added = 0, updated = 0;
+  const existingIds = new Set(bookings.map(b => b.id));
+  for (const nb of importedBookings) {
+    // Check for overlap with existing bookings for same apt
+    const overlap = bookings.find(x =>
+      x.apt === nb.apt && x.id !== nb.id &&
+      x.checkin && nb.checkin && x.checkout && nb.checkout &&
+      x.checkin < nb.checkout && nb.checkin < x.checkout
+    );
+    if (overlap) {
+      // Replace if new one has a guest name and old one doesn't
+      if (nb.notes && !overlap.notes) {
+        const idx = bookings.indexOf(overlap);
+        bookings[idx] = nb;
+        updated++;
+      }
+      // else skip duplicate
+      continue;
+    }
+    if (existingIds.has(nb.id)) {
+      // Update existing
+      const idx = bookings.findIndex(x => x.id === nb.id);
+      if (idx !== -1) { bookings[idx] = {...bookings[idx], ...nb}; updated++; }
+    } else {
+      bookings.push(nb);
+      added++;
+    }
+  }
+  saveB(); render();
+  if(viewMode==='calendar') renderCalendar();
+  document.getElementById('importOverlay').classList.remove('open');
+  showSyncSuccess(`Import done: ${added} added, ${updated} updated.`);
+};
+
+function parseImportFile(filename, text, apt) {
+  const fn = filename.toLowerCase();
+  // Detect format by content / filename
+  if (fn.endsWith('.csv')) {
+    const firstLine = text.split('\n')[0];
+    if (firstLine.includes('Code de confirmation') || firstLine.includes('Nom du voyageur')) {
+      return parseAirbnbCSV(text, apt);
+    }
+    if (firstLine.includes('code') && firstLine.includes('startDate')) {
+      return parsePingotelCSV(text, apt);
+    }
+    // Try booking.com CSV
+    if (firstLine.includes('Book number') || firstLine.includes('Guest name')) {
+      return parseBookingCSV(text, apt, 'en');
+    }
+    throw new Error('Unknown CSV format. Expected Airbnb, Pingotel, or Booking.com CSV.');
+  }
+  if (fn.endsWith('.xls') || fn.endsWith('.xlsx')) {
+    // XLS content parsed as text (libreoffice isn't available in browser)
+    // We ask user to save as CSV first — but actually we can parse the raw bytes
+    // For browser: we'll parse it as CSV after the filename hint
+    if (fn.includes('stay') || fn.includes('sejour') || fn.includes('s_jour')) {
+      // Booking.com XLS exported as text - try to detect language
+      const isEN = text.includes('Check-in') || text.includes('Guest name');
+      return parseBookingCSV(text, apt, isEN ? 'en' : 'fr');
+    }
+    throw new Error('For XLS files: in Booking.com, use "Export as CSV" option, or open in Excel/Google Sheets and save as CSV first.');
+  }
+  throw new Error('Unsupported file format.');
+}
+
+function parseCSVRows(text) {
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  return lines.map(line => {
+    const cols = []; let cur = ''; let q = false;
+    for (const c of line) {
+      if (c==='"') { q=!q; }
+      else if (c===',' && !q) { cols.push(cur.trim()); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function isoDate(str) {
+  if (!str) return '';
+  str = str.trim().replace(/&nbsp;/g,'');
+  // DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    const [d,m,y] = str.split('/');
+    return `${y}-${m}-${d}`;
+  }
+  // YYYY-MM-DD already
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0,10);
+  return '';
+}
+
+function parseBookingCSV(text, apt, lang) {
+  const rows = parseCSVRows(text);
+  if (rows.length < 2) throw new Error('Empty file');
+  const headers = rows[0].map(h => h.toLowerCase().trim().replace(/&nbsp;/g,''));
+  const find = (...keys) => {
+    for (const k of keys) {
+      const i = headers.findIndex(h => h.includes(k.toLowerCase()));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+  const iCheckin  = find('check-in','arriv','arrivée');
+  const iCheckout = find('check-out','depart','départ');
+  const iGuest    = find('guest name','nom du client','boosted by','booked by');
+  const iPersons  = find('persons','personnes');
+  const iStatus   = find('status','statut');
+  const iCancel   = find('cancellation','annulation');
+  const iBookNum  = find('book number','numéro de réservation','réservation');
+
+  const result = []; let skipped = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.length < 3) continue;
+    const status = iStatus >= 0 ? (r[iStatus]||'').toLowerCase() : 'ok';
+    const cancel = iCancel >= 0 ? (r[iCancel]||'').trim() : '';
+    if (status === 'cancelled' || status === 'annulé' || cancel) { skipped++; continue; }
+    if (status !== 'ok' && status !== 'confirmée' && status !== 'confirmed' && status) { skipped++; continue; }
+    const checkin  = isoDate(iCheckin>=0 ? r[iCheckin] : '');
+    const checkout = isoDate(iCheckout>=0 ? r[iCheckout] : '');
+    if (!checkin || !checkout) { skipped++; continue; }
+    const guestName = iGuest>=0 ? (r[iGuest]||'').trim() : '';
+    const persons   = iPersons>=0 ? (r[iPersons]||'').trim() : '';
+    const bookNum   = iBookNum>=0 ? (r[iBookNum]||'').trim() : uid();
+    result.push({
+      id: 'bkcom_' + bookNum,
+      apt, source:'booking',
+      checkin, checkout, clean: checkout,
+      guests: persons,
+      notes: guestName,
+      paid: 'unpaid', _local: true
+    });
+  }
+  return { bookings: result, skipped, source: 'Booking.com', warnings: [] };
+}
+
+function parseAirbnbCSV(text, apt) {
+  const rows = parseCSVRows(text);
+  if (rows.length < 2) throw new Error('Empty file');
+  const headers = rows[0].map(h => h.toLowerCase().trim());
+  const find = (...keys) => {
+    for (const k of keys) {
+      const i = headers.findIndex(h => h.includes(k.toLowerCase()));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+  const iCode    = find('code','confirmation');
+  const iStatus  = find('statut','status');
+  const iGuest   = find('voyageur','guest','nom');
+  const iAdults  = find('adultes','adults');
+  const iChildren= find('enfants','children');
+  const iStart   = find('début','start','check-in','date de début');
+  const iEnd     = find('fin','end','check-out','date de fin');
+
+  const result = []; let skipped = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.length < 3) continue;
+    const status = iStatus>=0 ? (r[iStatus]||'').toLowerCase() : '';
+    if (status && !status.includes('confirm')) { skipped++; continue; }
+    const checkin  = isoDate(iStart>=0 ? r[iStart] : '');
+    const checkout = isoDate(iEnd>=0 ? r[iEnd] : '');
+    if (!checkin || !checkout) { skipped++; continue; }
+    const adults   = iAdults>=0 ? parseInt(r[iAdults]||0) : 0;
+    const children = iChildren>=0 ? parseInt(r[iChildren]||0) : 0;
+    const guests   = adults + children > 0 ? String(adults+children) : '';
+    const guestName = iGuest>=0 ? (r[iGuest]||'').trim() : '';
+    const code     = iCode>=0 ? (r[iCode]||uid()).trim() : uid();
+    result.push({
+      id: 'airbnb_' + code,
+      apt, source:'airbnb',
+      checkin, checkout, clean: checkout,
+      guests,
+      notes: guestName,
+      paid: 'unpaid', _local: true
+    });
+  }
+  return { bookings: result, skipped, source: 'Airbnb', warnings: [] };
+}
+
+function parsePingotelCSV(text, apt) {
+  const rows = parseCSVRows(text);
+  if (rows.length < 2) throw new Error('Empty file');
+  const headers = rows[0].map(h => h.toLowerCase().trim());
+  const find = k => headers.findIndex(h => h.includes(k.toLowerCase()));
+  const iCode     = find('code');
+  const iStatus   = find('status');
+  const iStart    = find('startdate');
+  const iEnd      = find('enddate');
+  const iEmail    = find('email');
+  const iResource = find('resources');
+
+  const result = []; let skipped = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (r.length < 3) continue;
+    const status = iStatus>=0 ? (r[iStatus]||'').toLowerCase() : '';
+    if (status.includes('cancel')) { skipped++; continue; }
+    const checkin  = isoDate(iStart>=0 ? r[iStart] : '');
+    const checkout = isoDate(iEnd>=0 ? r[iEnd] : '');
+    if (!checkin || !checkout) { skipped++; continue; }
+    // Auto-detect apt from resource name
+    const resource = iResource>=0 ? (r[iResource]||'').toLowerCase() : '';
+    const detectedApt = resource.includes('300') || resource.includes('beach') ? 'b' :
+                        resource.includes('800') || resource.includes('ocean') ? 'a' : apt;
+    const email = iEmail>=0 ? (r[iEmail]||'').trim() : '';
+    const code  = iCode>=0 ? (r[iCode]||uid()).trim() : uid();
+    result.push({
+      id: 'ping_' + code,
+      apt: detectedApt, source:'direct',
+      checkin, checkout, clean: checkout,
+      guests: '',
+      notes: email,
+      paid: status.includes('paid') ? 'paid' : 'unpaid',
+      _local: true
+    });
+  }
+  return { bookings: result, skipped, source: 'Pingotel', warnings: result.length ? [] : ['No valid bookings found.'] };
+}
+
 // ── INIT ─────────────────────────────────────
 applyLang();
 syncSheet();
 setInterval(syncSheet, 10*60*1000);
 </script>
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📥 Import Bookings</h2>
+    <div class="cfg-hint">
+      Supported formats:<br>
+      • <strong>Booking.com</strong> — XLS export (FR or EN)<br>
+      • <strong>Airbnb</strong> — CSV export (reservations.csv)<br>
+      • <strong>Pingotel</strong> — CSV export (bookings-*.csv)<br>
+    </div>
+    <div class="form-group">
+      <label>Apartment</label>
+      <select id="importApt">
+        <option value="a">🏠 1-Praceta Jose Saramago</option>
+        <option value="b">🏡 2-Al-Paranagua</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>File (XLS or CSV)</label>
+      <input type="file" id="importFile" accept=".csv,.xls,.xlsx" style="padding:10px 14px;font-size:14px">
+    </div>
+    <div id="importPreview" style="display:none;margin-bottom:12px">
+      <div class="cfg-hint" id="importSummary" style="background:#dcfce7;color:#166534"></div>
+      <div id="importWarnings" style="font-size:12px;color:#dc2626;font-weight:700;margin-top:6px"></div>
+    </div>
+    <button class="btn-primary" id="importParseBtn">🔍 Preview Import</button>
+    <button class="btn-primary" id="importConfirmBtn" style="display:none;background:#16a34a;margin-top:8px">✅ Confirm Import</button>
+    <button class="btn-secondary" id="cancelImportBtn">Cancel</button>
+  </div>
+</div>
+
 </body>
 </html>
