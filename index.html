@@ -1356,7 +1356,6 @@ if(!cfg.sheetUrl && bookings.length===0){
 }
 
 // ── IMPORT LOGIC ─────────────────────────────
-// Pre-load SheetJS for XLS support
 function loadSheetJS(cb) {
   if (typeof XLSX !== 'undefined') { if(cb) cb(); return; }
   const s = document.createElement('script');
@@ -1365,7 +1364,6 @@ function loadSheetJS(cb) {
   document.head.appendChild(s);
 }
 
-// Open modal
 document.getElementById('openImportBtn').onclick = function() {
   document.getElementById('importFile').value = '';
   document.getElementById('importStatus').style.display = 'none';
@@ -1373,265 +1371,311 @@ document.getElementById('openImportBtn').onclick = function() {
   loadSheetJS();
 };
 
-// Cancel — close modal
 document.getElementById('cancelImportBtn').onclick = function() {
   document.getElementById('importOverlay').classList.remove('open');
 };
 
-// Import Now button
 document.getElementById('importDoBtn').onclick = function() {
-  const file = document.getElementById('importFile').files[0];
-  if (!file) { showImportStatus('Please select a file first.', 'warn'); return; }
-  const apt    = document.getElementById('importApt').value;
-  const source = document.getElementById('importSource').value;
-  const fname  = file.name.toLowerCase();
-  const isXLS  = fname.endsWith('.xls') || fname.endsWith('.xlsx');
+  var fileInput = document.getElementById('importFile');
+  var file = fileInput.files[0];
+  if (!file) {
+    showImportStatus('Please select a file first.', 'warn');
+    return;
+  }
+  var apt    = document.getElementById('importApt').value;
+  var source = document.getElementById('importSource').value;
+  var fname  = file.name.toLowerCase();
+  var isXLS  = fname.endsWith('.xls') || fname.endsWith('.xlsx');
+
+  showImportStatus('Reading file...', 'warn');
 
   if (isXLS) {
     if (typeof XLSX === 'undefined') {
-      showImportStatus('Loading XLS parser, please try again in 2 seconds...', 'warn');
-      loadSheetJS(); return;
+      showImportStatus('Loading XLS reader... please click Import again in 3 seconds.', 'warn');
+      loadSheetJS(null);
+      return;
     }
-    const reader = new FileReader();
+    var reader = new FileReader();
+    reader.onerror = function() { showImportStatus('Could not read file.', 'error'); };
     reader.onload = function(e) {
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const csv = XLSX.utils.sheet_to_csv(ws);
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var csv = XLSX.utils.sheet_to_csv(ws);
         doImport(csv, source, apt);
       } catch(err) {
-        showImportStatus('XLS read error: ' + err.message, 'error');
+        showImportStatus('XLS error: ' + err.message, 'error');
       }
     };
     reader.readAsArrayBuffer(file);
   } else {
-    const reader = new FileReader();
+    var reader = new FileReader();
+    reader.onerror = function() { showImportStatus('Could not read file.', 'error'); };
     reader.onload = function(e) {
-      doImport(e.target.result, source, apt);
+      try {
+        doImport(e.target.result, source, apt);
+      } catch(err) {
+        showImportStatus('Error: ' + err.message, 'error');
+      }
     };
     reader.readAsText(file, 'UTF-8');
   }
 };
 
 function showImportStatus(msg, type) {
-  const el = document.getElementById('importStatus');
+  var el = document.getElementById('importStatus');
   el.style.display = 'block';
   el.textContent = msg;
   el.style.background = type === 'error' ? '#fee2e2' : type === 'warn' ? '#fef3c7' : '#dcfce7';
   el.style.color = type === 'error' ? '#991b1b' : type === 'warn' ? '#92400e' : '#166534';
 }
 
-function doImport(text, source, apt) {
-  let result;
+// Strip accents for fuzzy column matching
+function stripAccents(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Find column index by matching keywords (accent-insensitive)
+function findCol(headers) {
+  var keys = Array.prototype.slice.call(arguments, 1);
+  for (var ki = 0; ki < keys.length; ki++) {
+    var kn = stripAccents(keys[ki].toLowerCase()).replace(/[^a-z0-9]/g, '');
+    for (var i = 0; i < headers.length; i++) {
+      var hn = stripAccents(headers[i].toLowerCase()).replace(/[^a-z0-9]/g, '');
+      if (hn.indexOf(kn) !== -1 || kn.indexOf(hn) !== -1) return i;
+    }
+  }
+  return -1;
+}
+
+function parseRows(text) {
+  var lines = text.replace(/\r/g, '').split('\n');
+  var result = [];
+  for (var li = 0; li < lines.length; li++) {
+    var line = lines[li];
+    if (!line.trim()) continue;
+    var cols = [];
+    var cur = '';
+    var inQ = false;
+    for (var ci = 0; ci < line.length; ci++) {
+      var c = line[ci];
+      if (c === '"') { inQ = !inQ; }
+      else if ((c === ',' || c === ';') && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    result.push(cols);
+  }
+  return result;
+}
+
+function toISO(str) {
+  if (!str) return '';
+  str = String(str).trim();
+  // Remove non-breaking spaces, quotes, &nbsp;
+  str = str.replace(/[\u00a0\u00ad]/g, '').replace(/^["']|["']$/g, '').trim();
+  if (!str || str.length < 6) return '';
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  // DD/MM/YYYY
+  var m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    var a = parseInt(m[1]), b = parseInt(m[2]), y = m[3];
+    // If first number > 12, must be day
+    if (a > 12) return y + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+    // Else assume DD/MM (European)
+    return y + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  }
+  // Excel serial number
+  var n = parseInt(str);
+  if (!isNaN(n) && str.match(/^\d+$/) && n > 40000 && n < 60000) {
+    var d = new Date((n - 25569) * 86400000);
+    return d.toLocaleDateString('sv-SE', {timeZone: 'Europe/Lisbon'});
+  }
+  // Try native date parse
   try {
-    if (source === 'booking') result = parseBookingCSV(text, apt);
-    else if (source === 'airbnb') result = parseAirbnbCSV(text, apt);
-    else result = parseDirectCSV(text, apt);
-  } catch(err) {
-    showImportStatus('Error: ' + err.message, 'error');
+    var d = new Date(str);
+    if (!isNaN(d.getTime()) && d.getFullYear() > 2020)
+      return d.toLocaleDateString('sv-SE', {timeZone: 'Europe/Lisbon'});
+  } catch(e) {}
+  return '';
+}
+
+function doImport(text, source, apt) {
+  var rows = parseRows(text);
+  if (rows.length < 2) {
+    showImportStatus('File appears empty or unreadable.', 'error');
     return;
   }
 
-  if (!result.bookings.length) {
-    showImportStatus('No valid bookings found. Check the Source selection matches your file.', 'warn');
-    return;
-  }
+  var headers = rows[0];
+  var parsed = [];
+  var skipped = 0;
 
-  let added = 0, replaced = 0, skippedDupe = 0;
-  for (const nb of result.bookings) {
-    // Find overlapping booking for same apt
-    const overlapIdx = bookings.findIndex(x =>
-      x.apt === nb.apt && x.id !== nb.id &&
-      x.checkin && nb.checkin && x.checkout && nb.checkout &&
-      x.checkin < nb.checkout && nb.checkin < x.checkout
-    );
-    if (overlapIdx !== -1) {
-      const existing = bookings[overlapIdx];
-      const newIsPlatform = nb.source === 'booking' || nb.source === 'airbnb';
-      const exIsPlatform  = existing.source === 'booking' || existing.source === 'airbnb';
-      // Platform wins over direct
-      if (newIsPlatform && !exIsPlatform) {
-        bookings[overlapIdx] = nb; replaced++;
-      } else if (!newIsPlatform && exIsPlatform) {
-        skippedDupe++; // keep platform, skip direct
-      } else {
-        // Same type — keep one with more info
-        if (nb.notes && !existing.notes) { bookings[overlapIdx] = nb; replaced++; }
-        else skippedDupe++;
+  if (source === 'booking') {
+    // Booking.com: FR and EN XLS/CSV
+    var iIn   = findCol(headers, 'checkin', 'arrivee', 'arrival', 'arriv');
+    var iOut  = findCol(headers, 'checkout', 'depart', 'departure');
+    var iName = findCol(headers, 'guestname', 'nomduclient', 'clientname', 'guest');
+    var iPers = findCol(headers, 'persons', 'personnes');
+    var iStat = findCol(headers, 'status', 'statut');
+    var iCanc = findCol(headers, 'cancellation', 'annulation');
+    var iNum  = findCol(headers, 'booknumber', 'numeroreservation', 'numero');
+
+    if (iIn === -1 || iOut === -1) {
+      showImportStatus('Cannot find check-in/check-out columns in this file. Are you sure this is a Booking.com export?', 'error');
+      return;
+    }
+
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
+      var stat = iStat >= 0 ? r[iStat].toLowerCase() : 'ok';
+      var canc = iCanc >= 0 ? r[iCanc].trim() : '';
+      if (canc || stat.indexOf('cancel') !== -1 || stat.indexOf('annul') !== -1 || stat === 'c') { skipped++; continue; }
+      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
+      if (!ci || !co || ci >= co) { skipped++; continue; }
+      var num = iNum >= 0 && r[iNum] ? r[iNum].trim() : uid();
+      parsed.push({
+        id: 'bk_' + num,
+        apt: apt, source: 'booking',
+        checkin: ci, checkout: co, clean: co,
+        guests: iPers >= 0 ? r[iPers].trim() : '',
+        notes:  iName >= 0 ? r[iName].trim() : '',
+        paid: 'unpaid', _local: true
+      });
+    }
+
+  } else if (source === 'airbnb') {
+    // Airbnb CSV - French export
+    // Column names: "Date de début", "Date de fin", "Statut", "Nom du voyageur"
+    var iIn = -1, iOut = -1;
+    for (var hi = 0; hi < headers.length; hi++) {
+      var hs = stripAccents(headers[hi].toLowerCase());
+      if (iIn === -1  && (hs.indexOf('debut') !== -1 || hs.indexOf('start') !== -1 || hs.indexOf('checkin') !== -1)) iIn = hi;
+      if (iOut === -1 && (hs.indexOf('fin') !== -1   || hs.indexOf('end') !== -1   || hs.indexOf('checkout') !== -1 || hs.indexOf('depart') !== -1)) iOut = hi;
+    }
+    var iCode = findCol(headers, 'code', 'confirmation');
+    var iStat = findCol(headers, 'statut', 'status');
+    var iName = findCol(headers, 'voyageur', 'guestname', 'nom');
+    var iAdu  = findCol(headers, 'adultes', 'adults');
+    var iChi  = findCol(headers, 'enfants', 'children');
+
+    if (iIn === -1 || iOut === -1) {
+      showImportStatus('Cannot find date columns. Are you sure this is an Airbnb export?', 'error');
+      return;
+    }
+
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
+      var stat = iStat >= 0 ? stripAccents(r[iStat].toLowerCase()) : 'confirm';
+      // Airbnb: "Confirmée" → confirmed, skip "Annulée"
+      if (stat.indexOf('annul') !== -1 || stat.indexOf('cancel') !== -1) { skipped++; continue; }
+      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
+      if (!ci || !co || ci >= co) { skipped++; continue; }
+      var adults = iAdu >= 0 ? (parseInt(r[iAdu]) || 0) : 0;
+      var kids   = iChi >= 0 ? (parseInt(r[iChi]) || 0) : 0;
+      var code   = iCode >= 0 && r[iCode] ? r[iCode].trim() : uid();
+      parsed.push({
+        id: 'ab_' + code,
+        apt: apt, source: 'airbnb',
+        checkin: ci, checkout: co, clean: co,
+        guests: (adults + kids) > 0 ? String(adults + kids) : '',
+        notes:  iName >= 0 ? r[iName].trim() : '',
+        paid: 'unpaid', _local: true
+      });
+    }
+
+  } else {
+    // Direct / Pingotel
+    var iCode = findCol(headers, 'code');
+    var iStat = findCol(headers, 'status', 'statut');
+    var iIn   = findCol(headers, 'startdate', 'start', 'checkin', 'arrivee', 'arrival');
+    var iOut  = findCol(headers, 'enddate', 'end', 'checkout', 'depart', 'departure');
+    var iRes  = findCol(headers, 'resources', 'resource', 'apartment', 'logement');
+    var iName = findCol(headers, 'guest', 'nom', 'name', 'client');
+    var iMail = findCol(headers, 'email');
+    var iPers = findCol(headers, 'persons', 'personnes', 'adults', 'adultes');
+
+    if (iIn === -1 || iOut === -1) {
+      showImportStatus('Cannot find date columns. Check the file format.', 'error');
+      return;
+    }
+
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
+      var stat = iStat >= 0 ? r[iStat].toLowerCase() : '';
+      if (stat.indexOf('cancel') !== -1 || stat.indexOf('refund') !== -1) { skipped++; continue; }
+      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
+      if (!ci || !co || ci >= co) { skipped++; continue; }
+      // Auto-detect apt from resource
+      var detApt = apt;
+      if (iRes >= 0 && r[iRes]) {
+        var res = r[iRes].toLowerCase();
+        if (res.indexOf('300') !== -1 || res.indexOf('beach') !== -1) detApt = 'b';
+        else if (res.indexOf('800') !== -1 || res.indexOf('ocean') !== -1) detApt = 'a';
       }
+      var code  = iCode >= 0 && r[iCode] ? r[iCode].trim() : uid();
+      var name  = iName >= 0 && r[iName] ? r[iName].trim() : (iMail >= 0 ? r[iMail].trim() : '');
+      var isPaid = stat.indexOf('paid') !== -1 || stat.indexOf('confirm') !== -1;
+      parsed.push({
+        id: 'dir_' + code,
+        apt: detApt, source: 'direct',
+        checkin: ci, checkout: co, clean: co,
+        guests: iPers >= 0 ? r[iPers].trim() : '',
+        notes: name,
+        paid: isPaid ? 'paid' : 'unpaid',
+        _local: true
+      });
+    }
+  }
+
+  if (!parsed.length) {
+    showImportStatus('No valid bookings found (' + skipped + ' skipped). Check the Source matches your file.', 'warn');
+    return;
+  }
+
+  // Merge into bookings
+  var added = 0, replaced = 0, dupeSkipped = 0;
+  for (var bi = 0; bi < parsed.length; bi++) {
+    var nb = parsed[bi];
+    var overlapIdx = -1;
+    for (var xi = 0; xi < bookings.length; xi++) {
+      var x = bookings[xi];
+      if (x.apt === nb.apt && x.id !== nb.id &&
+          x.checkin && nb.checkin && x.checkout && nb.checkout &&
+          x.checkin < nb.checkout && nb.checkin < x.checkout) {
+        overlapIdx = xi; break;
+      }
+    }
+    if (overlapIdx !== -1) {
+      var ex = bookings[overlapIdx];
+      var nbPlat = nb.source === 'booking' || nb.source === 'airbnb';
+      var exPlat = ex.source === 'booking' || ex.source === 'airbnb';
+      if (nbPlat && !exPlat) { bookings[overlapIdx] = nb; replaced++; }
+      else if (!nbPlat && exPlat) { dupeSkipped++; }
+      else if (nb.notes && !ex.notes) { bookings[overlapIdx] = nb; replaced++; }
+      else { dupeSkipped++; }
       continue;
     }
-    // Exact ID match → update
-    const exactIdx = bookings.findIndex(x => x.id === nb.id);
-    if (exactIdx !== -1) { bookings[exactIdx] = {...bookings[exactIdx], ...nb}; replaced++; }
+    var exactIdx = -1;
+    for (var xi = 0; xi < bookings.length; xi++) {
+      if (bookings[xi].id === nb.id) { exactIdx = xi; break; }
+    }
+    if (exactIdx !== -1) { bookings[exactIdx] = Object.assign({}, bookings[exactIdx], nb); replaced++; }
     else { bookings.push(nb); added++; }
   }
 
   saveB(); render();
   if (viewMode === 'calendar') renderCalendar();
   document.getElementById('importOverlay').classList.remove('open');
-  const msg = '✅ Import done: ' + added + ' added' +
-    (replaced > 0 ? ', ' + replaced + ' updated' : '') +
-    (result.skipped > 0 ? ', ' + result.skipped + ' skipped (cancelled)' : '') +
-    (skippedDupe > 0 ? ', ' + skippedDupe + ' duplicates removed' : '');
+  var msg = '✅ ' + added + ' bookings imported';
+  if (replaced > 0) msg += ', ' + replaced + ' updated';
+  if (skipped > 0)  msg += ', ' + skipped + ' skipped (cancelled)';
+  if (dupeSkipped > 0) msg += ', ' + dupeSkipped + ' duplicates removed';
   showSyncSuccess(msg);
-}
-
-// ── CSV PARSERS ───────────────────────────────
-function splitCSV(text) {
-  const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim());
-  if (!lines.length) return [];
-  const firstLine = lines[0];
-  const sep = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
-  return lines.map(line => {
-    const cols = []; let cur = ''; let q = false;
-    for (const c of line) {
-      if (c === '"') { q = !q; }
-      else if (c === sep && !q) { cols.push(cur.trim().replace(/^"|"$/g,'')); cur = ''; }
-      else cur += c;
-    }
-    cols.push(cur.trim().replace(/^"|"$/g,''));
-    return cols;
-  });
-}
-
-function toISO(str) {
-  if (!str) return '';
-  str = String(str).trim().replace(/[\u00a0&]|nbsp;/g,'').trim();
-  if (!str || str.length < 6) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0,10);
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
-    const [a,b,y] = str.split('/');
-    // Detect DD/MM vs MM/DD: if first part > 12, must be DD
-    if (parseInt(a) > 12) return y+'-'+b.padStart(2,'0')+'-'+a.padStart(2,'0');
-    return y+'-'+a.padStart(2,'0')+'-'+b.padStart(2,'0');
-  }
-  // Excel serial
-  const n = parseInt(str);
-  if (!isNaN(n) && n > 40000 && n < 60000) {
-    const d = new Date((n - 25569) * 86400000);
-    return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Lisbon'});
-  }
-  try {
-    const d = new Date(str);
-    if (!isNaN(d) && d.getFullYear() > 2020)
-      return d.toLocaleDateString('sv-SE',{timeZone:'Europe/Lisbon'});
-  } catch(e){}
-  return '';
-}
-
-function colIdx(headers, ...keys) {
-  for (const k of keys) {
-    const kn = k.toLowerCase().replace(/[^a-z0-9]/g,'');
-    const i = headers.findIndex(h => h.toLowerCase().replace(/[^a-z0-9]/g,'').includes(kn));
-    if (i !== -1) return i;
-  }
-  return -1;
-}
-
-function parseBookingCSV(text, apt) {
-  const rows = splitCSV(text);
-  if (rows.length < 2) throw new Error('File is empty');
-  const h = rows[0];
-  const iIn   = colIdx(h,'checkin','arriv','arrivée');
-  const iOut  = colIdx(h,'checkout','départ','depart','departure');
-  const iName = colIdx(h,'guestname','nomduclient','clientname');
-  const iPers = colIdx(h,'persons','personnes');
-  const iStat = colIdx(h,'status','statut');
-  const iCanc = colIdx(h,'cancellation','annulation');
-  const iNum  = colIdx(h,'booknumber','numéroréservation','bookid','reservation');
-  if (iIn === -1 || iOut === -1) throw new Error('Cannot find date columns. Is Source set to Booking.com?');
-  const out = []; let skipped = 0;
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[0] || r.join('').trim() === '') continue;
-    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : 'ok';
-    const canc = iCanc>=0 ? (r[iCanc]||'').trim() : '';
-    if (canc || stat.includes('cancel') || stat.includes('annul') || stat === 'c') { skipped++; continue; }
-    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
-    if (!ci || !co || ci >= co) { skipped++; continue; }
-    const num = iNum>=0 ? r[iNum].trim() : uid();
-    out.push({ id:'bk_'+num, apt, source:'booking', checkin:ci, checkout:co, clean:co,
-      guests: iPers>=0 ? r[iPers].trim() : '',
-      notes:  iName>=0 ? r[iName].trim() : '',
-      paid:'unpaid', _local:true });
-  }
-  return { bookings:out, skipped, source:'Booking.com', warnings:[] };
-}
-
-function parseAirbnbCSV(text, apt) {
-  const rows = splitCSV(text);
-  if (rows.length < 2) throw new Error('File is empty');
-  const h = rows[0];
-  // Airbnb uses French: "Date de début", "Date de fin", "Nom du voyageur"
-  const iCode = colIdx(h,'code','confirmation');
-  const iStat = colIdx(h,'statut','status');
-  const iName = colIdx(h,'voyageur','guestname','nom');
-  const iAdu  = colIdx(h,'adultes','adults');
-  const iChi  = colIdx(h,'enfants','children');
-  // Date cols — try multiple names
-  let iIn = -1, iOut = -1;
-  h.forEach((col,i) => {
-    const c = col.toLowerCase();
-    if (iIn  === -1 && (c.includes('début') || c.includes('debut') || c.includes('start') || c.includes('check-in') || c.includes('checkin'))) iIn = i;
-    if (iOut === -1 && (c.includes('fin') || c.includes('end') || c.includes('check-out') || c.includes('checkout') || c.includes('depart'))) iOut = i;
-  });
-  if (iIn === -1 || iOut === -1) throw new Error('Cannot find date columns. Is Source set to Airbnb?');
-  const out = []; let skipped = 0;
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[0] || r.join('').trim() === '') continue;
-    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : 'confirm';
-    if (!stat.includes('confirm')) { skipped++; continue; }
-    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
-    if (!ci || !co || ci >= co) { skipped++; continue; }
-    const adults = iAdu>=0 ? parseInt(r[iAdu])||0 : 0;
-    const kids   = iChi>=0 ? parseInt(r[iChi])||0 : 0;
-    const code   = iCode>=0 ? r[iCode].trim() : uid();
-    out.push({ id:'ab_'+code, apt, source:'airbnb', checkin:ci, checkout:co, clean:co,
-      guests: (adults+kids)>0 ? String(adults+kids) : '',
-      notes:  iName>=0 ? r[iName].trim() : '',
-      paid:'unpaid', _local:true });
-  }
-  return { bookings:out, skipped, source:'Airbnb', warnings:[] };
-}
-
-function parseDirectCSV(text, apt) {
-  const rows = splitCSV(text);
-  if (rows.length < 2) throw new Error('File is empty');
-  const h = rows[0];
-  const iCode = colIdx(h,'code');
-  const iStat = colIdx(h,'status','statut');
-  const iIn   = colIdx(h,'startdate','start','checkin','arrivée','arrival');
-  const iOut  = colIdx(h,'enddate','end','checkout','départ','departure');
-  const iRes  = colIdx(h,'resources','resource','apartment','logement');
-  const iName = colIdx(h,'guest','nom','name','client');
-  const iMail = colIdx(h,'email');
-  const iPers = colIdx(h,'persons','personnes','adults','adultes');
-  if (iIn===-1 || iOut===-1) throw new Error('Cannot find date columns. Check the file format.');
-  const out = []; let skipped = 0;
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[0] || r.join('').trim() === '') continue;
-    const stat = iStat>=0 ? (r[iStat]||'').toLowerCase() : '';
-    if (stat.includes('cancel') || stat.includes('refund')) { skipped++; continue; }
-    const ci = toISO(r[iIn]), co = toISO(r[iOut]);
-    if (!ci || !co || ci >= co) { skipped++; continue; }
-    let detApt = apt;
-    if (iRes>=0) {
-      const res = (r[iRes]||'').toLowerCase();
-      if (res.includes('300') || res.includes('beach')) detApt = 'b';
-      else if (res.includes('800') || res.includes('ocean')) detApt = 'a';
-    }
-    const code  = iCode>=0 ? r[iCode].trim() : uid();
-    const name  = iName>=0 ? r[iName].trim() : (iMail>=0 ? r[iMail].trim() : '');
-    const isPaid = stat.includes('paid') || stat.includes('confirm');
-    out.push({ id:'dir_'+code, apt:detApt, source:'direct', checkin:ci, checkout:co, clean:co,
-      guests: iPers>=0 ? r[iPers].trim() : '',
-      notes: name,
-      paid: isPaid ? 'paid' : 'unpaid', _local:true });
-  }
-  return { bookings:out, skipped, source:'Direct / Pingotel', warnings:[] };
 }
 
 // ── INIT ─────────────────────────────────────
