@@ -1,1724 +1,998 @@
 <!DOCTYPE html>
-<html lang="pt">
+
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>SummerClean – Permanent Summer</title>
+<title>SummerClean</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --green: #22c55e;
-    --green-light: #dcfce7;
-    --red: #ef4444;
-    --red-light: #fee2e2;
-    --blue: #3b82f6;
-    --blue-light: #dbeafe;
-    --yellow: #f59e0b;
-    --yellow-light: #fef3c7;
-    --apt-a: #8b5cf6;
-    --apt-a-light: #ede9fe;
-    --apt-b: #0ea5e9;
-    --apt-b-light: #e0f2fe;
-    --bg: #f1f5f9;
-    --card: #ffffff;
-    --text: #1e293b;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --radius: 18px;
-    --shadow: 0 2px 16px rgba(0,0,0,0.07);
-  }
+:root {
+  --green:#22c55e; --green-bg:#dcfce7;
+  --red:#ef4444;   --red-bg:#fee2e2;
+  --blue:#3b82f6;  --blue-bg:#dbeafe;
+  --yellow:#f59e0b;--yellow-bg:#fef3c7;
+  --a:#8b5cf6;     --a-bg:#ede9fe;
+  --b:#0ea5e9;     --b-bg:#e0f2fe;
+  --bg:#f1f5f9; --card:#fff; --text:#1e293b;
+  --muted:#64748b; --border:#e2e8f0;
+  --r:16px; --shadow:0 2px 12px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* HEADER */
+header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.hl{display:flex;align-items:center;gap:10px}
+.hi{width:38px;height:38px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.ht h1{font-size:18px;font-weight:900}
+.ht p{font-size:11px;color:#94a3b8;font-weight:600;margin-top:1px}
+.hr{display:flex;gap:6px}
+.hbtn{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:16px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding-bottom: 100px;
-  }
+/* ADMIN BAR */
+#adminBar{display:none;align-items:center;justify-content:space-between;background:#fef3c7;padding:8px 14px;margin:10px 14px 0;border-radius:12px;border:2px solid #fde68a}
+#adminBar.show{display:flex}
+#adminBar span{font-size:12px;font-weight:800;color:#92400e}
+#adminBar div{display:flex;gap:6px}
+#adminBar button{background:#0f172a;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-family:‘Nunito’,sans-serif;font-size:12px;font-weight:800;cursor:pointer}
 
-  header {
-    background: #0f172a;
-    color: white;
-    padding: 18px 20px 14px;
-    position: sticky; top: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.25);
-  }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .header-icon {
-    width: 42px; height: 42px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-  .header-title h1 { font-size: 19px; font-weight: 900; letter-spacing: -0.3px; }
-  .header-title p { font-size: 11px; color: #94a3b8; font-weight: 600; margin-top: 1px; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
-  .hbtn {
-    background: rgba(255,255,255,0.1); border: none; color: white;
-    font-size: 17px; width: 38px; height: 38px; border-radius: 50%;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-  }
-  .hbtn:hover { background: rgba(255,255,255,0.2); }
-  #syncBtn.spinning { animation: spin 0.9s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* TOAST */
+#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:800;font-family:‘Nunito’,sans-serif;white-space:nowrap;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:90vw;text-align:center}
+#toast.ok{background:#dcfce7;color:#15803d}
+#toast.err{background:#fee2e2;color:#dc2626}
+#toast.warn{background:#fef3c7;color:#92400e}
 
-  .admin-pill {
-    display: none; background: #fef3c7; color: #92400e;
-    font-size: 12px; font-weight: 800; padding: 6px 14px;
-    margin: 10px 16px 0; border-radius: 999px;
-    align-items: center; gap: 6px;
-  }
-  .admin-pill.visible { display: flex; }
+/* FILTERS */
+.filters{display:flex;gap:6px;padding:12px 14px 8px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fb{flex-shrink:0;padding:7px 14px;border-radius:999px;border:2px solid var(–border);background:#fff;font-family:‘Nunito’,sans-serif;font-size:13px;font-weight:800;color:var(–muted);cursor:pointer;transition:all .15s}
+.fb.on{background:#0f172a;border-color:#0f172a;color:#fff}
+.fb.a.on{background:var(–a);border-color:var(–a)}
+.fb.b.on{background:var(–b);border-color:var(–b)}
 
-  .setup-banner {
-    margin: 12px 16px 0; background: #1e293b;
-    border-radius: var(--radius); padding: 14px 16px;
-    color: white; font-size: 13px; font-weight: 600;
-    line-height: 1.5; display: none;
-  }
-  .setup-banner.visible { display: block; }
-  .setup-banner strong { color: #fbbf24; }
+/* TODAY BANNER */
+#todayBanner{display:none;margin:0 14px 10px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:var(–r);padding:14px 16px;color:#fff}
+#todayBanner.show{display:flex;align-items:center;gap:12px}
+#todayBanner .ti{font-size:30px}
+#todayBanner h3{font-size:15px;font-weight:900}
+#todayBanner p{font-size:12px;opacity:.9;margin-top:2px}
 
-  .filter-bar {
-    display: flex; gap: 8px; padding: 14px 16px 10px;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  .filter-bar::-webkit-scrollbar { display: none; }
-  .filter-btn {
-    flex-shrink: 0; padding: 8px 16px; border-radius: 999px;
-    border: 2px solid var(--border); background: white;
-    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
-    color: var(--muted); cursor: pointer; transition: all 0.15s;
-  }
-  .filter-btn.active { background: #0f172a; border-color: #0f172a; color: white; }
-  .filter-btn.apt-a.active { background: var(--apt-a); border-color: var(--apt-a); color: white; }
-  .filter-btn.apt-b.active { background: var(--apt-b); border-color: var(--apt-b); color: white; }
+/* VIEW TOGGLE */
+.vtoggle{display:flex;gap:6px;padding:0 14px 10px}
+.vbtn{flex:1;padding:8px;border-radius:10px;border:2px solid var(–border);background:#fff;font-family:‘Nunito’,sans-serif;font-size:13px;font-weight:800;color:var(–muted);cursor:pointer;transition:all .15s}
+.vbtn.on{background:#0f172a;border-color:#0f172a;color:#fff}
 
-  .today-banner {
-    margin: 0 16px 10px;
-    background: linear-gradient(135deg, #f59e0b, #ef4444);
-    border-radius: var(--radius); padding: 16px 18px;
-    color: white; display: none; align-items: center; gap: 14px;
-  }
-  .today-banner.visible { display: flex; }
-  .today-banner .ti { font-size: 34px; }
-  .today-banner h3 { font-size: 16px; font-weight: 900; }
-  .today-banner p { font-size: 13px; font-weight: 600; opacity: 0.9; margin-top: 2px; }
+/* LIST */
+#list{padding:0 14px;display:flex;flex-direction:column;gap:10px}
+.slabel{font-size:11px;font-weight:900;color:var(–muted);text-transform:uppercase;letter-spacing:1px;padding:0 2px;margin:14px 0 6px}
 
-  .section-label {
-    font-size: 11px; font-weight: 900; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1.2px;
-    padding: 0 16px; margin: 18px 0 8px;
-  }
+/* CARD */
+.bcard{background:#fff;border-radius:var(–r);box-shadow:var(–shadow);overflow:hidden;border:2px solid transparent;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.bcard.past{opacity:.5}
+.bcard.tod{border-color:var(–yellow);box-shadow:0 0 0 3px rgba(245,158,11,.12),var(–shadow)}
+.ctop{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;border-bottom:1px solid var(–border)}
+.abadge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.abadge.a{background:var(–a-bg);color:var(–a)}
+.abadge.b{background:var(–b-bg);color:var(–b)}
+.sbadge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(–bg)}
+.sbadge.airbnb{background:#fff0eb;color:#ff5a5f}
+.sbadge.booking{background:#e8f0fe;color:#003580}
+.sbadge.direct{background:#f0fdf4;color:#15803d}
+.cdates{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 14px 8px;gap:6px}
+.db{display:flex;flex-direction:column;gap:2px}
+.db.r{text-align:right}
+.dlbl{font-size:10px;font-weight:800;color:var(–muted);text-transform:uppercase;letter-spacing:.5px}
+.dval{font-size:17px;font-weight:900;color:var(–text)}
+.dday{font-size:11px;font-weight:700;color:var(–muted)}
+.darr{font-size:18px;color:#cbd5e1}
+.cinfo{display:flex;gap:8px;padding:0 12px 10px}
+.gchip{background:var(–bg);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:800}
+.nchip{flex:1;background:var(–bg);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(–muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfoot{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(–border)}
+.pbtn{flex:1;padding:9px;border-radius:10px;border:none;font-family:‘Nunito’,sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s}
+.pbtn.paid{background:var(–green-bg);color:#15803d}
+.pbtn.unpaid{background:var(–red-bg);color:#dc2626}
+.pbtn:active{transform:scale(.97)}
+.pbtn.locked{pointer-events:none;opacity:.55}
+.adm{display:none;gap:6px}
+.adm.show{display:flex}
+.ibtn{width:36px;height:36px;border-radius:9px;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.ibtn.e{background:var(–blue-bg);color:var(–blue)}
+.ibtn.d{background:var(–red-bg);color:var(–red)}
 
-  .bookings-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+/* CALENDAR */
+#calView{display:none;padding:0 14px 14px}
+.cnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cnbtn{width:34px;height:34px;border-radius:9px;border:2px solid var(–border);background:#fff;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cmlbl{font-size:16px;font-weight:900}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(–border);border-radius:12px;overflow:hidden;border:2px solid var(–border)}
+.cdh{background:#0f172a;color:#fff;text-align:center;font-size:10px;font-weight:800;padding:6px 2px;text-transform:uppercase}
+.cday{background:#fff;min-height:48px;padding:3px;position:relative}
+.cday.om{background:#f8fafc}
+.cday.nt{background:#fef3c7}
+.cnum{font-size:12px;font-weight:800;color:var(–text);display:block;margin-bottom:2px}
+.cday.om .cnum{color:#cbd5e1}
+.cday.nt .cnum{color:var(–yellow)}
+.cev{display:block;border-radius:3px;padding:1px 3px;font-size:9px;font-weight:800;color:#fff;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cev.a{background:var(–a)}
+.cev.b{background:var(–b)}
+.clgd{display:flex;align-items:center;gap:10px;padding:8px 2px 0;font-size:12px;font-weight:700;color:var(–muted)}
+.ldot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:3px}
 
-  .booking-card {
-    background: var(--card); border-radius: var(--radius);
-    box-shadow: var(--shadow); overflow: hidden;
-    border: 2px solid transparent; transition: transform 0.15s;
-    animation: fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-  .booking-card.past { opacity: 0.5; }
-  .booking-card.today-card { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15), var(--shadow); }
+/* FABs */
+#fabAdd{position:fixed;bottom:22px;right:18px;width:56px;height:56px;border-radius:50%;background:#0f172a;color:#fff;font-size:26px;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;align-items:center;justify-content:center;z-index:200}
+#fabAdd.show{display:flex}
+#fabWA{position:fixed;bottom:22px;left:18px;width:52px;height:52px;border-radius:50%;background:#25d366;color:#fff;font-size:22px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:200}
 
-  .card-top {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 14px 10px; border-bottom: 1px solid var(--border);
-  }
-  .apt-badge {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 12px; border-radius: 999px;
-    font-size: 13px; font-weight: 800;
-  }
-  .apt-badge.a { background: var(--apt-a-light); color: var(--apt-a); }
-  .apt-badge.b { background: var(--apt-b-light); color: var(--apt-b); }
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px}
+.empty .ico{font-size:52px;margin-bottom:12px}
+.empty h3{font-size:18px;font-weight:900;margin-bottom:6px}
+.empty p{font-size:14px;color:var(–muted);font-weight:600}
 
-  .source-badge {
-    font-size: 11px; font-weight: 800; padding: 4px 10px;
-    border-radius: 8px; background: var(--bg); color: var(--muted);
-  }
-  .source-badge.airbnb { background: #fff0eb; color: #ff5a5f; }
-  .source-badge.booking { background: #e8f0fe; color: #003580; }
-  .source-badge.direct { background: #f0fdf4; color: #16a34a; }
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 36px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:su .22s ease}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mhandle{width:38px;height:4px;background:#e2e8f0;border-radius:999px;margin:0 auto 16px}
+.modal h2{font-size:19px;font-weight:900;margin-bottom:16px}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:11px;font-weight:800;color:var(–muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:2px solid var(–border);border-radius:11px;font-family:‘Nunito’,sans-serif;font-size:16px;font-weight:600;color:var(–text);background:#fff;outline:none;-webkit-appearance:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#0f172a}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn1{width:100%;padding:14px;background:#0f172a;color:#fff;border:none;border-radius:13px;font-family:‘Nunito’,sans-serif;font-size:16px;font-weight:800;cursor:pointer;margin-top:4px}
+.btn2{width:100%;padding:12px;background:transparent;color:var(–muted);border:2px solid var(–border);border-radius:13px;font-family:‘Nunito’,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+.btn3{width:100%;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:13px;font-family:‘Nunito’,sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;display:none}
+.section-sep{font-size:11px;font-weight:900;color:var(–muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:8px;border-bottom:2px solid var(–border)}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(–bg);border-radius:11px;margin-bottom:7px;font-size:14px;font-weight:700}
+.toggle{position:relative;width:42px;height:23px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.ttrack{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;cursor:pointer;transition:background .2s}
+.ttrack:before{content:’’;position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle input:checked + .ttrack{background:#22c55e}
+.toggle input:checked + .ttrack:before{transform:translateX(19px)}
+#importStatus{display:none;padding:11px 13px;border-radius:11px;font-size:13px;font-weight:700;margin-bottom:12px}
+.hint{background:var(–bg);border-radius:11px;padding:11px 13px;font-size:12px;font-weight:600;color:var(–muted);line-height:1.6;margin-bottom:12px}
+.hint strong{color:var(–text)}
 
-  .card-dates {
-    display: grid; grid-template-columns: 1fr auto 1fr;
-    align-items: center; padding: 14px 16px 10px; gap: 8px;
-  }
-  .date-block { display: flex; flex-direction: column; gap: 2px; }
-  .date-block.right { text-align: right; }
-  .date-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
-  .date-value { font-size: 17px; font-weight: 900; color: var(--text); }
-  .date-sub { font-size: 11px; font-weight: 700; color: var(--muted); }
-  .date-arrow { font-size: 20px; color: #cbd5e1; }
-
-  .card-clean {
-    margin: 0 14px 12px; background: var(--bg);
-    border-radius: 10px; padding: 8px 12px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .clean-label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; }
-  .clean-value { font-size: 13px; font-weight: 800; color: var(--text); }
-  .clean-value.today-clean { color: var(--yellow); }
-
-  .card-info-row {
-    display: flex; align-items: center; gap: 8px; padding: 0 14px 10px;
-  }
-  .guests-chip {
-    display: flex; align-items: center; gap: 4px;
-    background: var(--bg); border-radius: 8px; padding: 5px 10px;
-    font-size: 13px; font-weight: 800;
-  }
-  .notes-chip {
-    flex: 1; background: var(--bg); border-radius: 8px; padding: 5px 10px;
-    font-size: 12px; font-weight: 600; color: var(--muted);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-
-  .card-footer {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 14px; border-top: 1px solid var(--border);
-  }
-  .payment-btn {
-    flex: 1; padding: 10px; border-radius: 12px; border: none;
-    font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
-    cursor: pointer; transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .payment-btn.paid { background: var(--green-light); color: #15803d; }
-  .payment-btn.unpaid { background: var(--red-light); color: #dc2626; }
-  .payment-btn:active { transform: scale(0.97); }
-
-  .admin-actions { display: none; gap: 6px; }
-  .admin-actions.visible { display: flex; }
-  .icon-btn {
-    width: 38px; height: 38px; border-radius: 10px; border: none;
-    cursor: pointer; font-size: 15px;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform 0.15s;
-  }
-  .icon-btn:active { transform: scale(0.9); }
-  .edit-btn { background: var(--blue-light); color: var(--blue); }
-  .delete-btn { background: var(--red-light); color: var(--red); }
-
-  #fabAdd {
-    position: fixed; bottom: 24px; right: 20px;
-    width: 58px; height: 58px; border-radius: 50%;
-    background: #0f172a; color: white; font-size: 28px;
-    border: none; cursor: pointer;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.3);
-    display: none; align-items: center; justify-content: center;
-    transition: transform 0.15s; z-index: 200;
-  }
-  #fabAdd.visible { display: flex; }
-  #fabAdd:active { transform: scale(0.92); }
-
-  #fabWA {
-    position: fixed; bottom: 24px; left: 20px;
-    width: 54px; height: 54px; border-radius: 50%;
-    background: #25d366; color: white; font-size: 24px;
-    border: none; cursor: pointer;
-    box-shadow: 0 4px 18px rgba(37,211,102,0.45);
-    display: flex; align-items: center; justify-content: center;
-    text-decoration: none; z-index: 200; transition: transform 0.15s;
-  }
-  #fabWA:active { transform: scale(0.92); }
-
-  .empty-state { text-align: center; padding: 60px 24px; }
-  .empty-state .emoji { font-size: 56px; margin-bottom: 14px; }
-  .empty-state h3 { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
-  .empty-state p { font-size: 15px; color: var(--muted); font-weight: 600; }
-
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 300; display: none; align-items: flex-end; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: white; border-radius: 24px 24px 0 0;
-    padding: 20px 20px 40px; width: 100%; max-width: 500px;
-    max-height: 92vh; overflow-y: auto; animation: slideUp 0.25s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-handle {
-    width: 40px; height: 4px; background: #e2e8f0;
-    border-radius: 999px; margin: 0 auto 18px;
-  }
-  .modal h2 { font-size: 20px; font-weight: 900; margin-bottom: 18px; }
-
-  .form-group { margin-bottom: 14px; }
-  .form-group label {
-    display: block; font-size: 11px; font-weight: 800; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
-  }
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    width: 100%; padding: 12px 14px;
-    border: 2px solid var(--border); border-radius: 12px;
-    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 600;
-    color: var(--text); background: white; outline: none;
-    transition: border-color 0.15s; -webkit-appearance: none;
-  }
-  .form-group input:focus,
-  .form-group select:focus,
-  .form-group textarea:focus { border-color: #0f172a; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  .btn-primary {
-    width: 100%; padding: 15px; background: #0f172a; color: white;
-    border: none; border-radius: 14px; font-family: 'Nunito', sans-serif;
-    font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 4px;
-  }
-  .btn-secondary {
-    width: 100%; padding: 13px; background: transparent; color: var(--muted);
-    border: 2px solid var(--border); border-radius: 14px;
-    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
-    cursor: pointer; margin-top: 8px;
-  }
-
-  .pin-modal {
-    background: white; border-radius: 24px 24px 0 0;
-    padding: 28px 24px 40px; width: 100%; max-width: 360px;
-    text-align: center; animation: slideUp 0.25s ease;
-  }
-  .pin-modal h2 { font-size: 22px; font-weight: 900; margin-bottom: 6px; }
-  .pin-modal p { color: var(--muted); font-size: 14px; margin-bottom: 22px; font-weight: 600; }
-  .pin-display { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
-  .pin-dot {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid var(--border); background: transparent; transition: all 0.15s;
-  }
-  .pin-dot.filled { background: #0f172a; border-color: #0f172a; }
-  .pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; max-width: 260px; margin: 0 auto; }
-  .pin-key {
-    padding: 15px; background: var(--bg); border: 2px solid var(--border);
-    border-radius: 14px; font-family: 'Nunito', sans-serif;
-    font-size: 22px; font-weight: 800; cursor: pointer; transition: all 0.1s;
-  }
-  .pin-key:active { background: #0f172a; color: white; border-color: #0f172a; transform: scale(0.94); }
-  .pin-error { color: var(--red); font-size: 13px; font-weight: 700; margin-top: 14px; min-height: 18px; }
-
-  .admin-bar {
-    display: none; align-items: center; justify-content: space-between;
-    background: #fef3c7; padding: 10px 16px; margin: 10px 16px 0;
-    border-radius: 14px; border: 2px solid #fde68a;
-  }
-  .admin-bar.visible { display: flex; }
-  .admin-bar span { font-size: 13px; font-weight: 800; color: #92400e; }
-  .admin-bar button {
-    background: #0f172a; color: white; border: none;
-    padding: 8px 16px; border-radius: 10px;
-    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
-    cursor: pointer;
-  }
-
-  .cfg-hint {
-    background: #f8fafc; border-radius: 12px; padding: 12px 14px;
-    margin-bottom: 14px; font-size: 13px; font-weight: 600;
-    color: var(--muted); line-height: 1.6;
-  }
-  .cfg-hint strong { color: var(--text); }
-
-  .lang-switcher {
-    display: flex; gap: 3px; background: rgba(255,255,255,0.1);
-    border-radius: 8px; padding: 3px;
-  }
-  .lang-btn {
-    background: transparent; border: none; color: rgba(255,255,255,0.6);
-    font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 800;
-    padding: 4px 7px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
-  }
-  .lang-btn.active { background: white; color: #0f172a; }
-
-  /* VIEW TOGGLE */
-  .view-toggle {
-    display: flex; gap: 6px; padding: 0 16px 12px;
-  }
-  .view-btn {
-    flex: 1; padding: 9px; border-radius: 12px;
-    border: 2px solid var(--border); background: white;
-    font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
-    color: var(--muted); cursor: pointer; transition: all 0.15s;
-  }
-  .view-btn.active { background: #0f172a; border-color: #0f172a; color: white; }
-
-  /* CALENDAR */
-  .cal-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .cal-nav-btn {
-    width: 36px; height: 36px; border-radius: 10px;
-    border: 2px solid var(--border); background: white;
-    font-size: 20px; font-weight: 800; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text);
-  }
-  .cal-month-label { font-size: 17px; font-weight: 900; color: var(--text); }
-  .cal-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    gap: 3px; background: var(--border); border-radius: 14px;
-    overflow: hidden; border: 2px solid var(--border);
-  }
-  .cal-day-header {
-    background: #0f172a; color: white; text-align: center;
-    font-size: 10px; font-weight: 800; padding: 6px 2px;
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .cal-day {
-    background: white; min-height: 52px; padding: 4px;
-    position: relative; cursor: default;
-  }
-  .cal-day.other-month { background: #f8fafc; }
-  .cal-day.is-today { background: #fef3c7; }
-  .cal-day-num {
-    font-size: 12px; font-weight: 800; color: var(--text);
-    display: block; margin-bottom: 2px;
-  }
-  .cal-day.other-month .cal-day-num { color: #cbd5e1; }
-  .cal-day.is-today .cal-day-num { color: var(--yellow); }
-  .cal-event {
-    display: block; border-radius: 4px; padding: 1px 3px;
-    font-size: 9px; font-weight: 800; margin-bottom: 1px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    color: white;
-  }
-  .cal-event.a { background: var(--apt-a); }
-  .cal-event.b { background: var(--apt-b); }
-  .cal-event.checkout-day { opacity: 0.6; }
-  .cal-legend {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 4px 0; font-size: 12px; font-weight: 700; color: var(--muted);
-  }
-  .leg-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-
-  .cfg-section-title {
-    font-size: 11px; font-weight: 900; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 1px;
-    margin: 20px 0 10px; padding-bottom: 8px;
-    border-bottom: 2px solid var(--border);
-  }
-  .cfg-subsection-title {
-    font-size: 13px; font-weight: 800; color: var(--text);
-    margin: 12px 0 8px;
-  }
-  .perm-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; background: #f8fafc; border-radius: 12px;
-    margin-bottom: 8px; font-size: 14px; font-weight: 700; color: var(--text);
-  }
-  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-track {
-    position: absolute; inset: 0; background: #cbd5e1; border-radius: 999px;
-    cursor: pointer; transition: background 0.2s;
-  }
-  .toggle-track:before {
-    content: ''; position: absolute; width: 18px; height: 18px;
-    left: 3px; top: 3px; background: white; border-radius: 50%;
-    transition: transform 0.2s;
-  }
-  .toggle-switch input:checked + .toggle-track { background: #22c55e; }
-  .toggle-switch input:checked + .toggle-track:before { transform: translateX(20px); }
+/* PIN */
+.pinmodal{background:#fff;border-radius:22px 22px 0 0;padding:26px 22px 38px;width:100%;max-width:340px;text-align:center;animation:su .22s ease}
+.pinmodal h2{font-size:21px;font-weight:900;margin-bottom:6px}
+.pinmodal p{color:var(–muted);font-size:14px;margin-bottom:20px;font-weight:600}
+.pindots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
+.pd{width:15px;height:15px;border-radius:50%;border:2px solid var(–border);background:transparent;transition:all .15s}
+.pd.on{background:#0f172a;border-color:#0f172a}
+.pkpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:250px;margin:0 auto}
+.pk{padding:14px;background:var(–bg);border:2px solid var(–border);border-radius:13px;font-family:‘Nunito’,sans-serif;font-size:21px;font-weight:800;cursor:pointer;transition:all .1s}
+.pk:active{background:#0f172a;color:#fff;border-color:#0f172a;transform:scale(.94)}
+.pierr{color:var(–red);font-size:13px;font-weight:700;margin-top:12px;min-height:18px}
 </style>
+
 </head>
 <body>
 
 <header>
-  <div class="header-left">
-    <div class="header-icon">🧹</div>
-    <div class="header-title">
+  <div class="hl">
+    <div class="hi">🧹</div>
+    <div class="ht">
       <h1>SummerClean</h1>
-      <p id="headerSub">Permanent Summer</p>
+      <p id="hSub">Permanent Summer</p>
     </div>
   </div>
-  <div class="header-right">
-    <div class="lang-switcher">
-      <button class="lang-btn active" data-lang="pt">PT</button>
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="fr">FR</button>
-    </div>
-    <button class="hbtn" id="syncBtn" title="Sincronizar">🔄</button>
-    <button class="hbtn" id="adminToggleBtn" title="Admin">⚙️</button>
+  <div class="hr">
+    <button class="hbtn" id="syncBtn" title="Sync">🔄</button>
+    <button class="hbtn" id="pinBtn" title="Admin">⚙️</button>
   </div>
 </header>
 
-<div class="admin-bar" id="adminBar">
-  <span>🔐 Administrador</span>
-  <div style="display:flex;gap:6px">
-    <button id="openImportBtn">📥 Import</button>
-    <button id="openCfgBtn">⚙️ Settings</button>
-  </div>
-</div>
-<div class="setup-banner" id="setupBanner">
-  <strong>⚙️ Configuração pendente:</strong> Faça login como admin (⚙️ no canto superior direito) e depois toque em "Configurações" para adicionar o Google Sheet e WhatsApp.
-</div>
-<div class="setup-banner" id="syncError" style="background:#fee2e2;color:#991b1b;display:none">
-  <strong>❌ Erro de sincronização:</strong> <span id="syncErrorMsg"></span>
-</div>
-<div class="setup-banner" id="syncSuccess" style="background:#dcfce7;color:#166534;display:none">
-  ✅ <span id="syncSuccessMsg"></span>
-</div>
-<div class="setup-banner" id="syncError" style="background:#fee2e2;color:#991b1b;display:none">
-  <strong>❌ Erro de sincronização:</strong> <span id="syncErrorMsg"></span>
-</div>
-<div class="setup-banner" id="syncSuccess" style="background:#dcfce7;color:#166534;display:none">
-  ✅ <span id="syncSuccessMsg"></span>
-</div>
-
-<div class="filter-bar">
-  <button class="filter-btn active" data-filter="all">Todos</button>
-  <button class="filter-btn apt-a" data-filter="a">🏠 Saramago</button>
-  <button class="filter-btn apt-b" data-filter="b">🏡 Al-Paranaguá</button>
-  <button class="filter-btn" data-filter="today">📅 Hoje</button>
-  <button class="filter-btn" data-filter="unpaid">🔴 Por Pagar</button>
-</div>
-
-<!-- VIEW TOGGLE -->
-<div class="view-toggle">
-  <button class="view-btn active" id="viewListBtn">☰ <span id="vl-label">List</span></button>
-  <button class="view-btn" id="viewCalBtn">📅 <span id="vc-label">Calendar</span></button>
-</div>
-
-<!-- CALENDAR VIEW -->
-<div id="calendarView" style="display:none;padding:0 16px 16px">
-  <div class="cal-nav">
-    <button class="cal-nav-btn" id="calPrev">‹</button>
-    <span class="cal-month-label" id="calMonthLabel"></span>
-    <button class="cal-nav-btn" id="calNext">›</button>
-  </div>
-  <div class="cal-grid" id="calGrid"></div>
-  <div class="cal-legend">
-    <span class="leg-dot" style="background:var(--apt-a)"></span><span id="leg-a">Saramago</span>
-    <span class="leg-dot" style="background:var(--apt-b)"></span><span id="leg-b">Al-Paranaguá</span>
-  </div>
-</div>
-
-<div class="today-banner" id="todayBanner">
-  <div class="ti">🌅</div>
+<div id="adminBar">
+  <span>🔐 Admin</span>
   <div>
-    <h3 id="todayCount"></h3>
-    <p id="todayApts"></p>
+    <button onclick="openImport()">📥 Import</button>
+    <button onclick="openCfg()">⚙️ Settings</button>
   </div>
 </div>
 
-<div id="bookingsList" class="bookings-list"></div>
+<div id="toast"></div>
 
-<button id="fabAdd" title="Nova reserva">+</button>
+<div class="filters" id="filters">
+  <button class="fb on" data-f="all">All</button>
+  <button class="fb a"  data-f="a">🏠 Saramago</button>
+  <button class="fb b"  data-f="b">🏡 Al-Paranaguá</button>
+  <button class="fb"    data-f="today">📅 Today</button>
+  <button class="fb"    data-f="unpaid">🔴 Unpaid</button>
+</div>
+
+<div id="todayBanner">
+  <div class="ti">🌅</div>
+  <div><h3 id="tbCount"></h3><p id="tbApts"></p></div>
+</div>
+
+<div class="vtoggle">
+  <button class="vbtn on" id="vList">☰ List</button>
+  <button class="vbtn"    id="vCal">📅 Calendar</button>
+</div>
+
+<div id="list"></div>
+
+<div id="calView">
+  <div class="cnav">
+    <button class="cnbtn" id="calPrev">‹</button>
+    <span class="cmlbl" id="calLbl"></span>
+    <button class="cnbtn" id="calNext">›</button>
+  </div>
+  <div class="cgrid" id="calGrid"></div>
+  <div class="clgd">
+    <span class="ldot" style="background:var(--a)"></span>Saramago
+    <span class="ldot" style="background:var(--b)"></span>Al-Paranaguá
+  </div>
+</div>
+
+<button id="fabAdd">+</button>
 <a id="fabWA" href="#" target="_blank">💬</a>
 
-<!-- PIN -->
-<div class="modal-overlay" id="pinOverlay">
-  <div class="pin-modal">
-    <div class="modal-handle"></div>
-    <h2>🔐 Acesso Admin</h2>
-    <p>PIN de 4 dígitos</p>
-    <div class="pin-display" id="pinDisplay">
-      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+<!-- PIN MODAL -->
+
+<div class="overlay" id="pinOverlay">
+  <div class="pinmodal">
+    <div class="mhandle"></div>
+    <h2>🔐 Admin Access</h2>
+    <p>Enter your 4-digit PIN</p>
+    <div class="pindots"><div class="pd" id="p0"></div><div class="pd" id="p1"></div><div class="pd" id="p2"></div><div class="pd" id="p3"></div></div>
+    <div class="pkpad">
+      <button class="pk" data-n="1">1</button><button class="pk" data-n="2">2</button><button class="pk" data-n="3">3</button>
+      <button class="pk" data-n="4">4</button><button class="pk" data-n="5">5</button><button class="pk" data-n="6">6</button>
+      <button class="pk" data-n="7">7</button><button class="pk" data-n="8">8</button><button class="pk" data-n="9">9</button>
+      <button class="pk" data-n="del" style="font-size:17px">⌫</button>
+      <button class="pk" data-n="0">0</button>
+      <button class="pk" data-n="x" style="font-size:13px;font-weight:800;color:var(--muted)">Exit</button>
     </div>
-    <div class="pin-keypad">
-      <button class="pin-key" data-n="1">1</button><button class="pin-key" data-n="2">2</button><button class="pin-key" data-n="3">3</button>
-      <button class="pin-key" data-n="4">4</button><button class="pin-key" data-n="5">5</button><button class="pin-key" data-n="6">6</button>
-      <button class="pin-key" data-n="7">7</button><button class="pin-key" data-n="8">8</button><button class="pin-key" data-n="9">9</button>
-      <button class="pin-key" data-n="del" style="font-size:18px">⌫</button>
-      <button class="pin-key" data-n="0">0</button>
-      <button class="pin-key" data-n="cancel" style="font-size:13px;font-weight:800;color:var(--muted)">Sair</button>
-    </div>
-    <div class="pin-error" id="pinError"></div>
+    <div class="pierr" id="pinErr"></div>
   </div>
 </div>
 
-<!-- ADD/EDIT -->
-<div class="modal-overlay" id="bookingOverlay">
+<!-- ADD/EDIT MODAL -->
+
+<div class="overlay" id="editOverlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <h2 id="modalTitle">➕ Nova Reserva</h2>
-    <input type="hidden" id="editId">
-    <div class="form-group">
-      <label>Apartamento</label>
-      <select id="fApt">
-        <option value="a">🏠 1-Praceta Jose Saramago</option>
-        <option value="b">🏡 2-Al-Paranagua</option>
-      </select>
+    <div class="mhandle"></div>
+    <h2 id="editTitle">New Booking</h2>
+    <input type="hidden" id="eId">
+    <div class="fg"><label>Apartment</label>
+      <select id="eApt"><option value="a">🏠 1-Praceta Jose Saramago</option><option value="b">🏡 2-Al-Paranagua</option></select>
     </div>
-    <div class="form-group">
-      <label>Origem</label>
-      <select id="fSource">
-        <option value="airbnb">Airbnb</option>
-        <option value="booking">Booking.com</option>
-        <option value="direct">Direto / Pingotel</option>
-      </select>
+    <div class="fg"><label>Source</label>
+      <select id="eSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct / Pingotel</option></select>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Check-in</label><input type="date" id="fCheckin"></div>
-      <div class="form-group"><label>Check-out</label><input type="date" id="fCheckout"></div>
+    <div class="fr">
+      <div class="fg"><label>Check-in</label><input type="date" id="eIn"></div>
+      <div class="fg"><label>Check-out</label><input type="date" id="eOut"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Hóspedes</label><input type="number" id="fGuests" min="1" max="20" value="2"></div>
-      <div class="form-group"><label>Data Limpeza</label><input type="date" id="fClean"></div>
+    <div class="fr">
+      <div class="fg"><label>Guests</label><input type="number" id="eGuests" min="1" max="30" value="2"></div>
+      <div class="fg"><label>Clean date</label><input type="date" id="eClean"></div>
     </div>
-    <div class="form-group">
-      <label>Notas</label>
-      <textarea id="fNotes" rows="2" placeholder="Pedidos especiais, chaves..."></textarea>
+    <div class="fg"><label>Notes</label><textarea id="eNotes" rows="2" placeholder="Baby cot, VIP, keys..."></textarea></div>
+    <div class="fg"><label>Payment</label>
+      <select id="ePaid"><option value="unpaid">🔴 Unpaid</option><option value="paid">🟢 Paid</option></select>
     </div>
-    <div class="form-group">
-      <label>Pagamento</label>
-      <select id="fPaid">
-        <option value="unpaid">🔴 Por Pagar</option>
-        <option value="paid">🟢 Pago</option>
-      </select>
-    </div>
-    <button class="btn-primary" id="saveBtn">💾 Guardar</button>
-    <button class="btn-secondary" id="cancelBtn">Cancelar</button>
+    <button class="btn1" onclick="saveEdit()">💾 Save</button>
+    <button class="btn2" onclick="closeModal('editOverlay')">Cancel</button>
   </div>
 </div>
 
-<!-- CONFIG -->
-<div class="modal-overlay" id="configOverlay">
+<!-- IMPORT MODAL -->
+
+<div class="overlay" id="importOverlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <h2 id="cfg-title">⚙️ Settings</h2>
+    <div class="mhandle"></div>
+    <h2>📥 Import Bookings</h2>
+    <div class="fg"><label>Source</label>
+      <select id="iSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct / Pingotel</option></select>
+    </div>
+    <div class="fg"><label>Apartment (default)</label>
+      <select id="iApt"><option value="a">🏠 Saramago</option><option value="b">🏡 Al-Paranaguá</option></select>
+    </div>
+    <div class="fg"><label>File (CSV or XLS/XLSX)</label>
+      <input type="file" id="iFile" accept=".csv,.xls,.xlsx" style="padding:10px 13px;font-size:15px">
+    </div>
+    <div class="hint">
+      <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
+      <strong>Airbnb:</strong> Reservations → Export CSV<br>
+      <strong>Pingotel:</strong> Bookings → Export CSV<br>
+      Platform bookings win over direct duplicates.
+    </div>
+    <div id="importStatus"></div>
+    <button class="btn1" onclick="doImport()">📥 Import Now</button>
+    <button class="btn2" onclick="closeModal('importOverlay')">Cancel</button>
+  </div>
+</div>
 
-    <!-- SECTION 1: WHATSAPP -->
-    <div class="cfg-section-title" id="cfg-s1">💬 WhatsApp Notifications</div>
-    <div class="cfg-hint" id="cfg-wa-hint">
-      Save +34 644 91 07 79 and send "I allow callmebot to send me messages" on WhatsApp to get your API key.
-    </div>
-    <div class="cfg-subsection-title" id="cfg-cleaner-label">🧹 Cleaner</div>
-    <div class="form-row">
-      <div class="form-group"><label id="cfg-wa-num-label">Number (351...)</label><input type="text" id="cfgWaN" placeholder="351912345678"></div>
-      <div class="form-group"><label id="cfg-wa-key-label">API Key</label><input type="text" id="cfgWaK" placeholder="123456"></div>
-    </div>
-    <div class="cfg-subsection-title" id="cfg-admin-label">👤 Admin (you)</div>
-    <div class="form-row">
-      <div class="form-group"><label id="cfg-adm-num-label">Number (351...)</label><input type="text" id="cfgAdmN" placeholder="351924477353"></div>
-      <div class="form-group"><label id="cfg-adm-key-label">API Key</label><input type="text" id="cfgAdmK" placeholder="654321"></div>
-    </div>
+<!-- SETTINGS MODAL -->
 
-    <!-- SECTION 3: PERMISSIONS -->
-    <div class="cfg-section-title" id="cfg-s2">🔐 Cleaner Permissions</div>
-    <div class="perm-row">
-      <span id="t-perm-payment">Toggle payment status</span>
-      <label class="toggle-switch"><input type="checkbox" id="permPayment" checked><span class="toggle-track"></span></label>
+<div class="overlay" id="cfgOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <h2>⚙️ Settings</h2>
+    <div class="section-sep">💬 WhatsApp — Cleaner</div>
+    <div class="fr">
+      <div class="fg"><label>Number (351...)</label><input type="text" id="cWaN" placeholder="351912345678"></div>
+      <div class="fg"><label>CallMeBot API Key</label><input type="text" id="cWaK" placeholder="123456"></div>
     </div>
-    <div class="perm-row">
-      <span id="t-perm-notes">View notes</span>
-      <label class="toggle-switch"><input type="checkbox" id="permNotes" checked><span class="toggle-track"></span></label>
+    <div class="section-sep">👤 WhatsApp — Admin</div>
+    <div class="fr">
+      <div class="fg"><label>Number (351...)</label><input type="text" id="cAdmN" placeholder="351924477353"></div>
+      <div class="fg"><label>CallMeBot API Key</label><input type="text" id="cAdmK" placeholder="7950168"></div>
     </div>
-
-    <!-- ACTIONS -->
-    <button class="btn-primary" id="saveCfgBtn" style="margin-top:20px">💾 <span id="cfg-save-label">Save Settings</span></button>
-    <button class="btn-secondary" id="cancelCfgBtn"><span id="cfg-cancel-label">Cancel</span></button>
-    <button class="btn-secondary" id="clearAllBtn" style="color:#ef4444;border-color:#fecaca;margin-top:8px">🗑️ <span id="cfg-clear-label">Clear all local data</span></button>
+    <div class="section-sep">🔐 Cleaner Permissions</div>
+    <div class="prow"><span>Toggle payment status</span><label class="toggle"><input type="checkbox" id="pPay" checked><span class="ttrack"></span></label></div>
+    <div class="prow"><span>View notes</span><label class="toggle"><input type="checkbox" id="pNotes" checked><span class="ttrack"></span></label></div>
+    <button class="btn1" onclick="saveCfg()">💾 Save</button>
+    <button class="btn2" onclick="closeModal('cfgOverlay')">Cancel</button>
+    <div class="section-sep" style="margin-top:20px">⚠️ Danger Zone</div>
+    <button class="btn2" style="color:var(--red);border-color:#fecaca" onclick="clearAll()">🗑️ Clear all bookings</button>
   </div>
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────
-const ADMIN_PIN   = "2302";
-const APT_A_NAME  = "1-Praceta Jose Saramago";
-const APT_B_NAME  = "2-Al-Paranagua";
-const APT_A_SHORT = "Saramago";
-const APT_B_SHORT = "Al-Paranaguá";
-const ADMIN_WA_DEFAULT = "351924477353";
-const ADMIN_KEY_DEFAULT = "7950168";
+// ─── CONFIG (change these) ───────────────────────
+var PIN      = '2302';
+var ADMIN_WA = '351924477353';
+var APT_A    = '1-Praceta Jose Saramago';
+var APT_B    = '2-Al-Paranagua';
+var AS       = 'Saramago';
+var BS       = 'Al-Paranaguá';
 
-// ── TRANSLATIONS ─────────────────────────────
-const T = {
-  pt: {
-    appSub:'Gestão de Limpezas',
-    upcoming:'📅 Próximas & Hoje', past:'📁 Anteriores',
-    today:'limpeza hoje!', todays:'limpezas hoje!',
-    checkin:'Check-in', checkout:'Check-out', cleaning:'Limpeza',
-    paid:'✅ Pago', unpaid:'❌ Por Pagar',
-    all:'Todos', aptA:'🏠 Saramago', aptB:'🏡 Al-Paranaguá',
-    todayF:'📅 Hoje', unpaidF:'🔴 Por Pagar',
-    empty:'Sem reservas neste filtro.', emptyTitle:'Tudo limpo!',
-    syncOk:'Sincronizado:', reservations:'reservas.',
-    adminMode:'Administrador', normalMode:'Permanent Summer',
-    settings:'⚙️ Configurações', todayBadge:'⚡ HOJE',
-    source:{airbnb:'Airbnb',booking:'Booking.com',direct:'Direto'},
-    weekdays:['dom','seg','ter','qua','qui','sex','sáb'],
-    months:['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'],
-    cfg:{title:'⚙️ Configurações',s1:'📊 Fonte de dados',s2:'💬 Notificações WhatsApp',
-      s3:'🔐 Permissões da Empregada',
-      sheetHint:'Folha Google → Ficheiro → Partilhar → Publicar na web → CSV → Copiar link',
-      sheetLabel:'Link Google Sheet (CSV)',testBtn:'Testar ligação',
-      cleaner:'🧹 Empregada',admin:'👤 Admin (você)',
-      numLabel:'Número (351...)',keyLabel:'API Key',
-      permPayment:'Alternar estado de pagamento',permNotes:'Ver notas',
-      save:'Guardar Configurações',cancel:'Cancelar',clear:'Apagar dados locais'},
-    msg:{sheetEmpty:'Ligação OK — sem reservas ainda.',sheetError:'Erro ao aceder ao Sheet. Verifique o link.',sheetHtml:'O Sheet não está publicado como CSV.',clearConfirm:'Apagar reservas locais? As configurações são mantidas.',deleteConfirm:'Apagar esta reserva?',savedOk:'Configurações guardadas!',fillDates:'Por favor preencha as datas.'},
-  },
-  en: {
-    appSub:'Cleaning Manager',
-    upcoming:'📅 Upcoming & Today', past:'📁 Previous',
-    today:'cleaning today!', todays:'cleanings today!',
-    checkin:'Check-in', checkout:'Check-out', cleaning:'Cleaning',
-    paid:'✅ Paid', unpaid:'❌ Unpaid',
-    all:'All', aptA:'🏠 Saramago', aptB:'🏡 Al-Paranaguá',
-    todayF:'📅 Today', unpaidF:'🔴 Unpaid',
-    empty:'No bookings in this filter.', emptyTitle:'All clean!',
-    syncOk:'Synced:', reservations:'bookings.',
-    adminMode:'Administrator', normalMode:'Permanent Summer',
-    settings:'⚙️ Settings', todayBadge:'⚡ TODAY',
-    source:{airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'},
-    weekdays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
-    months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    cfg:{title:'⚙️ Settings',s1:'📊 Data Source',s2:'💬 WhatsApp Notifications',
-      s3:'🔐 Cleaner Permissions',
-      sheetHint:'Google Sheet → File → Share → Publish to web → CSV → Copy link',
-      sheetLabel:'Google Sheet CSV Link',testBtn:'Test connection',
-      cleaner:'🧹 Cleaner',admin:'👤 Admin (you)',
-      numLabel:'Number (351...)',keyLabel:'API Key',
-      permPayment:'Toggle payment status',permNotes:'View notes',
-      save:'Save Settings',cancel:'Cancel',clear:'Clear local data'},
-    msg:{sheetEmpty:'Connection OK — no bookings yet.',sheetError:'Cannot reach the Sheet. Check the link.',sheetHtml:'Sheet is not published as CSV.',clearConfirm:'Clear local bookings? Settings will be kept.',deleteConfirm:'Delete this booking?',savedOk:'Settings saved!',fillDates:'Please fill in the dates.'},
-  },
-  fr: {
-    appSub:"Gestion du Ménage",
-    upcoming:"📅 À venir & Aujourd'hui", past:"📁 Précédentes",
-    today:"nettoyage aujourd'hui!", todays:"nettoyages aujourd'hui!",
-    checkin:"Arrivée", checkout:"Départ", cleaning:"Nettoyage",
-    paid:"✅ Payé", unpaid:"❌ Non payé",
-    all:"Tous", aptA:"🏠 Saramago", aptB:"🏡 Al-Paranaguá",
-    todayF:"📅 Aujourd'hui", unpaidF:"🔴 Non payé",
-    empty:"Aucune réservation dans ce filtre.", emptyTitle:"Tout est propre!",
-    syncOk:"Synchronisé:", reservations:"réservations.",
-    adminMode:"Administrateur", normalMode:"Permanent Summer",
-    settings:"⚙️ Paramètres", todayBadge:"⚡ AUJOURD'HUI",
-    source:{airbnb:"Airbnb",booking:"Booking.com",direct:"Direct"},
-    weekdays:["dim","lun","mar","mer","jeu","ven","sam"],
-    months:["jan","fév","mar","avr","mai","jun","jul","aoû","sep","oct","nov","déc"],
-    cfg:{title:"⚙️ Paramètres",s1:"📊 Source de données",s2:"💬 Notifications WhatsApp",
-      s3:"🔐 Permissions de la femme de ménage",
-      sheetHint:"Google Sheet → Fichier → Partager → Publier sur le web → CSV → Copier le lien",
-      sheetLabel:"Lien Google Sheet (CSV)",testBtn:"Tester la connexion",
-      cleaner:"🧹 Femme de ménage",admin:"👤 Admin (vous)",
-      numLabel:"Numéro (351...)",keyLabel:"Clé API",
-      permPayment:"Changer le statut du paiement",permNotes:"Voir les notes",
-      save:"Enregistrer",cancel:"Annuler",clear:"Effacer les données locales"},
-    msg:{sheetEmpty:"Connexion OK — aucune réservation encore.",sheetError:"Impossible d'accéder au Sheet. Vérifiez le lien.",sheetHtml:"Le Sheet n'est pas publié en CSV.",clearConfirm:"Effacer les réservations locales? Les paramètres sont conservés.",deleteConfirm:"Supprimer cette réservation?",savedOk:"Paramètres enregistrés!",fillDates:"Veuillez remplir les dates."},
-  }
-};
-let lang = localStorage.getItem('ps_lang') || 'pt';
-const t = () => T[lang];
+// ─── STATE ───────────────────────────────────────
+var cfg = load('sc_cfg', {});
+var bks = load('sc_bks', []);
+var isAdmin = false;
+var curFilter = 'all';
+var viewMode = 'list';
+var calYear  = new Date().getFullYear();
+var calMonth = new Date().getMonth();
+var pinBuf   = '';
 
-// ── STATE ────────────────────────────────────
-let cfg      = JSON.parse(localStorage.getItem('ps_cfg')  || '{}');
-let bookings = JSON.parse(localStorage.getItem('ps_bk')   || '[]');
-let isAdmin  = false;
-let filter   = 'all';
-let pinBuf   = '';
+// ─── UTILS ───────────────────────────────────────
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function load(k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e) { return def; } }
+function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+function saveBks() { save('sc_bks', bks); }
+function saveCfgData() { save('sc_cfg', cfg); }
+function today() { return new Date().toISOString().slice(0,10); }
 
-// ── PERMISSIONS (from cfg) ───────────────────
-const canDo = (action) => {
-  if (isAdmin) return true;
-  if (action === 'payment') return cfg.permPayment !== false;
-  if (action === 'notes')   return cfg.permNotes   !== false;
-  return false;
-};
-
-// ── UTILS ────────────────────────────────────
-const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
-const saveB   = () => localStorage.setItem('ps_bk',  JSON.stringify(bookings));
-const saveCfg = () => localStorage.setItem('ps_cfg', JSON.stringify(cfg));
-const today   = () => new Date().toISOString().slice(0,10);
-
-// Normalise any date string/number to YYYY-MM-DD
-function normaliseDate(str) {
-  if (!str || str === '—') return '';
-  str = String(str).trim();
-  // Already YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-  // Excel/Google Sheets serial number (e.g. 46279)
-  // Serial 1 = Jan 1 1900, but Excel has a leap year bug so offset is 25569 from Unix epoch
-  if (/^\d{4,6}$/.test(str)) {
-    const serial = parseInt(str);
-    // Convert: (serial - 25569) days from Unix epoch
-    const ms = (serial - 25569) * 86400 * 1000;
-    const d = new Date(ms);
-    if (!isNaN(d)) return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
-  }
-  // ISO timestamp like 2026-07-03T23:00:00.000Z
-  try {
-    const d = new Date(str);
-    if (isNaN(d)) return '';
-    return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
-  } catch(e) { return ''; }
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = type || 'ok';
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.style.display = 'none'; }, 4000);
 }
-function subtractDay(dateStr) {
-  if (!dateStr) return dateStr;
-  const d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() - 1);
-  return d.toLocaleDateString('sv-SE', {timeZone:'Europe/Lisbon'});
+
+function fmtS(s) {
+  if (!s) return '—';
+  var d = new Date(s + 'T12:00:00');
+  return String(d.getDate()).padStart(2,'0') + '/' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
 }
-function fmt(str, opts) {
-  const clean = normaliseDate(str);
-  if (!clean) return '—';
-  return new Date(clean + 'T12:00:00').toLocaleDateString('pt-PT', opts);
-}
-function fmtShort(s) {
-  const clean = normaliseDate(s);
-  if (!clean) return '—';
-  const d = new Date(clean + 'T12:00:00');
-  return String(d.getDate()).padStart(2,'0') + '/' + t().months[d.getMonth()];
-}
-function fmtWday(s) {
-  const clean = normaliseDate(s);
-  if (!clean) return '';
-  return t().weekdays[new Date(clean + 'T12:00:00').getDay()];
+function fmtWd(s) {
+  if (!s) return '';
+  var d = new Date(s + 'T12:00:00');
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
 }
 function fmtFull(s) {
-  const clean = normaliseDate(s);
-  if (!clean) return '—';
-  const d = new Date(clean + 'T12:00:00');
-  return t().weekdays[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + '/' + t().months[d.getMonth()] + '/' + d.getFullYear();
+  if (!s) return '—';
+  var d = new Date(s + 'T12:00:00');
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()] + ' ' + fmtS(s) + ' ' + d.getFullYear();
 }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-// ── WHATSAPP ─────────────────────────────────
-function sendWA(phone, key, msg) {
-  if (!phone || !key) return;
-  const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(msg)}&apikey=${key}`;
-  fetch(url).catch(()=>{});
-}
-
-function notifyNew(b) {
-  const apt = b.apt === 'a' ? APT_A_NAME : APT_B_NAME;
-  const guests = b.guests ? `\n👥 Hóspedes: ${b.guests}` : '';
-  const notes  = b.notes  ? `\n📝 ${b.notes}` : '';
-  const msg =
-    `🧹 *Nova limpeza!*\n🏠 ${apt}\n📥 Check-in: ${fmtFull(b.checkin)}\n📤 Limpeza: ${fmtFull(b.checkout)}${guests}${notes}\n\n👉 cleaning.permanentsummer.co`;
-  sendWA(cfg.waN, cfg.waK, msg);
-}
-
-// ── GOOGLE SHEETS SYNC ───────────────────────
-/*  Sheet columns:
-    A=id  B=apt(a/b)  C=source  D=checkin(YYYY-MM-DD)
-    E=checkout  F=clean  G=guests  H=notes  I=paid(paid/unpaid)
-*/
-function showSyncError(msg) {
-  document.getElementById('syncError').style.display='block';
-  document.getElementById('syncErrorMsg').textContent=msg;
-  document.getElementById('syncSuccess').style.display='none';
-  setTimeout(()=>document.getElementById('syncError').style.display='none', 8000);
-}
-function showSyncSuccess(msg) {
-  document.getElementById('syncSuccess').style.display='block';
-  document.getElementById('syncSuccessMsg').textContent=msg;
-  document.getElementById('syncError').style.display='none';
-  setTimeout(()=>document.getElementById('syncSuccess').style.display='none', 5000);
-}
-
-async function syncSheet() {
-  if (!cfg.sheetUrl) {
-    document.getElementById('setupBanner').classList.add('visible');
-    return;
-  }
-  document.getElementById('setupBanner').classList.remove('visible');
-  const btn = document.getElementById('syncBtn');
-  btn.classList.add('spinning');
-  try {
-    let res;
-    try {
-      res = await fetch(cfg.sheetUrl + '&cachebust=' + Date.now());
-    } catch(fetchErr) {
-      showSyncError(t().msg.sheetError);
-      return;
-    }
-    if (!res.ok) {
-      showSyncError(t().msg.sheetError + ' (' + res.status + ')');
-      return;
-    }
-    const text = await res.text();
-    // Check if response is HTML (means sheet is not public)
-    if (text.trim().startsWith('<')) {
-      showSyncError(t().msg.sheetHtml);
-      return;
-    }
-    const rows = parseCSV(text).filter(r => r.length > 1);
-    if (rows.length < 2) {
-      showSyncSuccess(t().msg.sheetEmpty);
-      return;
-    }
-    // skip header row (row 0)
-    // Helper: clean a guests value - strip any Google metadata garbage
-    const cleanGuests = v => {
-      if (!v) return '';
-      const s = v.trim();
-      // If it looks like a plain number, keep it
-      if (/^\d+$/.test(s)) return s;
-      // Otherwise discard (Google metadata / formula bleed)
-      return '';
-    };
-    // Strip Google metadata garbage from notes field
-    const cleanNotes = v => {
-      if (!v) return '';
-      // Reject if it contains known Google/embed garbage patterns
-      if (v.includes('objectImageUrlPath') || v.includes('embed/oimg') ||
-          v.includes('U+') || v.includes('accessCapabilities') ||
-          v.includes('JspbFormat') || v.length > 300) return '';
-      return v;
-    };
-    const sheetBks = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => {
-      const checkout = normaliseDate((r[4]||'').trim());
-      const checkin  = normaliseDate((r[3]||'').trim()) || checkout; // fallback to checkout if empty
-      return {
-        id:      r[0].trim(),
-        apt:     (r[1]||'a').trim().toLowerCase(), // normalise A→a, B→b
-        source:  (r[2]||'direct').trim().toLowerCase(),
-        checkin,
-        checkout,
-        clean:   normaliseDate((r[5]||'').trim()) || checkout,
-        guests:  cleanGuests(r[6]),
-        notes:   cleanNotes((r[7]||'').trim()),
-        paid:    (r[8]||'unpaid').trim().toLowerCase(),
-      };
-    });
-
-    // Only filter out entries with no valid dates or obvious technical garbage
-    const validBks = sheetBks.filter(b => {
-      if (!b.checkin || !b.checkout) return false;
-      const notesLow = b.notes.toLowerCase();
-      // Only reject actual technical garbage, not booking platform labels
-      const garbage = ['objectimageurlpath', 'embed/oimg', 'accesscapabilities', 'jspbformat'];
-      return !garbage.some(w => notesLow.includes(w));
-    });
-
-    // Deduplicate: remove overlapping bookings for same apartment
-    // (happens when Booking blocks + Airbnb blocks cover same dates)
-    const dedupedBks = [];
-    for (const b of validBks) {
-      const overlap = dedupedBks.find(x =>
-        x.apt === b.apt &&
-        x.checkin && b.checkin && x.checkout && b.checkout &&
-        x.checkin < b.checkout && b.checkin < x.checkout
-      );
-      if (overlap) {
-        // Prefer booking.com entry; if same source, prefer the one with more info
-        const keepNew = (b.source === 'booking' && overlap.source !== 'booking') ||
-                        (b.checkin !== b.checkout && overlap.checkin === overlap.checkout);
-        if (keepNew) dedupedBks.splice(dedupedBks.indexOf(overlap), 1, b);
-        // else skip b (keep existing)
-      } else {
-        dedupedBks.push(b);
-      }
-    }
-
-    // Detect genuinely new arrivals → notify
-    const sheetIds = new Set(dedupedBks.map(b => b.id));
-    const existIds = new Set(bookings.filter(b=>!b._local).map(b => b.id));
-    dedupedBks.filter(b => !existIds.has(b.id)).forEach(b => notifyNew(b));
-
-    // Merge strategy: sheet rows replace old sheet rows, manual local bookings are kept
-    // This preserves both apt A and apt B since the sheet contains all of them
-    const localOnly = bookings.filter(b => b._local && !b._demo);
-    bookings = [...dedupedBks, ...localOnly];
-    saveB();
-    render();
-    if(viewMode==='calendar') renderCalendar();
-    showSyncSuccess(t().syncOk + ' ' + dedupedBks.length + ' ' + t().reservations);
-  } catch(e) {
-    console.error('Sync error', e);
-    showSyncError((t().msg.sheetError||'Error') + ': ' + e.message);
-  } finally {
-    btn.classList.remove('spinning');
-  }
-}
-
-function parseCSV(text) {
-  return text.split('\n').map(line => {
-    const cols = []; let cur = ''; let q = false;
-    for (const c of line) {
-      if (c==='"') { q=!q; }
-      else if (c===',' && !q) { cols.push(cur.trim()); cur=''; }
-      else cur+=c;
-    }
-    cols.push(cur.trim());
-    return cols;
-  });
-}
-
-// ── CALENDAR STATE ───────────────────────────
-let calYear  = new Date().getFullYear();
-let calMonth = new Date().getMonth();
-let viewMode = 'list'; // 'list' or 'calendar'
-
-// ── STATS ─────────────────────────────────────
-function updateStats() {
-  const tod = today();
-  const future = bookings.filter(b => (b.clean||b.checkout) >= tod);
-  const nAll    = future.length;
-  const nA      = future.filter(b=>b.apt==='a').length;
-  const nB      = future.filter(b=>b.apt==='b').length;
-  const nUnpaid = future.filter(b=>b.paid!=='paid').length;
-  // Update filter button labels with counts
-  const fb = document.querySelectorAll('.filter-btn');
-  if(fb[0]) fb[0].textContent = `${t().all} (${nAll})`;
-  if(fb[1]) fb[1].textContent = `${t().aptA} (${nA})`;
-  if(fb[2]) fb[2].textContent = `${t().aptB} (${nB})`;
-  if(fb[3]) fb[3].textContent = t().todayF;
-  if(fb[4]) fb[4].textContent = `${t().unpaidF} (${nUnpaid})`;
-}
-
-// ── CALENDAR RENDER ───────────────────────────
-function renderCalendar() {
-  const grid = document.getElementById('calGrid');
-  const label = document.getElementById('calMonthLabel');
-  const months = t().months;
-  const wdays  = t().weekdays;
-  label.textContent = months[calMonth].charAt(0).toUpperCase() + months[calMonth].slice(1) + ' ' + calYear;
-
-  // Day headers
-  const headers = wdays.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-
-  // First day of month
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const daysInPrev  = new Date(calYear, calMonth, 0).getDate();
-  const todStr = today();
-
-  let cells = '';
-  // Prev month padding
-  for (let i = firstDay - 1; i >= 0; i--) {
-    cells += `<div class="cal-day other-month"><span class="cal-day-num">${daysInPrev - i}</span></div>`;
-  }
-  // Current month days
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const isToday = dateStr === todStr;
-    // Find bookings that cover this day (respects current filter)
-    const dayBookings = bookings.filter(b => {
-      if (!b.checkin || !b.checkout) return false;
-      if (filter === 'a' && b.apt !== 'a') return false;
-      if (filter === 'b' && b.apt !== 'b') return false;
-      return b.checkin <= dateStr && b.checkout >= dateStr;
-    });
-    const events = dayBookings.map(b => {
-      const isCheckout = b.checkout === dateStr;
-      const isCheckin  = b.checkin  === dateStr;
-      const label = isCheckin ? '↓in' : isCheckout ? '↑out' : '·';
-      return `<span class="cal-event ${b.apt}${isCheckout?' checkout-day':''}" title="${b.apt==='a'?'Saramago':'Al-Paranaguá'}">${label}</span>`;
-    }).join('');
-    cells += `<div class="cal-day${isToday?' is-today':''}">
-      <span class="cal-day-num">${d}</span>${events}</div>`;
-  }
-  // Next month padding to complete grid
-  const totalCells = firstDay + daysInMonth;
-  const remaining  = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-  for (let i = 1; i <= remaining; i++) {
-    cells += `<div class="cal-day other-month"><span class="cal-day-num">${i}</span></div>`;
-  }
-  grid.innerHTML = headers + cells;
-}
-
-// ── RENDER ───────────────────────────────────
+// ─── RENDER ──────────────────────────────────────
 function render() {
-  const tod = today();
-  const sorted = [...bookings].sort((a,b)=>
-    (a.clean||a.checkout) > (b.clean||b.checkout) ? 1 : -1);
+  var tod = today();
+  var sorted = bks.slice().sort(function(a,b){ return (a.checkout||'') > (b.checkout||'') ? 1 : -1; });
 
   // Today banner
-  const todayBks = sorted.filter(b=>(b.clean||b.checkout)===tod);
-  const tb = document.getElementById('todayBanner');
-  if (todayBks.length) {
-    tb.classList.add('visible');
-    document.getElementById('todayCount').textContent =
-      todayBks.length===1 ? `1 ${t().today}` : `${todayBks.length} ${t().todays}`;
-    document.getElementById('todayApts').textContent =
-      todayBks.map(b=>b.apt==='a'?APT_A_SHORT:APT_B_SHORT).join(' · ');
-  } else tb.classList.remove('visible');
+  var todBks = sorted.filter(function(b){ return b.checkout === tod; });
+  var tb = document.getElementById('todayBanner');
+  if (todBks.length) {
+    tb.classList.add('show');
+    document.getElementById('tbCount').textContent = todBks.length + ' cleaning' + (todBks.length>1?'s':'') + ' today!';
+    document.getElementById('tbApts').textContent  = todBks.map(function(b){ return b.apt==='a'?AS:BS; }).join(' · ');
+  } else { tb.classList.remove('show'); }
+
+  // Filter counts
+  var fut = sorted.filter(function(b){ return b.checkout >= tod; });
+  var filters = document.querySelectorAll('.fb');
+  filters[0].textContent = 'All (' + fut.length + ')';
+  filters[1].textContent = '🏠 ' + AS + ' (' + fut.filter(function(b){return b.apt==='a';}).length + ')';
+  filters[2].textContent = '🏡 ' + BS + ' (' + fut.filter(function(b){return b.apt==='b';}).length + ')';
+  filters[3].textContent = '📅 Today';
+  filters[4].textContent = '🔴 Unpaid (' + fut.filter(function(b){return b.paid!=='paid';}).length + ')';
 
   // Apply filter
-  let list = sorted;
-  if (filter==='a')      list = sorted.filter(b=>b.apt==='a');
-  else if (filter==='b') list = sorted.filter(b=>b.apt==='b');
-  else if (filter==='today') list = sorted.filter(b=>(b.clean||b.checkout)===tod);
-  else if (filter==='unpaid') list = sorted.filter(b=>b.paid!=='paid');
+  var list;
+  if (curFilter==='a')      list = sorted.filter(function(b){return b.apt==='a';});
+  else if (curFilter==='b') list = sorted.filter(function(b){return b.apt==='b';});
+  else if (curFilter==='today') list = sorted.filter(function(b){return b.checkout===tod;});
+  else if (curFilter==='unpaid') list = sorted.filter(function(b){return b.paid!=='paid';});
+  else list = sorted;
 
-  const c = document.getElementById('bookingsList');
-  c.innerHTML = '';
+  var container = document.getElementById('list');
+  container.innerHTML = '';
+
   if (!list.length) {
-    c.innerHTML=`<div class="empty-state"><div class="emoji">✨</div><h3>${t().emptyTitle}</h3><p>${t().empty}</p></div>`;
+    container.innerHTML = '<div class="empty"><div class="ico">✨</div><h3>All clean!</h3><p>No bookings in this filter.</p></div>';
     return;
   }
-  const up   = list.filter(b=>(b.clean||b.checkout)>=tod);
-  const past = list.filter(b=>(b.clean||b.checkout)<tod);
+
+  var up   = list.filter(function(b){return b.checkout>=tod;});
+  var past = list.filter(function(b){return b.checkout<tod;});
+
   if (up.length) {
-    const l=document.createElement('div'); l.className='section-label'; l.textContent=t().upcoming; c.appendChild(l);
-    up.forEach(b=>c.appendChild(card(b,false)));
+    var l = document.createElement('div'); l.className='slabel'; l.textContent='📅 Upcoming & Today';
+    container.appendChild(l);
+    up.forEach(function(b){ container.appendChild(makeCard(b,false)); });
   }
   if (past.length) {
-    const l=document.createElement('div'); l.className='section-label'; l.textContent=t().past; c.appendChild(l);
-    past.forEach(b=>c.appendChild(card(b,true)));
+    var l2 = document.createElement('div'); l2.className='slabel'; l2.textContent='📁 Previous';
+    container.appendChild(l2);
+    past.forEach(function(b){ container.appendChild(makeCard(b,true)); });
   }
-  updateStats();
+
+  if (viewMode==='calendar') renderCal();
 }
 
-function card(b, isPast) {
-  const el = document.createElement('div');
-  const cleanD = b.clean||b.checkout;
-  const isT = cleanD===today(); // uses global today()
-  el.className='booking-card'+(isPast?' past':'')+(isT?' today-card':'');
+function makeCard(b, isPast) {
+  var tod = today();
+  var isT = b.checkout === tod;
+  var el = document.createElement('div');
+  el.className = 'bcard' + (isPast?' past':'') + (isT?' tod':'');
 
-  const srcLabel = (t().source[b.source]) || t().source.direct;
-  const paidCls  = b.paid==='paid'?'paid':'unpaid';
-  const paidLbl  = b.paid==='paid' ? t().paid : t().unpaid;
-  const canPay   = canDo('payment');
-  const canSeeN  = canDo('notes');
+  var srcLabel = {airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source] || 'Direct';
+  var paidCls  = b.paid==='paid'?'paid':'unpaid';
+  var paidLbl  = b.paid==='paid'?'✅ Paid':'❌ Unpaid';
+  var canPay   = isAdmin || cfg.pPay!==false;
+  var canNotes = isAdmin || cfg.pNotes!==false;
 
-  el.innerHTML=`
-    <div class="card-top">
-      <div class="apt-badge ${b.apt==='a'?'a':'b'}">${b.apt==='a'?'🏠':'🏡'} ${b.apt==='a'?APT_A_SHORT:APT_B_SHORT}</div>
-      <div class="source-badge ${b.source||'direct'}">${srcLabel}</div>
-    </div>
-    <div class="card-dates">
-      <div class="date-block">
-        <span class="date-label">${t().checkin}</span>
-        <span class="date-value">${fmtShort(b.checkin)}</span>
-        <span class="date-sub">${fmtWday(b.checkin)}</span>
-      </div>
-      <div class="date-arrow">→</div>
-      <div class="date-block right">
-        <span class="date-label">${t().checkout}</span>
-        <span class="date-value">${fmtShort(b.checkout)}</span>
-        <span class="date-sub">${fmtWday(b.checkout)}</span>
-      </div>
-    </div>
-    ${isT?`<div class="card-clean"><span class="clean-label">🧹 ${t().cleaning}</span><span class="clean-value today-clean">${t().todayBadge}</span></div>`:''}
-    ${(b.guests||(b.notes&&canSeeN))?`<div class="card-info-row">${b.guests?`<div class="guests-chip">👥 ${b.guests}</div>`:''} ${(b.notes&&canSeeN)?`<div class="notes-chip">📝 ${b.notes}</div>`:''}</div>`:''}
-    <div class="card-footer">
-      <button class="payment-btn ${paidCls}" data-id="${b.id}" ${canPay?'':'style="pointer-events:none;opacity:0.6"'}>${paidLbl}</button>
-      <div class="admin-actions${isAdmin?' visible':''}">
-        <button class="icon-btn edit-btn" data-id="${b.id}">✏️</button>
-        <button class="icon-btn delete-btn" data-id="${b.id}">🗑️</button>
-      </div>
-    </div>`;
+  var infoRow = '';
+  if (b.guests || (b.notes && canNotes)) {
+    infoRow = '<div class="cinfo">';
+    if (b.guests) infoRow += '<div class="gchip">👥 ' + b.guests + '</div>';
+    if (b.notes && canNotes) infoRow += '<div class="nchip">📝 ' + b.notes + '</div>';
+    infoRow += '</div>';
+  }
 
-  el.querySelector('.payment-btn').onclick = e => {
-    const idx=bookings.findIndex(x=>x.id===e.currentTarget.dataset.id);
-    if(idx!==-1){ bookings[idx].paid=bookings[idx].paid==='paid'?'unpaid':'paid'; saveB(); render(); }
-  };
-  const eb=el.querySelector('.edit-btn');
-  if(eb) eb.onclick=()=>openEdit(b.id);
-  const db=el.querySelector('.delete-btn');
-  if(db) db.onclick=()=>{ if(confirm(t().msg.deleteConfirm)){ bookings=bookings.filter(x=>x.id!==b.id); saveB(); render(); } };
+  el.innerHTML = [
+    '<div class="ctop">',
+      '<div class="abadge ' + b.apt + '">' + (b.apt==='a'?'🏠 '+AS:'🏡 '+BS) + '</div>',
+      '<div class="sbadge ' + (b.source||'direct') + '">' + srcLabel + '</div>',
+    '</div>',
+    '<div class="cdates">',
+      '<div class="db"><span class="dlbl">Check-in</span><span class="dval">' + fmtS(b.checkin) + '</span><span class="dday">' + fmtWd(b.checkin) + '</span></div>',
+      '<div class="darr">→</div>',
+      '<div class="db r"><span class="dlbl">Check-out</span><span class="dval">' + fmtS(b.checkout) + '</span><span class="dday">' + fmtWd(b.checkout) + '</span></div>',
+    '</div>',
+    infoRow,
+    '<div class="cfoot">',
+      '<button class="pbtn ' + paidCls + (canPay?'':' locked') + '" data-id="' + b.id + '">' + paidLbl + '</button>',
+      '<div class="adm' + (isAdmin?' show':'') + '">',
+        '<button class="ibtn e" data-id="' + b.id + '">✏️</button>',
+        '<button class="ibtn d" data-id="' + b.id + '">🗑️</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+
+  // Events
+  var payBtn = el.querySelector('.pbtn');
+  if (payBtn && canPay) {
+    payBtn.addEventListener('click', function() {
+      var id = this.getAttribute('data-id');
+      var idx = bks.findIndex(function(x){return x.id===id;});
+      if (idx!==-1) { bks[idx].paid = bks[idx].paid==='paid'?'unpaid':'paid'; saveBks(); render(); }
+    });
+  }
+  var editBtn = el.querySelector('.ibtn.e');
+  if (editBtn) editBtn.addEventListener('click', function() { openEdit(this.getAttribute('data-id')); });
+  var delBtn = el.querySelector('.ibtn.d');
+  if (delBtn) delBtn.addEventListener('click', function() {
+    var id = this.getAttribute('data-id');
+    if (confirm('Delete this booking?')) { bks = bks.filter(function(x){return x.id!==id;}); saveBks(); render(); }
+  });
   return el;
 }
 
-// ── FILTERS ──────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn=>{
-  btn.onclick=()=>{
-    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); filter=btn.dataset.filter; render();
-    if(viewMode==='calendar') renderCalendar();
-  };
+// ─── CALENDAR ────────────────────────────────────
+function renderCal() {
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var wdays  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('calLbl').textContent = months[calMonth] + ' ' + calYear;
+  var tod = today();
+  var grid = document.getElementById('calGrid');
+  var heads = wdays.map(function(d){return '<div class="cdh">'+d+'</div>';}).join('');
+  var first = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  var prevDays = new Date(calYear, calMonth, 0).getDate();
+  var cells = '';
+  for (var i=first-1;i>=0;i--) cells += '<div class="cday om"><span class="cnum">'+(prevDays-i)+'</span></div>';
+  for (var d=1;d<=daysInMonth;d++) {
+    var ds = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isT = ds===tod;
+    var dayBks = bks.filter(function(b){
+      if (!b.checkin||!b.checkout) return false;
+      if (curFilter==='a'&&b.apt!=='a') return false;
+      if (curFilter==='b'&&b.apt!=='b') return false;
+      return b.checkin<=ds && b.checkout>=ds;
+    });
+    var evs = dayBks.map(function(b){
+      var lbl = b.checkout===ds?'↑out': b.checkin===ds?'↓in':'·';
+      return '<span class="cev '+b.apt+'">'+lbl+'</span>';
+    }).join('');
+    cells += '<div class="cday'+(isT?' nt':'')+'"><span class="cnum">'+d+'</span>'+evs+'</div>';
+  }
+  var total = first + daysInMonth;
+  var rem = total%7===0?0:7-(total%7);
+  for (var r=1;r<=rem;r++) cells += '<div class="cday om"><span class="cnum">'+r+'</span></div>';
+  grid.innerHTML = heads + cells;
+}
+
+// ─── ADD / EDIT ───────────────────────────────────
+document.getElementById('eOut').addEventListener('change', function(){
+  if (!document.getElementById('eClean').value) document.getElementById('eClean').value = this.value;
 });
 
-// ── ADD/EDIT MODAL ────────────────────────────
-function openAdd(){
-  document.getElementById('modalTitle').textContent='➕ Nova Reserva';
-  ['editId','fCheckin','fCheckout','fClean','fNotes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fApt').value='a';
-  document.getElementById('fSource').value='direct';
-  document.getElementById('fGuests').value=2;
-  document.getElementById('fPaid').value='unpaid';
-  document.getElementById('bookingOverlay').classList.add('open');
+function openAdd() {
+  document.getElementById('editTitle').textContent = '➕ New Booking';
+  document.getElementById('eId').value = '';
+  document.getElementById('eApt').value = 'a';
+  document.getElementById('eSrc').value = 'direct';
+  document.getElementById('eIn').value = '';
+  document.getElementById('eOut').value = '';
+  document.getElementById('eClean').value = '';
+  document.getElementById('eGuests').value = 2;
+  document.getElementById('eNotes').value = '';
+  document.getElementById('ePaid').value = 'unpaid';
+  document.getElementById('editOverlay').classList.add('show');
 }
-function openEdit(id){
-  const b=bookings.find(x=>x.id===id); if(!b) return;
-  document.getElementById('modalTitle').textContent='✏️ Editar';
-  document.getElementById('editId').value=b.id;
-  document.getElementById('fApt').value=b.apt;
-  document.getElementById('fSource').value=b.source||'direct';
-  document.getElementById('fCheckin').value=b.checkin;
-  document.getElementById('fCheckout').value=b.checkout;
-  document.getElementById('fClean').value=b.clean||b.checkout;
-  document.getElementById('fGuests').value=b.guests||2;
-  document.getElementById('fNotes').value=b.notes||'';
-  document.getElementById('fPaid').value=b.paid||'unpaid';
-  document.getElementById('bookingOverlay').classList.add('open');
+
+function openEdit(id) {
+  var b = bks.find(function(x){return x.id===id;});
+  if (!b) return;
+  document.getElementById('editTitle').textContent = '✏️ Edit Booking';
+  document.getElementById('eId').value    = b.id;
+  document.getElementById('eApt').value   = b.apt;
+  document.getElementById('eSrc').value   = b.source||'direct';
+  document.getElementById('eIn').value    = b.checkin;
+  document.getElementById('eOut').value   = b.checkout;
+  document.getElementById('eClean').value = b.clean||b.checkout;
+  document.getElementById('eGuests').value= b.guests||2;
+  document.getElementById('eNotes').value = b.notes||'';
+  document.getElementById('ePaid').value  = b.paid||'unpaid';
+  document.getElementById('editOverlay').classList.add('show');
 }
-document.getElementById('fCheckout').onchange=function(){ if(!document.getElementById('fClean').value) document.getElementById('fClean').value=this.value; };
-document.getElementById('saveBtn').onclick=()=>{
-  const id=document.getElementById('editId').value;
-  const d={
-    apt:document.getElementById('fApt').value,
-    source:document.getElementById('fSource').value,
-    checkin:document.getElementById('fCheckin').value,
-    checkout:document.getElementById('fCheckout').value,
-    clean:document.getElementById('fClean').value,
-    guests:document.getElementById('fGuests').value,
-    notes:document.getElementById('fNotes').value.trim(),
-    paid:document.getElementById('fPaid').value,
-    _local:true,
+
+function saveEdit() {
+  var id  = document.getElementById('eId').value;
+  var cin = document.getElementById('eIn').value;
+  var cout= document.getElementById('eOut').value;
+  if (!cin||!cout) { alert('Please fill in the dates.'); return; }
+  var data = {
+    apt:    document.getElementById('eApt').value,
+    source: document.getElementById('eSrc').value,
+    checkin: cin, checkout: cout,
+    clean:  document.getElementById('eClean').value || cout,
+    guests: document.getElementById('eGuests').value,
+    notes:  document.getElementById('eNotes').value.trim(),
+    paid:   document.getElementById('ePaid').value,
+    _local: true
   };
-  if(!d.checkin||!d.checkout){alert(t().msg.fillDates);return;}
-  if(id){
-    const i=bookings.findIndex(x=>x.id===id);
-    if(i!==-1) bookings[i]={...bookings[i],...d};
+  if (id) {
+    var idx = bks.findIndex(function(x){return x.id===id;});
+    if (idx!==-1) bks[idx] = Object.assign({}, bks[idx], data);
   } else {
-    const nb={id:uid(),...d}; bookings.push(nb); notifyNew(nb);
+    data.id = uid();
+    bks.push(data);
+    sendWA(cfg.waN, cfg.waK, buildWAMsg(data));
   }
-  saveB(); render(); document.getElementById('bookingOverlay').classList.remove('open');
-};
-document.getElementById('cancelBtn').onclick=()=>document.getElementById('bookingOverlay').classList.remove('open');
-document.getElementById('fabAdd').onclick=openAdd;
-
-// ── CONFIG MODAL ──────────────────────────────
-function openConfig(){
-  document.getElementById('cfgWaN').value=cfg.waN||'';
-  document.getElementById('cfgWaK').value=cfg.waK||'';
-  document.getElementById('cfgAdmN').value=cfg.admN||ADMIN_WA_DEFAULT;
-  document.getElementById('cfgAdmK').value=cfg.admK||ADMIN_KEY_DEFAULT;
-  document.getElementById('permPayment').checked = cfg.permPayment !== false;
-  document.getElementById('permNotes').checked   = cfg.permNotes   !== false;
-  document.getElementById('configOverlay').classList.add('open');
-}
-document.getElementById('saveCfgBtn').onclick=()=>{
-  cfg.waN=document.getElementById('cfgWaN').value.trim();
-  cfg.waK=document.getElementById('cfgWaK').value.trim();
-  cfg.admN=document.getElementById('cfgAdmN').value.trim();
-  cfg.admK=document.getElementById('cfgAdmK').value.trim();
-  cfg.permPayment=document.getElementById('permPayment').checked;
-  cfg.permNotes=document.getElementById('permNotes').checked;
-  saveCfg();
-  // Verify it was actually saved
-  const saved = JSON.parse(localStorage.getItem('ps_cfg')||'{}');
-  if(saved.sheetUrl !== cfg.sheetUrl) {
-    alert('Erro ao guardar! Tente novamente.');
-    return;
-  }
-  document.getElementById('configOverlay').classList.remove('open');
-  if(cfg.sheetUrl){ bookings=bookings.filter(b=>!b._demo); saveB(); syncSheet(); }
-};
-document.getElementById('cancelCfgBtn').onclick=()=>document.getElementById('configOverlay').classList.remove('open');
-// Test sheet button removed (sheet sync disabled)
-document.getElementById('clearAllBtn').onclick=()=>{
-  if(confirm(t().msg.clearConfirm)){
-    localStorage.removeItem('ps_bk');
-    bookings=[];
-    document.getElementById('configOverlay').classList.remove('open');
-    render();
-    setTimeout(syncSheet, 300);
-  }
-};
-
-// ── PIN ───────────────────────────────────────
-document.getElementById('adminToggleBtn').onclick=()=>{
-  if(isAdmin){isAdmin=false;updateAdminUI();return;}
-  pinBuf=''; updDots(); document.getElementById('pinError').textContent='';
-  document.getElementById('pinOverlay').classList.add('open');
-};
-document.querySelectorAll('.pin-key').forEach(k=>{
-  k.onclick=()=>{
-    const n=k.dataset.n;
-    if(n==='cancel'){document.getElementById('pinOverlay').classList.remove('open');return;}
-    if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}
-    if(pinBuf.length>=4) return;
-    pinBuf+=n; updDots();
-    if(pinBuf.length===4) setTimeout(()=>{
-      if(pinBuf===ADMIN_PIN){
-        isAdmin=true; document.getElementById('pinOverlay').classList.remove('open'); updateAdminUI();
-      } else {
-        document.getElementById('pinError').textContent='❌ PIN incorreto.';
-        pinBuf=''; updDots();
-      }
-    },200);
-  };
-});
-function updDots(){ for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length); }
-
-document.getElementById('openCfgBtn').onclick = openConfig;
-
-function updateAdminUI(){
-  const fab  = document.getElementById('fabAdd');
-  const bar  = document.getElementById('adminBar');
-  if(isAdmin){
-    fab.classList.add('visible'); fab.style.display='flex';
-    bar.classList.add('visible');
-    document.getElementById('headerSub').textContent=t().adminMode;
-    document.getElementById('adminToggleBtn').textContent='🔓';
-  } else {
-    fab.classList.remove('visible'); fab.style.display='none';
-    bar.classList.remove('visible');
-    document.getElementById('headerSub').textContent=t().appSub||'Permanent Summer';
-    document.getElementById('adminToggleBtn').textContent='⚙️';
-  }
-  render();
+  saveBks(); render();
+  closeModal('editOverlay');
 }
 
-// ── LANGUAGE SWITCHER ────────────────────────
-function applyLang() {
-  document.querySelectorAll('.lang-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.lang === lang);
-  });
-  // Header subtitle (non-admin mode)
-  if(!isAdmin) {
-    const sub = document.getElementById('headerSub');
-    if(sub) sub.textContent = t().appSub || 'Permanent Summer';
+// ─── WHATSAPP ────────────────────────────────────
+function sendWA(phone, key, msg) {
+  if (!phone||!key) return;
+  var url = 'https://api.callmebot.com/whatsapp.php?phone='+phone+'&text='+encodeURIComponent(msg)+'&apikey='+key;
+  var img = new Image(); img.src = url;
+}
+function buildWAMsg(b) {
+  var apt = b.apt==='a' ? APT_A : APT_B;
+  var g = b.guests ? '\n👥 Guests: '+b.guests : '';
+  var n = b.notes  ? '\n📝 '+b.notes : '';
+  return '🧹 New cleaning!\n🏠 '+apt+'\n📥 Check-in: '+fmtFull(b.checkin)+'\n📤 Check-out: '+fmtFull(b.checkout)+g+n+'\n\nhttp://cleaning.permanentsummer.co';
+}
+
+// ─── IMPORT ──────────────────────────────────────
+function openImport() {
+  document.getElementById('iFile').value = '';
+  var st = document.getElementById('importStatus');
+  st.style.display = 'none';
+  document.getElementById('importOverlay').classList.add('show');
+  // Pre-load SheetJS for XLS
+  if (typeof XLSX === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    document.head.appendChild(s);
   }
-  // Filter buttons updated via updateStats() which is called from render()
-  // Admin bar settings button
-  const cfgBtn = document.querySelector('#adminBar button');
-  if(cfgBtn) cfgBtn.textContent = t().settings;
-  // Settings modal labels
-  const c = t().cfg;
-  if(!c) { render(); return; }
-  setText('cfg-title', c.title);
-  setText('cfg-s1', c.s2);
-  setText('cfg-s2', c.s3);
-  setText('cfg-cleaner-label', c.cleaner);
-  setText('cfg-admin-label', c.admin);
-  const numLabels = document.querySelectorAll('[id^="cfg-wa-num-label"],[id^="cfg-adm-num-label"]');
-  numLabels.forEach(el => el.textContent = c.numLabel);
-  const keyLabels = document.querySelectorAll('[id^="cfg-wa-key-label"],[id^="cfg-adm-key-label"]');
-  keyLabels.forEach(el => el.textContent = c.keyLabel);
-  setText('t-perm-payment', c.permPayment);
-  setText('t-perm-notes', c.permNotes);
-  setText('cfg-save-label', c.save);
-  setText('cfg-cancel-label', c.cancel);
-  setText('cfg-clear-label', c.clear);
-
-  // View buttons
-  setText('vl-label', lang==='pt'?'Lista':lang==='fr'?'Liste':'List');
-  setText('vc-label', lang==='pt'?'Calendário':lang==='fr'?'Calendrier':'Calendar');
-  // Calendar legend
-  setText('leg-a', 'Saramago');
-  setText('leg-b', 'Al-Paranaguá');
-  if(viewMode==='calendar') renderCalendar();
-  render();
-}
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if(el && val) el.textContent = val;
-}
-document.querySelectorAll('.lang-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    lang = btn.dataset.lang;
-    localStorage.setItem('ps_lang', lang);
-    applyLang();
-  });
-});
-
-// ── WA FAB ───────────────────────────────────
-document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||ADMIN_WA_DEFAULT);
-
-// ── VIEW TOGGLE ──────────────────────────────
-document.getElementById('viewListBtn').onclick = () => {
-  viewMode = 'list';
-  document.getElementById('viewListBtn').classList.add('active');
-  document.getElementById('viewCalBtn').classList.remove('active');
-  document.getElementById('bookingsList').style.display = 'flex';
-  document.getElementById('calendarView').style.display = 'none';
-  render();
-};
-document.getElementById('viewCalBtn').onclick = () => {
-  viewMode = 'calendar';
-  document.getElementById('viewCalBtn').classList.add('active');
-  document.getElementById('viewListBtn').classList.remove('active');
-  document.getElementById('bookingsList').style.display = 'none';
-  document.getElementById('calendarView').style.display = 'block';
-  renderCalendar();
-};
-document.getElementById('calPrev').onclick = () => {
-  calMonth--; if(calMonth < 0){ calMonth=11; calYear--; } renderCalendar();
-};
-document.getElementById('calNext').onclick = () => {
-  calMonth++; if(calMonth > 11){ calMonth=0; calYear++; } renderCalendar();
-};
-
-// ── SYNC BTN ─────────────────────────────────
-document.getElementById('syncBtn').onclick=syncSheet;
-
-// ── DEMO DATA (only if no sheet configured AND no bookings yet) ──
-if(!cfg.sheetUrl && bookings.length===0){
-  const add=d=>{const dt=new Date();dt.setDate(dt.getDate()+d);return dt.toISOString().slice(0,10);};
-  bookings=[
-    {id:uid(),apt:'a',source:'airbnb',checkin:add(1),checkout:add(4),clean:add(4),guests:'3',notes:'',paid:'unpaid',_local:true,_demo:true},
-    {id:uid(),apt:'b',source:'booking',checkin:add(2),checkout:add(5),clean:add(5),guests:'2',notes:'Chegam tarde',paid:'paid',_local:true,_demo:true},
-    {id:uid(),apt:'a',source:'direct',checkin:add(0),checkout:add(0),clean:add(0),guests:'4',notes:'Cama extra no quarto 2',paid:'unpaid',_local:true,_demo:true},
-  ];
-  saveB();
-} else if(cfg.sheetUrl) {
-  // Sheet is configured — clear any demo data that may be lingering
-  bookings = bookings.filter(b => !b._demo);
-  saveB();
 }
 
-// ── IMPORT LOGIC ─────────────────────────────
-function loadSheetJS(cb) {
-  if (typeof XLSX !== 'undefined') { if(cb) cb(); return; }
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-  s.onload = () => { if(cb) cb(); };
-  document.head.appendChild(s);
-}
-
-document.getElementById('openImportBtn').onclick = function() {
-  document.getElementById('importFile').value = '';
-  document.getElementById('importStatus').style.display = 'none';
-  document.getElementById('importOverlay').classList.add('open');
-  loadSheetJS();
-};
-
-document.getElementById('cancelImportBtn').onclick = function() {
-  document.getElementById('importOverlay').classList.remove('open');
-};
-
-document.getElementById('importDoBtn').onclick = function() {
-  var fileInput = document.getElementById('importFile');
-  var file = fileInput.files[0];
-  if (!file) {
-    showImportStatus('Please select a file first.', 'warn');
-    return;
-  }
-  var apt    = document.getElementById('importApt').value;
-  var source = document.getElementById('importSource').value;
-  var fname  = file.name.toLowerCase();
-  var isXLS  = fname.endsWith('.xls') || fname.endsWith('.xlsx');
-
-  showImportStatus('Reading file...', 'warn');
-
-  if (isXLS) {
-    if (typeof XLSX === 'undefined') {
-      showImportStatus('Loading XLS reader... please click Import again in 3 seconds.', 'warn');
-      loadSheetJS(null);
-      return;
-    }
-    var reader = new FileReader();
-    reader.onerror = function() { showImportStatus('Could not read file.', 'error'); };
-    reader.onload = function(e) {
-      try {
-        var wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
-        var ws = wb.Sheets[wb.SheetNames[0]];
-        var csv = XLSX.utils.sheet_to_csv(ws);
-        doImport(csv, source, apt);
-      } catch(err) {
-        showImportStatus('XLS error: ' + err.message, 'error');
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    var reader = new FileReader();
-    reader.onerror = function() { showImportStatus('Could not read file.', 'error'); };
-    reader.onload = function(e) {
-      try {
-        doImport(e.target.result, source, apt);
-      } catch(err) {
-        showImportStatus('Error: ' + err.message, 'error');
-      }
-    };
-    reader.readAsText(file, 'UTF-8');
-  }
-};
-
-function showImportStatus(msg, type) {
+function setImportStatus(msg, type) {
   var el = document.getElementById('importStatus');
   el.style.display = 'block';
   el.textContent = msg;
-  el.style.background = type === 'error' ? '#fee2e2' : type === 'warn' ? '#fef3c7' : '#dcfce7';
-  el.style.color = type === 'error' ? '#991b1b' : type === 'warn' ? '#92400e' : '#166534';
+  el.style.background = type==='ok' ? '#dcfce7' : type==='err' ? '#fee2e2' : '#fef3c7';
+  el.style.color = type==='ok' ? '#15803d' : type==='err' ? '#dc2626' : '#92400e';
 }
 
-// Strip accents for fuzzy column matching
-function stripAccents(s) {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function doImport() {
+  var fileInput = document.getElementById('iFile');
+  if (!fileInput.files || !fileInput.files[0]) {
+    setImportStatus('Please select a file.', 'warn');
+    return;
+  }
+  var file   = fileInput.files[0];
+  var apt    = document.getElementById('iApt').value;
+  var source = document.getElementById('iSrc').value;
+  var fname  = file.name.toLowerCase();
+
+  setImportStatus('Reading file...', 'warn');
+
+  if (fname.endsWith('.xls') || fname.endsWith('.xlsx')) {
+    if (typeof XLSX === 'undefined') {
+      setImportStatus('XLS reader loading. Please wait 3 seconds and try again.', 'warn');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var csv = XLSX.utils.sheet_to_csv(ws);
+        processImport(csv, source, apt);
+      } catch(err) { setImportStatus('XLS error: ' + err.message, 'err'); }
+    };
+    reader.onerror = function() { setImportStatus('Cannot read file.', 'err'); };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var reader2 = new FileReader();
+    reader2.onload = function(e) {
+      try { processImport(e.target.result, source, apt); }
+      catch(err) { setImportStatus('Error: ' + err.message, 'err'); }
+    };
+    reader2.onerror = function() { setImportStatus('Cannot read file.', 'err'); };
+    reader2.readAsText(file, 'UTF-8');
+  }
 }
 
-// Find column index by matching keywords (accent-insensitive)
-function findCol(headers) {
+// Strip accents for column matching
+function sa(s) {
+  try { return s.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  catch(e) { return s; }
+}
+
+// Find column index
+function fc(headers) {
   var keys = Array.prototype.slice.call(arguments, 1);
-  for (var ki = 0; ki < keys.length; ki++) {
-    var kn = stripAccents(keys[ki].toLowerCase()).replace(/[^a-z0-9]/g, '');
-    for (var i = 0; i < headers.length; i++) {
-      var hn = stripAccents(headers[i].toLowerCase()).replace(/[^a-z0-9]/g, '');
-      if (hn.indexOf(kn) !== -1 || kn.indexOf(hn) !== -1) return i;
+  for (var ki=0; ki<keys.length; ki++) {
+    var kn = sa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');
+    for (var i=0; i<headers.length; i++) {
+      var hn = sa(headers[i]).toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (hn.indexOf(kn)!==-1 || kn.indexOf(hn)!==-1) return i;
     }
   }
   return -1;
 }
 
-function parseRows(text) {
-  var lines = text.replace(/\r/g, '').split('\n');
-  var result = [];
-  for (var li = 0; li < lines.length; li++) {
+// Parse CSV text into rows
+function parseCSV(text) {
+  var lines = text.replace(/\r/g,'').split('\n');
+  var sep = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
+  var rows = [];
+  for (var li=0; li<lines.length; li++) {
     var line = lines[li];
     if (!line.trim()) continue;
-    var cols = [];
-    var cur = '';
-    var inQ = false;
-    for (var ci = 0; ci < line.length; ci++) {
+    var cols=[]; var cur=''; var inQ=false;
+    for (var ci=0; ci<line.length; ci++) {
       var c = line[ci];
-      if (c === '"') { inQ = !inQ; }
-      else if ((c === ',' || c === ';') && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += c; }
+      if (c==='"') { inQ=!inQ; }
+      else if (c===sep && !inQ) { cols.push(cur.trim()); cur=''; }
+      else cur+=c;
     }
     cols.push(cur.trim());
-    result.push(cols);
+    rows.push(cols);
   }
-  return result;
+  return rows;
 }
 
-function toISO(str) {
-  if (!str) return '';
-  str = String(str).trim();
-  // Remove non-breaking spaces, quotes, &nbsp;
-  str = str.replace(/[\u00a0\u00ad]/g, '').replace(/^["']|["']$/g, '').trim();
-  if (!str || str.length < 6) return '';
+// Convert any date string to YYYY-MM-DD
+function toISO(s) {
+  if (!s) return '';
+  s = String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();
+  if (!s || s.length<6) return '';
   // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
-  // DD/MM/YYYY
-  var m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) {
-    var a = parseInt(m[1]), b = parseInt(m[2]), y = m[3];
-    // If first number > 12, must be day
-    if (a > 12) return y + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
-    // Else assume DD/MM (European)
-    return y + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0');
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  // DD/MM/YYYY (European)
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  // Excel serial
+  var n = parseInt(s);
+  if (!isNaN(n) && /^\d+$/.test(s) && n>40000 && n<60000) {
+    var d = new Date((n-25569)*86400000);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  // Excel serial number
-  var n = parseInt(str);
-  if (!isNaN(n) && str.match(/^\d+$/) && n > 40000 && n < 60000) {
-    var d = new Date((n - 25569) * 86400000);
-    return d.toLocaleDateString('sv-SE', {timeZone: 'Europe/Lisbon'});
-  }
-  // Try native date parse
+  // Fallback native parse
   try {
-    var d = new Date(str);
-    if (!isNaN(d.getTime()) && d.getFullYear() > 2020)
-      return d.toLocaleDateString('sv-SE', {timeZone: 'Europe/Lisbon'});
-  } catch(e) {}
+    var d2 = new Date(s);
+    if (!isNaN(d2.getTime()) && d2.getFullYear()>2020)
+      return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+  } catch(e2) {}
   return '';
 }
 
-function doImport(text, source, apt) {
-  var rows = parseRows(text);
-  if (rows.length < 2) {
-    showImportStatus('File appears empty or unreadable.', 'error');
-    return;
-  }
-
+function processImport(text, source, apt) {
+  var rows = parseCSV(text);
+  if (rows.length < 2) { setImportStatus('File appears empty.', 'err'); return; }
   var headers = rows[0];
   var parsed = [];
   var skipped = 0;
 
-  if (source === 'booking') {
-    // Booking.com: FR and EN XLS/CSV
-    var iIn   = findCol(headers, 'checkin', 'arrivee', 'arrival', 'arriv');
-    var iOut  = findCol(headers, 'checkout', 'depart', 'departure');
-    var iName = findCol(headers, 'guestname', 'nomduclient', 'clientname', 'guest');
-    var iPers = findCol(headers, 'persons', 'personnes');
-    var iStat = findCol(headers, 'status', 'statut');
-    var iCanc = findCol(headers, 'cancellation', 'annulation');
-    var iNum  = findCol(headers, 'booknumber', 'numeroreservation', 'numero');
+  if (source === 'airbnb') {
+    // Detect date columns by scanning all headers for date-like keywords
+    var iIn=-1, iOut=-1;
+    for (var hi=0; hi<headers.length; hi++) {
+      var hs = sa(headers[hi]).toLowerCase();
+      if (iIn===-1  && (hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1)) iIn=hi;
+      if (iOut===-1 && (hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1||hs.indexOf('depart')!==-1)) iOut=hi;
+    }
+    var iCode = fc(headers,'code','confirmation');
+    var iStat = fc(headers,'statut','status');
+    var iName = fc(headers,'voyageur','guestname','nom');
+    var iAdu  = fc(headers,'adultes','adults','#desadultes');
+    var iChi  = fc(headers,'enfants','children','#desenfants');
 
-    if (iIn === -1 || iOut === -1) {
-      showImportStatus('Cannot find check-in/check-out columns in this file. Are you sure this is a Booking.com export?', 'error');
-      return;
+    if (iIn===-1||iOut===-1) { setImportStatus('Cannot find date columns. Make sure Source = Airbnb.', 'err'); return; }
+
+    for (var i=1; i<rows.length; i++) {
+      var r=rows[i];
+      if (!r[0]||r.join('').trim()==='') continue;
+      var stat = iStat>=0 ? sa(r[iStat]).toLowerCase() : 'confirm';
+      if (stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1) { skipped++; continue; }
+      var ci=toISO(r[iIn]), co=toISO(r[iOut]);
+      if (!ci||!co||ci>=co) { skipped++; continue; }
+      var adults = iAdu>=0 ? (parseInt(r[iAdu])||0) : 0;
+      var kids   = iChi>=0 ? (parseInt(r[iChi])||0) : 0;
+      var code   = iCode>=0&&r[iCode] ? r[iCode].trim() : uid();
+      parsed.push({id:'ab_'+code, apt:apt, source:'airbnb', checkin:ci, checkout:co, clean:co,
+        guests:(adults+kids)>0?String(adults+kids):'',
+        notes:iName>=0?r[iName].trim():'', paid:'unpaid', _local:true});
     }
 
-    for (var i = 1; i < rows.length; i++) {
-      var r = rows[i];
-      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
-      var stat = iStat >= 0 ? r[iStat].toLowerCase() : 'ok';
-      var canc = iCanc >= 0 ? r[iCanc].trim() : '';
-      if (canc || stat.indexOf('cancel') !== -1 || stat.indexOf('annul') !== -1 || stat === 'c') { skipped++; continue; }
-      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
-      if (!ci || !co || ci >= co) { skipped++; continue; }
-      var num = iNum >= 0 && r[iNum] ? r[iNum].trim() : uid();
-      parsed.push({
-        id: 'bk_' + num,
-        apt: apt, source: 'booking',
-        checkin: ci, checkout: co, clean: co,
-        guests: iPers >= 0 ? r[iPers].trim() : '',
-        notes:  iName >= 0 ? r[iName].trim() : '',
-        paid: 'unpaid', _local: true
-      });
-    }
+  } else if (source === 'booking') {
+    var iIn2  = fc(headers,'checkin','arrivee','arrival','arriv');
+    var iOut2 = fc(headers,'checkout','depart','departure');
+    var iName2= fc(headers,'guestname','nomduclient','clientname');
+    var iPers = fc(headers,'persons','personnes');
+    var iStat2= fc(headers,'status','statut');
+    var iCanc = fc(headers,'cancellation','annulation');
+    var iNum  = fc(headers,'booknumber','numeroreservation','numero');
 
-  } else if (source === 'airbnb') {
-    // Airbnb CSV - French export
-    // Column names: "Date de début", "Date de fin", "Statut", "Nom du voyageur"
-    var iIn = -1, iOut = -1;
-    for (var hi = 0; hi < headers.length; hi++) {
-      var hs = stripAccents(headers[hi].toLowerCase());
-      if (iIn === -1  && (hs.indexOf('debut') !== -1 || hs.indexOf('start') !== -1 || hs.indexOf('checkin') !== -1)) iIn = hi;
-      if (iOut === -1 && (hs.indexOf('fin') !== -1   || hs.indexOf('end') !== -1   || hs.indexOf('checkout') !== -1 || hs.indexOf('depart') !== -1)) iOut = hi;
-    }
-    var iCode = findCol(headers, 'code', 'confirmation');
-    var iStat = findCol(headers, 'statut', 'status');
-    var iName = findCol(headers, 'voyageur', 'guestname', 'nom');
-    var iAdu  = findCol(headers, 'adultes', 'adults');
-    var iChi  = findCol(headers, 'enfants', 'children');
+    if (iIn2===-1||iOut2===-1) { setImportStatus('Cannot find date columns. Make sure Source = Booking.com.', 'err'); return; }
 
-    if (iIn === -1 || iOut === -1) {
-      showImportStatus('Cannot find date columns. Are you sure this is an Airbnb export?', 'error');
-      return;
-    }
-
-    for (var i = 1; i < rows.length; i++) {
-      var r = rows[i];
-      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
-      var stat = iStat >= 0 ? stripAccents(r[iStat].toLowerCase()) : 'confirm';
-      // Airbnb: "Confirmée" → confirmed, skip "Annulée"
-      if (stat.indexOf('annul') !== -1 || stat.indexOf('cancel') !== -1) { skipped++; continue; }
-      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
-      if (!ci || !co || ci >= co) { skipped++; continue; }
-      var adults = iAdu >= 0 ? (parseInt(r[iAdu]) || 0) : 0;
-      var kids   = iChi >= 0 ? (parseInt(r[iChi]) || 0) : 0;
-      var code   = iCode >= 0 && r[iCode] ? r[iCode].trim() : uid();
-      parsed.push({
-        id: 'ab_' + code,
-        apt: apt, source: 'airbnb',
-        checkin: ci, checkout: co, clean: co,
-        guests: (adults + kids) > 0 ? String(adults + kids) : '',
-        notes:  iName >= 0 ? r[iName].trim() : '',
-        paid: 'unpaid', _local: true
-      });
+    for (var i=1; i<rows.length; i++) {
+      var r=rows[i];
+      if (!r[0]||r.join('').trim()==='') continue;
+      var stat2 = iStat2>=0 ? r[iStat2].toLowerCase() : 'ok';
+      var canc  = iCanc>=0 ? r[iCanc].trim() : '';
+      if (canc||stat2.indexOf('cancel')!==-1||stat2.indexOf('annul')!==-1||stat2==='c') { skipped++; continue; }
+      var ci2=toISO(r[iIn2]), co2=toISO(r[iOut2]);
+      if (!ci2||!co2||ci2>=co2) { skipped++; continue; }
+      var num = iNum>=0&&r[iNum] ? r[iNum].trim() : uid();
+      parsed.push({id:'bk_'+num, apt:apt, source:'booking', checkin:ci2, checkout:co2, clean:co2,
+        guests:iPers>=0?r[iPers].trim():'',
+        notes:iName2>=0?r[iName2].trim():'', paid:'unpaid', _local:true});
     }
 
   } else {
     // Direct / Pingotel
-    var iCode = findCol(headers, 'code');
-    var iStat = findCol(headers, 'status', 'statut');
-    var iIn   = findCol(headers, 'startdate', 'start', 'checkin', 'arrivee', 'arrival');
-    var iOut  = findCol(headers, 'enddate', 'end', 'checkout', 'depart', 'departure');
-    var iRes  = findCol(headers, 'resources', 'resource', 'apartment', 'logement');
-    var iName = findCol(headers, 'guest', 'nom', 'name', 'client');
-    var iMail = findCol(headers, 'email');
-    var iPers = findCol(headers, 'persons', 'personnes', 'adults', 'adultes');
+    var iIn3  = fc(headers,'startdate','start','checkin','arrivee','arrival');
+    var iOut3 = fc(headers,'enddate','end','checkout','depart','departure');
+    var iCode3= fc(headers,'code');
+    var iStat3= fc(headers,'status','statut');
+    var iRes  = fc(headers,'resources','resource','apartment','logement');
+    var iName3= fc(headers,'guest','nom','name','client');
+    var iMail = fc(headers,'email');
+    var iPers3= fc(headers,'persons','personnes','adults','adultes');
 
-    if (iIn === -1 || iOut === -1) {
-      showImportStatus('Cannot find date columns. Check the file format.', 'error');
-      return;
-    }
+    if (iIn3===-1||iOut3===-1) { setImportStatus('Cannot find date columns. Check your file format.', 'err'); return; }
 
-    for (var i = 1; i < rows.length; i++) {
-      var r = rows[i];
-      if (!r[0] || r.join('').replace(/,/g,'').trim() === '') continue;
-      var stat = iStat >= 0 ? r[iStat].toLowerCase() : '';
-      if (stat.indexOf('cancel') !== -1 || stat.indexOf('refund') !== -1) { skipped++; continue; }
-      var ci = toISO(r[iIn]), co = toISO(r[iOut]);
-      if (!ci || !co || ci >= co) { skipped++; continue; }
-      // Auto-detect apt from resource
+    for (var i=1; i<rows.length; i++) {
+      var r=rows[i];
+      if (!r[0]||r.join('').trim()==='') continue;
+      var stat3 = iStat3>=0 ? r[iStat3].toLowerCase() : '';
+      if (stat3.indexOf('cancel')!==-1||stat3.indexOf('refund')!==-1) { skipped++; continue; }
+      var ci3=toISO(r[iIn3]), co3=toISO(r[iOut3]);
+      if (!ci3||!co3||ci3>=co3) { skipped++; continue; }
       var detApt = apt;
-      if (iRes >= 0 && r[iRes]) {
-        var res = r[iRes].toLowerCase();
-        if (res.indexOf('300') !== -1 || res.indexOf('beach') !== -1) detApt = 'b';
-        else if (res.indexOf('800') !== -1 || res.indexOf('ocean') !== -1) detApt = 'a';
+      if (iRes>=0&&r[iRes]) {
+        var res=r[iRes].toLowerCase();
+        if (res.indexOf('300')!==-1||res.indexOf('beach')!==-1) detApt='b';
+        else if (res.indexOf('800')!==-1||res.indexOf('ocean')!==-1) detApt='a';
       }
-      var code  = iCode >= 0 && r[iCode] ? r[iCode].trim() : uid();
-      var name  = iName >= 0 && r[iName] ? r[iName].trim() : (iMail >= 0 ? r[iMail].trim() : '');
-      var isPaid = stat.indexOf('paid') !== -1 || stat.indexOf('confirm') !== -1;
-      parsed.push({
-        id: 'dir_' + code,
-        apt: detApt, source: 'direct',
-        checkin: ci, checkout: co, clean: co,
-        guests: iPers >= 0 ? r[iPers].trim() : '',
-        notes: name,
-        paid: isPaid ? 'paid' : 'unpaid',
-        _local: true
-      });
+      var code3 = iCode3>=0&&r[iCode3] ? r[iCode3].trim() : uid();
+      var name3 = iName3>=0 ? r[iName3].trim() : (iMail>=0?r[iMail].trim():'');
+      var isPaid = stat3.indexOf('paid')!==-1||stat3.indexOf('confirm')!==-1;
+      parsed.push({id:'dir_'+code3, apt:detApt, source:'direct', checkin:ci3, checkout:co3, clean:co3,
+        guests:iPers3>=0?r[iPers3].trim():'',
+        notes:name3, paid:isPaid?'paid':'unpaid', _local:true});
     }
   }
 
   if (!parsed.length) {
-    showImportStatus('No valid bookings found (' + skipped + ' skipped). Check the Source matches your file.', 'warn');
+    setImportStatus('No valid bookings found (' + skipped + ' skipped). Check the Source matches your file.', 'err');
     return;
   }
 
-  // Merge into bookings
-  var added = 0, replaced = 0, dupeSkipped = 0;
-  for (var bi = 0; bi < parsed.length; bi++) {
+  // Merge
+  var added=0, updated=0, dupes=0;
+  for (var bi=0; bi<parsed.length; bi++) {
     var nb = parsed[bi];
+    // Check overlap
     var overlapIdx = -1;
-    for (var xi = 0; xi < bookings.length; xi++) {
-      var x = bookings[xi];
-      if (x.apt === nb.apt && x.id !== nb.id &&
-          x.checkin && nb.checkin && x.checkout && nb.checkout &&
-          x.checkin < nb.checkout && nb.checkin < x.checkout) {
-        overlapIdx = xi; break;
-      }
+    for (var xi=0; xi<bks.length; xi++) {
+      var x=bks[xi];
+      if (x.apt===nb.apt && x.id!==nb.id && x.checkin&&nb.checkin&&x.checkout&&nb.checkout
+          && x.checkin<nb.checkout && nb.checkin<x.checkout) { overlapIdx=xi; break; }
     }
-    if (overlapIdx !== -1) {
-      var ex = bookings[overlapIdx];
-      var nbPlat = nb.source === 'booking' || nb.source === 'airbnb';
-      var exPlat = ex.source === 'booking' || ex.source === 'airbnb';
-      if (nbPlat && !exPlat) { bookings[overlapIdx] = nb; replaced++; }
-      else if (!nbPlat && exPlat) { dupeSkipped++; }
-      else if (nb.notes && !ex.notes) { bookings[overlapIdx] = nb; replaced++; }
-      else { dupeSkipped++; }
+    if (overlapIdx!==-1) {
+      var ex=bks[overlapIdx];
+      var nbPlat = nb.source==='booking'||nb.source==='airbnb';
+      var exPlat = ex.source==='booking'||ex.source==='airbnb';
+      if (nbPlat&&!exPlat) { bks[overlapIdx]=nb; updated++; }
+      else if (!nbPlat&&exPlat) { dupes++; }
+      else if (nb.notes&&!ex.notes) { bks[overlapIdx]=nb; updated++; }
+      else { dupes++; }
       continue;
     }
-    var exactIdx = -1;
-    for (var xi = 0; xi < bookings.length; xi++) {
-      if (bookings[xi].id === nb.id) { exactIdx = xi; break; }
-    }
-    if (exactIdx !== -1) { bookings[exactIdx] = Object.assign({}, bookings[exactIdx], nb); replaced++; }
-    else { bookings.push(nb); added++; }
+    // Exact ID
+    var exactIdx=-1;
+    for (var xi=0; xi<bks.length; xi++) { if (bks[xi].id===nb.id){exactIdx=xi;break;} }
+    if (exactIdx!==-1) { bks[exactIdx]=Object.assign({},bks[exactIdx],nb); updated++; }
+    else { bks.push(nb); added++; }
   }
 
-  saveB(); render();
-  if (viewMode === 'calendar') renderCalendar();
-  document.getElementById('importOverlay').classList.remove('open');
-  var msg = '✅ ' + added + ' bookings imported';
-  if (replaced > 0) msg += ', ' + replaced + ' updated';
-  if (skipped > 0)  msg += ', ' + skipped + ' skipped (cancelled)';
-  if (dupeSkipped > 0) msg += ', ' + dupeSkipped + ' duplicates removed';
-  showSyncSuccess(msg);
+  saveBks(); render();
+  closeModal('importOverlay');
+  var msg = '✅ ' + added + ' imported';
+  if (updated) msg += ', ' + updated + ' updated';
+  if (skipped) msg += ', ' + skipped + ' skipped';
+  if (dupes)   msg += ', ' + dupes + ' duplicates removed';
+  toast(msg, 'ok');
 }
 
-// ── INIT ─────────────────────────────────────
-applyLang();
-// Auto-sync disabled — use CSV/XLS import instead
-// syncSheet();
-// setInterval(syncSheet, 10*60*1000);
+// ─── SETTINGS ────────────────────────────────────
+function openCfg() {
+  document.getElementById('cWaN').value  = cfg.waN||'';
+  document.getElementById('cWaK').value  = cfg.waK||'';
+  document.getElementById('cAdmN').value = cfg.admN||ADMIN_WA;
+  document.getElementById('cAdmK').value = cfg.admK||'7950168';
+  document.getElementById('pPay').checked   = cfg.pPay!==false;
+  document.getElementById('pNotes').checked = cfg.pNotes!==false;
+  document.getElementById('cfgOverlay').classList.add('show');
+}
+function saveCfg() {
+  cfg.waN    = document.getElementById('cWaN').value.trim();
+  cfg.waK    = document.getElementById('cWaK').value.trim();
+  cfg.admN   = document.getElementById('cAdmN').value.trim();
+  cfg.admK   = document.getElementById('cAdmK').value.trim();
+  cfg.pPay   = document.getElementById('pPay').checked;
+  cfg.pNotes = document.getElementById('pNotes').checked;
+  saveCfgData();
+  closeModal('cfgOverlay');
+  toast('Settings saved!', 'ok');
+}
+function clearAll() {
+  if (confirm('Clear all bookings? Settings will be kept.')) {
+    bks = []; saveBks(); render();
+    toast('All bookings cleared.', 'ok');
+  }
+}
+
+// ─── PIN ─────────────────────────────────────────
+document.getElementById('pinBtn').addEventListener('click', function() {
+  if (isAdmin) { isAdmin=false; updateAdminUI(); return; }
+  pinBuf=''; updatePinDots(); document.getElementById('pinErr').textContent='';
+  document.getElementById('pinOverlay').classList.add('show');
+});
+document.querySelectorAll('.pk').forEach(function(k) {
+  k.addEventListener('click', function() {
+    var n = this.getAttribute('data-n');
+    if (n==='x') { closeModal('pinOverlay'); return; }
+    if (n==='del') { pinBuf=pinBuf.slice(0,-1); updatePinDots(); return; }
+    if (pinBuf.length>=4) return;
+    pinBuf+=n; updatePinDots();
+    if (pinBuf.length===4) {
+      var self=this;
+      setTimeout(function() {
+        if (pinBuf===PIN) { isAdmin=true; closeModal('pinOverlay'); updateAdminUI(); }
+        else { document.getElementById('pinErr').textContent='❌ Wrong PIN'; pinBuf=''; updatePinDots(); }
+      }, 200);
+    }
+  });
+});
+function updatePinDots() {
+  for (var i=0;i<4;i++) document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');
+}
+function updateAdminUI() {
+  var bar = document.getElementById('adminBar');
+  var fab = document.getElementById('fabAdd');
+  var sub = document.getElementById('hSub');
+  var btn = document.getElementById('pinBtn');
+  if (isAdmin) {
+    bar.classList.add('show'); fab.classList.add('show');
+    sub.textContent='Administrator'; btn.textContent='🔓';
+  } else {
+    bar.classList.remove('show'); fab.classList.remove('show');
+    sub.textContent='Permanent Summer'; btn.textContent='⚙️';
+  }
+  render();
+}
+
+// ─── FILTERS ─────────────────────────────────────
+document.querySelectorAll('.fb').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});
+    this.classList.add('on');
+    curFilter = this.getAttribute('data-f');
+    render();
+    if (viewMode==='calendar') renderCal();
+  });
+});
+
+// ─── VIEW TOGGLE ─────────────────────────────────
+document.getElementById('vList').addEventListener('click', function() {
+  viewMode='list';
+  this.classList.add('on'); document.getElementById('vCal').classList.remove('on');
+  document.getElementById('list').style.display='flex';
+  document.getElementById('calView').style.display='none';
+  render();
+});
+document.getElementById('vCal').addEventListener('click', function() {
+  viewMode='calendar';
+  this.classList.add('on'); document.getElementById('vList').classList.remove('on');
+  document.getElementById('list').style.display='none';
+  document.getElementById('calView').style.display='block';
+  renderCal();
+});
+document.getElementById('calPrev').addEventListener('click', function() {
+  calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCal();
+});
+document.getElementById('calNext').addEventListener('click', function() {
+  calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCal();
+});
+
+// ─── FABs ────────────────────────────────────────
+document.getElementById('fabAdd').addEventListener('click', openAdd);
+document.getElementById('fabWA').href = 'https://wa.me/' + (cfg.admN||ADMIN_WA);
+document.getElementById('syncBtn').addEventListener('click', function() {
+  render(); toast('Refreshed', 'ok');
+});
+
+// ─── INIT ────────────────────────────────────────
+render();
 </script>
-<!-- IMPORT MODAL -->
-<div class="modal-overlay" id="importOverlay">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <h2>📥 Import Bookings</h2>
-    <div class="form-group">
-      <label>Source</label>
-      <select id="importSource">
-        <option value="booking">Booking.com</option>
-        <option value="airbnb">Airbnb</option>
-        <option value="direct">Direct / Pingotel</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Apartment</label>
-      <select id="importApt">
-        <option value="a">🏠 1-Praceta Jose Saramago</option>
-        <option value="b">🏡 2-Al-Paranagua</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>File (CSV or XLS/XLSX)</label>
-      <input type="file" id="importFile" accept=".csv,.xls,.xlsx" style="padding:10px 14px;font-size:14px;width:100%;border:2px solid var(--border);border-radius:12px">
-    </div>
-    <div class="cfg-hint" style="font-size:12px;margin-bottom:14px">
-      💡 <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
-      💡 <strong>Airbnb:</strong> Reservations → All → Export CSV<br>
-      💡 <strong>Direct/Pingotel:</strong> Bookings → Export CSV<br>
-      ⚠️ Platform bookings (Booking/Airbnb) win over direct duplicates.
-    </div>
-    <div id="importStatus" style="display:none;padding:12px 14px;border-radius:12px;font-size:14px;font-weight:700;margin-bottom:12px"></div>
-    <button class="btn-primary" id="importDoBtn">📥 Import Now</button>
-    <button class="btn-secondary" id="cancelImportBtn" style="margin-top:8px">Cancel</button>
-  </div>
-</div>
 
 </body>
 </html>
