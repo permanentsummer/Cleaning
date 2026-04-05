@@ -6,120 +6,147 @@
 <title>SummerClean</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--green:#22c55e;--green-bg:#dcfce7;--red:#ef4444;--red-bg:#fee2e2;--blue:#3b82f6;--blue-bg:#dbeafe;--yellow:#f59e0b;--yellow-bg:#fef3c7;--a:#8b5cf6;--a-bg:#ede9fe;--b:#0ea5e9;--b-bg:#e0f2fe;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:16px;--shadow:0 2px 12px rgba(0,0,0,.07)}
+:root{--green:#22c55e;--green-bg:#dcfce7;--red:#ef4444;--red-bg:#fee2e2;--blue:#3b82f6;--blue-bg:#dbeafe;--yellow:#f59e0b;--bg:#f1f5f9;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:16px;--shadow:0 2px 12px rgba(0,0,0,.07)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px}
-header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,0,0,.3)}
 .hl{display:flex;align-items:center;gap:10px}
-.hi{width:38px;height:38px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
-.ht h1{font-size:18px;font-weight:900}.ht p{font-size:11px;color:#94a3b8;font-weight:600;margin-top:1px}
-.hr{display:flex;gap:6px}
-.hbtn{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:16px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.hbtn.spin{animation:spin .8s linear infinite}
+.hi{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.ht h1{font-size:17px;font-weight:900}.ht p{font-size:10px;color:#94a3b8;font-weight:700;margin-top:1px}
+.hr{display:flex;gap:5px;align-items:center}
+.hbtn{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:15px;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hbtn.spin{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#adminBar{display:none;align-items:center;justify-content:space-between;background:#fef3c7;padding:8px 14px;margin:10px 14px 0;border-radius:12px;border:2px solid #fde68a}
+.langBtn{font-size:10px;font-weight:900;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 8px;border-radius:6px;cursor:pointer;letter-spacing:.5px}
+#adminBar{display:none;align-items:center;justify-content:space-between;background:#fef3c7;padding:7px 13px;margin:8px 13px 0;border-radius:12px;border:2px solid #fde68a;gap:8px;flex-wrap:wrap}
 #adminBar.show{display:flex}
-#adminBar span{font-size:12px;font-weight:800;color:#92400e}
-#adminBar div{display:flex;gap:6px}
-#adminBar button{background:#0f172a;color:#fff;border:none;padding:6px 14px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer}
-#toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:999;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:800;font-family:'Nunito',sans-serif;white-space:nowrap;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:90vw;text-align:center}
+#adminBar span{font-size:11px;font-weight:800;color:#92400e}
+#adminBar .abtns{display:flex;gap:4px;flex-wrap:wrap}
+.abarbtn{background:#0f172a;color:#fff;border:none;padding:5px 10px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer}
+#toast{position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:800;font-family:'Nunito',sans-serif;white-space:nowrap;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:92vw;text-align:center}
 #toast.ok{background:#dcfce7;color:#15803d}
 #toast.err{background:#fee2e2;color:#dc2626}
 #toast.warn{background:#fef3c7;color:#92400e}
-#syncStatus{text-align:center;font-size:12px;color:var(--muted);padding:6px 14px;font-weight:600}
-.filters{display:flex;gap:6px;padding:10px 14px 8px;overflow-x:auto;scrollbar-width:none}
-.filters::-webkit-scrollbar{display:none}
-.fb{flex-shrink:0;padding:7px 14px;border-radius:999px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .15s}
+#syncStatus{text-align:center;font-size:11px;color:var(--muted);padding:4px 14px;font-weight:600}
+.frow{display:flex;gap:5px;padding:8px 13px 3px;overflow-x:auto;scrollbar-width:none}
+.frow::-webkit-scrollbar{display:none}
+#srcRow{display:none;gap:5px;padding:3px 13px 8px;overflow-x:auto;scrollbar-width:none}
+#srcRow::-webkit-scrollbar{display:none}
+#srcRow.show{display:flex}
+.fb{flex-shrink:0;padding:6px 12px;border-radius:999px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
 .fb.on{background:#0f172a;border-color:#0f172a;color:#fff}
-.fb.a.on{background:var(--a);border-color:var(--a)}
-.fb.b.on{background:var(--b);border-color:var(--b)}
-#todayBanner{display:none;margin:0 14px 10px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:var(--r);padding:14px 16px;color:#fff}
-#todayBanner.show{display:flex;align-items:center;gap:12px}
-#todayBanner .ti{font-size:30px}
-#todayBanner h3{font-size:15px;font-weight:900}
-#todayBanner p{font-size:12px;opacity:.9;margin-top:2px}
-.vtoggle{display:flex;gap:6px;padding:0 14px 10px}
+#todayBanner{display:none;margin:0 13px 9px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:var(--r);padding:12px 15px;color:#fff}
+#todayBanner.show{display:flex;align-items:center;gap:11px}
+.ti{font-size:26px}
+#todayBanner h3{font-size:14px;font-weight:900}
+#todayBanner p{font-size:11px;opacity:.9;margin-top:1px}
+.vtoggle{display:flex;gap:6px;padding:0 13px 9px}
 .vbtn{flex:1;padding:8px;border-radius:10px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer}
 .vbtn.on{background:#0f172a;border-color:#0f172a;color:#fff}
-#list{padding:0 14px;display:flex;flex-direction:column;gap:10px}
-.slabel{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 2px;margin:14px 0 6px}
-.bcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:2px solid transparent;animation:fi .25s ease}
-@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.bcard.past{opacity:.5}.bcard.tod{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,158,11,.12),var(--shadow)}
-.ctop{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;border-bottom:1px solid var(--border)}
-.abadge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800}
-.abadge.a{background:var(--a-bg);color:var(--a)}.abadge.b{background:var(--b-bg);color:var(--b)}
-.sbadge{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--bg)}
-.sbadge.airbnb{background:#fff0eb;color:#ff5a5f}.sbadge.booking{background:#e8f0fe;color:#003580}.sbadge.direct{background:#f0fdf4;color:#15803d}
-.cdates{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:12px 14px 8px;gap:6px}
-.db{display:flex;flex-direction:column;gap:2px}.db.r{text-align:right}
-.dlbl{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.dval{font-size:17px;font-weight:900;color:var(--text)}.dday{font-size:11px;font-weight:700;color:var(--muted)}
-.darr{font-size:18px;color:#cbd5e1}
-.cinfo{display:flex;gap:8px;padding:0 12px 10px}
-.gchip{background:var(--bg);border-radius:8px;padding:5px 10px;font-size:13px;font-weight:800}
-.nchip{flex:1;background:var(--bg);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cfoot{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--border)}
-.pbtn{flex:1;padding:9px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
-.pbtn.paid{background:var(--green-bg);color:#15803d}.pbtn.unpaid{background:var(--red-bg);color:#dc2626}
-.pbtn:active{transform:scale(.97)}.pbtn.locked{pointer-events:none;opacity:.55}
-.adm{display:none;gap:6px}.adm.show{display:flex}
-.ibtn{width:36px;height:36px;border-radius:9px;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+#list{padding:0 13px;display:flex;flex-direction:column;gap:9px}
+.slabel{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 2px;margin:12px 0 4px}
+.bcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:2px solid transparent;animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.bcard.past{opacity:.42}.bcard.tod{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,158,11,.1),var(--shadow)}
+.ctop{display:flex;align-items:center;justify-content:space-between;padding:9px 11px 7px;border-bottom:1px solid var(--border)}
+.abadge{padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}
+.sbadge{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px}
+.sbadge.airbnb{background:#fff0eb;color:#e8485a}
+.sbadge.booking{background:#e8f0fe;color:#003580}
+.sbadge.direct{background:#f0fdf4;color:#15803d}
+.cdates{display:grid;grid-template-columns:1fr 32px 1fr;align-items:center;padding:10px 12px 7px}
+.db{display:flex;flex-direction:column;gap:1px}
+.db.r{text-align:right}
+.dlbl{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.dval{font-size:17px;font-weight:900;color:var(--text);line-height:1.1}
+.dday{font-size:10px;font-weight:700;color:var(--muted)}
+.darr{display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:18px;font-weight:300}
+.cinfo{display:flex;gap:5px;padding:0 11px 8px;flex-wrap:wrap}
+.chip{background:var(--bg);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700}
+.chip.note{color:var(--muted);font-size:11px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfoot{display:flex;align-items:center;gap:5px;padding:7px 11px;border-top:1px solid var(--border)}
+.pbtn{flex:1;padding:8px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
+.pbtn.paid{background:var(--green-bg);color:#15803d}
+.pbtn.unpaid{background:var(--red-bg);color:#dc2626}
+.pbtn:active{transform:scale(.96)}.pbtn.locked{pointer-events:none;opacity:.5}
+.adm{display:none;gap:5px}.adm.show{display:flex}
+.ibtn{width:33px;height:33px;border-radius:9px;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
 .ibtn.e{background:var(--blue-bg);color:var(--blue)}.ibtn.d{background:var(--red-bg);color:var(--red)}
-#calView{display:none;padding:0 14px 14px}
+.empty{text-align:center;padding:56px 20px}
+.empty .ico{font-size:46px;margin-bottom:10px}
+.empty h3{font-size:17px;font-weight:900;margin-bottom:4px}
+.empty p{font-size:13px;color:var(--muted);font-weight:600}
+/* CALENDAR */
+#calView{display:none;padding:0 13px 14px}
 .cnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.cnbtn{width:34px;height:34px;border-radius:9px;border:2px solid var(--border);background:#fff;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.cmlbl{font-size:16px;font-weight:900}
-.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--border);border-radius:12px;overflow:hidden;border:2px solid var(--border)}
-.cdh{background:#0f172a;color:#fff;text-align:center;font-size:10px;font-weight:800;padding:6px 2px;text-transform:uppercase}
-.cday{background:#fff;min-height:48px;padding:3px}.cday.om{background:#f8fafc}.cday.nt{background:#fef3c7}
-.cnum{font-size:12px;font-weight:800;color:var(--text);display:block;margin-bottom:2px}
-.cday.om .cnum{color:#cbd5e1}.cday.nt .cnum{color:var(--yellow)}
-.cev{display:block;border-radius:3px;padding:1px 3px;font-size:9px;font-weight:800;color:#fff;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cev.a{background:var(--a)}.cev.b{background:var(--b)}
-.clgd{display:flex;align-items:center;gap:10px;padding:8px 2px 0;font-size:12px;font-weight:700;color:var(--muted)}
-.ldot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:3px}
-.empty{text-align:center;padding:60px 20px}
-.empty .ico{font-size:52px;margin-bottom:12px}
-.empty h3{font-size:18px;font-weight:900;margin-bottom:6px}
-.empty p{font-size:14px;color:var(--muted);font-weight:600}
-#fabAdd{position:fixed;bottom:22px;right:18px;width:56px;height:56px;border-radius:50%;background:#0f172a;color:#fff;font-size:26px;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;align-items:center;justify-content:center;z-index:200}
+.cnbtn{width:34px;height:34px;border-radius:9px;border:2px solid var(--border);background:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cmlbl{font-size:15px;font-weight:900}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;border:2px solid var(--border)}
+.cdh{background:#0f172a;color:#fff;text-align:center;font-size:9px;font-weight:800;padding:6px 2px;text-transform:uppercase}
+.cday{background:#fff;min-height:58px;padding:4px 3px;cursor:default;transition:background .1s}
+.cday.om{background:#f8fafc}.cday.nt{background:#fffbeb}
+.cday.hasbk{cursor:pointer}.cday.hasbk:active{background:#f0f4ff}
+.cnum{font-size:11px;font-weight:800;color:var(--text);display:block;margin-bottom:2px}
+.cday.om .cnum{color:#cbd5e1}.cday.nt .cnum{color:var(--yellow);font-weight:900}
+.cbar{border-radius:4px;padding:2px 4px;font-size:8px;font-weight:800;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.clgd{display:flex;flex-wrap:wrap;gap:8px;padding:8px 2px 0;font-size:11px;font-weight:700;color:var(--muted)}
+.ldot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:3px;vertical-align:middle}
+/* CALENDAR POPUP */
+#calPopup{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
+#calPopup.show{display:flex}
+.cpbox{background:#fff;border-radius:18px;padding:18px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);animation:fi .15s ease;max-height:80vh;overflow-y:auto}
+.cpbox h3{font-size:13px;font-weight:900;color:var(--muted);margin-bottom:10px}
+.cprow{display:flex;flex-direction:column;gap:8px}
+.cpmini{border-radius:12px;padding:10px 12px;border:2px solid transparent}
+.cpmini .cpm-apt{font-size:13px;font-weight:900;margin-bottom:5px}
+.cpmini .cpm-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.cpmini .cpm-info{font-size:12px;font-weight:600;color:var(--muted);line-height:1.6}
+.cpmini .cpm-info strong{color:var(--text);font-weight:800}
+/* FABs */
+#fabAdd{position:fixed;bottom:22px;right:17px;width:54px;height:54px;border-radius:50%;background:#0f172a;color:#fff;font-size:24px;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;align-items:center;justify-content:center;z-index:200}
 #fabAdd.show{display:flex}
-#fabWA{position:fixed;bottom:22px;left:18px;width:52px;height:52px;border-radius:50%;background:#25d366;color:#fff;font-size:22px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:200}
+#fabWA{position:fixed;bottom:22px;left:17px;width:50px;height:50px;border-radius:50%;background:#25d366;color:#fff;font-size:21px;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.4);display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:200}
+/* MODALS */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
-.modal{background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 36px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:su .22s ease}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:16px 16px 34px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:su .2s ease}
 @keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.mhandle{width:38px;height:4px;background:#e2e8f0;border-radius:999px;margin:0 auto 16px}
-.modal h2{font-size:19px;font-weight:900;margin-bottom:16px}
-.fg{margin-bottom:13px}
-.fg label{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:11px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;color:var(--text);background:#fff;outline:none;-webkit-appearance:none}
+.mhandle{width:36px;height:4px;background:#e2e8f0;border-radius:999px;margin:0 auto 13px}
+.modal h2{font-size:17px;font-weight:900;margin-bottom:13px}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 11px;border:2px solid var(--border);border-radius:11px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);background:#fff;outline:none;-webkit-appearance:none}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#0f172a}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn1{width:100%;padding:14px;background:#0f172a;color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;margin-top:4px}
-.btn2{width:100%;padding:12px;background:transparent;color:var(--muted);border:2px solid var(--border);border-radius:13px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
-.sep{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;padding-bottom:8px;border-bottom:2px solid var(--border)}
-.prow{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg);border-radius:11px;margin-bottom:7px;font-size:14px;font-weight:700}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.btn1{width:100%;padding:13px;background:#0f172a;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-top:4px}
+.btn2{width:100%;padding:10px;background:transparent;color:var(--muted);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn3{width:100%;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px}
+.sep{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:15px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--border)}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg);border-radius:10px;margin-bottom:5px;font-size:13px;font-weight:700}
 .toggle{position:relative;width:42px;height:23px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
 .ttrack{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;cursor:pointer;transition:background .2s}
 .ttrack:before{content:'';position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
 .toggle input:checked+.ttrack{background:#22c55e}
 .toggle input:checked+.ttrack:before{transform:translateX(19px)}
-#importStatus{display:none;padding:11px 13px;border-radius:11px;font-size:13px;font-weight:700;margin-bottom:12px}
-.hint{background:var(--bg);border-radius:11px;padding:11px 13px;font-size:12px;font-weight:600;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.aptrow{display:flex;align-items:center;gap:7px;margin-bottom:7px;background:var(--bg);border-radius:11px;padding:7px 9px}
+.aptrow .acolor{width:18px;height:18px;border-radius:4px;flex-shrink:0;cursor:pointer}
+.aptrow .aname{flex:1;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text);outline:none;padding:0;min-width:0}
+.aptrow .ashort{width:60px;border:2px solid var(--border);border-radius:7px;padding:3px 5px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;text-align:center;background:#fff;outline:none}
+.aptrow .adel{width:26px;height:26px;border-radius:7px;border:none;background:var(--red-bg);color:var(--red);font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#importStatus{display:none;padding:9px 11px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:10px}
+.hint{background:var(--bg);border-radius:10px;padding:9px 11px;font-size:11px;font-weight:600;color:var(--muted);line-height:1.65;margin-bottom:10px}
 .hint strong{color:var(--text)}
-.pinmodal{background:#fff;border-radius:22px 22px 0 0;padding:26px 22px 38px;width:100%;max-width:340px;text-align:center;animation:su .22s ease}
-.pinmodal h2{font-size:21px;font-weight:900;margin-bottom:6px}
-.pinmodal p{color:var(--muted);font-size:14px;margin-bottom:20px;font-weight:600}
-.pindots{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
-.pd{width:15px;height:15px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s}
+.pinmodal{background:#fff;border-radius:22px 22px 0 0;padding:22px 20px 34px;width:100%;max-width:320px;text-align:center;animation:su .2s ease}
+.pinmodal h2{font-size:19px;font-weight:900;margin-bottom:4px}
+.pinmodal p{color:var(--muted);font-size:13px;margin-bottom:16px;font-weight:600}
+.pindots{display:flex;justify-content:center;gap:11px;margin-bottom:16px}
+.pd{width:13px;height:13px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s}
 .pd.on{background:#0f172a;border-color:#0f172a}
-.pkpad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;max-width:250px;margin:0 auto}
-.pk{padding:14px;background:var(--bg);border:2px solid var(--border);border-radius:13px;font-family:'Nunito',sans-serif;font-size:21px;font-weight:800;cursor:pointer;transition:all .1s}
-.pk:active{background:#0f172a;color:#fff;border-color:#0f172a;transform:scale(.94)}
-.pierr{color:var(--red);font-size:13px;font-weight:700;margin-top:12px;min-height:18px}
+.pkpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:230px;margin:0 auto}
+.pk{padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:19px;font-weight:800;cursor:pointer;transition:all .1s}
+.pk:active{background:#0f172a;color:#fff;border-color:#0f172a;transform:scale(.92)}
+.pierr{color:var(--red);font-size:12px;font-weight:700;margin-top:8px;min-height:15px}
 </style>
 </head>
 <body>
@@ -130,6 +157,7 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
     <div class="ht"><h1>SummerClean</h1><p id="hSub">Permanent Summer</p></div>
   </div>
   <div class="hr">
+    <button class="langBtn" id="langBtn">EN</button>
     <button class="hbtn" id="syncBtn">🔄</button>
     <button class="hbtn" id="pinBtn">⚙️</button>
   </div>
@@ -137,21 +165,22 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
 
 <div id="adminBar">
   <span>🔐 Admin</span>
-  <div>
-    <button onclick="openImport()">📥 Import</button>
-    <button onclick="openCfg()">⚙️ Settings</button>
+  <div class="abtns">
+    <button class="abarbtn" onclick="openImport()">📥 Import</button>
+    <button class="abarbtn" onclick="openApts()">🏠 Apts</button>
+    <button class="abarbtn" onclick="openCfg()">⚙️ Settings</button>
   </div>
 </div>
 
 <div id="syncStatus"></div>
 <div id="toast"></div>
 
-<div class="filters">
-  <button class="fb on" data-f="all">All</button>
-  <button class="fb a"  data-f="a">🏠 Saramago</button>
-  <button class="fb b"  data-f="b">🏡 Al-Paranaguá</button>
-  <button class="fb"    data-f="today">📅 Today</button>
-  <button class="fb"    data-f="unpaid">🔴 Unpaid</button>
+<div class="frow" id="aptFilters"></div>
+<div id="srcRow">
+  <button class="fb on" data-src="all" id="srcAll">All sources</button>
+  <button class="fb" data-src="airbnb">🏠 Airbnb</button>
+  <button class="fb" data-src="booking">📋 Booking.com</button>
+  <button class="fb" data-src="direct">🤝 Direct</button>
 </div>
 
 <div id="todayBanner">
@@ -173,21 +202,26 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
     <button class="cnbtn" id="calNext">›</button>
   </div>
   <div class="cgrid" id="calGrid"></div>
-  <div class="clgd">
-    <span class="ldot" style="background:var(--a)"></span>Saramago
-    <span class="ldot" style="background:var(--b)"></span>Al-Paranaguá
+  <div class="clgd" id="calLgd"></div>
+</div>
+
+<div id="calPopup">
+  <div class="cpbox">
+    <h3 id="cpDate"></h3>
+    <div class="cprow" id="cpCards"></div>
+    <button class="btn2" style="margin-top:10px" onclick="document.getElementById('calPopup').classList.remove('show')">✕ Close</button>
   </div>
 </div>
 
 <button id="fabAdd">+</button>
-<a id="fabWA" href="https://wa.me/351924477353" target="_blank">💬</a>
+<a id="fabWA" href="#" target="_blank">💬</a>
 
 <!-- PIN -->
 <div class="overlay" id="pinOverlay">
   <div class="pinmodal">
     <div class="mhandle"></div>
-    <h2>🔐 Admin Access</h2>
-    <p>Enter your 4-digit PIN</p>
+    <h2>🔐 Admin</h2>
+    <p id="pinHint">Enter your 4-digit PIN</p>
     <div class="pindots">
       <div class="pd" id="p0"></div><div class="pd" id="p1"></div>
       <div class="pd" id="p2"></div><div class="pd" id="p3"></div>
@@ -196,9 +230,9 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
       <button class="pk" data-n="1">1</button><button class="pk" data-n="2">2</button><button class="pk" data-n="3">3</button>
       <button class="pk" data-n="4">4</button><button class="pk" data-n="5">5</button><button class="pk" data-n="6">6</button>
       <button class="pk" data-n="7">7</button><button class="pk" data-n="8">8</button><button class="pk" data-n="9">9</button>
-      <button class="pk" data-n="del" style="font-size:17px">⌫</button>
+      <button class="pk" data-n="del" style="font-size:16px">⌫</button>
       <button class="pk" data-n="0">0</button>
-      <button class="pk" data-n="x" style="font-size:13px;font-weight:800;color:var(--muted)">Exit</button>
+      <button class="pk" data-n="x" style="font-size:12px;color:var(--muted)">Exit</button>
     </div>
     <div class="pierr" id="pinErr"></div>
   </div>
@@ -210,13 +244,12 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
     <div class="mhandle"></div>
     <h2 id="editTitle">New Booking</h2>
     <input type="hidden" id="eId">
-    <div class="fg"><label>Apartment</label>
-      <select id="eApt"><option value="a">🏠 1-Praceta Jose Saramago</option><option value="b">🏡 2-Al-Paranagua</option></select></div>
+    <div class="fg"><label>Apartment</label><select id="eApt"></select></div>
     <div class="fg"><label>Source</label>
-      <select id="eSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct / Pingotel</option></select></div>
+      <select id="eSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
     <div class="fr">
-      <div class="fg"><label>Check-in</label><input type="date" id="eIn"></div>
-      <div class="fg"><label>Check-out</label><input type="date" id="eOut"></div>
+      <div class="fg"><label id="lIn">Check-in</label><input type="date" id="eIn"></div>
+      <div class="fg"><label id="lOut">Check-out</label><input type="date" id="eOut"></div>
     </div>
     <div class="fr">
       <div class="fg"><label>Guests</label><input type="number" id="eGuests" min="1" max="30" value="2"></div>
@@ -225,7 +258,7 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
     <div class="fg"><label>Notes</label><textarea id="eNotes" rows="2" placeholder="Baby cot, VIP, keys..."></textarea></div>
     <div class="fg"><label>Payment</label>
       <select id="ePaid"><option value="unpaid">🔴 Unpaid</option><option value="paid">🟢 Paid</option></select></div>
-    <button class="btn1" onclick="saveEdit()">💾 Save</button>
+    <button class="btn1" id="saveEditBtn">💾 Save</button>
     <button class="btn2" onclick="closeModal('editOverlay')">Cancel</button>
   </div>
 </div>
@@ -236,19 +269,31 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
     <div class="mhandle"></div>
     <h2>📥 Import Bookings</h2>
     <div class="fg"><label>Source</label>
-      <select id="iSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct / Pingotel</option></select></div>
-    <div class="fg"><label>Apartment (default)</label>
-      <select id="iApt"><option value="a">🏠 Saramago</option><option value="b">🏡 Al-Paranaguá</option></select></div>
+      <select id="iSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
+    <div class="fg"><label>Apartment (default)</label><select id="iApt"></select></div>
     <div class="fg"><label>File (CSV or XLS/XLSX)</label>
-      <input type="file" id="iFile" accept=".csv,.xls,.xlsx" style="padding:10px 13px;font-size:15px"></div>
+      <input type="file" id="iFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px"></div>
     <div class="hint">
       <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
       <strong>Airbnb:</strong> Reservations → Export CSV<br>
-      <strong>Pingotel:</strong> Bookings → Export CSV
+      <strong>Direct/Pingotel:</strong> Bookings → Export CSV
     </div>
     <div id="importStatus"></div>
-    <button class="btn1" onclick="doImport()">📥 Import Now</button>
+    <button class="btn1" id="doImportBtn">📥 Import Now</button>
     <button class="btn2" onclick="closeModal('importOverlay')">Cancel</button>
+  </div>
+</div>
+
+<!-- APARTMENTS -->
+<div class="overlay" id="aptsOverlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <h2>🏠 Apartments</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600">Rename freely. Short name appears on cards and filters.</p>
+    <div id="aptList"></div>
+    <button class="btn3" id="addAptBtn">+ Add Apartment</button>
+    <button class="btn1" id="saveAptsBtn" style="margin-top:8px">💾 Save</button>
+    <button class="btn2" onclick="closeModal('aptsOverlay')">Cancel</button>
   </div>
 </div>
 
@@ -268,146 +313,266 @@ header{background:#0f172a;color:#fff;padding:16px 16px 12px;position:sticky;top:
       <div class="fg"><label>CallMeBot Key</label><input type="text" id="cAdmK" placeholder="7950168"></div>
     </div>
     <div class="sep">🔐 Cleaner Permissions</div>
-    <div class="prow"><span>Toggle payment status</span><label class="toggle"><input type="checkbox" id="pPay" checked><span class="ttrack"></span></label></div>
+    <div class="prow"><span>Toggle payment</span><label class="toggle"><input type="checkbox" id="pPay" checked><span class="ttrack"></span></label></div>
     <div class="prow"><span>View notes</span><label class="toggle"><input type="checkbox" id="pNotes" checked><span class="ttrack"></span></label></div>
-    <button class="btn1" onclick="saveCfg()">💾 Save</button>
+    <div class="sep">🔑 Change PIN</div>
+    <div class="fg"><label>New PIN (4 digits)</label><input type="text" id="newPin" placeholder="Leave blank to keep current" maxlength="4" pattern="[0-9]{4}" inputmode="numeric"></div>
+    <button class="btn1" id="saveCfgBtn">💾 Save Settings</button>
     <button class="btn2" onclick="closeModal('cfgOverlay')">Cancel</button>
-    <div class="sep" style="margin-top:20px">⚠️ Danger Zone</div>
-    <button class="btn2" style="color:var(--red);border-color:#fecaca" onclick="clearAll()">🗑️ Clear all bookings</button>
+    <div class="sep" style="margin-top:16px;border-color:#fecaca;color:var(--red)">⚠️ Danger Zone</div>
+    <button class="btn2" style="color:var(--red);border-color:#fecaca" id="clearAllBtn">🗑️ Clear all bookings</button>
   </div>
 </div>
 
 <script>
+// ─── SUPABASE ────────────────────────────────
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
-var PIN='2302',ADMIN_WA='351924477353',APT_A='1-Praceta Jose Saramago',APT_B='2-Al-Paranagua',AS='Saramago',BS='Al-Paranaguá';
-var cfg=loadLocal('sc_cfg',{}),bks=[],isAdmin=false,curFilter='all',viewMode='list',calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),pinBuf='';
-
-function loadLocal(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
-function saveLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-
-// ── Supabase ──
-function sbFetch(method,path,body){
+function sbF(method,path,body){
   var opts={method:method,headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':method==='POST'?'resolution=merge-duplicates':''}};
   if(body)opts.body=JSON.stringify(body);
   return fetch(SB_URL+'/rest/v1/'+path,opts).then(function(r){
     if(!r.ok)return r.text().then(function(t){throw new Error(t);});
-    if(r.status===204||r.headers.get('content-length')==='0')return[];
-    return r.text().then(function(t){return t?JSON.parse(t):[];});
+    if(r.status===204)return[];
+    return r.text().then(function(t){try{return t?JSON.parse(t):[];}catch(e){return[];}});
   });
 }
 function sbLoad(){
-  setSS('⏳ Loading...');
-  return sbFetch('GET','bookings?select=*&order=checkout.asc').then(function(data){
-    bks=data.map(r2l);setSS('✅ '+bks.length+' bookings loaded');render();
+  setSS(T('syncing'));
+  return sbF('GET','bookings?select=*&order=checkout.asc').then(function(data){
+    bks=data.map(r2l);setSS('✅ '+bks.length+' '+T('loaded'));render();
   }).catch(function(e){setSS('❌ '+e.message);});
 }
-function sbUpsert(arr){return sbFetch('POST','bookings',arr.map(l2r));}
-function sbPatch(id,f){return sbFetch('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
-function sbDelete(id){return sbFetch('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
+function sbUpsert(arr){return sbF('POST','bookings',arr.map(l2r));}
+function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
+function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
 function l2r(b){return{id:b.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid'};}
-function r2l(r){return{id:r.id,apt:r.apt,source:r.source,checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid};}
-function setSS(m){document.getElementById('syncStatus').textContent=m;}
+function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid||'unpaid'};}
 
-// ── Utils ──
+// ─── STATE ───────────────────────────────────
+var bks=[],isAdmin=false,curFilter='all',curSrc='all',viewMode='list';
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),pinBuf='';
+var cfg=ll('sc_cfg',{});
+var PIN=cfg.pin||'2302';
+
+// ─── APARTMENTS ──────────────────────────────
+var APT_COLORS=['#8b5cf6','#0ea5e9','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316'];
+var DEFAULT_APTS=[{id:'a',name:'1-Praceta Jose Saramago',short:'Saramago',color:'#8b5cf6'},{id:'b',name:'2-Al-Paranagua',short:'Al-Paranaguá',color:'#0ea5e9'}];
+var apts=ll('sc_apts',DEFAULT_APTS);
+function aptById(id){return apts.find(function(a){return a.id===id;})||{id:id,name:id,short:id,color:'#64748b'};}
+
+// ─── LANGUAGE ────────────────────────────────
+var LANG=ll('sc_lang','en');
+var LANGS=['en','fr','pt'];
+var S={
+  en:{syncing:'⏳ Syncing...',loaded:'bookings loaded',upcoming:'📅 Upcoming & Today',previous:'📁 Previous',checkin:'Check-in',checkout:'Check-out',paid:'✅ Paid',unpaid:'❌ Unpaid',today:'📅 Today',allSrc:'All sources',todayCl:' cleaning(s) today!',empty:'All clean!',emptySub:'No bookings in this filter.',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings from cloud? Cannot be undone.',
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']},
+  fr:{syncing:'⏳ Chargement...',loaded:'réservations chargées',upcoming:'📅 À venir & Aujourd\'hui',previous:'📁 Précédentes',checkin:'Arrivée',checkout:'Départ',paid:'✅ Payé',unpaid:'❌ Impayé',today:'📅 Aujourd\'hui',allSrc:'Toutes sources',todayCl:' ménage(s) aujourd\'hui !',empty:'Tout propre !',emptySub:'Aucune réservation dans ce filtre.',deleteQ:'Supprimer cette réservation ?',clearQ:'Supprimer TOUTES les réservations ? Irréversible.',
+    months:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']},
+  pt:{syncing:'⏳ A sincronizar...',loaded:'reservas carregadas',upcoming:'📅 Próximas & Hoje',previous:'📁 Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'✅ Pago',unpaid:'❌ Por pagar',today:'📅 Hoje',allSrc:'Todas as fontes',todayCl:' limpeza(s) hoje!',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',deleteQ:'Eliminar esta reserva?',clearQ:'Eliminar TODAS as reservas? Ação irreversível.',
+    months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wdL:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']}
+};
+function T(k){return(S[LANG]||S.en)[k]||k;}
+
+// ─── UTILS ───────────────────────────────────
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function today(){return new Date().toISOString().slice(0,10);}
+function ll(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function sl(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function setSS(m){document.getElementById('syncStatus').textContent=m;}
 function toast(m,t){var el=document.getElementById('toast');el.textContent=m;el.className=t||'ok';el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none';},4000);}
-function fmtS(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return String(d.getDate()).padStart(2,'0')+'/'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];}
-function fmtWd(s){if(!s)return'';return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(s+'T12:00:00').getDay()];}
-function fmtFull(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+fmtS(s)+' '+d.getFullYear();}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
+function fmtD(s){
+  if(!s)return'—';
+  var d=new Date(s+'T12:00:00');
+  var mn=LANG==='fr'?['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']:LANG==='pt'?['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return String(d.getDate()).padStart(2,'0')+' '+mn[d.getMonth()];
+}
+function fmtWd(s){if(!s)return'';return T('wdS')[new Date(s+'T12:00:00').getDay()];}
+function fmtFull(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return T('wdL')[d.getDay()]+' '+fmtD(s)+' '+d.getFullYear();}
 
-// ── Render ──
+// ─── APT FILTERS ─────────────────────────────
+function buildAptFilters(){
+  var row=document.getElementById('aptFilters');row.innerHTML='';
+  var tod=today(),fut=bks.filter(function(b){return b.checkout>=tod;});
+  function mkFb(f,lbl,col){
+    var b=document.createElement('button');
+    b.className='fb'+(curFilter===f?' on':'');
+    b.setAttribute('data-f',f);b.textContent=lbl;
+    if(curFilter===f&&col){b.style.background=col;b.style.borderColor=col;b.style.color='#fff';}
+    b.addEventListener('click',function(){curFilter=f;buildAptFilters();render();if(viewMode==='calendar')renderCal();});
+    row.appendChild(b);
+  }
+  mkFb('all','All ('+fut.length+')','#0f172a');
+  apts.forEach(function(a){
+    var c=fut.filter(function(b){return b.apt===a.id;}).length;
+    mkFb(a.id,a.short+' ('+c+')',a.color);
+  });
+  mkFb('today',T('today'),'#0f172a');
+  mkFb('unpaid','🔴 Unpaid ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
+  // Source row label
+  document.getElementById('srcAll').textContent=T('allSrc');
+}
+
+function populateAptSelects(){
+  ['eApt','iApt'].forEach(function(sid){
+    var sel=document.getElementById(sid);if(!sel)return;
+    var cur=sel.value;sel.innerHTML='';
+    apts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.short+' — '+a.name;sel.appendChild(o);});
+    if(cur)sel.value=cur;
+  });
+}
+
+// ─── RENDER ──────────────────────────────────
 function render(){
   var tod=today(),sorted=bks.slice().sort(function(a,b){return(a.checkout||'')>(b.checkout||'')?1:-1;});
   var todBks=sorted.filter(function(b){return b.checkout===tod;});
   var tb=document.getElementById('todayBanner');
-  if(todBks.length){tb.classList.add('show');document.getElementById('tbCount').textContent=todBks.length+' cleaning'+(todBks.length>1?'s':'')+' today!';document.getElementById('tbApts').textContent=todBks.map(function(b){return b.apt==='a'?AS:BS;}).join(' · ');}
+  if(todBks.length){tb.classList.add('show');document.getElementById('tbCount').textContent=todBks.length+T('todayCl');document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' · ');}
   else tb.classList.remove('show');
-  var fut=sorted.filter(function(b){return b.checkout>=tod;});
-  var fbs=document.querySelectorAll('.fb');
-  fbs[0].textContent='All ('+fut.length+')';
-  fbs[1].textContent='🏠 '+AS+' ('+fut.filter(function(b){return b.apt==='a';}).length+')';
-  fbs[2].textContent='🏡 '+BS+' ('+fut.filter(function(b){return b.apt==='b';}).length+')';
-  fbs[3].textContent='📅 Today';
-  fbs[4].textContent='🔴 Unpaid ('+fut.filter(function(b){return b.paid!=='paid';}).length+')';
-  var list;
-  if(curFilter==='a')list=sorted.filter(function(b){return b.apt==='a';});
-  else if(curFilter==='b')list=sorted.filter(function(b){return b.apt==='b';});
-  else if(curFilter==='today')list=sorted.filter(function(b){return b.checkout===tod;});
-  else if(curFilter==='unpaid')list=sorted.filter(function(b){return b.paid!=='paid';});
-  else list=sorted;
+  buildAptFilters();
+  var list=sorted.filter(function(b){
+    if(curFilter==='today'&&b.checkout!==tod)return false;
+    if(curFilter==='unpaid'&&b.paid==='paid')return false;
+    if(curFilter!=='all'&&curFilter!=='today'&&curFilter!=='unpaid'&&b.apt!==curFilter)return false;
+    if(curSrc!=='all'&&b.source!==curSrc)return false;
+    return true;
+  });
   var c=document.getElementById('list');c.innerHTML='';
-  if(!list.length){c.innerHTML='<div class="empty"><div class="ico">✨</div><h3>All clean!</h3><p>No bookings in this filter.</p></div>';return;}
+  if(!list.length){c.innerHTML='<div class="empty"><div class="ico">✨</div><h3>'+T('empty')+'</h3><p>'+T('emptySub')+'</p></div>';return;}
   var up=list.filter(function(b){return b.checkout>=tod;}),past=list.filter(function(b){return b.checkout<tod;});
-  if(up.length){var l=document.createElement('div');l.className='slabel';l.textContent='📅 Upcoming & Today';c.appendChild(l);up.forEach(function(b){c.appendChild(mkCard(b,false));});}
-  if(past.length){var l2=document.createElement('div');l2.className='slabel';l2.textContent='📁 Previous';c.appendChild(l2);past.forEach(function(b){c.appendChild(mkCard(b,true));});}
+  if(up.length){var l=document.createElement('div');l.className='slabel';l.textContent=T('upcoming');c.appendChild(l);up.forEach(function(b){c.appendChild(mkCard(b,false));});}
+  if(past.length){var l2=document.createElement('div');l2.className='slabel';l2.textContent=T('previous');c.appendChild(l2);past.forEach(function(b){c.appendChild(mkCard(b,true));});}
 }
 
 function mkCard(b,isPast){
   var tod=today(),isT=b.checkout===tod,el=document.createElement('div');
   el.className='bcard'+(isPast?' past':'')+(isT?' tod':'');
-  var srcLbl={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
-  var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?'✅ Paid':'❌ Unpaid';
+  var apt=aptById(b.apt);
+  var srcL={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
+  var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
   var canPay=isAdmin||cfg.pPay!==false,canNotes=isAdmin||cfg.pNotes!==false;
-  var infoRow='';
-  if(b.guests||(b.notes&&canNotes)){infoRow='<div class="cinfo">'+(b.guests?'<div class="gchip">👥 '+b.guests+'</div>':'')+((b.notes&&canNotes)?'<div class="nchip">📝 '+b.notes+'</div>':'')+'</div>';}
-  el.innerHTML='<div class="ctop"><div class="abadge '+b.apt+'">'+(b.apt==='a'?'🏠 '+AS:'🏡 '+BS)+'</div><div class="sbadge '+(b.source||'direct')+'">'+srcLbl+'</div></div>'
-    +'<div class="cdates"><div class="db"><span class="dlbl">Check-in</span><span class="dval">'+fmtS(b.checkin)+'</span><span class="dday">'+fmtWd(b.checkin)+'</span></div><div class="darr">→</div><div class="db r"><span class="dlbl">Check-out</span><span class="dval">'+fmtS(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div></div>'
-    +infoRow
-    +'<div class="cfoot"><button class="pbtn '+pCls+(canPay?'':' locked')+'" data-id="'+b.id+'">'+pLbl+'</button><div class="adm'+(isAdmin?' show':'')+'"><button class="ibtn e" data-id="'+b.id+'">✏️</button><button class="ibtn d" data-id="'+b.id+'">🗑️</button></div></div>';
+  var ir='';
+  if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">👥 '+b.guests+'</span>':'')+((b.notes&&canNotes)?'<span class="chip note">📝 '+b.notes+'</span>':'')+'</div>';}
+  el.innerHTML=
+    '<div class="ctop">'+
+      '<div class="abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+
+      '<div class="sbadge '+b.source+'">'+srcL+'</div>'+
+    '</div>'+
+    '<div class="cdates">'+
+      '<div class="db"><span class="dlbl">'+T('checkin')+'</span><span class="dval">'+fmtD(b.checkin)+'</span><span class="dday">'+fmtWd(b.checkin)+'</span></div>'+
+      '<div class="darr">→</div>'+
+      '<div class="db r"><span class="dlbl">'+T('checkout')+'</span><span class="dval">'+fmtD(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div>'+
+    '</div>'+ir+
+    '<div class="cfoot">'+
+      '<button class="pbtn '+pCls+(canPay?'':' locked')+'" data-id="'+b.id+'">'+pLbl+'</button>'+
+      '<div class="adm'+(isAdmin?' show':'')+'"><button class="ibtn e" data-id="'+b.id+'">✏️</button><button class="ibtn d" data-id="'+b.id+'">🗑️</button></div>'+
+    '</div>';
   var pb=el.querySelector('.pbtn');
   if(pb&&canPay)pb.addEventListener('click',function(){
     var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
     if(idx===-1)return;var np=bks[idx].paid==='paid'?'unpaid':'paid';bks[idx].paid=np;render();
-    sbPatch(id,{paid:np}).catch(function(e){toast('Sync error','err');});
+    sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
   });
   var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){openEdit(this.getAttribute('data-id'));});
   var db=el.querySelector('.ibtn.d');if(db)db.addEventListener('click',function(){
-    var id=this.getAttribute('data-id');if(!confirm('Delete this booking?'))return;
+    var id=this.getAttribute('data-id');if(!confirm(T('deleteQ')))return;
     bks=bks.filter(function(x){return x.id!==id;});render();
-    sbDelete(id).catch(function(e){toast('Delete error','err');});
+    sbDel(id).catch(function(){toast('Delete error','err');});
   });
   return el;
 }
 
-// ── Calendar ──
+// ─── CALENDAR ────────────────────────────────
 function renderCal(){
-  var months=['January','February','March','April','May','June','July','August','September','October','November','December'],wdays=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  document.getElementById('calLbl').textContent=months[calMonth]+' '+calYear;
-  var tod=today(),grid=document.getElementById('calGrid');
-  var heads=wdays.map(function(d){return'<div class="cdh">'+d+'</div>';}).join('');
-  var first=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate(),prev=new Date(calYear,calMonth,0).getDate(),cells='';
+  var ms=T('months'),ws=T('wdS');
+  document.getElementById('calLbl').textContent=ms[calMonth]+' '+calYear;
+  var tod=today(),first=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate(),prev=new Date(calYear,calMonth,0).getDate();
+  // Legend
+  var lgd=document.getElementById('calLgd');lgd.innerHTML='';
+  apts.forEach(function(a){
+    var s=document.createElement('span');
+    s.innerHTML='<span class="ldot" style="background:'+a.color+'"></span>'+a.short;
+    lgd.appendChild(s);
+  });
+  var heads=ws.map(function(d){return'<div class="cdh">'+d+'</div>';}).join(''),cells='';
   for(var i=first-1;i>=0;i--)cells+='<div class="cday om"><span class="cnum">'+(prev-i)+'</span></div>';
   for(var d=1;d<=dim;d++){
-    var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var dayBks=bks.filter(function(b){if(!b.checkin||!b.checkout)return false;if(curFilter==='a'&&b.apt!=='a')return false;if(curFilter==='b'&&b.apt!=='b')return false;return b.checkin<=ds&&b.checkout>=ds;});
-    var evs=dayBks.map(function(b){return'<span class="cev '+b.apt+'">'+(b.checkout===ds?'↑out':b.checkin===ds?'↓in':'·')+'</span>';}).join('');
-    cells+='<div class="cday'+(ds===tod?' nt':'')+'"><span class="cnum">'+d+'</span>'+evs+'</div>';
+    var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),isT=ds===tod;
+    var dayBks=bks.filter(function(b){
+      if(!b.checkin||!b.checkout)return false;
+      if(curFilter!=='all'&&curFilter!=='today'&&curFilter!=='unpaid'&&b.apt!==curFilter)return false;
+      if(curSrc!=='all'&&b.source!==curSrc)return false;
+      return b.checkin<=ds&&b.checkout>=ds;
+    });
+    var bars=dayBks.map(function(b){
+      var col=aptById(b.apt).color,sht=aptById(b.apt).short;
+      var isIn=b.checkin===ds,isOut=b.checkout===ds;
+      var label=isIn&&isOut?'⇅ '+sht:isIn?'↓ '+sht:isOut?'↑ '+sht:'· '+sht;
+      var alpha=isIn||isOut?'ff':'99';
+      return'<span class="cbar" style="background:'+col+(isIn||isOut?'':'bb')+'" title="'+sht+'">'+label+'</span>';
+    }).join('');
+    cells+='<div class="cday'+(isT?' nt':'')+(dayBks.length?' hasbk':'')+'" data-ds="'+ds+'"><span class="cnum">'+d+'</span>'+bars+'</div>';
   }
-  var rem=(first+dim)%7===0?0:7-(first+dim)%7;for(var r=1;r<=rem;r++)cells+='<div class="cday om"><span class="cnum">'+r+'</span></div>';
-  grid.innerHTML=heads+cells;
+  var rem=(first+dim)%7===0?0:7-(first+dim)%7;
+  for(var r=1;r<=rem;r++)cells+='<div class="cday om"><span class="cnum">'+r+'</span></div>';
+  document.getElementById('calGrid').innerHTML=heads+cells;
+  document.querySelectorAll('.cday.hasbk').forEach(function(cell){
+    cell.addEventListener('click',function(){
+      var ds=this.getAttribute('data-ds');
+      var db=bks.filter(function(b){return b.checkin<=ds&&b.checkout>=ds;});
+      showCalPopup(ds,db);
+    });
+  });
 }
 
-// ── Add/Edit ──
+function showCalPopup(ds,dayBks){
+  var d=new Date(ds+'T12:00:00');
+  document.getElementById('cpDate').textContent=T('wdL')[d.getDay()]+', '+fmtD(ds)+' '+d.getFullYear();
+  var cc=document.getElementById('cpCards');cc.innerHTML='';
+  dayBks.forEach(function(b){
+    var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;
+    var tag=isIn&&isOut?'⇅ Check-in + Check-out':isOut?'↑ '+T('checkout'):isIn?'↓ '+T('checkin'):'· Staying';
+    var div=document.createElement('div');
+    div.className='cpmini';
+    div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';
+    div.innerHTML=
+      '<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div>'+
+      '<div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div>'+
+      '<div class="cpm-info">'+
+        T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+
+        T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+
+        (b.guests?'<br>👥 <strong>'+b.guests+'</strong> guests':'')+
+        (b.notes?'<br>📝 '+b.notes:'')+
+        '<br><span style="opacity:.6;font-size:11px">'+(b.source==='airbnb'?'Airbnb':b.source==='booking'?'Booking.com':'Direct')+'</span>'+
+      '</div>';
+    cc.appendChild(div);
+  });
+  document.getElementById('calPopup').classList.add('show');
+}
+document.getElementById('calPopup').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+
+// ─── ADD / EDIT ───────────────────────────────
 document.getElementById('eOut').addEventListener('change',function(){if(!document.getElementById('eClean').value)document.getElementById('eClean').value=this.value;});
 function openAdd(){
   document.getElementById('editTitle').textContent='➕ New Booking';document.getElementById('eId').value='';
-  document.getElementById('eApt').value='a';document.getElementById('eSrc').value='direct';
-  document.getElementById('eIn').value='';document.getElementById('eOut').value='';document.getElementById('eClean').value='';
-  document.getElementById('eGuests').value=2;document.getElementById('eNotes').value='';document.getElementById('ePaid').value='unpaid';
+  populateAptSelects();
+  document.getElementById('eSrc').value='direct';document.getElementById('eIn').value='';document.getElementById('eOut').value='';
+  document.getElementById('eClean').value='';document.getElementById('eGuests').value=2;document.getElementById('eNotes').value='';document.getElementById('ePaid').value='unpaid';
   document.getElementById('editOverlay').classList.add('show');
 }
 function openEdit(id){
   var b=bks.find(function(x){return x.id===id;});if(!b)return;
-  document.getElementById('editTitle').textContent='✏️ Edit Booking';document.getElementById('eId').value=b.id;
-  document.getElementById('eApt').value=b.apt;document.getElementById('eSrc').value=b.source||'direct';
+  document.getElementById('editTitle').textContent='✏️ Edit';populateAptSelects();
+  document.getElementById('eId').value=b.id;document.getElementById('eApt').value=b.apt;document.getElementById('eSrc').value=b.source||'direct';
   document.getElementById('eIn').value=b.checkin;document.getElementById('eOut').value=b.checkout;document.getElementById('eClean').value=b.clean||b.checkout;
   document.getElementById('eGuests').value=b.guests||2;document.getElementById('eNotes').value=b.notes||'';document.getElementById('ePaid').value=b.paid||'unpaid';
   document.getElementById('editOverlay').classList.add('show');
 }
-function saveEdit(){
+document.getElementById('saveEditBtn').addEventListener('click',function(){
   var id=document.getElementById('eId').value,cin=document.getElementById('eIn').value,cout=document.getElementById('eOut').value;
   if(!cin||!cout){alert('Please fill in the dates.');return;}
   var data={id:id||uid(),apt:document.getElementById('eApt').value,source:document.getElementById('eSrc').value,checkin:cin,checkout:cout,clean:document.getElementById('eClean').value||cout,guests:document.getElementById('eGuests').value,notes:document.getElementById('eNotes').value.trim(),paid:document.getElementById('ePaid').value};
@@ -415,77 +580,96 @@ function saveEdit(){
   if(isNew){bks.push(data);sendWA(cfg.waN,cfg.waK,buildWAMsg(data));}
   else{var idx=bks.findIndex(function(x){return x.id===data.id;});if(idx!==-1)bks[idx]=data;}
   render();closeModal('editOverlay');
-  sbUpsert([data]).then(function(){toast(isNew?'Booking added ✅':'Updated ✅','ok');}).catch(function(e){toast('Save error: '+e.message,'err');});
+  sbUpsert([data]).then(function(){toast(isNew?'✅ Added':'✅ Updated','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+});
+
+// ─── APARTMENTS MANAGER ───────────────────────
+var editApts=[];
+function openApts(){editApts=JSON.parse(JSON.stringify(apts));renderAptList();document.getElementById('aptsOverlay').classList.add('show');}
+function renderAptList(){
+  var c=document.getElementById('aptList');c.innerHTML='';
+  editApts.forEach(function(a,idx){
+    var row=document.createElement('div');row.className='aptrow';
+    row.innerHTML='<div class="acolor" style="background:'+a.color+'" title="Color"></div>'+
+      '<input class="aname" value="'+a.name+'" placeholder="Full name" data-idx="'+idx+'">'+
+      '<input class="ashort" value="'+a.short+'" placeholder="Short" maxlength="14" data-idx="'+idx+'">'+
+      '<button class="adel" data-idx="'+idx+'">✕</button>';
+    c.appendChild(row);
+    row.querySelector('.aname').addEventListener('input',function(){editApts[this.getAttribute('data-idx')].name=this.value;});
+    row.querySelector('.ashort').addEventListener('input',function(){editApts[this.getAttribute('data-idx')].short=this.value;});
+    row.querySelector('.adel').addEventListener('click',function(){editApts.splice(parseInt(this.getAttribute('data-idx')),1);renderAptList();});
+  });
 }
+document.getElementById('addAptBtn').addEventListener('click',function(){
+  editApts.push({id:'apt_'+uid().slice(0,6),name:'New Apartment',short:'Apt '+(editApts.length+1),color:APT_COLORS[editApts.length%APT_COLORS.length]});
+  renderAptList();
+});
+document.getElementById('saveAptsBtn').addEventListener('click',function(){
+  if(!editApts.length){alert('At least one apartment required.');return;}
+  apts=editApts;sl('sc_apts',apts);populateAptSelects();buildAptFilters();render();if(viewMode==='calendar')renderCal();
+  closeModal('aptsOverlay');toast('✅ Apartments saved','ok');
+});
 
-// ── WhatsApp ──
+// ─── WHATSAPP ─────────────────────────────────
 function sendWA(phone,key,msg){if(!phone||!key)return;var img=new Image();img.src='https://api.callmebot.com/whatsapp.php?phone='+phone+'&text='+encodeURIComponent(msg)+'&apikey='+key;}
-function buildWAMsg(b){var apt=b.apt==='a'?APT_A:APT_B,g=b.guests?'\n👥 Guests: '+b.guests:'',n=b.notes?'\n📝 '+b.notes:'';return'🧹 New cleaning!\n🏠 '+apt+'\n📥 Check-in: '+fmtFull(b.checkin)+'\n📤 Check-out: '+fmtFull(b.checkout)+g+n+'\n\nhttp://cleaning.permanentsummer.co';}
+function buildWAMsg(b){var apt=aptById(b.apt);var g=b.guests?'\n👥 '+b.guests+' guests':'',n=b.notes?'\n📝 '+b.notes:'';return'🧹 New cleaning!\n🏠 '+apt.name+'\n📥 '+T('checkin')+': '+fmtFull(b.checkin)+'\n📤 '+T('checkout')+': '+fmtFull(b.checkout)+g+n+'\n\nhttp://cleaning.permanentsummer.co';}
 
-// ── Import ──
+// ─── IMPORT ───────────────────────────────────
 function openImport(){
   document.getElementById('iFile').value='';document.getElementById('importStatus').style.display='none';
-  document.getElementById('importOverlay').classList.add('show');
+  populateAptSelects();document.getElementById('importOverlay').classList.add('show');
   if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
 }
 function setIS(m,t){var el=document.getElementById('importStatus');el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
-function doImport(){
+document.getElementById('doImportBtn').addEventListener('click',function(){
   var fi=document.getElementById('iFile');if(!fi.files||!fi.files[0]){setIS('Please select a file.','warn');return;}
   var file=fi.files[0],apt=document.getElementById('iApt').value,source=document.getElementById('iSrc').value,fname=file.name.toLowerCase();
   setIS('Reading file...','warn');
   if(fname.endsWith('.xls')||fname.endsWith('.xlsx')){
-    if(typeof XLSX==='undefined'){setIS('XLS reader loading, wait 3 seconds and retry.','warn');return;}
+    if(typeof XLSX==='undefined'){setIS('XLS reader loading, wait 3 sec and retry.','warn');return;}
     var r=new FileReader();r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});processImport(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]),source,apt);}catch(err){setIS('XLS error: '+err.message,'err');}};r.onerror=function(){setIS('Cannot read file.','err');};r.readAsArrayBuffer(file);
-  }else{
-    var r2=new FileReader();r2.onload=function(e){try{processImport(e.target.result,source,apt);}catch(err){setIS('Error: '+err.message,'err');}};r2.onerror=function(){setIS('Cannot read file.','err');};r2.readAsText(file,'UTF-8');
-  }
-}
+  }else{var r2=new FileReader();r2.onload=function(e){try{processImport(e.target.result,source,apt);}catch(err){setIS('Error: '+err.message,'err');}};r2.onerror=function(){setIS('Cannot read file.','err');};r2.readAsText(file,'UTF-8');}
+});
 function sa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
-function fc(headers){
-  var keys=Array.prototype.slice.call(arguments,1);
-  for(var ki=0;ki<keys.length;ki++){var kn=sa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<headers.length;i++){var hn=sa(headers[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;
-}
-function parseCSV(text){
-  var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];
-  for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;
-}
-function toISO(s){
-  if(!s)return'';s=String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();if(!s||s.length<6)return'';
-  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
-  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
-  var n=parseInt(s);if(!isNaN(n)&&/^\d+$/.test(s)&&n>40000&&n<60000){var d=new Date((n-25569)*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-  try{var d2=new Date(s);if(!isNaN(d2.getTime())&&d2.getFullYear()>2020)return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');}catch(e){}return'';
-}
+function fc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=sa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=sa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
+function pCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
+function toISO(s){if(!s)return'';s=String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();if(!s||s.length<6)return'';if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');var n=parseInt(s);if(!isNaN(n)&&/^\d+$/.test(s)&&n>40000&&n<60000){var d=new Date((n-25569)*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}try{var d2=new Date(s);if(!isNaN(d2.getTime())&&d2.getFullYear()>2020)return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');}catch(e){}return'';}
 function processImport(text,source,apt){
-  var rows=parseCSV(text);if(rows.length<2){setIS('File appears empty.','err');return;}
-  var headers=rows[0],parsed=[],skipped=0;
+  var rows=pCSV(text);if(rows.length<2){setIS('File appears empty.','err');return;}
+  var h=rows[0],parsed=[],skipped=0;
   if(source==='airbnb'){
     var iIn=-1,iOut=-1;
-    for(var hi=0;hi<headers.length;hi++){var hs=sa(headers[hi]).toLowerCase();if(iIn===-1&&(hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1))iIn=hi;if(iOut===-1&&(hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1||hs.indexOf('depart')!==-1))iOut=hi;}
-    var iCode=fc(headers,'code','confirmation'),iStat=fc(headers,'statut','status'),iName=fc(headers,'voyageur','guestname','nom'),iAdu=fc(headers,'adultes','adults'),iChi=fc(headers,'enfants','children');
-    if(iIn===-1||iOut===-1){setIS('Cannot find date columns. Make sure Source = Airbnb.','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat=iStat>=0?sa(r[iStat]).toLowerCase():'confirm';if(stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1){skipped++;continue;}var ci=toISO(r[iIn]),co=toISO(r[iOut]);if(!ci||!co||ci>=co){skipped++;continue;}var adults=iAdu>=0?(parseInt(r[iAdu])||0):0,kids=iChi>=0?(parseInt(r[iChi])||0):0,code=iCode>=0&&r[iCode]?r[iCode].trim():uid();parsed.push({id:'ab_'+code,apt:apt,source:'airbnb',checkin:ci,checkout:co,clean:co,guests:(adults+kids)>0?String(adults+kids):'',notes:iName>=0?r[iName].trim():'',paid:'unpaid'});}
+    for(var hi=0;hi<h.length;hi++){var hs=sa(h[hi]).toLowerCase();if(iIn===-1&&(hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1))iIn=hi;if(iOut===-1&&(hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1))iOut=hi;}
+    var iCode=fc(h,'code','confirmation'),iStat=fc(h,'statut','status'),iName=fc(h,'voyageur','guestname','nom'),iAdu=fc(h,'adultes','adults'),iChi=fc(h,'enfants','children');
+    if(iIn===-1||iOut===-1){setIS('Cannot find date columns. Source = Airbnb?','err');return;}
+    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat=iStat>=0?sa(r[iStat]).toLowerCase():'confirm';if(stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1){skipped++;continue;}var ci=toISO(r[iIn]),co=toISO(r[iOut]);if(!ci||!co||ci>=co){skipped++;continue;}var ad=iAdu>=0?(parseInt(r[iAdu])||0):0,kd=iChi>=0?(parseInt(r[iChi])||0):0,code=iCode>=0&&r[iCode]?r[iCode].trim():uid();parsed.push({id:'ab_'+code,apt:apt,source:'airbnb',checkin:ci,checkout:co,clean:co,guests:(ad+kd)>0?String(ad+kd):'',notes:iName>=0?r[iName].trim():'',paid:'unpaid'});}
   }else if(source==='booking'){
-    var iIn2=fc(headers,'checkin','arrivee','arrival','arriv'),iOut2=fc(headers,'checkout','depart','departure'),iName2=fc(headers,'guestname','nomduclient','clientname'),iPers=fc(headers,'persons','personnes'),iStat2=fc(headers,'status','statut'),iCanc=fc(headers,'cancellation','annulation'),iNum=fc(headers,'booknumber','numeroreservation','numero');
-    if(iIn2===-1||iOut2===-1){setIS('Cannot find date columns. Make sure Source = Booking.com.','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat2=iStat2>=0?r[iStat2].toLowerCase():'ok',canc=iCanc>=0?r[iCanc].trim():'';if(canc||stat2.indexOf('cancel')!==-1||stat2.indexOf('annul')!==-1){skipped++;continue;}var ci2=toISO(r[iIn2]),co2=toISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}var num=iNum>=0&&r[iNum]?r[iNum].trim():uid();parsed.push({id:'bk_'+num,apt:apt,source:'booking',checkin:ci2,checkout:co2,clean:co2,guests:iPers>=0?r[iPers].trim():'',notes:iName2>=0?r[iName2].trim():'',paid:'unpaid'});}
+    var iIn2=fc(h,'checkin','arrivee','arrival','arriv'),iOut2=fc(h,'checkout','depart','departure'),iName2=fc(h,'guestname','nomduclient','clientname'),iP=fc(h,'persons','personnes'),iS2=fc(h,'status','statut'),iC=fc(h,'cancellation','annulation'),iN=fc(h,'booknumber','numeroreservation','numero');
+    if(iIn2===-1||iOut2===-1){setIS('Cannot find date columns. Source = Booking.com?','err');return;}
+    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var s2=iS2>=0?r[iS2].toLowerCase():'ok',cc=iC>=0?r[iC].trim():'';if(cc||s2.indexOf('cancel')!==-1||s2.indexOf('annul')!==-1){skipped++;continue;}var ci2=toISO(r[iIn2]),co2=toISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}var nm=iN>=0&&r[iN]?r[iN].trim():uid();parsed.push({id:'bk_'+nm,apt:apt,source:'booking',checkin:ci2,checkout:co2,clean:co2,guests:iP>=0?r[iP].trim():'',notes:iName2>=0?r[iName2].trim():'',paid:'unpaid'});}
   }else{
-    var iIn3=fc(headers,'startdate','start','checkin','arrivee','arrival'),iOut3=fc(headers,'enddate','end','checkout','depart','departure'),iCode3=fc(headers,'code'),iStat3=fc(headers,'status','statut'),iRes=fc(headers,'resources','resource','apartment','logement'),iName3=fc(headers,'guest','nom','name','client'),iMail=fc(headers,'email'),iPers3=fc(headers,'persons','personnes','adults','adultes');
+    var iIn3=fc(h,'startdate','start','checkin','arrivee','arrival'),iOut3=fc(h,'enddate','end','checkout','depart','departure'),iC3=fc(h,'code'),iS3=fc(h,'status','statut'),iR=fc(h,'resources','resource','apartment','logement'),iN3=fc(h,'guest','nom','name','client'),iM=fc(h,'email'),iP3=fc(h,'persons','personnes','adults','adultes');
     if(iIn3===-1||iOut3===-1){setIS('Cannot find date columns.','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat3=iStat3>=0?r[iStat3].toLowerCase():'';if(stat3.indexOf('cancel')!==-1||stat3.indexOf('refund')!==-1){skipped++;continue;}var ci3=toISO(r[iIn3]),co3=toISO(r[iOut3]);if(!ci3||!co3||ci3>=co3){skipped++;continue;}var detApt=apt;if(iRes>=0&&r[iRes]){var res=r[iRes].toLowerCase();if(res.indexOf('300')!==-1||res.indexOf('beach')!==-1)detApt='b';else if(res.indexOf('800')!==-1||res.indexOf('ocean')!==-1)detApt='a';}var code3=iCode3>=0&&r[iCode3]?r[iCode3].trim():uid(),name3=iName3>=0?r[iName3].trim():(iMail>=0?r[iMail].trim():''),isPaid=stat3.indexOf('paid')!==-1||stat3.indexOf('confirm')!==-1;parsed.push({id:'dir_'+code3,apt:detApt,source:'direct',checkin:ci3,checkout:co3,clean:co3,guests:iPers3>=0?r[iPers3].trim():'',notes:name3,paid:isPaid?'paid':'unpaid'});}
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;
+      var s3=iS3>=0?r[iS3].toLowerCase():'';if(s3.indexOf('cancel')!==-1||s3.indexOf('refund')!==-1){skipped++;continue;}
+      var ci3=toISO(r[iIn3]),co3=toISO(r[iOut3]);if(!ci3||!co3||ci3>=co3){skipped++;continue;}
+      var detApt=apt;
+      if(iR>=0&&r[iR]){var res=r[iR].toLowerCase();apts.forEach(function(a){if(res.indexOf(a.name.toLowerCase())!==-1||res.indexOf(a.short.toLowerCase())!==-1)detApt=a.id;});if(detApt===apt){if(res.indexOf('300')!==-1||res.indexOf('beach')!==-1)detApt=apts[1]?apts[1].id:apt;else if(res.indexOf('800')!==-1||res.indexOf('ocean')!==-1)detApt=apts[0]?apts[0].id:apt;}}
+      var c3=iC3>=0&&r[iC3]?r[iC3].trim():uid(),n3=iN3>=0?r[iN3].trim():(iM>=0?r[iM].trim():''),isp=s3.indexOf('paid')!==-1||s3.indexOf('confirm')!==-1;
+      parsed.push({id:'dir_'+c3,apt:detApt,source:'direct',checkin:ci3,checkout:co3,clean:co3,guests:iP3>=0?r[iP3].trim():'',notes:n3,paid:isp?'paid':'unpaid'});
+    }
   }
-  if(!parsed.length){setIS('No valid bookings found ('+skipped+' skipped). Check Source matches file.','err');return;}
-  // Merge locally
+  if(!parsed.length){setIS('No valid bookings found ('+skipped+' skipped). Check Source.','err');return;}
   var added=0,updated=0,dupes=0;
   for(var bi=0;bi<parsed.length;bi++){
-    var nb=parsed[bi],overlapIdx=-1;
-    for(var xi=0;xi<bks.length;xi++){var x=bks[xi];if(x.apt===nb.apt&&x.id!==nb.id&&x.checkin&&nb.checkin&&x.checkout&&nb.checkout&&x.checkin<nb.checkout&&nb.checkin<x.checkout){overlapIdx=xi;break;}}
-    if(overlapIdx!==-1){var ex=bks[overlapIdx],nbP=nb.source==='booking'||nb.source==='airbnb',exP=ex.source==='booking'||ex.source==='airbnb';if(nbP&&!exP){bks[overlapIdx]=nb;updated++;}else if(!nbP&&exP){dupes++;}else if(nb.notes&&!ex.notes){bks[overlapIdx]=nb;updated++;}else{dupes++;}continue;}
-    var exactIdx=-1;for(var xi=0;xi<bks.length;xi++){if(bks[xi].id===nb.id){exactIdx=xi;break;}}
-    if(exactIdx!==-1){bks[exactIdx]=Object.assign({},bks[exactIdx],nb);updated++;}else{bks.push(nb);added++;}
+    var nb=parsed[bi],ovIdx=-1;
+    for(var xi=0;xi<bks.length;xi++){var x=bks[xi];if(x.apt===nb.apt&&x.id!==nb.id&&x.checkin&&nb.checkin&&x.checkout&&nb.checkout&&x.checkin<nb.checkout&&nb.checkin<x.checkout){ovIdx=xi;break;}}
+    if(ovIdx!==-1){var ex=bks[ovIdx],nbP=nb.source==='booking'||nb.source==='airbnb',exP=ex.source==='booking'||ex.source==='airbnb';if(nbP&&!exP){bks[ovIdx]=nb;updated++;}else if(!nbP&&exP){dupes++;}else if(nb.notes&&!ex.notes){bks[ovIdx]=nb;updated++;}else{dupes++;}continue;}
+    var exIdx=-1;for(var xi=0;xi<bks.length;xi++){if(bks[xi].id===nb.id){exIdx=xi;break;}}
+    if(exIdx!==-1){bks[exIdx]=Object.assign({},bks[exIdx],nb);updated++;}else{bks.push(nb);added++;}
   }
-  render();
-  setIS('Saving to cloud...','warn');
+  render();setIS('Saving to cloud...','warn');
   sbUpsert(parsed).then(function(){
     closeModal('importOverlay');
     var msg='✅ '+added+' imported';if(updated)msg+=', '+updated+' updated';if(skipped)msg+=', '+skipped+' skipped';if(dupes)msg+=', '+dupes+' duplicates removed';
@@ -493,35 +677,61 @@ function processImport(text,source,apt){
   }).catch(function(e){setIS('Cloud error: '+e.message,'err');});
 }
 
-// ── Settings ──
-function openCfg(){document.getElementById('cWaN').value=cfg.waN||'';document.getElementById('cWaK').value=cfg.waK||'';document.getElementById('cAdmN').value=cfg.admN||ADMIN_WA;document.getElementById('cAdmK').value=cfg.admK||'7950168';document.getElementById('pPay').checked=cfg.pPay!==false;document.getElementById('pNotes').checked=cfg.pNotes!==false;document.getElementById('cfgOverlay').classList.add('show');}
-function saveCfg(){cfg.waN=document.getElementById('cWaN').value.trim();cfg.waK=document.getElementById('cWaK').value.trim();cfg.admN=document.getElementById('cAdmN').value.trim();cfg.admK=document.getElementById('cAdmK').value.trim();cfg.pPay=document.getElementById('pPay').checked;cfg.pNotes=document.getElementById('pNotes').checked;saveLocal('sc_cfg',cfg);closeModal('cfgOverlay');toast('Settings saved!','ok');}
-function clearAll(){
-  if(!confirm('Delete ALL bookings from the cloud? Cannot be undone.'))return;
-  var ids=bks.map(function(b){return b.id;});
-  Promise.all(ids.map(function(id){return sbDelete(id);})).then(function(){bks=[];render();toast('All bookings cleared.','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+// ─── SETTINGS ─────────────────────────────────
+function openCfg(){
+  document.getElementById('cWaN').value=cfg.waN||'';document.getElementById('cWaK').value=cfg.waK||'';
+  document.getElementById('cAdmN').value=cfg.admN||'351924477353';document.getElementById('cAdmK').value=cfg.admK||'';
+  document.getElementById('pPay').checked=cfg.pPay!==false;document.getElementById('pNotes').checked=cfg.pNotes!==false;
+  document.getElementById('newPin').value='';document.getElementById('cfgOverlay').classList.add('show');
 }
+document.getElementById('saveCfgBtn').addEventListener('click',function(){
+  cfg.waN=document.getElementById('cWaN').value.trim();cfg.waK=document.getElementById('cWaK').value.trim();
+  cfg.admN=document.getElementById('cAdmN').value.trim();cfg.admK=document.getElementById('cAdmK').value.trim();
+  cfg.pPay=document.getElementById('pPay').checked;cfg.pNotes=document.getElementById('pNotes').checked;
+  var np=document.getElementById('newPin').value.trim();
+  if(np){if(/^\d{4}$/.test(np)){cfg.pin=np;PIN=np;}else{alert('PIN must be 4 digits.');return;}}
+  sl('sc_cfg',cfg);closeModal('cfgOverlay');toast('✅ Saved','ok');
+});
+document.getElementById('clearAllBtn').addEventListener('click',function(){
+  if(!confirm(T('clearQ')))return;
+  var ids=bks.map(function(b){return b.id;});
+  Promise.all(ids.map(function(id){return sbDel(id);})).then(function(){bks=[];render();toast('🗑️ Cleared','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+});
 
-// ── PIN ──
+// ─── PIN ──────────────────────────────────────
 document.getElementById('pinBtn').addEventListener('click',function(){if(isAdmin){isAdmin=false;updateAdminUI();return;}pinBuf='';updDots();document.getElementById('pinErr').textContent='';document.getElementById('pinOverlay').classList.add('show');});
 document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='❌ Wrong PIN';pinBuf='';updDots();}},200);}});});
 function updDots(){for(var i=0;i<4;i++)document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');}
-function updateAdminUI(){var bar=document.getElementById('adminBar'),fab=document.getElementById('fabAdd'),sub=document.getElementById('hSub'),btn=document.getElementById('pinBtn');if(isAdmin){bar.classList.add('show');fab.classList.add('show');sub.textContent='Administrator';btn.textContent='🔓';}else{bar.classList.remove('show');fab.classList.remove('show');sub.textContent='Permanent Summer';btn.textContent='⚙️';}render();}
+function updateAdminUI(){
+  document.getElementById('adminBar').className=isAdmin?'show':'';
+  document.getElementById('fabAdd').className=isAdmin?'show':'';
+  document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';
+  document.getElementById('pinBtn').textContent=isAdmin?'🔓':'⚙️';
+  document.getElementById('srcRow').className=isAdmin?'show':'';
+  render();if(viewMode==='calendar')renderCal();
+}
 
-// ── Filters ──
-document.querySelectorAll('.fb').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');curFilter=this.getAttribute('data-f');render();if(viewMode==='calendar')renderCal();});});
+// ─── SOURCE FILTERS ───────────────────────────
+document.querySelectorAll('#srcRow .fb').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('#srcRow .fb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');curSrc=this.getAttribute('data-src');render();if(viewMode==='calendar')renderCal();});});
 
-// ── View toggle ──
+// ─── VIEW TOGGLE ──────────────────────────────
 document.getElementById('vList').addEventListener('click',function(){viewMode='list';this.classList.add('on');document.getElementById('vCal').classList.remove('on');document.getElementById('list').style.display='flex';document.getElementById('calView').style.display='none';render();});
 document.getElementById('vCal').addEventListener('click',function(){viewMode='calendar';this.classList.add('on');document.getElementById('vList').classList.remove('on');document.getElementById('list').style.display='none';document.getElementById('calView').style.display='block';renderCal();});
 document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();});
 document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();});
 
-// ── FABs & Sync ──
+// ─── LANG ─────────────────────────────────────
+document.getElementById('langBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();render();if(viewMode==='calendar')renderCal();});
+
+// ─── FABs ─────────────────────────────────────
 document.getElementById('fabAdd').addEventListener('click',openAdd);
 document.getElementById('syncBtn').addEventListener('click',function(){var btn=this;btn.classList.add('spin');sbLoad().then(function(){btn.classList.remove('spin');});});
+document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||'351924477353');
 
-// ── Init ──
+// ─── INIT ─────────────────────────────────────
+document.getElementById('langBtn').textContent=LANG.toUpperCase();
+buildAptFilters();
+populateAptSelects();
 sbLoad();
 </script>
 </body>
