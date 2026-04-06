@@ -495,7 +495,7 @@ var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),pinBuf='';
 var cfg={};
 var PIN='2302';
 var APT_COLORS=['#8b5cf6','#0ea5e9','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316'];
-var DEFAULT_APTS=[{id:'a',name:'1-Praceta Jose Saramago',short:'Saramago',color:'#8b5cf6'},{id:'b',name:'2-Al-Paranagua',short:'Al-Paranaguá',color:'#0ea5e9'}];
+var DEFAULT_APTS=[{id:'a',name:'Unit 1',short:'Unit 1',color:'#8b5cf6'},{id:'b',name:'Unit 2',short:'Unit 2',color:'#0ea5e9'}];
 var apts=DEFAULT_APTS.slice();
 var LANG=ll('sc_lang','en');
 var LANGS=['en','fr','pt'];
@@ -968,7 +968,7 @@ function renderAptList(){
     var row=document.createElement('div');row.className='aptrow';
     row.innerHTML='<div class="acolor" style="background:'+a.color+'" data-idx="'+idx+'"></div><div class="aptrow-inner"><input class="aname" value="'+a.short+'" placeholder="Display name" data-idx="'+idx+'"><input class="afull" value="'+a.name+'" placeholder="Full address" data-idx="'+idx+'"></div><button class="adel" data-idx="'+idx+'">✕</button>';
     c.appendChild(row);
-    row.querySelector('.aname').addEventListener('input',function(){editApts[parseInt(this.getAttribute('data-idx'))].short=this.value;});
+    row.querySelector('.aname').addEventListener('input',function(){var i=parseInt(this.getAttribute('data-idx'));editApts[i].short=this.value;editApts[i].name=this.value;});
     row.querySelector('.afull').addEventListener('input',function(){editApts[parseInt(this.getAttribute('data-idx'))].name=this.value;});
     row.querySelector('.adel').addEventListener('click',function(){editApts.splice(parseInt(this.getAttribute('data-idx')),1);renderAptList();});
     row.querySelector('.acolor').addEventListener('click',function(){var i=parseInt(this.getAttribute('data-idx'));var ci=APT_COLORS.indexOf(editApts[i].color);editApts[i].color=APT_COLORS[(ci+1)%APT_COLORS.length];this.style.background=editApts[i].color;});
