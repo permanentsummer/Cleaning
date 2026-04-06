@@ -234,7 +234,10 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 <body>
 
 <!-- LOADING -->
-<div id="loadingPage" class="page active"><div class="spinner"></div></div>
+<div id="loadingPage" class="page active" style="flex-direction:column;gap:16px">
+  <div class="spinner"></div>
+  <p id="loadingMsg" style="font-size:14px;font-weight:700;color:var(--muted)">Loading...</p>
+</div>
 
 <!-- AUTH PAGE -->
 <div id="authPage" class="page">
@@ -566,16 +569,39 @@ window.addEventListener('load',function(){
   var token=params.get('cleaner');
   if(token){cleanerToken=token;startCleanerFlow();return;}
 
+  function setLoadMsg(m){var el=document.getElementById('loadingMsg');if(el)el.textContent=m;}
+
+  // Safety timeout — never stay on loading screen > 5 seconds
+  var loadTimeout=setTimeout(function(){clearSession();showPage('authPage');},5000);
+
   // Try to restore session
   var stored=getStoredSession();
-  if(stored&&stored.access_token){
-    session=stored;
-    // Verify session is still valid
-    sbF('GET','workspaces?select=*&user_id=eq.'+stored.user.id).then(function(rows){
-      if(rows&&rows.length){workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();}
-      else{clearSession();showPage('authPage');}
-    }).catch(function(){clearSession();showPage('authPage');});
-  }else{showPage('authPage');}
+
+  // Validate stored session has required fields (guard against old format)
+  if(!stored||!stored.access_token||!stored.user||!stored.user.id){
+    clearTimeout(loadTimeout);clearSession();showPage('authPage');return;
+  }
+
+  session=stored;
+  setLoadMsg('Restoring session...');
+
+  sbF('GET','workspaces?select=*&limit=1').then(function(rows){
+    clearTimeout(loadTimeout);
+    if(rows&&rows.length){
+      workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
+    }else{
+      setLoadMsg('Setting up workspace...');
+      // Trigger may have been slow — try creating workspace
+      sbF('POST','workspaces',{user_id:stored.user.id}).then(function(ws){
+        workspace=Array.isArray(ws)?ws[0]:ws;
+        if(!workspace||!workspace.id){clearSession();showPage('authPage');return;}
+        loadWorkspaceData();showPage('appPage');initApp();
+      }).catch(function(){clearSession();showPage('authPage');});
+    }
+  }).catch(function(){
+    clearTimeout(loadTimeout);
+    clearSession();showPage('authPage');
+  });
 });
 
 // ─── AUTH FLOWS ───────────────────────────────
@@ -598,7 +624,7 @@ document.getElementById('loginBtn').addEventListener('click',function(){
   sbAuth('token?grant_type=password',{email:email,password:pwd}).then(function(data){
     if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Sign in →';return;}
     storeSession(data);
-    return sbF('GET','workspaces?select=*&user_id=eq.'+data.user.id).then(function(rows){
+    return sbF('GET','workspaces?select=*&limit=1').then(function(rows){
       workspace=rows[0]||null;
       loadWorkspaceData();showPage('appPage');initApp();
     });
@@ -622,7 +648,7 @@ document.getElementById('signupBtn').addEventListener('click',function(){
     storeSession(data.session||data);
     // Workspace auto-created by trigger — wait a moment then fetch
     setTimeout(function(){
-      sbF('GET','workspaces?select=*&user_id=eq.'+data.user.id).then(function(rows){
+      sbF('GET','workspaces?select=*&limit=1').then(function(rows){
         workspace=rows[0]||null;loadWorkspaceData();showPage('appPage');initApp();
       });
     },1000);
