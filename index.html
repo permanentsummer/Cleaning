@@ -391,7 +391,7 @@ var session=null,workspace=null,bks=[],isAdmin=false,curFilter='all',curSrc='all
 var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),pinBuf='';
 var cfg={},PIN='2302';
 var APT_COLORS=['#8b5cf6','#0ea5e9','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316'];
-var DEFAULT_APTS=[{id:'a',name:'Unit 1',short:'Unit 1',color:'#8b5cf6'},{id:'b',name:'Unit 2',short:'Unit 2',color:'#0ea5e9'}];
+var DEFAULT_APTS=[{id:'a',name:'Unit 1',short:'Unit 1',color:'#8b5cf6'}];
 var apts=DEFAULT_APTS.slice();
 var LANG=ll('sc_lang','en'),LANGS=['en','fr','pt'];
 var selectedIds={},bulkMode=false;
@@ -522,12 +522,22 @@ function saveWorkspaceSettings(){
 }
 function startCleanerFlow(){
   showPage('cleanerPage');
-  sbF('GET','workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken,null,SB_KEY).then(function(rows){
-    if(!rows||!rows.length){document.getElementById('clPinBox').innerHTML='<h2 style="color:var(--red)">Invalid link</h2><p style="color:var(--muted);margin-top:8px">Please ask your host for a new link.</p>';return;}
+  // Fetch workspace using anon key — requires "cleaner_read" policy (select using true) on workspaces
+  fetch(SB_URL+'/rest/v1/workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}
+  }).then(function(r){return r.json();}).then(function(rows){
+    if(!Array.isArray(rows)||!rows.length){
+      document.getElementById('clPinBox').innerHTML='<h2 style="color:var(--red)">Invalid link</h2><p style="color:var(--muted);margin-top:8px;font-size:13px;font-weight:600">This link is not valid. Please ask your host for a new one.</p>';
+      return;
+    }
     cleanerWorkspace=rows[0];
     var s=cleanerWorkspace.settings||{};
     if(s.apts&&s.apts.length)apts=s.apts;
-  }).catch(function(){document.getElementById('clPinBox').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error.</p>';});
+    // Show PIN hint with workspace loaded
+    document.getElementById('clPinHint') && (document.getElementById('clPinHint').textContent='Enter the PIN provided by your host');
+  }).catch(function(e){
+    document.getElementById('clPinBox').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error. Please try again.</p>';
+  });
   document.querySelectorAll('.cl-pk').forEach(function(k){
     k.addEventListener('click',function(){
       var n=this.getAttribute('data-n');
@@ -843,7 +853,7 @@ document.getElementById('calNext').addEventListener('click',function(){calMonth+
 document.getElementById('pinBtn').addEventListener('click',function(){if(isAdmin){isAdmin=false;updateAdminUI();return;}pinBuf='';updDots();document.getElementById('pinErr').textContent='';document.getElementById('pinOverlay').classList.add('show');});
 document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='Wrong PIN';pinBuf='';updDots();}},200);}});});
 function updDots(){for(var i=0;i<4;i++)document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');}
-function updateAdminUI(){document.getElementById('adminBar').className=isAdmin?'show':'';document.getElementById('fabAdd').className=isAdmin?'show':'';document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';document.getElementById('pinBtn').textContent=isAdmin?'unlock':'settings';document.getElementById('srcRow').className=isAdmin?'show':'';render();if(viewMode==='calendar')renderCal();}
+function updateAdminUI(){document.getElementById('adminBar').className=isAdmin?'show':'';document.getElementById('fabAdd').className=isAdmin?'show':'';document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';document.getElementById('pinBtn').textContent=isAdmin?'🔓':'⚙️';document.getElementById('srcRow').className=isAdmin?'show':'';render();if(viewMode==='calendar')renderCal();}
 document.getElementById('fabAdd').addEventListener('click',openAdd);
 document.getElementById('syncBtn').addEventListener('click',function(){
   var btn=this;btn.classList.add('spin');
