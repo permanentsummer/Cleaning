@@ -68,6 +68,8 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .pbtn{flex:1;padding:8px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
 .pbtn.paid{background:var(--green-bg);color:#15803d}
 .pbtn.unpaid{background:var(--red-bg);color:#dc2626}
+.pbtn.cleaned{background:var(--green-bg);color:#15803d}
+.pbtn.uncleaned{background:#fff7ed;color:#c2410c;border:2px solid #fed7aa}
 .pbtn:active{transform:scale(.96)}.pbtn.locked{pointer-events:none;opacity:.5}
 .adm{display:none;gap:5px}.adm.show{display:flex}
 .ibtn{width:33px;height:33px;border-radius:9px;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
@@ -346,8 +348,8 @@ function sbLoad(){
 function sbUpsert(arr){return sbF('POST','bookings',arr.map(l2r));}
 function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
 function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
-function l2r(b){return{id:b.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid'};}
-function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid||'unpaid'};}
+function l2r(b){return{id:b.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid',cleaned:b.cleaned||'no'};}
+function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid||'unpaid',cleaned:r.cleaned||'no'};}
 
 // ─── STATE ───────────────────────────────────
 var bks=[],isAdmin=false,curFilter='all',curSrc='all',viewMode='list';
@@ -366,12 +368,15 @@ var LANG=ll('sc_lang','en');
 var LANGS=['en','fr','pt'];
 var S={
   en:{syncing:'⏳ Syncing...',loaded:'bookings loaded',upcoming:'📅 Upcoming & Today',previous:'📁 Previous',checkin:'Check-in',checkout:'Check-out',paid:'✅ Paid',unpaid:'❌ Unpaid',today:'📅 Today',allSrc:'All sources',todayCl:' cleaning(s) today!',empty:'All clean!',emptySub:'No bookings in this filter.',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings from cloud? Cannot be undone.',
+    list:'☰ List',calendar:'📅 Calendar',cleaned:'✅ Cleaned',notCleaned:'🧹 Mark as cleaned',uncleanedToday:'uncleaned apartment(s) need cleaning today:',allUnpaid:'🔴 Unpaid',
     months:['January','February','March','April','May','June','July','August','September','October','November','December'],
     wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']},
   fr:{syncing:'⏳ Chargement...',loaded:'réservations chargées',upcoming:'📅 À venir & Aujourd\'hui',previous:'📁 Précédentes',checkin:'Arrivée',checkout:'Départ',paid:'✅ Payé',unpaid:'❌ Impayé',today:'📅 Aujourd\'hui',allSrc:'Toutes sources',todayCl:' ménage(s) aujourd\'hui !',empty:'Tout propre !',emptySub:'Aucune réservation dans ce filtre.',deleteQ:'Supprimer cette réservation ?',clearQ:'Supprimer TOUTES les réservations ? Irréversible.',
+    list:'☰ Liste',calendar:'📅 Calendrier',cleaned:'✅ Nettoyé',notCleaned:'🧹 Marquer comme nettoyé',uncleanedToday:'appartement(s) à nettoyer aujourd\'hui :',allUnpaid:'🔴 Impayé',
     months:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
     wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']},
   pt:{syncing:'⏳ A sincronizar...',loaded:'reservas carregadas',upcoming:'📅 Próximas & Hoje',previous:'📁 Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'✅ Pago',unpaid:'❌ Por pagar',today:'📅 Hoje',allSrc:'Todas as fontes',todayCl:' limpeza(s) hoje!',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',deleteQ:'Eliminar esta reserva?',clearQ:'Eliminar TODAS as reservas? Ação irreversível.',
+    list:'☰ Lista',calendar:'📅 Calendário',cleaned:'✅ Limpo',notCleaned:'🧹 Marcar como limpo',uncleanedToday:'apartamento(s) por limpar hoje:',allUnpaid:'🔴 Por pagar',
     months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
     wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wdL:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']}
 };
@@ -412,7 +417,7 @@ function buildAptFilters(){
     mkFb(a.id,a.short+' ('+c+')',a.color);
   });
   mkFb('today',T('today'),'#0f172a');
-  mkFb('unpaid','🔴 Unpaid ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
+  mkFb('unpaid',T('allUnpaid')+' ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
   // Source row label
   document.getElementById('srcAll').textContent=T('allSrc');
 }
@@ -429,10 +434,23 @@ function populateAptSelects(){
 // ─── RENDER ──────────────────────────────────
 function render(){
   var tod=today(),sorted=bks.slice().sort(function(a,b){return(a.checkout||'')>(b.checkout||'')?1:-1;});
+  // Today = bookings checking out today
   var todBks=sorted.filter(function(b){return b.checkout===tod;});
+  // Uncleaned = checking out today AND not yet cleaned
+  var uncleanedBks=todBks.filter(function(b){return b.cleaned!=='yes';});
   var tb=document.getElementById('todayBanner');
-  if(todBks.length){tb.classList.add('show');document.getElementById('tbCount').textContent=todBks.length+T('todayCl');document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' · ');}
-  else tb.classList.remove('show');
+  if(todBks.length){
+    tb.classList.add('show');
+    if(uncleanedBks.length){
+      document.getElementById('tbCount').textContent=uncleanedBks.length+' '+T('uncleanedToday');
+      document.getElementById('tbApts').textContent=uncleanedBks.map(function(b){return aptById(b.apt).short;}).join(' · ');
+      tb.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';
+    }else{
+      document.getElementById('tbCount').textContent='✅ All cleaned today!';
+      document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' · ');
+      tb.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
+    }
+  }else tb.classList.remove('show');
   buildAptFilters();
   var list=sorted.filter(function(b){
     if(curFilter==='today'&&b.checkout!==tod)return false;
@@ -453,8 +471,33 @@ function mkCard(b,isPast){
   el.className='bcard'+(isPast?' past':'')+(isT?' tod':'');
   var apt=aptById(b.apt);
   var srcL={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
-  var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
-  var canPay=isAdmin||cfg.pPay!==false,canNotes=isAdmin||cfg.pNotes!==false;
+  var canNotes=isAdmin||cfg.pNotes!==false;
+
+  // Is this booking active (checkout <= today)? Only then show cleaner button
+  // Active = booking has started (checkin <= today) — cleaner button visible
+  var isActive=b.checkin<=tod;
+  // cleaned field: 'yes' or 'no'
+  var isCleaned=b.cleaned==='yes';
+
+  // FOOTER LOGIC:
+  // Admin: always sees Paid/Unpaid button (full control)
+  // Cleaner on active booking: sees Cleaned/Not Cleaned button
+  // Cleaner on future booking: no button at all
+  var footHtml='';
+  if(isAdmin){
+    // Admin sees payment status + cleaned indicator
+    var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
+    var cleanedBadge=isActive?(isCleaned?'<span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px;margin-left:4px">🧹 Cleaned</span>':'<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px;margin-left:4px">🧹 Not yet</span>'):'';
+    footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button>'+
+      cleanedBadge+
+      '<div class="adm show"><button class="ibtn e" data-id="'+b.id+'">✏️</button><button class="ibtn d" data-id="'+b.id+'">🗑️</button></div>';
+  }else if(isActive){
+    // Cleaner sees cleaned/not cleaned toggle
+    var cCls=isCleaned?'cleaned':'uncleaned',cLbl=isCleaned?T('cleaned'):T('notCleaned');
+    footHtml='<button class="pbtn '+cCls+'" data-id="'+b.id+'">'+cLbl+'</button>';
+  }
+  // Future booking for cleaner: no footer button
+
   var ir='';
   if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">👥 '+b.guests+'</span>':'')+((b.notes&&canNotes)?'<span class="chip note">📝 '+b.notes+'</span>':'')+'</div>';}
   el.innerHTML=
@@ -467,22 +510,36 @@ function mkCard(b,isPast){
       '<div class="darr">→</div>'+
       '<div class="db r"><span class="dlbl">'+T('checkout')+'</span><span class="dval">'+fmtD(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div>'+
     '</div>'+ir+
-    '<div class="cfoot">'+
-      '<button class="pbtn '+pCls+(canPay?'':' locked')+'" data-id="'+b.id+'">'+pLbl+'</button>'+
-      '<div class="adm'+(isAdmin?' show':'')+'"><button class="ibtn e" data-id="'+b.id+'">✏️</button><button class="ibtn d" data-id="'+b.id+'">🗑️</button></div>'+
-    '</div>';
-  var pb=el.querySelector('.pbtn');
-  if(pb&&canPay)pb.addEventListener('click',function(){
-    var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
-    if(idx===-1)return;var np=bks[idx].paid==='paid'?'unpaid':'paid';bks[idx].paid=np;render();
-    sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
-  });
-  var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){openEdit(this.getAttribute('data-id'));});
-  var db=el.querySelector('.ibtn.d');if(db)db.addEventListener('click',function(){
-    var id=this.getAttribute('data-id');if(!confirm(T('deleteQ')))return;
-    bks=bks.filter(function(x){return x.id!==id;});render();
-    sbDel(id).catch(function(){toast('Delete error','err');});
-  });
+    (footHtml?'<div class="cfoot">'+footHtml+'</div>':'');
+
+  // Admin: payment toggle
+  if(isAdmin){
+    var pb=el.querySelector('.pbtn');
+    if(pb)pb.addEventListener('click',function(){
+      var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
+      if(idx===-1)return;var np=bks[idx].paid==='paid'?'unpaid':'paid';bks[idx].paid=np;render();
+      sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
+    });
+    var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){openEdit(this.getAttribute('data-id'));});
+    var db=el.querySelector('.ibtn.d');if(db)db.addEventListener('click',function(){
+      var id=this.getAttribute('data-id');if(!confirm(T('deleteQ')))return;
+      bks=bks.filter(function(x){return x.id!==id;});render();
+      sbDel(id).catch(function(){toast('Delete error','err');});
+    });
+  }else if(isActive){
+    // Cleaner: cleaned toggle — marking cleaned sets paid to unpaid (triggers admin to pay)
+    var cb=el.querySelector('.pbtn');
+    if(cb)cb.addEventListener('click',function(){
+      var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
+      if(idx===-1)return;
+      var nowCleaned=bks[idx].cleaned==='yes'?'no':'yes';
+      bks[idx].cleaned=nowCleaned;
+      // When cleaner marks as cleaned → set paid to unpaid so admin knows to pay
+      if(nowCleaned==='yes') bks[idx].paid='unpaid';
+      render();
+      sbPatch(id,{cleaned:nowCleaned,paid:bks[idx].paid}).catch(function(){toast('Sync error','err');});
+    });
+  }
   return el;
 }
 
@@ -590,14 +647,31 @@ function renderAptList(){
   var c=document.getElementById('aptList');c.innerHTML='';
   editApts.forEach(function(a,idx){
     var row=document.createElement('div');row.className='aptrow';
-    row.innerHTML='<div class="acolor" style="background:'+a.color+'" title="Color"></div>'+
-      '<input class="aname" value="'+a.name+'" placeholder="Full name" data-idx="'+idx+'">'+
-      '<input class="ashort" value="'+a.short+'" placeholder="Short" maxlength="14" data-idx="'+idx+'">'+
+    // Single editable display name — no separate short/name split
+    row.innerHTML=
+      '<div class="acolor" style="background:'+a.color+'" title="Click to change color" data-idx="'+idx+'"></div>'+
+      '<div style="flex:1;display:flex;flex-direction:column;gap:2px">'+
+        '<input class="aname" value="'+a.short+'" placeholder="Display name (e.g. Saramago)" data-idx="'+idx+'" style="font-size:15px;font-weight:800">'+
+        '<input class="afull" value="'+a.name+'" placeholder="Full address / description" data-idx="'+idx+'" style="font-size:11px;color:var(--muted);border-color:transparent;padding:3px 10px">'+
+      '</div>'+
       '<button class="adel" data-idx="'+idx+'">✕</button>';
     c.appendChild(row);
-    row.querySelector('.aname').addEventListener('input',function(){editApts[this.getAttribute('data-idx')].name=this.value;});
-    row.querySelector('.ashort').addEventListener('input',function(){editApts[this.getAttribute('data-idx')].short=this.value;});
+    row.querySelector('.aname').addEventListener('input',function(){
+      var i=parseInt(this.getAttribute('data-idx'));
+      editApts[i].short=this.value;
+    });
+    row.querySelector('.afull').addEventListener('input',function(){
+      var i=parseInt(this.getAttribute('data-idx'));
+      editApts[i].name=this.value;
+    });
     row.querySelector('.adel').addEventListener('click',function(){editApts.splice(parseInt(this.getAttribute('data-idx')),1);renderAptList();});
+    // Color cycle on dot click
+    row.querySelector('.acolor').addEventListener('click',function(){
+      var i=parseInt(this.getAttribute('data-idx'));
+      var ci=APT_COLORS.indexOf(editApts[i].color);
+      editApts[i].color=APT_COLORS[(ci+1)%APT_COLORS.length];
+      this.style.background=editApts[i].color;
+    });
   });
 }
 document.getElementById('addAptBtn').addEventListener('click',function(){
@@ -721,7 +795,16 @@ document.getElementById('calPrev').addEventListener('click',function(){calMonth-
 document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();});
 
 // ─── LANG ─────────────────────────────────────
-document.getElementById('langBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();render();if(viewMode==='calendar')renderCal();});
+document.getElementById('langBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);applyLangUI();render();if(viewMode==='calendar')renderCal();});
+function applyLangUI(){
+  document.getElementById('langBtn').textContent=LANG.toUpperCase();
+  document.getElementById('vList').innerHTML=T('list');
+  document.getElementById('vCal').innerHTML=T('calendar');
+  document.getElementById('srcAll').textContent=T('allSrc');
+  // Unpaid filter label
+  var fbs=document.querySelectorAll('#aptFilters .fb');
+  if(fbs.length) fbs[fbs.length-1].textContent=T('allUnpaid')+' ('+bks.filter(function(b){var tod=today();return b.checkout>=tod&&b.paid!=='paid';}).length+')';
+}
 
 // ─── FABs ─────────────────────────────────────
 document.getElementById('fabAdd').addEventListener('click',openAdd);
@@ -729,10 +812,10 @@ document.getElementById('syncBtn').addEventListener('click',function(){var btn=t
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||'351924477353');
 
 // ─── INIT ─────────────────────────────────────
-document.getElementById('langBtn').textContent=LANG.toUpperCase();
+applyLangUI();
 buildAptFilters();
 populateAptSelects();
-sbLoad();
+sbLoad().then(function(){applyLangUI();});
 </script>
 </body>
 </html>
