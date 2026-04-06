@@ -564,44 +564,14 @@ function clearSession(){
 
 // ─── STARTUP ROUTER ───────────────────────────
 window.addEventListener('load',function(){
-  // Check if this is a cleaner link: ?cleaner=TOKEN
+  // Cleaner link check
   var params=new URLSearchParams(window.location.search);
   var token=params.get('cleaner');
   if(token){cleanerToken=token;startCleanerFlow();return;}
 
-  function setLoadMsg(m){var el=document.getElementById('loadingMsg');if(el)el.textContent=m;}
-
-  // Safety timeout — never stay on loading screen > 5 seconds
-  var loadTimeout=setTimeout(function(){clearSession();showPage('authPage');},5000);
-
-  // Try to restore session
-  var stored=getStoredSession();
-
-  // Validate stored session has required fields (guard against old format)
-  if(!stored||!stored.access_token||!stored.user||!stored.user.id){
-    clearTimeout(loadTimeout);clearSession();showPage('authPage');return;
-  }
-
-  session=stored;
-  setLoadMsg('Restoring session...');
-
-  sbF('GET','workspaces?select=*&limit=1').then(function(rows){
-    clearTimeout(loadTimeout);
-    if(rows&&rows.length){
-      workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
-    }else{
-      setLoadMsg('Setting up workspace...');
-      // Trigger may have been slow — try creating workspace
-      sbF('POST','workspaces',{user_id:stored.user.id}).then(function(ws){
-        workspace=Array.isArray(ws)?ws[0]:ws;
-        if(!workspace||!workspace.id){clearSession();showPage('authPage');return;}
-        loadWorkspaceData();showPage('appPage');initApp();
-      }).catch(function(){clearSession();showPage('authPage');});
-    }
-  }).catch(function(){
-    clearTimeout(loadTimeout);
-    clearSession();showPage('authPage');
-  });
+  // Always go to auth page — user logs in fresh each time for now
+  // (session restore can be added later once auth is confirmed working)
+  showPage('authPage');
 });
 
 // ─── AUTH FLOWS ───────────────────────────────
