@@ -6,51 +6,38 @@
 <title>SummerClean</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--green:#22c55e;--green-bg:#dcfce7;--red:#ef4444;--red-bg:#fee2e2;--blue:#3b82f6;--blue-bg:#dbeafe;--yellow:#f59e0b;--yellow-bg:#fef3c7;--bg:#f1f5f9;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:16px;--shadow:0 2px 12px rgba(0,0,0,.07)}
+:root{--green:#22c55e;--green-bg:#dcfce7;--red:#ef4444;--red-bg:#fee2e2;--blue:#3b82f6;--blue-bg:#dbeafe;--yellow:#f59e0b;--bg:#f1f5f9;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:16px;--shadow:0 2px 12px rgba(0,0,0,.07)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-
-/* ── PAGES ── */
 .page{display:none!important;min-height:100vh}
 .page.active{display:block!important}
 #authPage.active{display:flex!important}
 #loadingPage.active{display:flex!important}
-
-/* ── AUTH PAGE ── */
 #authPage{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);display:none;align-items:center;justify-content:center;padding:24px;min-height:100vh}
-
 .auth-box{background:#fff;border-radius:24px;padding:32px 28px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
 .auth-logo .ico{width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
 .auth-logo h1{font-size:22px;font-weight:900;color:#0f172a}
 .auth-tabs{display:flex;background:var(--bg);border-radius:12px;padding:4px;margin-bottom:24px;gap:4px}
-.auth-tab{flex:1;padding:9px;border-radius:9px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;color:var(--muted);transition:all .15s}
+.auth-tab{flex:1;padding:9px;border-radius:9px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;background:transparent;color:var(--muted)}
 .auth-tab.on{background:#fff;color:#0f172a;box-shadow:0 1px 6px rgba(0,0,0,.1)}
 .auth-form{display:flex;flex-direction:column;gap:12px}
 .auth-field{display:flex;flex-direction:column;gap:5px}
 .auth-field label{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .auth-field input{padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;-webkit-appearance:none}
 .auth-field input:focus{border-color:#6366f1}
-.auth-btn{padding:14px;background:#0f172a;color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;margin-top:4px;transition:background .15s}
-.auth-btn:hover{background:#1e293b}
+.auth-btn{padding:14px;background:#0f172a;color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;margin-top:4px}
 .auth-btn:disabled{opacity:.6;cursor:wait}
-.auth-err{color:var(--red);font-size:13px;font-weight:700;text-align:center;min-height:18px}
+.auth-err{font-size:13px;font-weight:700;text-align:center;min-height:18px}
 .auth-footer{text-align:center;font-size:12px;color:var(--muted);margin-top:16px;font-weight:600}
-
-/* ── LOADING ── */
-#loadingPage{display:none;align-items:center;justify-content:center;min-height:100vh;background:#f1f5f9}
-#loadingPage.active{display:flex}
-.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite}
+#loadingPage{background:#f1f5f9;display:none;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:14px}
+.spinner{width:38px;height:38px;border:4px solid var(--border);border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── CLEANER PAGE ── */
-#cleanerPage{display:none;background:var(--bg);padding-bottom:30px}
-#cleanerPage.active{display:block}
+#cleanerPage{background:var(--bg);padding-bottom:30px}
 .cl-header{background:#0f172a;color:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between}
 .cl-logo{display:flex;align-items:center;gap:9px}
 .cl-logo .ico{width:34px;height:34px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
-.cl-logo h1{font-size:16px;font-weight:900}
-.cl-logo p{font-size:10px;color:#94a3b8;font-weight:700}
+.cl-logo h1{font-size:16px;font-weight:900}.cl-logo p{font-size:10px;color:#94a3b8;font-weight:700}
 .cl-langbtn{font-size:10px;font-weight:900;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:4px 8px;border-radius:6px;cursor:pointer}
 #clPinBox{margin:24px 16px;background:#fff;border-radius:18px;padding:24px 20px;text-align:center;box-shadow:var(--shadow)}
 #clPinBox h2{font-size:18px;font-weight:900;margin-bottom:6px}
@@ -59,7 +46,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cl-pd{width:13px;height:13px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s}
 .cl-pd.on{background:#0f172a;border-color:#0f172a}
 .cl-pkpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto}
-.cl-pk{padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;cursor:pointer;transition:all .1s}
+.cl-pk{padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;cursor:pointer}
 .cl-pk:active{background:#0f172a;color:#fff;transform:scale(.92)}
 .cl-pierr{color:var(--red);font-size:12px;font-weight:700;margin-top:8px;min-height:15px}
 #clContent{display:none;padding:12px 14px}
@@ -67,25 +54,22 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cl-banner{display:none;margin-bottom:10px;border-radius:14px;padding:12px 14px;color:#fff}
 .cl-banner.show{display:flex;align-items:center;gap:10px}
 .cl-banner .bico{font-size:24px}
-.cl-banner h3{font-size:13px;font-weight:900}
-.cl-banner p{font-size:11px;opacity:.9;margin-top:1px}
+.cl-banner h3{font-size:13px;font-weight:900}.cl-banner p{font-size:11px;opacity:.9;margin-top:1px}
 .cl-section{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:12px 0 6px}
 .cl-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:8px;border:2px solid transparent}
 .cl-card.tod{border-color:var(--yellow)}
 .cl-ctop{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 7px;border-bottom:1px solid var(--border)}
 .cl-abadge{padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}
 .cl-dates{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;padding:10px 12px 8px}
-.cl-db{display:flex;flex-direction:column;gap:1px}
-.cl-db.r{text-align:right}
+.cl-db{display:flex;flex-direction:column;gap:1px}.cl-db.r{text-align:right}
 .cl-dlbl{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.cl-dval{font-size:16px;font-weight:900;color:var(--text)}
-.cl-dday{font-size:10px;font-weight:700;color:var(--muted)}
+.cl-dval{font-size:16px;font-weight:900;color:var(--text)}.cl-dday{font-size:10px;font-weight:700;color:var(--muted)}
 .cl-darr{display:flex;align-items:center;justify-content:center;color:#cbd5e1;font-size:16px}
 .cl-info{display:flex;gap:5px;padding:0 12px 8px;flex-wrap:wrap}
 .cl-chip{background:var(--bg);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700}
 .cl-chip.note{color:var(--muted);font-size:11px}
 .cl-foot{padding:8px 12px;border-top:1px solid var(--border)}
-.cl-cbtn{width:100%;padding:11px;border-radius:11px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s}
+.cl-cbtn{width:100%;padding:11px;border-radius:11px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
 .cl-cbtn.cleaned{background:var(--green-bg);color:#15803d}
 .cl-cbtn.uncleaned{background:#fff7ed;color:#c2410c;border:2px solid #fed7aa}
 .cl-cbtn:active{transform:scale(.97)}
@@ -93,10 +77,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cl-empty .ico{font-size:44px;margin-bottom:10px}
 .cl-empty h3{font-size:17px;font-weight:900;margin-bottom:4px}
 .cl-empty p{font-size:13px;color:var(--muted);font-weight:600}
-
-/* ── MAIN APP ── */
 #appPage{background:var(--bg);padding-bottom:90px}
-#appPage.active{display:block}
 header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(0,0,0,.3)}
 .hl{display:flex;align-items:center;gap:10px}
 .hi{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
@@ -130,11 +111,22 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .vtoggle{display:flex;gap:6px;padding:0 13px 9px}
 .vbtn{flex:1;padding:8px;border-radius:10px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:var(--muted);cursor:pointer}
 .vbtn.on{background:#0f172a;border-color:#0f172a;color:#fff}
+#bulkBar{display:none;align-items:center;justify-content:space-between;background:#fee2e2;padding:8px 13px;margin:0 13px 8px;border-radius:12px;border:2px solid #fecaca}
+#bulkBar.show{display:flex}
+#bulkBar span{font-size:13px;font-weight:800;color:#dc2626}
+#bulkBar div{display:flex;gap:6px}
+.bulk-btn{padding:6px 12px;border-radius:8px;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer}
+.bulk-del{background:#dc2626;color:#fff}
+.bulk-cancel{background:#fff;color:var(--muted);border:2px solid var(--border)}
 #list{padding:0 13px;display:flex;flex-direction:column;gap:9px}
 .slabel{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 2px;margin:12px 0 4px}
-.bcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:2px solid transparent;animation:fi .2s ease}
+.bcard{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:2px solid transparent;animation:fi .2s ease;position:relative}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .bcard.past{opacity:.42}.bcard.tod{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,158,11,.1),var(--shadow)}
+.bcard.selected{border-color:#6366f1;background:#f5f3ff}
+.bcard-chk{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:#fff;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:13px;font-weight:900;z-index:10}
+.bcard-chk.show{display:flex}
+.bcard-chk.checked{background:#6366f1;border-color:#6366f1;color:#fff}
 .ctop{display:flex;align-items:center;justify-content:space-between;padding:9px 11px 7px;border-bottom:1px solid var(--border)}
 .abadge{padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800}
 .sbadge{font-size:10px;font-weight:800;padding:3px 7px;border-radius:6px}
@@ -150,7 +142,6 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .cfoot{display:flex;align-items:center;gap:5px;padding:7px 11px;border-top:1px solid var(--border)}
 .pbtn{flex:1;padding:8px;border-radius:10px;border:none;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
 .pbtn.paid{background:var(--green-bg);color:#15803d}.pbtn.unpaid{background:var(--red-bg);color:#dc2626}
-.pbtn.cleaned{background:var(--green-bg);color:#15803d}.pbtn.uncleaned{background:#fff7ed;color:#c2410c;border:2px solid #fed7aa}
 .pbtn:active{transform:scale(.96)}.pbtn.locked{pointer-events:none;opacity:.5}
 .adm{display:none;gap:5px}.adm.show{display:flex}
 .ibtn{width:33px;height:33px;border-radius:9px;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
@@ -165,7 +156,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .cmlbl{font-size:15px;font-weight:900}
 .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;border:2px solid var(--border)}
 .cdh{background:#0f172a;color:#fff;text-align:center;font-size:9px;font-weight:800;padding:6px 2px;text-transform:uppercase}
-.cday{background:#fff;min-height:58px;padding:4px 3px;cursor:default;transition:background .1s}
+.cday{background:#fff;min-height:58px;padding:4px 3px;cursor:default}
 .cday.om{background:#f8fafc}.cday.nt{background:#fffbeb}
 .cday.hasbk{cursor:pointer}.cday.hasbk:active{background:#f0f4ff}
 .cnum{font-size:11px;font-weight:800;color:var(--text);display:block;margin-bottom:2px}
@@ -175,7 +166,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .ldot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:3px;vertical-align:middle}
 #calPopup{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
 #calPopup.show{display:flex}
-.cpbox{background:#fff;border-radius:18px;padding:18px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);animation:fi .15s ease;max-height:80vh;overflow-y:auto}
+.cpbox{background:#fff;border-radius:18px;padding:18px;max-width:340px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);max-height:80vh;overflow-y:auto}
 .cpbox h3{font-size:13px;font-weight:900;color:var(--muted);margin-bottom:10px}
 .cpmini{border-radius:12px;padding:10px 12px;border:2px solid transparent;margin-bottom:8px}
 .cpmini .cpm-apt{font-size:13px;font-weight:900;margin-bottom:4px}
@@ -207,16 +198,14 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .ttrack:before{content:'';position:absolute;width:17px;height:17px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
 .toggle input:checked+.ttrack{background:#22c55e}
 .toggle input:checked+.ttrack:before{transform:translateX(19px)}
-.aptrow{display:flex;align-items:center;gap:7px;margin-bottom:7px;background:var(--bg);border-radius:11px;padding:7px 9px}
-.aptrow .acolor{width:18px;height:18px;border-radius:4px;flex-shrink:0;cursor:pointer}
-.aptrow .aname{flex:1;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--text);outline:none;padding:0;min-width:0}
-.aptrow .afull{width:100%;border:2px solid var(--border);border-radius:8px;padding:4px 8px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:600;color:var(--muted);background:#fff;outline:none;margin-top:3px}
-.aptrow-inner{flex:1;min-width:0}
-.aptrow .adel{width:26px;height:26px;border-radius:7px;border:none;background:var(--red-bg);color:var(--red);font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.aptrow{display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);border-radius:11px;padding:8px 10px}
+.aptrow .acolor{width:22px;height:22px;border-radius:6px;flex-shrink:0;cursor:pointer;border:2px solid rgba(0,0,0,.1)}
+.aptrow .aname{flex:1;border:2px solid var(--border);background:#fff;border-radius:9px;padding:8px 10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--text);outline:none}
+.aptrow .aname:focus{border-color:#0f172a}
+.aptrow .adel{width:28px;height:28px;border-radius:8px;border:none;background:var(--red-bg);color:var(--red);font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 #importStatus{display:none;padding:9px 11px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:10px}
 .hint{background:var(--bg);border-radius:10px;padding:9px 11px;font-size:11px;font-weight:600;color:var(--muted);line-height:1.65;margin-bottom:10px}
 .hint strong{color:var(--text)}
-/* share link box */
 .share-box{background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:12px}
 .share-box p{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:6px}
 .share-url{font-size:12px;font-weight:800;color:#0f172a;word-break:break-all;background:#fff;border-radius:8px;padding:8px 10px;border:2px solid var(--border)}
@@ -228,298 +217,197 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .pd{width:13px;height:13px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .15s}
 .pd.on{background:#0f172a;border-color:#0f172a}
 .pkpad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:230px;margin:0 auto}
-.pk{padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:19px;font-weight:800;cursor:pointer;transition:all .1s}
+.pk{padding:12px;background:var(--bg);border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:19px;font-weight:800;cursor:pointer}
 .pk:active{background:#0f172a;color:#fff;border-color:#0f172a;transform:scale(.92)}
 .pierr{color:var(--red);font-size:12px;font-weight:700;margin-top:8px;min-height:15px}
 </style>
 </head>
 <body>
-
-<!-- LOADING -->
-<div id="loadingPage" class="page active" style="flex-direction:column;gap:16px">
-  <div class="spinner"></div>
-  <p id="loadingMsg" style="font-size:14px;font-weight:700;color:var(--muted)">Loading...</p>
-</div>
-
-<!-- AUTH PAGE -->
+<div id="loadingPage" class="page active"><div class="spinner"></div><p style="font-size:13px;font-weight:700;color:var(--muted)">Loading...</p></div>
 <div id="authPage" class="page">
   <div class="auth-box">
-    <div class="auth-logo"><div class="ico">🧹</div><h1>SummerClean</h1></div>
+    <div class="auth-logo"><div class="ico">&#x1F9F9;</div><h1>SummerClean</h1></div>
     <div class="auth-tabs">
       <button class="auth-tab on" id="tabLogin">Sign in</button>
       <button class="auth-tab" id="tabSignup">Create account</button>
     </div>
     <div class="auth-form" id="loginForm">
       <div class="auth-field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="auth-field"><label>Password</label><input type="password" id="loginPwd" placeholder="••••••••" autocomplete="current-password"></div>
-      <div class="auth-err" id="loginErr"></div>
-      <button class="auth-btn" id="loginBtn">Sign in →</button>
+      <div class="auth-field"><label>Password</label><input type="password" id="loginPwd" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password"></div>
+      <div class="auth-err" id="loginErr" style="color:var(--red)"></div>
+      <button class="auth-btn" id="loginBtn">Sign in &rarr;</button>
     </div>
     <div class="auth-form" id="signupForm" style="display:none">
       <div class="auth-field"><label>Email</label><input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="auth-field"><label>Password (min 6 chars)</label><input type="password" id="signupPwd" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="auth-field"><label>Password (min 6 chars)</label><input type="password" id="signupPwd" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password"></div>
       <div class="auth-err" id="signupErr"></div>
-      <button class="auth-btn" id="signupBtn">Create account →</button>
+      <button class="auth-btn" id="signupBtn">Create account &rarr;</button>
     </div>
-    <div class="auth-footer">100% free · No credit card · Your data is private</div>
+    <div class="auth-footer">100% free &middot; No credit card &middot; Your data is private</div>
   </div>
 </div>
-
-<!-- CLEANER PAGE -->
 <div id="cleanerPage" class="page">
   <div class="cl-header">
-    <div class="cl-logo"><div class="ico">🧹</div><div><h1>SummerClean</h1><p id="clSubtitle">Cleaning Schedule</p></div></div>
+    <div class="cl-logo"><div class="ico">&#x1F9F9;</div><div><h1>SummerClean</h1><p>Cleaning Schedule</p></div></div>
     <button class="cl-langbtn" id="clLangBtn">EN</button>
   </div>
   <div id="clPinBox">
-    <h2>🔐 Cleaner Access</h2>
-    <p id="clPinHint">Enter the PIN provided by your host</p>
-    <div class="cl-pindots">
-      <div class="cl-pd" id="cp0"></div><div class="cl-pd" id="cp1"></div>
-      <div class="cl-pd" id="cp2"></div><div class="cl-pd" id="cp3"></div>
-    </div>
+    <h2>&#x1F510; Cleaner Access</h2>
+    <p>Enter the PIN provided by your host</p>
+    <div class="cl-pindots"><div class="cl-pd" id="cp0"></div><div class="cl-pd" id="cp1"></div><div class="cl-pd" id="cp2"></div><div class="cl-pd" id="cp3"></div></div>
     <div class="cl-pkpad">
       <button class="cl-pk" data-n="1">1</button><button class="cl-pk" data-n="2">2</button><button class="cl-pk" data-n="3">3</button>
       <button class="cl-pk" data-n="4">4</button><button class="cl-pk" data-n="5">5</button><button class="cl-pk" data-n="6">6</button>
       <button class="cl-pk" data-n="7">7</button><button class="cl-pk" data-n="8">8</button><button class="cl-pk" data-n="9">9</button>
-      <button class="cl-pk" data-n="del" style="font-size:16px">⌫</button>
-      <button class="cl-pk" data-n="0">0</button>
-      <button class="cl-pk" data-n="x" style="font-size:12px;color:var(--muted)">✕</button>
+      <button class="cl-pk" data-n="del" style="font-size:16px">&#9003;</button><button class="cl-pk" data-n="0">0</button><button class="cl-pk" data-n="x" style="font-size:12px;color:var(--muted)">&#x2715;</button>
     </div>
     <div class="cl-pierr" id="clPinErr"></div>
   </div>
   <div id="clContent">
-    <div class="cl-banner" id="clBanner">
-      <div class="bico">🌅</div>
-      <div><h3 id="clBannerCount"></h3><p id="clBannerApts"></p></div>
-    </div>
+    <div class="cl-banner" id="clBanner"><div class="bico">&#x1F305;</div><div><h3 id="clBannerCount"></h3><p id="clBannerApts"></p></div></div>
     <div id="clList"></div>
   </div>
 </div>
-
-<!-- MAIN APP -->
 <div id="appPage" class="page">
   <header>
-    <div class="hl">
-      <div class="hi">🧹</div>
-      <div class="ht"><h1>SummerClean</h1><p id="hSub">Permanent Summer</p></div>
-    </div>
+    <div class="hl"><div class="hi">&#x1F9F9;</div><div class="ht"><h1>SummerClean</h1><p id="hSub">Permanent Summer</p></div></div>
     <div class="hr">
       <button class="langBtn" id="langBtn">EN</button>
-      <button class="hbtn" id="syncBtn">🔄</button>
-      <button class="hbtn" id="pinBtn">⚙️</button>
+      <button class="hbtn" id="syncBtn">&#x1F504;</button>
+      <button class="hbtn" id="pinBtn">&#x2699;&#xFE0F;</button>
     </div>
   </header>
   <div id="adminBar">
-    <span>🔐 Admin</span>
+    <span>&#x1F510; Admin</span>
     <div class="abtns">
-      <button class="abarbtn" onclick="openImport()">📥 Import</button>
-      <button class="abarbtn" onclick="openApts()">🏠 Apts</button>
-      <button class="abarbtn" onclick="openShare()">🔗 Share</button>
-      <button class="abarbtn" onclick="openCfg()">⚙️ Settings</button>
+      <button class="abarbtn" onclick="openImport()">&#x1F4E5; Import</button>
+      <button class="abarbtn" onclick="openApts()">&#x1F3E0; Apts</button>
+      <button class="abarbtn" onclick="openShare()">&#x1F517; Share</button>
+      <button class="abarbtn" onclick="openCfg()">&#x2699;&#xFE0F; Settings</button>
     </div>
   </div>
   <div id="syncStatus"></div>
   <div id="toast"></div>
+  <div id="bulkBar">
+    <span id="bulkCount">0 selected</span>
+    <div><button class="bulk-btn bulk-del" id="bulkDelBtn">&#x1F5D1; Delete selected</button><button class="bulk-btn bulk-cancel" id="bulkCancelBtn">Cancel</button></div>
+  </div>
   <div class="frow" id="aptFilters"></div>
   <div id="srcRow">
     <button class="fb on" data-src="all" id="srcAll">All sources</button>
-    <button class="fb" data-src="airbnb">🏠 Airbnb</button>
-    <button class="fb" data-src="booking">📋 Booking.com</button>
-    <button class="fb" data-src="direct">🤝 Direct</button>
+    <button class="fb" data-src="airbnb">&#x1F3E0; Airbnb</button>
+    <button class="fb" data-src="booking">&#x1F4CB; Booking.com</button>
+    <button class="fb" data-src="direct">&#x1F91D; Direct</button>
   </div>
-  <div id="todayBanner">
-    <div class="ti">🌅</div>
-    <div><h3 id="tbCount"></h3><p id="tbApts"></p></div>
-  </div>
-  <div class="vtoggle">
-    <button class="vbtn on" id="vList">☰ List</button>
-    <button class="vbtn" id="vCal">📅 Calendar</button>
-  </div>
+  <div id="todayBanner"><div class="ti">&#x1F305;</div><div><h3 id="tbCount"></h3><p id="tbApts"></p></div></div>
+  <div class="vtoggle"><button class="vbtn on" id="vList">&#x2630; List</button><button class="vbtn" id="vCal">&#x1F4C5; Calendar</button></div>
   <div id="list"></div>
   <div id="calView">
-    <div class="cnav">
-      <button class="cnbtn" id="calPrev">‹</button>
-      <span class="cmlbl" id="calLbl"></span>
-      <button class="cnbtn" id="calNext">›</button>
-    </div>
+    <div class="cnav"><button class="cnbtn" id="calPrev">&#x2039;</button><span class="cmlbl" id="calLbl"></span><button class="cnbtn" id="calNext">&#x203A;</button></div>
     <div class="cgrid" id="calGrid"></div>
     <div class="clgd" id="calLgd"></div>
   </div>
-  <div id="calPopup">
-    <div class="cpbox">
-      <h3 id="cpDate"></h3>
-      <div id="cpCards"></div>
-      <button class="btn2" style="margin-top:10px" onclick="document.getElementById('calPopup').classList.remove('show')">✕ Close</button>
-    </div>
-  </div>
+  <div id="calPopup"><div class="cpbox"><h3 id="cpDate"></h3><div id="cpCards"></div><button class="btn2" style="margin-top:10px" onclick="document.getElementById('calPopup').classList.remove('show')">&#x2715; Close</button></div></div>
   <button id="fabAdd">+</button>
-  <a id="fabWA" href="#" target="_blank">💬</a>
-
-  <!-- PIN -->
+  <a id="fabWA" href="#" target="_blank">&#x1F4AC;</a>
   <div class="overlay" id="pinOverlay">
     <div class="pinmodal">
-      <div class="mhandle"></div>
-      <h2>🔐 Admin</h2><p>Enter your 4-digit PIN</p>
+      <div class="mhandle"></div><h2>&#x1F510; Admin</h2><p>Enter your 4-digit PIN</p>
       <div class="pindots"><div class="pd" id="p0"></div><div class="pd" id="p1"></div><div class="pd" id="p2"></div><div class="pd" id="p3"></div></div>
       <div class="pkpad">
         <button class="pk" data-n="1">1</button><button class="pk" data-n="2">2</button><button class="pk" data-n="3">3</button>
         <button class="pk" data-n="4">4</button><button class="pk" data-n="5">5</button><button class="pk" data-n="6">6</button>
         <button class="pk" data-n="7">7</button><button class="pk" data-n="8">8</button><button class="pk" data-n="9">9</button>
-        <button class="pk" data-n="del" style="font-size:16px">⌫</button>
-        <button class="pk" data-n="0">0</button>
-        <button class="pk" data-n="x" style="font-size:12px;color:var(--muted)">Exit</button>
+        <button class="pk" data-n="del" style="font-size:16px">&#9003;</button><button class="pk" data-n="0">0</button><button class="pk" data-n="x" style="font-size:12px;color:var(--muted)">Exit</button>
       </div>
       <div class="pierr" id="pinErr"></div>
     </div>
   </div>
-
-  <!-- ADD/EDIT -->
   <div class="overlay" id="editOverlay">
-    <div class="modal">
-      <div class="mhandle"></div>
-      <h2 id="editTitle">New Booking</h2>
+    <div class="modal"><div class="mhandle"></div><h2 id="editTitle">New Booking</h2>
       <input type="hidden" id="eId">
       <div class="fg"><label>Apartment</label><select id="eApt"></select></div>
-      <div class="fg"><label>Source</label>
-        <select id="eSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
-      <div class="fr">
-        <div class="fg"><label>Check-in</label><input type="date" id="eIn"></div>
-        <div class="fg"><label>Check-out</label><input type="date" id="eOut"></div>
-      </div>
-      <div class="fr">
-        <div class="fg"><label>Guests</label><input type="number" id="eGuests" min="1" max="30" value="2"></div>
-        <div class="fg"><label>Clean date</label><input type="date" id="eClean"></div>
-      </div>
+      <div class="fg"><label>Source</label><select id="eSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
+      <div class="fr"><div class="fg"><label>Check-in</label><input type="date" id="eIn"></div><div class="fg"><label>Check-out</label><input type="date" id="eOut"></div></div>
+      <div class="fr"><div class="fg"><label>Guests</label><input type="number" id="eGuests" min="1" max="30" value="2"></div><div class="fg"><label>Clean date</label><input type="date" id="eClean"></div></div>
       <div class="fg"><label>Notes</label><textarea id="eNotes" rows="2" placeholder="Baby cot, VIP, keys..."></textarea></div>
-      <div class="fg"><label>Payment</label>
-        <select id="ePaid"><option value="unpaid">🔴 Unpaid</option><option value="paid">🟢 Paid</option></select></div>
-      <button class="btn1" id="saveEditBtn">💾 Save</button>
+      <div class="fg"><label>Payment</label><select id="ePaid"><option value="unpaid">&#x1F534; Unpaid</option><option value="paid">&#x1F7E2; Paid</option></select></div>
+      <button class="btn1" id="saveEditBtn">&#x1F4BE; Save</button>
       <button class="btn2" onclick="closeModal('editOverlay')">Cancel</button>
     </div>
   </div>
-
-  <!-- IMPORT -->
   <div class="overlay" id="importOverlay">
-    <div class="modal">
-      <div class="mhandle"></div>
-      <h2>📥 Import Bookings</h2>
-      <div class="fg"><label>Source</label>
-        <select id="iSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
+    <div class="modal"><div class="mhandle"></div><h2>&#x1F4E5; Import Bookings</h2>
+      <div class="fg"><label>Source</label><select id="iSrc"><option value="airbnb">Airbnb</option><option value="booking">Booking.com</option><option value="direct">Direct</option></select></div>
       <div class="fg"><label>Apartment (default)</label><select id="iApt"></select></div>
-      <div class="fg"><label>File (CSV or XLS/XLSX)</label>
-        <input type="file" id="iFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px"></div>
-      <div class="hint">
-        <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
-        <strong>Airbnb:</strong> Reservations → Export CSV<br>
-        <strong>Direct/Pingotel:</strong> Bookings → Export CSV
-      </div>
+      <div class="fg"><label>File (CSV or XLS/XLSX)</label><input type="file" id="iFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px"></div>
+      <div class="hint"><strong>Booking.com:</strong> Reservations &rarr; Export &rarr; CSV or XLS<br><strong>Airbnb:</strong> Reservations &rarr; Export CSV<br><strong>Direct:</strong> Bookings &rarr; Export CSV</div>
       <div id="importStatus"></div>
-      <button class="btn1" id="doImportBtn">📥 Import Now</button>
+      <button class="btn1" id="doImportBtn">&#x1F4E5; Import Now</button>
       <button class="btn2" onclick="closeModal('importOverlay')">Cancel</button>
     </div>
   </div>
-
-  <!-- SHARE LINK -->
   <div class="overlay" id="shareOverlay">
-    <div class="modal">
-      <div class="mhandle"></div>
-      <h2>🔗 Cleaner Link</h2>
-      <p style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px">Share this link with your cleaning lady. She'll need the PIN below to access.</p>
-      <div class="share-box">
-        <p>Cleaner link</p>
-        <div class="share-url" id="shareUrl">—</div>
-        <button class="copy-btn" id="copyLinkBtn">📋 Copy link</button>
-      </div>
-      <div class="fg" style="margin-bottom:14px">
-        <label>Cleaner PIN (4 digits)</label>
-        <input type="text" id="cleanerPinInput" placeholder="0000" maxlength="4" inputmode="numeric" pattern="[0-9]{4}">
-      </div>
-      <button class="btn1" id="saveCleanerPinBtn">💾 Save PIN</button>
+    <div class="modal"><div class="mhandle"></div><h2>&#x1F517; Cleaner Link</h2>
+      <p style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:14px">Share this link with your cleaner. They need the PIN to access.</p>
+      <div class="share-box"><p>Cleaner link</p><div class="share-url" id="shareUrl">-</div><button class="copy-btn" id="copyLinkBtn">&#x1F4CB; Copy link</button></div>
+      <div class="fg" style="margin-bottom:14px"><label>Cleaner PIN (4 digits)</label><input type="text" id="cleanerPinInput" placeholder="0000" maxlength="4" inputmode="numeric" pattern="[0-9]{4}"></div>
+      <button class="btn1" id="saveCleanerPinBtn">&#x1F4BE; Save PIN</button>
       <button class="btn2" onclick="closeModal('shareOverlay')">Close</button>
     </div>
   </div>
-
-  <!-- APARTMENTS -->
   <div class="overlay" id="aptsOverlay">
-    <div class="modal">
-      <div class="mhandle"></div>
-      <h2>🏠 Apartments</h2>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600">Tap color dot to change color. Short name shows on cards.</p>
+    <div class="modal"><div class="mhandle"></div><h2>&#x1F3E0; Apartments</h2>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:600">Tap color dot to cycle colors. Name shows everywhere — filters, cards, calendar.</p>
       <div id="aptList"></div>
       <button class="btn3" id="addAptBtn">+ Add Apartment</button>
-      <button class="btn1" id="saveAptsBtn" style="margin-top:8px">💾 Save</button>
+      <button class="btn1" id="saveAptsBtn" style="margin-top:8px">&#x1F4BE; Save</button>
       <button class="btn2" onclick="closeModal('aptsOverlay')">Cancel</button>
     </div>
   </div>
-
-  <!-- SETTINGS -->
   <div class="overlay" id="cfgOverlay">
-    <div class="modal">
-      <div class="mhandle"></div>
-      <h2>⚙️ Settings</h2>
-      <div class="sep">💬 WhatsApp — Cleaner</div>
-      <div class="fr">
-        <div class="fg"><label>Number (351...)</label><input type="text" id="cWaN" placeholder="351912345678"></div>
-        <div class="fg"><label>CallMeBot Key</label><input type="text" id="cWaK" placeholder="123456"></div>
-      </div>
-      <div class="sep">👤 WhatsApp — Admin</div>
-      <div class="fr">
-        <div class="fg"><label>Number (351...)</label><input type="text" id="cAdmN"></div>
-        <div class="fg"><label>CallMeBot Key</label><input type="text" id="cAdmK"></div>
-      </div>
-      <div class="sep">🔐 Cleaner Permissions</div>
+    <div class="modal"><div class="mhandle"></div><h2>&#x2699;&#xFE0F; Settings</h2>
+      <div class="sep">&#x1F4AC; WhatsApp &mdash; Cleaner</div>
+      <div class="fr"><div class="fg"><label>Number (351...)</label><input type="text" id="cWaN" placeholder="351912345678"></div><div class="fg"><label>CallMeBot Key</label><input type="text" id="cWaK" placeholder="123456"></div></div>
+      <div class="sep">&#x1F464; WhatsApp &mdash; Admin</div>
+      <div class="fr"><div class="fg"><label>Number (351...)</label><input type="text" id="cAdmN"></div><div class="fg"><label>CallMeBot Key</label><input type="text" id="cAdmK"></div></div>
+      <div class="sep">&#x1F510; Cleaner Permissions</div>
       <div class="prow"><span>Toggle payment</span><label class="toggle"><input type="checkbox" id="pPay" checked><span class="ttrack"></span></label></div>
       <div class="prow"><span>View notes</span><label class="toggle"><input type="checkbox" id="pNotes" checked><span class="ttrack"></span></label></div>
-      <div class="sep">🔑 Admin PIN</div>
+      <div class="sep">&#x1F511; Admin PIN</div>
       <div class="fg"><label>New PIN (4 digits)</label><input type="text" id="newPin" placeholder="Leave blank to keep current" maxlength="4" inputmode="numeric"></div>
-      <button class="btn1" id="saveCfgBtn">💾 Save Settings</button>
+      <button class="btn1" id="saveCfgBtn">&#x1F4BE; Save Settings</button>
       <button class="btn2" onclick="closeModal('cfgOverlay')">Cancel</button>
-      <div class="sep" style="margin-top:16px;border-color:#fecaca;color:var(--red)">⚠️ Danger Zone</div>
-      <button class="btn2" style="color:var(--red);border-color:#fecaca" id="clearAllBtn">🗑️ Clear all bookings</button>
-      <button class="btn2" style="color:var(--red);border-color:#fecaca;margin-top:6px" id="signOutBtn">🚪 Sign out</button>
+      <div class="sep" style="margin-top:16px;border-color:#fecaca;color:var(--red)">&#x26A0;&#xFE0F; Danger Zone</div>
+      <button class="btn2" style="color:var(--red);border-color:#fecaca" id="clearAllBtn">&#x1F5D1;&#xFE0F; Clear all bookings</button>
+      <button class="btn2" style="color:var(--red);border-color:#fecaca;margin-top:6px" id="signOutBtn">&#x1F6AA; Sign out</button>
     </div>
   </div>
 </div>
-
 <script>
-// ─── SUPABASE CONFIG ─────────────────────────
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
-
-// ─── GLOBAL STATE ─────────────────────────────
-var session=null; // Supabase session
-var workspace=null; // current user's workspace row
-var bks=[],isAdmin=false,curFilter='all',curSrc='all',viewMode='list';
+var session=null,workspace=null,bks=[],isAdmin=false,curFilter='all',curSrc='all',viewMode='list';
 var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),pinBuf='';
-var cfg={};
-var PIN='2302';
+var cfg={},PIN='2302';
 var APT_COLORS=['#8b5cf6','#0ea5e9','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316'];
 var DEFAULT_APTS=[{id:'a',name:'Unit 1',short:'Unit 1',color:'#8b5cf6'},{id:'b',name:'Unit 2',short:'Unit 2',color:'#0ea5e9'}];
 var apts=DEFAULT_APTS.slice();
-var LANG=ll('sc_lang','en');
-var LANGS=['en','fr','pt'];
-
-// Cleaner mode state
-var cleanerToken=null;
-var cleanerWorkspace=null;
-var clPinBuf='';
-
-// ─── LANGUAGE ─────────────────────────────────
+var LANG=ll('sc_lang','en'),LANGS=['en','fr','pt'];
+var selectedIds={},bulkMode=false;
+var cleanerToken=null,cleanerWorkspace=null,clPinBuf='';
 var S={
-  en:{syncing:'⏳ Syncing...',loaded:'bookings loaded',upcoming:'📅 Upcoming & Today',previous:'📁 Previous',checkin:'Check-in',checkout:'Check-out',paid:'✅ Paid',unpaid:'❌ Unpaid',today:'📅 Today',allSrc:'All sources',uncleanedToday:'uncleaned apartment(s) need cleaning today:',allUnpaid:'🔴 Unpaid',list:'☰ List',calendar:'📅 Calendar',cleaned:'✅ Cleaned',notCleaned:'🧹 Mark as cleaned',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings? Cannot be undone.',empty:'All clean!',emptySub:'No bookings in this filter.',
+  en:{syncing:'Syncing...',loaded:'bookings loaded',upcoming:'Upcoming & Today',previous:'Previous',checkin:'Check-in',checkout:'Check-out',paid:'Paid',unpaid:'Unpaid',today:'Today',allSrc:'All sources',uncleanedToday:'unit(s) need cleaning today:',allUnpaid:'Unpaid',list:'List',calendar:'Calendar',cleaned:'Cleaned',notCleaned:'Mark as cleaned',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings?',empty:'All clean!',emptySub:'No bookings in this filter.',
     months:['January','February','March','April','May','June','July','August','September','October','November','December'],
     wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']},
-  fr:{syncing:'⏳ Chargement...',loaded:'réservations chargées',upcoming:'📅 À venir & Aujourd\'hui',previous:'📁 Précédentes',checkin:'Arrivée',checkout:'Départ',paid:'✅ Payé',unpaid:'❌ Impayé',today:'📅 Aujourd\'hui',allSrc:'Toutes sources',uncleanedToday:'appartement(s) à nettoyer aujourd\'hui :',allUnpaid:'🔴 Impayé',list:'☰ Liste',calendar:'📅 Calendrier',cleaned:'✅ Nettoyé',notCleaned:'🧹 Marquer comme nettoyé',deleteQ:'Supprimer ?',clearQ:'Supprimer TOUTES les réservations ?',empty:'Tout propre !',emptySub:'Aucune réservation.',
-    months:['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
+  fr:{syncing:'Chargement...',loaded:'reservations chargees',upcoming:'A venir & Aujourd\'hui',previous:'Precedentes',checkin:'Arrivee',checkout:'Depart',paid:'Paye',unpaid:'Impaye',today:'Aujourd\'hui',allSrc:'Toutes sources',uncleanedToday:'unite(s) a nettoyer aujourd\'hui :',allUnpaid:'Impaye',list:'Liste',calendar:'Calendrier',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',deleteQ:'Supprimer ?',clearQ:'Supprimer TOUTES les reservations ?',empty:'Tout propre !',emptySub:'Aucune reservation.',
+    months:['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'],
     wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']},
-  pt:{syncing:'⏳ A sincronizar...',loaded:'reservas carregadas',upcoming:'📅 Próximas & Hoje',previous:'📁 Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'✅ Pago',unpaid:'❌ Por pagar',today:'📅 Hoje',allSrc:'Todas as fontes',uncleanedToday:'apartamento(s) por limpar hoje:',allUnpaid:'🔴 Por pagar',list:'☰ Lista',calendar:'📅 Calendário',cleaned:'✅ Limpo',notCleaned:'🧹 Marcar como limpo',deleteQ:'Eliminar?',clearQ:'Eliminar TODAS as reservas?',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',
-    months:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],wdL:['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']}
+  pt:{syncing:'A sincronizar...',loaded:'reservas carregadas',upcoming:'Proximas & Hoje',previous:'Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'Pago',unpaid:'Por pagar',today:'Hoje',allSrc:'Todas as fontes',uncleanedToday:'unidade(s) por limpar hoje:',allUnpaid:'Por pagar',list:'Lista',calendar:'Calendario',cleaned:'Limpo',notCleaned:'Marcar como limpo',deleteQ:'Eliminar?',clearQ:'Eliminar TODAS as reservas?',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',
+    months:['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
+    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado']}
 };
 function T(k){return(S[LANG]||S.en)[k]||k;}
-
-// ─── UTILS ────────────────────────────────────
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 function today(){return new Date().toISOString().slice(0,10);}
 function ll(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
@@ -529,285 +417,172 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 function setSS(m){document.getElementById('syncStatus').textContent=m;}
 function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
 function aptById(id){return apts.find(function(a){return a.id===id;})||{id:id,name:id,short:id,color:'#64748b'};}
-function fmtD(s){if(!s)return'—';var d=new Date(s+'T12:00:00');var mn=LANG==='fr'?['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']:LANG==='pt'?['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+mn[d.getMonth()];}
+function fmtD(s){if(!s)return'-';var d=new Date(s+'T12:00:00');var mn=LANG==='fr'?['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec']:LANG==='pt'?['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+mn[d.getMonth()];}
 function fmtWd(s){if(!s)return'';return T('wdS')[new Date(s+'T12:00:00').getDay()];}
-function fmtFull(s){if(!s)return'—';var d=new Date(s+'T12:00:00');return T('wdL')[d.getDay()]+' '+fmtD(s)+' '+d.getFullYear();}
-
-// ─── SUPABASE AUTH ────────────────────────────
-function sbAuth(path,body){
-  return fetch(SB_URL+'/auth/v1/'+path,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json();});
-}
-function sbF(method,path,body,extraHeaders){
-  var headers={'apikey':SB_KEY,'Content-Type':'application/json'};
-  if(session)headers['Authorization']='Bearer '+session.access_token;
-  if(extraHeaders)Object.assign(headers,extraHeaders);
+function fmtFull(s){if(!s)return'-';var d=new Date(s+'T12:00:00');return T('wdL')[d.getDay()]+' '+fmtD(s)+' '+d.getFullYear();}
+function sbAuth(path,body){return fetch(SB_URL+'/auth/v1/'+path,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json();});}
+function sbF(method,path,body,tok){
+  var t=tok||(session?session.access_token:SB_KEY);
+  var headers={'apikey':SB_KEY,'Authorization':'Bearer '+t,'Content-Type':'application/json'};
   if(method==='POST')headers['Prefer']='resolution=merge-duplicates';
   var opts={method:method,headers:headers};
   if(body)opts.body=JSON.stringify(body);
   return fetch(SB_URL+'/rest/v1/'+path,opts).then(function(r){
-    if(!r.ok)return r.text().then(function(t){throw new Error(t);});
+    if(!r.ok)return r.text().then(function(t2){throw new Error(t2);});
     if(r.status===204)return[];
-    return r.text().then(function(t){try{return t?JSON.parse(t):[];}catch(e){return[];}});
+    return r.text().then(function(t2){try{return t2?JSON.parse(t2):[];}catch(e){return[];}});
   });
 }
-
-// Get or restore session from localStorage
-function getStoredSession(){
-  return ll('sb_session',null);
+function sbLoad(){
+  if(!workspace)return Promise.resolve();
+  setSS(T('syncing'));
+  return sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkout.asc').then(function(data){
+    bks=data.map(r2l);setSS(bks.length+' '+T('loaded'));render();
+  }).catch(function(e){setSS('Error: '+e.message);});
 }
-function storeSession(s){
-  sl('sb_session',s);
-  session=s;
-}
-function clearSession(){
-  localStorage.removeItem('sb_session');
-  session=null;workspace=null;bks=[];
-}
-
-// ─── STARTUP ROUTER ───────────────────────────
+function sbUpsert(arr){if(!workspace)return Promise.reject(new Error('No workspace'));return sbF('POST','bookings',arr.map(l2r));}
+function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
+function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
+function l2r(b){return{id:b.id,workspace_id:workspace.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid',cleaned:b.cleaned||'no'};}
+function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid||'unpaid',cleaned:r.cleaned||'no'};}
+function storeSession(s){sl('sb_session',s);session=s;}
+function clearSession(){localStorage.removeItem('sb_session');session=null;workspace=null;bks=[];}
 window.addEventListener('load',function(){
-  // Cleaner link check
   var params=new URLSearchParams(window.location.search);
   var token=params.get('cleaner');
   if(token){cleanerToken=token;startCleanerFlow();return;}
-
-  // Always go to auth page — user logs in fresh each time for now
-  // (session restore can be added later once auth is confirmed working)
   showPage('authPage');
 });
-
-// ─── AUTH FLOWS ───────────────────────────────
-document.getElementById('tabLogin').addEventListener('click',function(){
-  this.classList.add('on');document.getElementById('tabSignup').classList.remove('on');
-  document.getElementById('loginForm').style.display='flex';document.getElementById('signupForm').style.display='none';
-});
-document.getElementById('tabSignup').addEventListener('click',function(){
-  this.classList.add('on');document.getElementById('tabLogin').classList.remove('on');
-  document.getElementById('signupForm').style.display='flex';document.getElementById('loginForm').style.display='none';
-});
-
+document.getElementById('tabLogin').addEventListener('click',function(){this.classList.add('on');document.getElementById('tabSignup').classList.remove('on');document.getElementById('loginForm').style.display='flex';document.getElementById('signupForm').style.display='none';});
+document.getElementById('tabSignup').addEventListener('click',function(){this.classList.add('on');document.getElementById('tabLogin').classList.remove('on');document.getElementById('signupForm').style.display='flex';document.getElementById('loginForm').style.display='none';});
 document.getElementById('loginBtn').addEventListener('click',function(){
-  var email=document.getElementById('loginEmail').value.trim();
-  var pwd=document.getElementById('loginPwd').value;
+  var email=document.getElementById('loginEmail').value.trim(),pwd=document.getElementById('loginPwd').value;
   var err=document.getElementById('loginErr');
   if(!email||!pwd){err.textContent='Please fill in all fields.';return;}
-  this.disabled=true;this.textContent='Signing in...';err.textContent='';
-  var btn=this;
+  var btn=this;btn.disabled=true;btn.textContent='Signing in...';err.textContent='';
   sbAuth('token?grant_type=password',{email:email,password:pwd}).then(function(data){
-    if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Sign in →';return;}
-    storeSession(data);
-    return sbF('GET','workspaces?select=*&limit=1').then(function(rows){
-      workspace=rows[0]||null;
-      loadWorkspaceData();showPage('appPage');initApp();
-    });
-  }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Sign in →';});
+    if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Sign in';return;}
+    storeSession(data);loadUserWorkspace();
+  }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Sign in';});
 });
-
 document.getElementById('signupBtn').addEventListener('click',function(){
-  var email=document.getElementById('signupEmail').value.trim();
-  var pwd=document.getElementById('signupPwd').value;
+  var email=document.getElementById('signupEmail').value.trim(),pwd=document.getElementById('signupPwd').value;
   var err=document.getElementById('signupErr');
   if(!email||!pwd){err.textContent='Please fill in all fields.';return;}
   if(pwd.length<6){err.textContent='Password must be at least 6 characters.';return;}
-  this.disabled=true;this.textContent='Creating account...';err.textContent='';
-  var btn=this;
+  var btn=this;btn.disabled=true;btn.textContent='Creating account...';err.textContent='';
   sbAuth('signup',{email:email,password:pwd}).then(function(data){
-    if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Create account →';return;}
-    if(data.user&&!data.session){
-      err.style.color='#15803d';err.textContent='✅ Check your email to confirm your account, then sign in.';
-      btn.disabled=false;btn.textContent='Create account →';return;
+    if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Create account';return;}
+    if(!data.session&&!data.access_token){
+      document.getElementById('tabLogin').click();
+      document.getElementById('loginEmail').value=email;
+      document.getElementById('loginErr').style.color='#15803d';
+      document.getElementById('loginErr').textContent='Account created! Sign in now.';
+      btn.disabled=false;btn.textContent='Create account';return;
     }
-    storeSession(data.session||data);
-    // Workspace auto-created by trigger — wait a moment then fetch
-    setTimeout(function(){
-      sbF('GET','workspaces?select=*&limit=1').then(function(rows){
-        workspace=rows[0]||null;loadWorkspaceData();showPage('appPage');initApp();
-      });
-    },1000);
-  }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Create account →';});
+    var s=data.session||data;storeSession(s);
+    setTimeout(function(){loadUserWorkspace();},1000);
+  }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Create account';});
 });
-
-// Sign out
+function loadUserWorkspace(){
+  sbF('GET','workspaces?select=*&limit=1').then(function(rows){
+    if(rows&&rows.length){workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();}
+    else{
+      sbF('POST','workspaces',{user_id:session.user.id}).then(function(ws){
+        workspace=Array.isArray(ws)?ws[0]:ws;
+        if(workspace&&workspace.id){loadWorkspaceData();showPage('appPage');initApp();}
+        else showPage('authPage');
+      }).catch(function(){showPage('authPage');});
+    }
+  }).catch(function(){showPage('authPage');});
+}
 document.getElementById('signOutBtn').addEventListener('click',function(){
   if(!confirm('Sign out?'))return;
   sbAuth('logout',{}).catch(function(){});
   clearSession();bks=[];apts=DEFAULT_APTS.slice();cfg={};isAdmin=false;
   closeModal('cfgOverlay');showPage('authPage');
 });
-
-// ─── WORKSPACE ────────────────────────────────
 function loadWorkspaceData(){
   if(!workspace)return;
-  // Load settings from workspace
-  var s=workspace.settings||{};
-  cfg=s;
-  PIN=s.pin||'2302';
-  if(s.apts&&s.apts.length)apts=s.apts;
-  else apts=DEFAULT_APTS.slice();
+  var s=workspace.settings||{};cfg=s;PIN=s.pin||'2302';
+  if(s.apts&&s.apts.length)apts=s.apts;else apts=DEFAULT_APTS.slice();
 }
-
 function saveWorkspaceSettings(){
   if(!workspace)return Promise.resolve();
-  cfg.apts=apts;
-  cfg.pin=PIN;
+  cfg.apts=apts;cfg.pin=PIN;
   return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:cfg});
 }
-
-// ─── DATA LOADING ────────────────────────────
-function sbLoad(){
-  if(!workspace)return Promise.resolve();
-  setSS(T('syncing'));
-  return sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkout.asc').then(function(data){
-    bks=data.map(r2l);setSS('✅ '+bks.length+' '+T('loaded'));render();
-  }).catch(function(e){setSS('❌ '+e.message);});
-}
-function sbUpsert(arr){
-  if(!workspace)return Promise.reject(new Error('No workspace'));
-  return sbF('POST','bookings',arr.map(l2r));
-}
-function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
-function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
-function l2r(b){return{id:b.id,workspace_id:workspace.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid',cleaned:b.cleaned||'no'};}
-function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.checkin,checkout:r.checkout,clean:r.clean,guests:r.guests||'',notes:r.notes||'',paid:r.paid||'unpaid',cleaned:r.cleaned||'no'};}
-
-// ─── CLEANER FLOW ─────────────────────────────
 function startCleanerFlow(){
   showPage('cleanerPage');
-  // Fetch workspace by token to validate it exists
-  sbF('GET','workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken).then(function(rows){
-    if(!rows||!rows.length){
-      document.getElementById('clPinBox').innerHTML='<h2>❌ Invalid link</h2><p style="color:var(--muted);margin-top:8px">This cleaner link is not valid. Please ask your host for a new link.</p>';
-      return;
-    }
+  sbF('GET','workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken,null,SB_KEY).then(function(rows){
+    if(!rows||!rows.length){document.getElementById('clPinBox').innerHTML='<h2 style="color:var(--red)">Invalid link</h2><p style="color:var(--muted);margin-top:8px">Please ask your host for a new link.</p>';return;}
     cleanerWorkspace=rows[0];
-    // Show PIN box
-    document.getElementById('clPinBox').style.display='block';
-  }).catch(function(){
-    document.getElementById('clPinBox').innerHTML='<p style="color:var(--red);font-weight:700">Connection error. Please try again.</p>';
-  });
-
-  // PIN keypad
+    var s=cleanerWorkspace.settings||{};
+    if(s.apts&&s.apts.length)apts=s.apts;
+  }).catch(function(){document.getElementById('clPinBox').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error.</p>';});
   document.querySelectorAll('.cl-pk').forEach(function(k){
     k.addEventListener('click',function(){
       var n=this.getAttribute('data-n');
-      if(n==='x'){return;}
+      if(n==='x')return;
       if(n==='del'){clPinBuf=clPinBuf.slice(0,-1);updClDots();return;}
       if(clPinBuf.length>=4)return;
       clPinBuf+=n;updClDots();
       if(clPinBuf.length===4){
         setTimeout(function(){
           if(cleanerWorkspace&&clPinBuf===(cleanerWorkspace.cleaner_pin||'0000')){
-            // Load settings & bookings
-            var s=cleanerWorkspace.settings||{};
-            LANG=ll('sc_lang','en');
-            if(s.apts&&s.apts.length)apts=s.apts;
             document.getElementById('clPinBox').style.display='none';
             document.getElementById('clContent').classList.add('show');
             loadCleanerBookings();
-          }else{
-            document.getElementById('clPinErr').textContent='❌ Wrong PIN';
-            clPinBuf='';updClDots();
-          }
+          }else{document.getElementById('clPinErr').textContent='Wrong PIN';clPinBuf='';updClDots();}
         },200);
       }
     });
   });
 }
-
 function updClDots(){for(var i=0;i<4;i++)document.getElementById('cp'+i).className='cl-pd'+(i<clPinBuf.length?' on':'');}
-
 function loadCleanerBookings(){
-  // Cleaner reads bookings via their token — use anon key, filter by workspace
+  if(!cleanerWorkspace)return;
   fetch(SB_URL+'/rest/v1/bookings?select=*&workspace_id=eq.'+cleanerWorkspace.id+'&order=checkout.asc',{
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
   }).then(function(r){return r.json();}).then(function(data){
+    if(!Array.isArray(data)){document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error loading bookings. Please check Supabase RLS policies.</p>';return;}
     bks=data.map(r2l);renderCleanerView();
-  }).catch(function(e){
-    document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error: '+e.message+'</p>';
-  });
+  }).catch(function(){document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error.</p>';});
 }
-
 function renderCleanerView(){
-  var tod=today();
-  var container=document.getElementById('clList');
-  container.innerHTML='';
-
-  // Today's checkouts that aren't cleaned
+  var tod=today(),container=document.getElementById('clList');container.innerHTML='';
   var todBks=bks.filter(function(b){return b.checkout===tod;});
   var uncleaned=todBks.filter(function(b){return b.cleaned!=='yes';});
   var banner=document.getElementById('clBanner');
-  if(uncleaned.length){
-    banner.classList.add('show');
-    banner.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';
-    document.getElementById('clBannerCount').textContent=uncleaned.length+' '+T('uncleanedToday');
-    document.getElementById('clBannerApts').textContent=uncleaned.map(function(b){return aptById(b.apt).short;}).join(' · ');
-  }else if(todBks.length){
-    banner.classList.add('show');
-    banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
-    document.getElementById('clBannerCount').textContent='✅ All cleaned today!';
-    document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' · ');
-  }else banner.classList.remove('show');
-
-  // Show only active (checkin <= today) and upcoming bookings within next 30 days
-  var future30=new Date();future30.setDate(future30.getDate()+30);
-  var f30=future30.toISOString().slice(0,10);
-  var visible=bks.filter(function(b){return b.checkout>=tod&&b.checkin<=f30;});
-
-  if(!visible.length){
-    container.innerHTML='<div class="cl-empty"><div class="ico">✨</div><h3>'+T('empty')+'</h3><p>No upcoming cleanings.</p></div>';
-    return;
-  }
-
-  // Active (started) first, then upcoming
-  var active=visible.filter(function(b){return b.checkin<=tod;});
-  var upcoming=visible.filter(function(b){return b.checkin>tod;});
-
-  if(active.length){
-    var l=document.createElement('div');l.className='cl-section';l.textContent='🧹 Today & Active';
-    container.appendChild(l);
-    active.forEach(function(b){container.appendChild(mkClCard(b));});
-  }
-  if(upcoming.length){
-    var l2=document.createElement('div');l2.className='cl-section';l2.textContent='📅 Coming up';
-    container.appendChild(l2);
-    upcoming.forEach(function(b){container.appendChild(mkClCard(b));});
-  }
+  if(uncleaned.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';document.getElementById('clBannerCount').textContent=uncleaned.length+' '+T('uncleanedToday');document.getElementById('clBannerApts').textContent=uncleaned.map(function(b){return aptById(b.apt).short;}).join(' - ');}
+  else if(todBks.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';document.getElementById('clBannerCount').textContent='All cleaned today!';document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');}
+  else banner.classList.remove('show');
+  var f30=new Date();f30.setDate(f30.getDate()+30);var f30s=f30.toISOString().slice(0,10);
+  var visible=bks.filter(function(b){return b.checkout>=tod&&b.checkin<=f30s;});
+  if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>No upcoming cleanings.</p></div>';return;}
+  var active=visible.filter(function(b){return b.checkin<=tod;}),upcoming=visible.filter(function(b){return b.checkin>tod;});
+  if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent='Today & Active';container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
+  if(upcoming.length){var l2=document.createElement('div');l2.className='cl-section';l2.textContent='Coming up';container.appendChild(l2);upcoming.forEach(function(b){container.appendChild(mkClCard(b));});}
 }
-
 function mkClCard(b){
-  var tod=today(),isT=b.checkout===tod,apt=aptById(b.apt);
-  var el=document.createElement('div');
+  var tod=today(),isT=b.checkout===tod,apt=aptById(b.apt),el=document.createElement('div');
   el.className='cl-card'+(isT?' tod':'');
-  var isActive=b.checkin<=tod;
-  var isCleaned=b.cleaned==='yes';
-  var info='';
-  if(b.guests)info+='<span class="cl-chip">👥 '+b.guests+'</span>';
-  if(b.notes)info+='<span class="cl-chip note">📝 '+b.notes+'</span>';
+  var isActive=b.checkin<=tod,isCleaned=b.cleaned==='yes';
+  var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes)info+='<span class="cl-chip note">'+b.notes+'</span>';
   el.innerHTML=
-    '<div class="cl-ctop">'+
-      '<div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+
-      (isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+
-    '</div>'+
-    '<div class="cl-dates">'+
-      '<div class="cl-db"><span class="cl-dlbl">'+T('checkin')+'</span><span class="cl-dval">'+fmtD(b.checkin)+'</span><span class="cl-dday">'+fmtWd(b.checkin)+'</span></div>'+
-      '<div class="cl-darr">→</div>'+
-      '<div class="cl-db r"><span class="cl-dlbl">'+T('checkout')+'</span><span class="cl-dval">'+fmtD(b.checkout)+'</span><span class="cl-dday">'+fmtWd(b.checkout)+'</span></div>'+
-    '</div>'+
+    '<div class="cl-ctop"><div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+(isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+'</div>'+
+    '<div class="cl-dates"><div class="cl-db"><span class="cl-dlbl">'+T('checkin')+'</span><span class="cl-dval">'+fmtD(b.checkin)+'</span><span class="cl-dday">'+fmtWd(b.checkin)+'</span></div><div class="cl-darr">></div><div class="cl-db r"><span class="cl-dlbl">'+T('checkout')+'</span><span class="cl-dval">'+fmtD(b.checkout)+'</span><span class="cl-dday">'+fmtWd(b.checkout)+'</span></div></div>'+
     (info?'<div class="cl-info">'+info+'</div>':'')+
     (isActive?'<div class="cl-foot"><button class="cl-cbtn '+(isCleaned?'cleaned':'uncleaned')+'" data-id="'+b.id+'">'+(isCleaned?T('cleaned'):T('notCleaned'))+'</button></div>':'');
-
   if(isActive){
     var btn=el.querySelector('.cl-cbtn');
     if(btn)btn.addEventListener('click',function(){
       var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
       if(idx===-1)return;
-      var nc=bks[idx].cleaned==='yes'?'no':'yes';
-      bks[idx].cleaned=nc;
-      if(nc==='yes')bks[idx].paid='unpaid'; // trigger admin to pay
-      // Cleaner patches via anon key + workspace filter
+      var nc=bks[idx].cleaned==='yes'?'no':'yes';bks[idx].cleaned=nc;
+      if(nc==='yes')bks[idx].paid='unpaid';
       fetch(SB_URL+'/rest/v1/bookings?id=eq.'+encodeURIComponent(id),{
-        method:'PATCH',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
         body:JSON.stringify({cleaned:nc,paid:bks[idx].paid})
       });
       renderCleanerView();
@@ -815,36 +590,27 @@ function mkClCard(b){
   }
   return el;
 }
-
-// Lang toggle cleaner
-document.getElementById('clLangBtn').addEventListener('click',function(){
-  var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);
-  this.textContent=LANG.toUpperCase();renderCleanerView();
+document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();renderCleanerView();});
+function initApp(){applyLangUI();buildAptFilters();populateAptSelects();sbLoad();}
+function enterBulkMode(){bulkMode=true;selectedIds={};document.getElementById('bulkBar').classList.add('show');render();}
+function exitBulkMode(){bulkMode=false;selectedIds={};document.getElementById('bulkBar').classList.remove('show');render();}
+function updateBulkBar(){var n=Object.keys(selectedIds).length;document.getElementById('bulkCount').textContent=n+' selected';}
+document.getElementById('bulkDelBtn').addEventListener('click',function(){
+  var ids=Object.keys(selectedIds);if(!ids.length)return;
+  if(!confirm('Delete '+ids.length+' bookings?'))return;
+  bks=bks.filter(function(b){return!selectedIds[b.id];});render();exitBulkMode();
+  Promise.all(ids.map(function(id){return sbDel(id);})).then(function(){toast(ids.length+' deleted','ok');}).catch(function(){toast('Delete error','err');});
 });
-
-// ─── MAIN APP INIT ────────────────────────────
-function initApp(){
-  applyLangUI();buildAptFilters();populateAptSelects();
-  sbLoad().then(function(){applyLangUI();});
-}
-
-// ─── RENDER ───────────────────────────────────
+document.getElementById('bulkCancelBtn').addEventListener('click',exitBulkMode);
 function render(){
   var tod=today(),sorted=bks.slice().sort(function(a,b){return(a.checkout||'')>(b.checkout||'')?1:-1;});
   var todBks=sorted.filter(function(b){return b.checkout===tod;});
-  var uncleanedBks=todBks.filter(function(b){return b.cleaned!=='yes';});
+  var unclBks=todBks.filter(function(b){return b.cleaned!=='yes';});
   var tb=document.getElementById('todayBanner');
   if(todBks.length){
     tb.classList.add('show');
-    if(uncleanedBks.length){
-      document.getElementById('tbCount').textContent=uncleanedBks.length+' '+T('uncleanedToday');
-      document.getElementById('tbApts').textContent=uncleanedBks.map(function(b){return aptById(b.apt).short;}).join(' · ');
-      tb.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';
-    }else{
-      document.getElementById('tbCount').textContent='✅ All cleaned today!';
-      document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' · ');
-      tb.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
-    }
+    if(unclBks.length){document.getElementById('tbCount').textContent=unclBks.length+' '+T('uncleanedToday');document.getElementById('tbApts').textContent=unclBks.map(function(b){return aptById(b.apt).short;}).join(' - ');tb.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';}
+    else{document.getElementById('tbCount').textContent='All cleaned today!';document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');tb.style.background='linear-gradient(135deg,#22c55e,#16a34a)';}
   }else tb.classList.remove('show');
   buildAptFilters();
   var list=sorted.filter(function(b){
@@ -855,50 +621,59 @@ function render(){
     return true;
   });
   var c=document.getElementById('list');c.innerHTML='';
-  if(!list.length){c.innerHTML='<div class="empty"><div class="ico">✨</div><h3>'+T('empty')+'</h3><p>'+T('emptySub')+'</p></div>';return;}
+  if(!list.length){c.innerHTML='<div class="empty"><div class="ico" style="font-size:46px;margin-bottom:10px">ok</div><h3>'+T('empty')+'</h3><p>'+T('emptySub')+'</p></div>';return;}
   var up=list.filter(function(b){return b.checkout>=tod;}),past=list.filter(function(b){return b.checkout<tod;});
   if(up.length){var l=document.createElement('div');l.className='slabel';l.textContent=T('upcoming');c.appendChild(l);up.forEach(function(b){c.appendChild(mkCard(b,false));});}
   if(past.length){var l2=document.createElement('div');l2.className='slabel';l2.textContent=T('previous');c.appendChild(l2);past.forEach(function(b){c.appendChild(mkCard(b,true));});}
 }
-
 function mkCard(b,isPast){
   var tod=today(),isT=b.checkout===tod,el=document.createElement('div');
-  el.className='bcard'+(isPast?' past':'')+(isT?' tod':'');
+  el.className='bcard'+(isPast?' past':'')+(isT?' tod':'')+(selectedIds[b.id]?' selected':'');
   var apt=aptById(b.apt);
   var srcL={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
-  var canNotes=isAdmin||cfg.pNotes!==false;
-  var isActive=b.checkin<=tod,isCleaned=b.cleaned==='yes';
+  var canNotes=isAdmin||cfg.pNotes!==false,isActive=b.checkin<=tod,isCleaned=b.cleaned==='yes';
   var ir='';
-  if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">👥 '+b.guests+'</span>':'')+((b.notes&&canNotes)?'<span class="chip note">📝 '+b.notes+'</span>':'')+'</div>';}
-
+  if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">Guests: '+b.guests+'</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
   var footHtml='';
   if(isAdmin){
     var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
-    var cBadge=isActive?(isCleaned?'<span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">🧹 Cleaned</span>':'<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">🧹 Not yet</span>'):'';
-    footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button>'+cBadge+'<div class="adm show"><button class="ibtn e" data-id="'+b.id+'">✏️</button><button class="ibtn d" data-id="'+b.id+'">🗑️</button></div>';
+    var cBadge=isActive?(isCleaned?'<span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">Cleaned</span>':'<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">Not yet</span>'):'';
+    footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button>'+cBadge+'<div class="adm show"><button class="ibtn e" data-id="'+b.id+'">Edit</button><button class="ibtn d" data-id="'+b.id+'">Del</button></div>';
   }
-
   el.innerHTML=
     '<div class="ctop"><div class="abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div><div class="sbadge '+b.source+'">'+srcL+'</div></div>'+
-    '<div class="cdates"><div class="db"><span class="dlbl">'+T('checkin')+'</span><span class="dval">'+fmtD(b.checkin)+'</span><span class="dday">'+fmtWd(b.checkin)+'</span></div><div class="darr">→</div><div class="db r"><span class="dlbl">'+T('checkout')+'</span><span class="dval">'+fmtD(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div></div>'+
+    '<div class="cdates"><div class="db"><span class="dlbl">'+T('checkin')+'</span><span class="dval">'+fmtD(b.checkin)+'</span><span class="dday">'+fmtWd(b.checkin)+'</span></div><div class="darr">></div><div class="db r"><span class="dlbl">'+T('checkout')+'</span><span class="dval">'+fmtD(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div></div>'+
     ir+(footHtml?'<div class="cfoot">'+footHtml+'</div>':'');
-
   if(isAdmin){
-    var pb=el.querySelector('.pbtn');if(pb)pb.addEventListener('click',function(){
+    // Checkbox
+    var chk=document.createElement('div');chk.className='bcard-chk'+(bulkMode?' show':'')+(selectedIds[b.id]?' checked':'');chk.textContent=selectedIds[b.id]?'v':'';el.appendChild(chk);
+    chk.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(selectedIds[b.id]){delete selectedIds[b.id];this.className='bcard-chk show';this.textContent='';el.classList.remove('selected');}
+      else{selectedIds[b.id]=true;this.className='bcard-chk show checked';this.textContent='v';el.classList.add('selected');}
+      updateBulkBar();
+    });
+    // Long press
+    var pt;
+    el.addEventListener('mousedown',function(){pt=setTimeout(function(){if(!bulkMode)enterBulkMode();},600);});
+    el.addEventListener('touchstart',function(){pt=setTimeout(function(){if(!bulkMode)enterBulkMode();},600);},{passive:true});
+    el.addEventListener('mouseup',function(){clearTimeout(pt);});el.addEventListener('touchend',function(){clearTimeout(pt);});
+    var pb=el.querySelector('.pbtn');
+    if(pb)pb.addEventListener('click',function(e){
+      if(bulkMode)return;
       var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
       if(idx===-1)return;var np=bks[idx].paid==='paid'?'unpaid':'paid';bks[idx].paid=np;render();
       sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
     });
-    var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){openEdit(this.getAttribute('data-id'));});
+    var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){if(!bulkMode)openEdit(this.getAttribute('data-id'));});
     var db=el.querySelector('.ibtn.d');if(db)db.addEventListener('click',function(){
+      if(bulkMode)return;
       var id=this.getAttribute('data-id');if(!confirm(T('deleteQ')))return;
       bks=bks.filter(function(x){return x.id!==id;});render();sbDel(id);
     });
   }
   return el;
 }
-
-// ─── CALENDAR ─────────────────────────────────
 function renderCal(){
   var ms=T('months'),ws=T('wdS');
   document.getElementById('calLbl').textContent=ms[calMonth]+' '+calYear;
@@ -910,7 +685,7 @@ function renderCal(){
   for(var d=1;d<=dim;d++){
     var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),isT=ds===tod;
     var dayBks=bks.filter(function(b){if(!b.checkin||!b.checkout)return false;if(curFilter!=='all'&&curFilter!=='today'&&curFilter!=='unpaid'&&b.apt!==curFilter)return false;if(curSrc!=='all'&&b.source!==curSrc)return false;return b.checkin<=ds&&b.checkout>=ds;});
-    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var label=isIn&&isOut?'⇅ '+sht:isIn?'↓ '+sht:isOut?'↑ '+sht:'· '+sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+label+'</span>';}).join('');
+    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var lbl=isIn&&isOut?'in+out '+sht:isIn?'in '+sht:isOut?'out '+sht:sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+lbl+'</span>';}).join('');
     cells+='<div class="cday'+(isT?' nt':'')+(dayBks.length?' hasbk':'')+'" data-ds="'+ds+'"><span class="cnum">'+d+'</span>'+bars+'</div>';
   }
   var rem=(first+dim)%7===0?0:7-(first+dim)%7;for(var r=1;r<=rem;r++)cells+='<div class="cday om"><span class="cnum">'+r+'</span></div>';
@@ -920,83 +695,68 @@ function renderCal(){
 function showCalPopup(ds,db){
   var d=new Date(ds+'T12:00:00');document.getElementById('cpDate').textContent=T('wdL')[d.getDay()]+', '+fmtD(ds)+' '+d.getFullYear();
   var cc=document.getElementById('cpCards');cc.innerHTML='';
-  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?'⇅ In+Out':isOut?'↑ '+T('checkout'):isIn?'↓ '+T('checkin'):'· Staying';var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>👥 <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>📝 '+b.notes:'')+'</div>';cc.appendChild(div);});
+  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?'In+Out':isOut?T('checkout'):isIn?T('checkin'):'Staying';var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>Guests: <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>'+b.notes:'')+'</div>';cc.appendChild(div);});
   document.getElementById('calPopup').classList.add('show');
 }
 document.getElementById('calPopup').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
-
-// ─── ADD/EDIT ─────────────────────────────────
 document.getElementById('eOut').addEventListener('change',function(){if(!document.getElementById('eClean').value)document.getElementById('eClean').value=this.value;});
-function openAdd(){document.getElementById('editTitle').textContent='➕ New Booking';document.getElementById('eId').value='';populateAptSelects();document.getElementById('eSrc').value='direct';document.getElementById('eIn').value='';document.getElementById('eOut').value='';document.getElementById('eClean').value='';document.getElementById('eGuests').value=2;document.getElementById('eNotes').value='';document.getElementById('ePaid').value='unpaid';document.getElementById('editOverlay').classList.add('show');}
-function openEdit(id){var b=bks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('editTitle').textContent='✏️ Edit';populateAptSelects();document.getElementById('eId').value=b.id;document.getElementById('eApt').value=b.apt;document.getElementById('eSrc').value=b.source||'direct';document.getElementById('eIn').value=b.checkin;document.getElementById('eOut').value=b.checkout;document.getElementById('eClean').value=b.clean||b.checkout;document.getElementById('eGuests').value=b.guests||2;document.getElementById('eNotes').value=b.notes||'';document.getElementById('ePaid').value=b.paid||'unpaid';document.getElementById('editOverlay').classList.add('show');}
+function openAdd(){document.getElementById('editTitle').textContent='New Booking';document.getElementById('eId').value='';populateAptSelects();document.getElementById('eSrc').value='direct';document.getElementById('eIn').value='';document.getElementById('eOut').value='';document.getElementById('eClean').value='';document.getElementById('eGuests').value=2;document.getElementById('eNotes').value='';document.getElementById('ePaid').value='unpaid';document.getElementById('editOverlay').classList.add('show');}
+function openEdit(id){var b=bks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('editTitle').textContent='Edit';populateAptSelects();document.getElementById('eId').value=b.id;document.getElementById('eApt').value=b.apt;document.getElementById('eSrc').value=b.source||'direct';document.getElementById('eIn').value=b.checkin;document.getElementById('eOut').value=b.checkout;document.getElementById('eClean').value=b.clean||b.checkout;document.getElementById('eGuests').value=b.guests||2;document.getElementById('eNotes').value=b.notes||'';document.getElementById('ePaid').value=b.paid||'unpaid';document.getElementById('editOverlay').classList.add('show');}
 document.getElementById('saveEditBtn').addEventListener('click',function(){
   var id=document.getElementById('eId').value,cin=document.getElementById('eIn').value,cout=document.getElementById('eOut').value;
   if(!cin||!cout){alert('Please fill in the dates.');return;}
   var data={id:id||uid(),apt:document.getElementById('eApt').value,source:document.getElementById('eSrc').value,checkin:cin,checkout:cout,clean:document.getElementById('eClean').value||cout,guests:document.getElementById('eGuests').value,notes:document.getElementById('eNotes').value.trim(),paid:document.getElementById('ePaid').value,cleaned:'no'};
   var isNew=!id;
-  if(isNew){bks.push(data);}else{var idx=bks.findIndex(function(x){return x.id===data.id;});if(idx!==-1)bks[idx]=data;}
+  if(isNew)bks.push(data);else{var idx=bks.findIndex(function(x){return x.id===data.id;});if(idx!==-1)bks[idx]=data;}
   render();closeModal('editOverlay');
-  sbUpsert([data]).then(function(){toast(isNew?'✅ Added':'✅ Updated','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+  sbUpsert([data]).then(function(){toast(isNew?'Added':'Updated','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
 });
-
-// ─── SHARE LINK ───────────────────────────────
 function openShare(){
-  if(!workspace){toast('No workspace found','err');return;}
+  if(!workspace)return;
   var url=window.location.origin+window.location.pathname+'?cleaner='+workspace.cleaner_token;
   document.getElementById('shareUrl').textContent=url;
   document.getElementById('cleanerPinInput').value=workspace.cleaner_pin||'0000';
   document.getElementById('shareOverlay').classList.add('show');
 }
 document.getElementById('copyLinkBtn').addEventListener('click',function(){
-  var url=document.getElementById('shareUrl').textContent;
-  navigator.clipboard.writeText(url).then(function(){toast('✅ Link copied!','ok');}).catch(function(){toast('Copy manually from the box','warn');});
+  navigator.clipboard.writeText(document.getElementById('shareUrl').textContent).then(function(){toast('Link copied!','ok');}).catch(function(){toast('Copy manually','warn');});
 });
 document.getElementById('saveCleanerPinBtn').addEventListener('click',function(){
   var pin=document.getElementById('cleanerPinInput').value.trim();
   if(!/^\d{4}$/.test(pin)){toast('PIN must be 4 digits','err');return;}
-  sbF('PATCH','workspaces?id=eq.'+workspace.id,{cleaner_pin:pin}).then(function(){
-    workspace.cleaner_pin=pin;toast('✅ Cleaner PIN saved','ok');
-  }).catch(function(e){toast('Error: '+e.message,'err');});
+  sbF('PATCH','workspaces?id=eq.'+workspace.id,{cleaner_pin:pin}).then(function(){workspace.cleaner_pin=pin;toast('Cleaner PIN saved','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
 });
-
-// ─── APARTMENTS ───────────────────────────────
 var editApts=[];
 function openApts(){editApts=JSON.parse(JSON.stringify(apts));renderAptList();document.getElementById('aptsOverlay').classList.add('show');}
 function renderAptList(){
   var c=document.getElementById('aptList');c.innerHTML='';
   editApts.forEach(function(a,idx){
     var row=document.createElement('div');row.className='aptrow';
-    row.innerHTML='<div class="acolor" style="background:'+a.color+'" data-idx="'+idx+'"></div><div class="aptrow-inner"><input class="aname" value="'+a.short+'" placeholder="Display name" data-idx="'+idx+'"><input class="afull" value="'+a.name+'" placeholder="Full address" data-idx="'+idx+'"></div><button class="adel" data-idx="'+idx+'">✕</button>';
+    row.innerHTML='<div class="acolor" style="background:'+a.color+'" data-idx="'+idx+'"></div><input class="aname" value="'+a.short+'" placeholder="e.g. Unit 1, Beach Studio..." data-idx="'+idx+'"><button class="adel" data-idx="'+idx+'">X</button>';
     c.appendChild(row);
     row.querySelector('.aname').addEventListener('input',function(){var i=parseInt(this.getAttribute('data-idx'));editApts[i].short=this.value;editApts[i].name=this.value;});
-    row.querySelector('.afull').addEventListener('input',function(){editApts[parseInt(this.getAttribute('data-idx'))].name=this.value;});
     row.querySelector('.adel').addEventListener('click',function(){editApts.splice(parseInt(this.getAttribute('data-idx')),1);renderAptList();});
     row.querySelector('.acolor').addEventListener('click',function(){var i=parseInt(this.getAttribute('data-idx'));var ci=APT_COLORS.indexOf(editApts[i].color);editApts[i].color=APT_COLORS[(ci+1)%APT_COLORS.length];this.style.background=editApts[i].color;});
   });
 }
-document.getElementById('addAptBtn').addEventListener('click',function(){editApts.push({id:'apt_'+uid().slice(0,6),name:'New Apartment',short:'Apt '+(editApts.length+1),color:APT_COLORS[editApts.length%APT_COLORS.length]});renderAptList();});
+document.getElementById('addAptBtn').addEventListener('click',function(){editApts.push({id:'apt_'+uid().slice(0,6),name:'Unit '+(editApts.length+1),short:'Unit '+(editApts.length+1),color:APT_COLORS[editApts.length%APT_COLORS.length]});renderAptList();});
 document.getElementById('saveAptsBtn').addEventListener('click',function(){
   if(!editApts.length){alert('At least one apartment required.');return;}
-  apts=editApts;cfg.apts=apts;
-  saveWorkspaceSettings().then(function(){toast('✅ Saved','ok');}).catch(function(){toast('Save error','err');});
+  apts=JSON.parse(JSON.stringify(editApts));cfg.apts=apts;
+  saveWorkspaceSettings().then(function(){toast('Apartments saved','ok');}).catch(function(){toast('Save error','err');});
   populateAptSelects();buildAptFilters();render();if(viewMode==='calendar')renderCal();closeModal('aptsOverlay');
 });
-
-// ─── SETTINGS ─────────────────────────────────
 function openCfg(){document.getElementById('cWaN').value=cfg.waN||'';document.getElementById('cWaK').value=cfg.waK||'';document.getElementById('cAdmN').value=cfg.admN||'';document.getElementById('cAdmK').value=cfg.admK||'';document.getElementById('pPay').checked=cfg.pPay!==false;document.getElementById('pNotes').checked=cfg.pNotes!==false;document.getElementById('newPin').value='';document.getElementById('cfgOverlay').classList.add('show');}
 document.getElementById('saveCfgBtn').addEventListener('click',function(){
   cfg.waN=document.getElementById('cWaN').value.trim();cfg.waK=document.getElementById('cWaK').value.trim();cfg.admN=document.getElementById('cAdmN').value.trim();cfg.admK=document.getElementById('cAdmK').value.trim();cfg.pPay=document.getElementById('pPay').checked;cfg.pNotes=document.getElementById('pNotes').checked;
   var np=document.getElementById('newPin').value.trim();if(np){if(/^\d{4}$/.test(np)){cfg.pin=np;PIN=np;}else{alert('PIN must be 4 digits.');return;}}
-  saveWorkspaceSettings().then(function(){toast('✅ Settings saved','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
-  closeModal('cfgOverlay');
+  saveWorkspaceSettings().then(function(){toast('Settings saved','ok');}).catch(function(e){toast('Error: '+e.message,'err');});closeModal('cfgOverlay');
 });
 document.getElementById('clearAllBtn').addEventListener('click',function(){
   if(!confirm(T('clearQ')))return;
-  var ids=bks.map(function(b){return b.id;});
-  Promise.all(ids.map(function(id){return sbDel(id);})).then(function(){bks=[];render();toast('🗑️ Cleared','ok');});
+  var ids=bks.map(function(b){return b.id;});bks=[];render();
+  Promise.all(ids.map(function(id){return sbDel(id);})).then(function(){toast('Cleared','ok');});
 });
-
-// ─── IMPORT ───────────────────────────────────
 function openImport(){document.getElementById('iFile').value='';document.getElementById('importStatus').style.display='none';populateAptSelects();document.getElementById('importOverlay').classList.add('show');if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}}
 function setIS(m,t){var el=document.getElementById('importStatus');el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
 document.getElementById('doImportBtn').addEventListener('click',function(){
@@ -1004,7 +764,7 @@ document.getElementById('doImportBtn').addEventListener('click',function(){
   var file=fi.files[0],apt=document.getElementById('iApt').value,source=document.getElementById('iSrc').value,fname=file.name.toLowerCase();
   setIS('Reading file...','warn');
   if(fname.endsWith('.xls')||fname.endsWith('.xlsx')){if(typeof XLSX==='undefined'){setIS('XLS reader loading, wait 3 sec.','warn');return;}var r=new FileReader();r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});processImport(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]),source,apt);}catch(err){setIS('XLS error: '+err.message,'err');}};r.onerror=function(){setIS('Cannot read file.','err');};r.readAsArrayBuffer(file);}
-  else{var r2=new FileReader();r2.onload=function(e){try{processImport(e.target.result,source,apt);}catch(err){setIS('Error: '+err.message,'err');}};r2.onerror=function(){setIS('Cannot read file.','err');};r2.readAsText(file,'UTF-8');}
+  else{var r2=new FileReader();r2.onload=function(e){try{processImport(e.target.result,source,apt);}catch(err){setIS('Error: '+err.message,'err');}};r2.onerror=function(){setIS('Cannot read.','err');};r2.readAsText(file,'UTF-8');}
 });
 function sa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
 function fc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=sa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=sa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
@@ -1020,10 +780,8 @@ function processImport(text,source,apt){
   var added=0,updated=0,dupes=0;
   for(var bi=0;bi<parsed.length;bi++){var nb=parsed[bi],ovIdx=-1;for(var xi=0;xi<bks.length;xi++){var x=bks[xi];if(x.apt===nb.apt&&x.id!==nb.id&&x.checkin&&nb.checkin&&x.checkout&&nb.checkout&&x.checkin<nb.checkout&&nb.checkin<x.checkout){ovIdx=xi;break;}}if(ovIdx!==-1){var ex=bks[ovIdx],nbP=nb.source==='booking'||nb.source==='airbnb',exP=ex.source==='booking'||ex.source==='airbnb';if(nbP&&!exP){bks[ovIdx]=nb;updated++;}else if(!nbP&&exP){dupes++;}else if(nb.notes&&!ex.notes){bks[ovIdx]=nb;updated++;}else{dupes++;}continue;}var exIdx=-1;for(var xi=0;xi<bks.length;xi++){if(bks[xi].id===nb.id){exIdx=xi;break;}}if(exIdx!==-1){bks[exIdx]=Object.assign({},bks[exIdx],nb);updated++;}else{bks.push(nb);added++;}}
   render();setIS('Saving to cloud...','warn');
-  sbUpsert(parsed).then(function(){closeModal('importOverlay');var msg='✅ '+added+' imported';if(updated)msg+=', '+updated+' updated';if(skipped)msg+=', '+skipped+' skipped';if(dupes)msg+=', '+dupes+' duplicates removed';toast(msg,'ok');}).catch(function(e){setIS('Cloud error: '+e.message,'err');});
+  sbUpsert(parsed).then(function(){closeModal('importOverlay');var msg=added+' imported';if(updated)msg+=', '+updated+' updated';if(skipped)msg+=', '+skipped+' skipped';if(dupes)msg+=', '+dupes+' duplicates removed';toast(msg,'ok');}).catch(function(e){setIS('Cloud error: '+e.message,'err');});
 }
-
-// ─── FILTERS & UI ─────────────────────────────
 function buildAptFilters(){
   var row=document.getElementById('aptFilters');row.innerHTML='';
   var tod=today(),fut=bks.filter(function(b){return b.checkout>=tod;});
@@ -1033,26 +791,30 @@ function buildAptFilters(){
   mkFb('today',T('today'),'#0f172a');
   mkFb('unpaid',T('allUnpaid')+' ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
 }
-function populateAptSelects(){['eApt','iApt'].forEach(function(sid){var sel=document.getElementById(sid);if(!sel)return;var cur=sel.value;sel.innerHTML='';apts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.short+' — '+a.name;sel.appendChild(o);});if(cur)sel.value=cur;});}
+function populateAptSelects(){['eApt','iApt'].forEach(function(sid){var sel=document.getElementById(sid);if(!sel)return;var cur=sel.value;sel.innerHTML='';apts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.short;sel.appendChild(o);});if(cur)sel.value=cur;});}
 function applyLangUI(){document.getElementById('langBtn').textContent=LANG.toUpperCase();document.getElementById('vList').textContent=T('list');document.getElementById('vCal').textContent=T('calendar');document.getElementById('srcAll').textContent=T('allSrc');}
 document.getElementById('langBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);applyLangUI();render();if(viewMode==='calendar')renderCal();});
 document.querySelectorAll('#srcRow .fb').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('#srcRow .fb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');curSrc=this.getAttribute('data-src');render();if(viewMode==='calendar')renderCal();});});
-
-// ─── VIEW TOGGLE ──────────────────────────────
 document.getElementById('vList').addEventListener('click',function(){viewMode='list';this.classList.add('on');document.getElementById('vCal').classList.remove('on');document.getElementById('list').style.display='flex';document.getElementById('calView').style.display='none';render();});
 document.getElementById('vCal').addEventListener('click',function(){viewMode='calendar';this.classList.add('on');document.getElementById('vList').classList.remove('on');document.getElementById('list').style.display='none';document.getElementById('calView').style.display='block';renderCal();});
 document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();});
 document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();});
-
-// ─── PIN (admin) ──────────────────────────────
 document.getElementById('pinBtn').addEventListener('click',function(){if(isAdmin){isAdmin=false;updateAdminUI();return;}pinBuf='';updDots();document.getElementById('pinErr').textContent='';document.getElementById('pinOverlay').classList.add('show');});
-document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='❌ Wrong PIN';pinBuf='';updDots();}},200);}});});
+document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='Wrong PIN';pinBuf='';updDots();}},200);}});});
 function updDots(){for(var i=0;i<4;i++)document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');}
-function updateAdminUI(){document.getElementById('adminBar').className=isAdmin?'show':'';document.getElementById('fabAdd').className=isAdmin?'show':'';document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';document.getElementById('pinBtn').textContent=isAdmin?'🔓':'⚙️';document.getElementById('srcRow').className=isAdmin?'show':'';render();if(viewMode==='calendar')renderCal();}
-
-// ─── FABs ─────────────────────────────────────
+function updateAdminUI(){document.getElementById('adminBar').className=isAdmin?'show':'';document.getElementById('fabAdd').className=isAdmin?'show':'';document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';document.getElementById('pinBtn').textContent=isAdmin?'unlock':'settings';document.getElementById('srcRow').className=isAdmin?'show':'';render();if(viewMode==='calendar')renderCal();}
 document.getElementById('fabAdd').addEventListener('click',openAdd);
-document.getElementById('syncBtn').addEventListener('click',function(){var btn=this;btn.classList.add('spin');sbLoad().then(function(){btn.classList.remove('spin');applyLangUI();});});
+document.getElementById('syncBtn').addEventListener('click',function(){
+  var btn=this;btn.classList.add('spin');
+  if(!workspace){btn.classList.remove('spin');return;}
+  sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkout.asc').then(function(data){
+    var cloudBks=data.map(r2l);
+    var cloudIds=new Set(cloudBks.map(function(b){return b.id;}));
+    var localOnly=bks.filter(function(b){return!cloudIds.has(b.id);});
+    bks=cloudBks.concat(localOnly);
+    setSS(bks.length+' '+T('loaded'));render();btn.classList.remove('spin');
+  }).catch(function(e){setSS('Error: '+e.message);btn.classList.remove('spin');});
+});
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||'351924477353');
 </script>
 </body>
