@@ -11,12 +11,14 @@
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* ── PAGES ── */
-.page{display:none;min-height:100vh}
-.page.active{display:block}
+.page{display:none!important;min-height:100vh}
+.page.active{display:block!important}
+#authPage.active{display:flex!important}
+#loadingPage.active{display:flex!important}
 
 /* ── AUTH PAGE ── */
-#authPage{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);display:flex;align-items:center;justify-content:center;padding:24px;min-height:100vh}
-#authPage.active{display:flex}
+#authPage{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);display:none;align-items:center;justify-content:center;padding:24px;min-height:100vh}
+
 .auth-box{background:#fff;border-radius:24px;padding:32px 28px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
 .auth-logo .ico{width:44px;height:44px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px}
@@ -36,13 +38,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .auth-footer{text-align:center;font-size:12px;color:var(--muted);margin-top:16px;font-weight:600}
 
 /* ── LOADING ── */
-#loadingPage{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f1f5f9}
+#loadingPage{display:none;align-items:center;justify-content:center;min-height:100vh;background:#f1f5f9}
 #loadingPage.active{display:flex}
 .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── CLEANER PAGE ── */
-#cleanerPage{background:var(--bg);padding-bottom:30px}
+#cleanerPage{display:none;background:var(--bg);padding-bottom:30px}
 #cleanerPage.active{display:block}
 .cl-header{background:#0f172a;color:#fff;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between}
 .cl-logo{display:flex;align-items:center;gap:9px}
