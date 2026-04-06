@@ -440,7 +440,15 @@ function sbLoad(){
     bks=data.map(r2l);setSS(bks.length+' '+T('loaded'));render();
   }).catch(function(e){setSS('Error: '+e.message);});
 }
-function sbUpsert(arr){if(!workspace)return Promise.reject(new Error('No workspace'));return sbF('POST','bookings',arr.map(l2r));}
+function sbUpsert(arr){
+  if(!workspace)return Promise.reject(new Error('No workspace'));
+  if(!session||!session.access_token)return Promise.reject(new Error('Not authenticated'));
+  var rows=arr.map(l2r);
+  // Ensure all rows have workspace_id
+  rows=rows.filter(function(r){return r.workspace_id;});
+  if(!rows.length)return Promise.resolve([]);
+  return sbF('POST','bookings',rows);
+}
 function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
 function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
 function l2r(b){return{id:b.id,workspace_id:workspace.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid',cleaned:b.cleaned||'no'};}
@@ -532,6 +540,9 @@ function startCleanerFlow(){
           if(cleanerWorkspace&&clPinBuf===(cleanerWorkspace.cleaner_pin||'0000')){
             document.getElementById('clPinBox').style.display='none';
             document.getElementById('clContent').classList.add('show');
+            // Load apts from workspace settings before loading bookings
+            var ws_s=cleanerWorkspace.settings||{};
+            if(ws_s.apts&&ws_s.apts.length)apts=ws_s.apts;
             loadCleanerBookings();
           }else{document.getElementById('clPinErr').textContent='Wrong PIN';clPinBuf='';updClDots();}
         },200);
@@ -631,19 +642,47 @@ function mkCard(b,isPast){
   el.className='bcard'+(isPast?' past':'')+(isT?' tod':'')+(selectedIds[b.id]?' selected':'');
   var apt=aptById(b.apt);
   var srcL={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
-  var canNotes=isAdmin||cfg.pNotes!==false,isActive=b.checkin<=tod,isCleaned=b.cleaned==='yes';
+  var canNotes=isAdmin||cfg.pNotes!==false;
+  // Active = booking has started (checkin <= today) — cleaner button only shows for these
+  var isActive=b.checkin<=tod;
+  var isCleaned=b.cleaned==='yes';
   var ir='';
-  if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">Guests: '+b.guests+'</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
+  if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">'+b.guests+' guests</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
   var footHtml='';
   if(isAdmin){
-    var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
+    // Admin always sees Paid/Unpaid + cleaned status badge on active bookings
+    var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?'Paid':'Unpaid';
     var cBadge=isActive?(isCleaned?'<span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">Cleaned</span>':'<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">Not yet</span>'):'';
     footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button>'+cBadge+'<div class="adm show"><button class="ibtn e" data-id="'+b.id+'">Edit</button><button class="ibtn d" data-id="'+b.id+'">Del</button></div>';
+  } else if(isActive){
+    // Cleaner sees Cleaned/Not cleaned ONLY for active bookings (checkout <= today or currently staying)
+    var cCls=isCleaned?'cleaned':'uncleaned';
+    var cLbl=isCleaned?'Cleaned':'Mark as cleaned';
+    footHtml='<button class="pbtn '+cCls+'" data-id="'+b.id+'">'+cLbl+'</button>';
   }
+  // Future bookings (checkin > today): no footer button for cleaner
   el.innerHTML=
     '<div class="ctop"><div class="abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div><div class="sbadge '+b.source+'">'+srcL+'</div></div>'+
     '<div class="cdates"><div class="db"><span class="dlbl">'+T('checkin')+'</span><span class="dval">'+fmtD(b.checkin)+'</span><span class="dday">'+fmtWd(b.checkin)+'</span></div><div class="darr">></div><div class="db r"><span class="dlbl">'+T('checkout')+'</span><span class="dval">'+fmtD(b.checkout)+'</span><span class="dday">'+fmtWd(b.checkout)+'</span></div></div>'+
     ir+(footHtml?'<div class="cfoot">'+footHtml+'</div>':'');
+  if(!isAdmin&&isActive){
+    // Cleaner: toggle cleaned
+    var cb=el.querySelector('.pbtn');
+    if(cb)cb.addEventListener('click',function(){
+      var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
+      if(idx===-1)return;
+      var nc=bks[idx].cleaned==='yes'?'no':'yes';
+      bks[idx].cleaned=nc;
+      if(nc==='yes')bks[idx].paid='unpaid'; // trigger admin to pay
+      render();
+      // Patch via anon key — open update policy
+      fetch(SB_URL+'/rest/v1/bookings?id=eq.'+encodeURIComponent(id),{
+        method:'PATCH',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({cleaned:nc,paid:bks[idx].paid})
+      });
+    });
+  }
   if(isAdmin){
     // Checkbox
     var chk=document.createElement('div');chk.className='bcard-chk'+(bulkMode?' show':'')+(selectedIds[b.id]?' checked':'');chk.textContent=selectedIds[b.id]?'v':'';el.appendChild(chk);
@@ -662,7 +701,9 @@ function mkCard(b,isPast){
     if(pb)pb.addEventListener('click',function(e){
       if(bulkMode)return;
       var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
-      if(idx===-1)return;var np=bks[idx].paid==='paid'?'unpaid':'paid';bks[idx].paid=np;render();
+      if(idx===-1)return;
+      var np=bks[idx].paid==='paid'?'unpaid':'paid';
+      bks[idx].paid=np;render();
       sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
     });
     var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){if(!bulkMode)openEdit(this.getAttribute('data-id'));});
