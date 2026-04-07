@@ -629,7 +629,8 @@ function renderCleanerView(){
 function mkClCard(b){
   var tod=today(),isT=b.checkout===tod,apt=aptById(b.apt),el=document.createElement('div');
   el.className='cl-card'+(isT?' tod':'');
-  var isActive=b.checkin<=tod,isCleaned=b.cleaned==='yes';
+  // Active = checkout is today or has passed — needs cleaning
+  var isActive=b.checkout<=tod,isCleaned=b.cleaned==='yes';
   var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes)info+='<span class="cl-chip note">'+b.notes+'</span>';
   el.innerHTML=
     '<div class="cl-ctop"><div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+(isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+'</div>'+
@@ -694,8 +695,8 @@ function mkCard(b,isPast){
   var apt=aptById(b.apt);
   var srcL={airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}[b.source]||'Direct';
   var canNotes=isAdmin||cfg.pNotes!==false;
-  // Active = booking has started (checkin <= today) — cleaner button only shows for these
-  var isActive=b.checkin<=tod;
+  // Active = checkout is today or past — apartment needs cleaning
+  var isActive=b.checkout<=tod;
   var isCleaned=b.cleaned==='yes';
   var ir='';
   if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">'+b.guests+' guests</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
