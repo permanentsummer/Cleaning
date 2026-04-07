@@ -619,8 +619,8 @@ function renderCleanerView(){
   if(uncleaned.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';document.getElementById('clBannerCount').textContent=uncleaned.length+' '+T('uncleanedToday');document.getElementById('clBannerApts').textContent=uncleaned.map(function(b){return aptById(b.apt).short;}).join(' - ');}
   else if(todBks.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';document.getElementById('clBannerCount').textContent='All cleaned today!';document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');}
   else banner.classList.remove('show');
-  var f30=new Date();f30.setDate(f30.getDate()+30);var f30s=f30.toISOString().slice(0,10);
-  var visible=bks.filter(function(b){return b.checkout>=tod&&b.checkin<=f30s;});
+  // Show all bookings from today onwards
+  var visible=bks.filter(function(b){return b.checkout>=tod;});
   if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>No upcoming cleanings.</p></div>';return;}
   var active=visible.filter(function(b){return b.checkin<=tod;}),upcoming=visible.filter(function(b){return b.checkin>tod;});
   if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent='Today & Active';container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
@@ -818,24 +818,36 @@ document.getElementById('saveCleanerPinBtn').addEventListener('click',function()
   if(!/^\d{4}$/.test(pin)){toast('PIN must be 4 digits','err');return;}
   if(!workspace){toast('No workspace','err');return;}
   // Save directly via fetch with session token
+  // Use SQL function via RPC to bypass RLS issues with REST JWT
+  // Or patch directly with user_id in filter (RLS: auth.uid() = user_id)
+  var tok=session?session.access_token:SB_KEY;
   fetch(SB_URL+'/rest/v1/workspaces?id=eq.'+workspace.id,{
     method:'PATCH',
     headers:{
       'apikey':SB_KEY,
-      'Authorization':'Bearer '+(session?session.access_token:SB_KEY),
+      'Authorization':'Bearer '+tok,
       'Content-Type':'application/json',
-      'Prefer':'return=representation'
+      'Prefer':'return=minimal'
     },
     body:JSON.stringify({cleaner_pin:pin})
   }).then(function(r){
-    if(!r.ok)return r.text().then(function(t){throw new Error(t);});
-    return r.json();
-  }).then(function(rows){
-    workspace.cleaner_pin=pin;
-    toast('PIN saved: '+pin,'ok');
-  }).catch(function(e){
-    toast('Error saving PIN: '+e.message,'err');
-  });
+    if(r.status===204||r.ok){
+      workspace.cleaner_pin=pin;
+      toast('PIN saved: '+pin,'ok');
+    } else {
+      return r.text().then(function(t){
+        // RLS blocked — save via SQL RPC instead
+        return fetch(SB_URL+'/rest/v1/rpc/set_cleaner_pin',{
+          method:'POST',
+          headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
+          body:JSON.stringify({workspace_id:workspace.id,new_pin:pin})
+        }).then(function(r2){
+          if(r2.ok){workspace.cleaner_pin=pin;toast('PIN saved: '+pin,'ok');}
+          else toast('Error: '+t,'err');
+        });
+      });
+    }
+  }).catch(function(e){toast('Error: '+e.message,'err');});
 });
 var editApts=[];
 function openApts(){editApts=JSON.parse(JSON.stringify(apts));renderAptList();document.getElementById('aptsOverlay').classList.add('show');}
