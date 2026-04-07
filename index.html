@@ -630,7 +630,7 @@ function loadCleanerBookings(){
   }
   document.getElementById('clList').innerHTML='<p style="color:#64748b;padding:16px;font-weight:700">Loading bookings...</p>';
   var url=SB_URL+'/rest/v1/bookings?select=*&workspace_id=eq.'+cleanerWorkspace.id+'&order=checkout.asc';
-  fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+  fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'x-cleaner-token':cleanerToken}})
   .then(function(r){
     if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
     return r.json();
@@ -685,7 +685,7 @@ function mkClCard(b){
       var nc=bks[idx].cleaned==='yes'?'no':'yes';bks[idx].cleaned=nc;
       if(nc==='yes')bks[idx].paid='unpaid';
       fetch(SB_URL+'/rest/v1/bookings?id=eq.'+encodeURIComponent(id),{
-        method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','x-cleaner-token':cleanerToken},
         body:JSON.stringify({cleaned:nc,paid:bks[idx].paid})
       });
       renderCleanerView();
@@ -770,7 +770,7 @@ function mkCard(b,isPast){
       // Patch via anon key — open update policy
       fetch(SB_URL+'/rest/v1/bookings?id=eq.'+encodeURIComponent(id),{
         method:'PATCH',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','x-cleaner-token':cleanerToken||''},
         body:JSON.stringify({cleaned:nc,paid:bks[idx].paid})
       });
     });
