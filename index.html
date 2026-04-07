@@ -463,20 +463,42 @@ window.addEventListener('load',function(){
 
   // Try restore saved session
   var stored=ll('sb_session',null);
-  if(stored&&stored.access_token&&stored.user&&stored.user.id){
-    session=stored;
-    // Verify token still valid by fetching workspace
+  if(!stored||!stored.access_token){showPage('authPage');return;}
+
+  session=stored;
+
+  function startWithSession(){
     sbF('GET','workspaces?select=*&limit=1').then(function(rows){
       if(rows&&rows.length){
         workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
       }else{
         clearSession();showPage('authPage');
       }
+    }).catch(function(){clearSession();showPage('authPage');});
+  }
+
+  // Try using current token first
+  // If expired, refresh it using refresh_token
+  if(stored.refresh_token){
+    fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({refresh_token:stored.refresh_token})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.access_token){
+        storeSession(data);
+        session=data;
+        startWithSession();
+      }else{
+        // Refresh failed — try existing token anyway
+        startWithSession();
+      }
     }).catch(function(){
-      clearSession();showPage('authPage');
+      // Network error — try existing token
+      startWithSession();
     });
   }else{
-    showPage('authPage');
+    startWithSession();
   }
 });
 document.getElementById('tabLogin').addEventListener('click',function(){this.classList.add('on');document.getElementById('tabSignup').classList.remove('on');document.getElementById('loginForm').style.display='flex';document.getElementById('signupForm').style.display='none';});
