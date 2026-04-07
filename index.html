@@ -456,10 +456,28 @@ function r2l(r){return{id:r.id,apt:r.apt,source:r.source||'direct',checkin:r.che
 function storeSession(s){sl('sb_session',s);session=s;}
 function clearSession(){localStorage.removeItem('sb_session');session=null;workspace=null;bks=[];}
 window.addEventListener('load',function(){
+  // Cleaner link
   var params=new URLSearchParams(window.location.search);
   var token=params.get('cleaner');
   if(token){cleanerToken=token;startCleanerFlow();return;}
-  showPage('authPage');
+
+  // Try restore saved session
+  var stored=ll('sb_session',null);
+  if(stored&&stored.access_token&&stored.user&&stored.user.id){
+    session=stored;
+    // Verify token still valid by fetching workspace
+    sbF('GET','workspaces?select=*&limit=1').then(function(rows){
+      if(rows&&rows.length){
+        workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
+      }else{
+        clearSession();showPage('authPage');
+      }
+    }).catch(function(){
+      clearSession();showPage('authPage');
+    });
+  }else{
+    showPage('authPage');
+  }
 });
 document.getElementById('tabLogin').addEventListener('click',function(){this.classList.add('on');document.getElementById('tabSignup').classList.remove('on');document.getElementById('loginForm').style.display='flex';document.getElementById('signupForm').style.display='none';});
 document.getElementById('tabSignup').addEventListener('click',function(){this.classList.add('on');document.getElementById('tabLogin').classList.remove('on');document.getElementById('signupForm').style.display='flex';document.getElementById('loginForm').style.display='none';});
