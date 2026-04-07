@@ -522,22 +522,36 @@ function saveWorkspaceSettings(){
 }
 function startCleanerFlow(){
   showPage('cleanerPage');
-  // Fetch workspace using anon key — requires "cleaner_read" policy (select using true) on workspaces
-  fetch(SB_URL+'/rest/v1/workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}
-  }).then(function(r){return r.json();}).then(function(rows){
-    if(!Array.isArray(rows)||!rows.length){
-      document.getElementById('clPinBox').innerHTML='<h2 style="color:var(--red)">Invalid link</h2><p style="color:var(--muted);margin-top:8px;font-size:13px;font-weight:600">This link is not valid. Please ask your host for a new one.</p>';
+  var pinBox=document.getElementById('clPinBox');
+  var statusEl=document.createElement('p');
+  statusEl.style.cssText='font-size:12px;color:#64748b;font-weight:700;margin-top:8px';
+  statusEl.textContent='Connecting...';
+  pinBox.appendChild(statusEl);
+
+  var url=SB_URL+'/rest/v1/workspaces?select=id,cleaner_pin,settings&cleaner_token=eq.'+cleanerToken;
+  fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+  .then(function(r){
+    if(!r.ok){statusEl.textContent='Server error: '+r.status;return null;}
+    return r.json();
+  })
+  .then(function(rows){
+    if(!rows)return;
+    if(!Array.isArray(rows)||rows.length===0){
+      statusEl.style.color='#ef4444';
+      statusEl.textContent='Link not found. Check the SQL policies in Supabase.';
       return;
     }
     cleanerWorkspace=rows[0];
     var s=cleanerWorkspace.settings||{};
     if(s.apts&&s.apts.length)apts=s.apts;
-    // Show PIN hint with workspace loaded
-    document.getElementById('clPinHint') && (document.getElementById('clPinHint').textContent='Enter the PIN provided by your host');
-  }).catch(function(e){
-    document.getElementById('clPinBox').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error. Please try again.</p>';
+    statusEl.textContent='Ready. Enter your PIN.';
+    statusEl.style.color='#22c55e';
+  })
+  .catch(function(e){
+    statusEl.style.color='#ef4444';
+    statusEl.textContent='Connection failed: '+e.message;
   });
+
   document.querySelectorAll('.cl-pk').forEach(function(k){
     k.addEventListener('click',function(){
       var n=this.getAttribute('data-n');
@@ -547,28 +561,55 @@ function startCleanerFlow(){
       clPinBuf+=n;updClDots();
       if(clPinBuf.length===4){
         setTimeout(function(){
-          if(cleanerWorkspace&&clPinBuf===(cleanerWorkspace.cleaner_pin||'0000')){
+          if(!cleanerWorkspace){
+            document.getElementById('clPinErr').textContent='Still loading workspace, try again';
+            clPinBuf='';updClDots();return;
+          }
+          var correctPin=cleanerWorkspace.cleaner_pin||'0000';
+          if(clPinBuf===correctPin){
             document.getElementById('clPinBox').style.display='none';
             document.getElementById('clContent').classList.add('show');
-            // Load apts from workspace settings before loading bookings
-            var ws_s=cleanerWorkspace.settings||{};
-            if(ws_s.apts&&ws_s.apts.length)apts=ws_s.apts;
+            var s=cleanerWorkspace.settings||{};
+            if(s.apts&&s.apts.length)apts=s.apts;
             loadCleanerBookings();
-          }else{document.getElementById('clPinErr').textContent='Wrong PIN';clPinBuf='';updClDots();}
+          }else{
+            document.getElementById('clPinErr').textContent='Wrong PIN (expected '+correctPin.length+' digits)';
+            clPinBuf='';updClDots();
+          }
         },200);
       }
     });
   });
 }
+
 function updClDots(){for(var i=0;i<4;i++)document.getElementById('cp'+i).className='cl-pd'+(i<clPinBuf.length?' on':'');}
 function loadCleanerBookings(){
-  if(!cleanerWorkspace)return;
-  fetch(SB_URL+'/rest/v1/bookings?select=*&workspace_id=eq.'+cleanerWorkspace.id+'&order=checkout.asc',{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
-  }).then(function(r){return r.json();}).then(function(data){
-    if(!Array.isArray(data)){document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error loading bookings. Please check Supabase RLS policies.</p>';return;}
-    bks=data.map(r2l);renderCleanerView();
-  }).catch(function(){document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Connection error.</p>';});
+  if(!cleanerWorkspace){
+    document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">No workspace loaded.</p>';
+    return;
+  }
+  document.getElementById('clList').innerHTML='<p style="color:#64748b;padding:16px;font-weight:700">Loading bookings...</p>';
+  var url=SB_URL+'/rest/v1/bookings?select=*&workspace_id=eq.'+cleanerWorkspace.id+'&order=checkout.asc';
+  fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+  .then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
+    return r.json();
+  })
+  .then(function(data){
+    if(!Array.isArray(data)){
+      document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error: '+JSON.stringify(data)+'</p>';
+      return;
+    }
+    if(data.length===0){
+      document.getElementById('clList').innerHTML='<p style="color:#64748b;padding:16px;font-weight:700">No bookings found for this workspace.</p>';
+      return;
+    }
+    bks=data.map(r2l);
+    renderCleanerView();
+  })
+  .catch(function(e){
+    document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error: '+e.message+'</p>';
+  });
 }
 function renderCleanerView(){
   var tod=today(),container=document.getElementById('clList');container.innerHTML='';
@@ -775,7 +816,26 @@ document.getElementById('copyLinkBtn').addEventListener('click',function(){
 document.getElementById('saveCleanerPinBtn').addEventListener('click',function(){
   var pin=document.getElementById('cleanerPinInput').value.trim();
   if(!/^\d{4}$/.test(pin)){toast('PIN must be 4 digits','err');return;}
-  sbF('PATCH','workspaces?id=eq.'+workspace.id,{cleaner_pin:pin}).then(function(){workspace.cleaner_pin=pin;toast('Cleaner PIN saved','ok');}).catch(function(e){toast('Error: '+e.message,'err');});
+  if(!workspace){toast('No workspace','err');return;}
+  // Save directly via fetch with session token
+  fetch(SB_URL+'/rest/v1/workspaces?id=eq.'+workspace.id,{
+    method:'PATCH',
+    headers:{
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+(session?session.access_token:SB_KEY),
+      'Content-Type':'application/json',
+      'Prefer':'return=representation'
+    },
+    body:JSON.stringify({cleaner_pin:pin})
+  }).then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error(t);});
+    return r.json();
+  }).then(function(rows){
+    workspace.cleaner_pin=pin;
+    toast('PIN saved: '+pin,'ok');
+  }).catch(function(e){
+    toast('Error saving PIN: '+e.message,'err');
+  });
 });
 var editApts=[];
 function openApts(){editApts=JSON.parse(JSON.stringify(apts));renderAptList();document.getElementById('aptsOverlay').classList.add('show');}
