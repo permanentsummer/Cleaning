@@ -468,6 +468,8 @@ window.addEventListener('load',function(){
   session=stored;
 
   function startWithSession(){
+    // Reset state before loading new session
+    workspace=null;bks=[];apts=DEFAULT_APTS.slice();cfg={};
     sbF('GET','workspaces?select=*&limit=1').then(function(rows){
       if(rows&&rows.length){
         workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
@@ -533,6 +535,8 @@ document.getElementById('signupBtn').addEventListener('click',function(){
   }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Create account';});
 });
 function loadUserWorkspace(){
+  // Reset state before loading workspace for new user
+  workspace=null;bks=[];apts=DEFAULT_APTS.slice();cfg={};
   sbF('GET','workspaces?select=*&limit=1').then(function(rows){
     if(rows&&rows.length){workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();}
     else{
@@ -546,9 +550,20 @@ function loadUserWorkspace(){
 }
 document.getElementById('signOutBtn').addEventListener('click',function(){
   if(!confirm('Sign out?'))return;
-  sbAuth('logout',{}).catch(function(){});
-  clearSession();bks=[];apts=DEFAULT_APTS.slice();cfg={};isAdmin=false;
-  closeModal('cfgOverlay');showPage('authPage');
+  // Properly invalidate session on Supabase server
+  var tok=session?session.access_token:null;
+  if(tok){
+    fetch(SB_URL+'/auth/v1/logout',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'}
+    }).catch(function(){});
+  }
+  // Clear everything locally
+  localStorage.removeItem('sb_session');
+  session=null;workspace=null;bks=[];
+  apts=DEFAULT_APTS.slice();cfg={};isAdmin=false;
+  closeModal('cfgOverlay');
+  showPage('authPage');
 });
 function loadWorkspaceData(){
   if(!workspace)return;
