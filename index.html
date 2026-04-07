@@ -274,7 +274,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
     <div class="hr">
       <button class="langBtn" id="langBtn">EN</button>
       <button class="hbtn" id="syncBtn">&#x1F504;</button>
-      <button class="hbtn" id="pinBtn">&#x2699;&#xFE0F;</button>
+      <button class="hbtn" id="pinBtn" title="Settings">&#x2699;&#xFE0F;</button>
     </div>
   </header>
   <div id="adminBar">
@@ -694,7 +694,15 @@ function mkClCard(b){
   return el;
 }
 document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();renderCleanerView();});
-function initApp(){applyLangUI();buildAptFilters();populateAptSelects();sbLoad();}
+function initApp(){
+  // Logged-in user is always admin — no PIN needed for their own account
+  isAdmin=true;
+  updateAdminUI();
+  applyLangUI();
+  buildAptFilters();
+  populateAptSelects();
+  sbLoad();
+}
 function enterBulkMode(){bulkMode=true;selectedIds={};document.getElementById('bulkBar').classList.add('show');render();}
 function exitBulkMode(){bulkMode=false;selectedIds={};document.getElementById('bulkBar').classList.remove('show');render();}
 function updateBulkBar(){var n=Object.keys(selectedIds).length;document.getElementById('bulkCount').textContent=n+' selected';}
@@ -947,10 +955,19 @@ document.getElementById('vList').addEventListener('click',function(){viewMode='l
 document.getElementById('vCal').addEventListener('click',function(){viewMode='calendar';this.classList.add('on');document.getElementById('vList').classList.remove('on');document.getElementById('list').style.display='none';document.getElementById('calView').style.display='block';renderCal();});
 document.getElementById('calPrev').addEventListener('click',function(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCal();});
 document.getElementById('calNext').addEventListener('click',function(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCal();});
-document.getElementById('pinBtn').addEventListener('click',function(){if(isAdmin){isAdmin=false;updateAdminUI();return;}pinBuf='';updDots();document.getElementById('pinErr').textContent='';document.getElementById('pinOverlay').classList.add('show');});
+document.getElementById('pinBtn').addEventListener('click',function(){
+  // Logged-in user is always admin - gear opens settings directly
+  openCfg();
+});
 document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='Wrong PIN';pinBuf='';updDots();}},200);}});});
 function updDots(){for(var i=0;i<4;i++)document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');}
-function updateAdminUI(){document.getElementById('adminBar').className=isAdmin?'show':'';document.getElementById('fabAdd').className=isAdmin?'show':'';document.getElementById('hSub').textContent=isAdmin?'Administrator':'Permanent Summer';document.getElementById('pinBtn').textContent=isAdmin?'🔓':'⚙️';document.getElementById('srcRow').className=isAdmin?'show':'';render();if(viewMode==='calendar')renderCal();}
+function updateAdminUI(){
+  document.getElementById('adminBar').className='show';
+  document.getElementById('fabAdd').className='show';
+  document.getElementById('hSub').textContent=session&&session.user?session.user.email:'SummerClean';
+  document.getElementById('srcRow').className='show';
+  render();if(viewMode==='calendar')renderCal();
+}
 document.getElementById('fabAdd').addEventListener('click',openAdd);
 document.getElementById('syncBtn').addEventListener('click',function(){
   var btn=this;btn.classList.add('spin');
