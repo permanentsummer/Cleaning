@@ -448,21 +448,14 @@ function sbUpsert(arr){
   if(!rows.length)return Promise.resolve([]);
   // Try RPC first, fall back to direct upsert
   var tok=session.access_token;
+  // Send as proper JSON array (not stringified) — function expects jsonb
   return fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
-    body:JSON.stringify({bookings_data:JSON.stringify(rows)})
+    body:JSON.stringify({bookings_data:rows})
   }).then(function(r){
     if(r.ok||r.status===204)return [];
-    // RPC failed - try direct POST
-    return fetch(SB_URL+'/rest/v1/bookings',{
-      method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify(rows)
-    }).then(function(r2){
-      if(!r2.ok)return r2.text().then(function(t){throw new Error(t);});
-      return [];
-    });
+    return r.text().then(function(t){throw new Error('RPC failed: '+t);});
   });
 }
 function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
