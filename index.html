@@ -446,16 +446,24 @@ function sbUpsert(arr){
   if(!session||!session.access_token)return Promise.reject(new Error('Not authenticated'));
   var rows=arr.map(l2r).filter(function(r){return r.workspace_id;});
   if(!rows.length)return Promise.resolve([]);
-  // Try RPC first, fall back to direct upsert
   var tok=session.access_token;
-  // Send as proper JSON array (not stringified) — function expects jsonb
-  return fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
+  // Direct upsert with user's JWT token
+  return fetch(SB_URL+'/rest/v1/bookings',{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
-    body:JSON.stringify({bookings_data:rows})
+    headers:{
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+tok,
+      'Content-Type':'application/json',
+      'Prefer':'resolution=merge-duplicates'
+    },
+    body:JSON.stringify(rows)
   }).then(function(r){
-    if(r.ok||r.status===204)return [];
-    return r.text().then(function(t){throw new Error('RPC failed: '+t);});
+    if(r.ok||r.status===201||r.status===204)return [];
+    return r.text().then(function(t){
+      // Log full error for debugging
+      console.error('Insert failed:',r.status,t);
+      throw new Error('Save failed ('+r.status+'): '+t);
+    });
   });
 }
 function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
