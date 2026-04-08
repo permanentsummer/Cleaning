@@ -487,7 +487,9 @@ window.addEventListener('load',function(){
   function startWithSession(){
     // Reset state before loading new session
     workspace=null;bks=[];apts=DEFAULT_APTS.slice();cfg={};
-    sbF('GET','workspaces?select=*&limit=1').then(function(rows){
+    // Filter by current user's ID — never load another user's workspace
+    var uid=stored.user.id;
+    sbF('GET','workspaces?select=*&user_id=eq.'+uid+'&limit=1').then(function(rows){
       if(rows&&rows.length){
         workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();
       }else{
@@ -554,7 +556,9 @@ document.getElementById('signupBtn').addEventListener('click',function(){
 function loadUserWorkspace(){
   // Reset state before loading workspace for new user
   workspace=null;bks=[];apts=DEFAULT_APTS.slice();cfg={};
-  sbF('GET','workspaces?select=*&limit=1').then(function(rows){
+  // Filter by current user's ID to get THEIR workspace
+  var uid=session.user.id;
+  sbF('GET','workspaces?select=*&user_id=eq.'+uid+'&limit=1').then(function(rows){
     if(rows&&rows.length){workspace=rows[0];loadWorkspaceData();showPage('appPage');initApp();}
     else{
       sbF('POST','workspaces',{user_id:session.user.id}).then(function(ws){
