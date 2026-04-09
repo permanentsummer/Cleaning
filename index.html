@@ -273,8 +273,8 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
     <div class="hl"><div class="hi">&#x1F9F9;</div><div class="ht"><h1>SummerClean</h1><p id="hSub">Permanent Summer</p></div></div>
     <div class="hr">
       <button class="langBtn" id="langBtn">EN</button>
-      <button class="hbtn" id="syncBtn" title="Sync">&#x1F504;</button>
-      <button class="hbtn" id="logoutBtn" title="Sign out" style="font-size:13px;font-weight:900">OUT</button>
+      
+      <button class="hbtn" id="logoutBtn" title="Sign out">&#x1F6AA;</button>
       <button class="hbtn" id="pinBtn" title="Settings">&#x2699;&#xFE0F;</button>
     </div>
   </header>
@@ -284,7 +284,6 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
       <button class="abarbtn" onclick="openImport()">&#x1F4E5; Import</button>
       <button class="abarbtn" onclick="openApts()">&#x1F3E0; Apts</button>
       <button class="abarbtn" onclick="openShare()">&#x1F517; Share</button>
-      <button class="abarbtn" onclick="openCfg()">&#x2699;&#xFE0F; Settings</button>
     </div>
   </div>
   <div id="syncStatus"></div>
@@ -346,6 +345,9 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
       <div id="importStatus"></div>
       <button class="btn1" id="doImportBtn">&#x1F4E5; Import Now</button>
       <button class="btn2" onclick="closeModal('importOverlay')">Cancel</button>
+      <div style="margin-top:20px;padding-top:16px;border-top:2px solid var(--border)">
+        <button class="btn2" style="color:var(--red);border-color:#fecaca" id="clearAllBtn">&#x1F5D1;&#xFE0F; Clear all bookings</button>
+      </div>
     </div>
   </div>
   <div class="overlay" id="shareOverlay">
@@ -368,23 +370,17 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
   </div>
   <div class="overlay" id="cfgOverlay">
     <div class="modal"><div class="mhandle"></div><h2>&#x2699;&#xFE0F; Settings</h2>
-      <div class="sep">&#x1F4AC; WhatsApp &mdash; Cleaner</div>
-      <div class="fr"><div class="fg"><label>Number (351...)</label><input type="text" id="cWaN" placeholder="351912345678"></div><div class="fg"><label>CallMeBot Key</label><input type="text" id="cWaK" placeholder="123456"></div></div>
-      <div class="sep">&#x1F464; WhatsApp &mdash; Admin</div>
-      <div class="fr"><div class="fg"><label>Number (351...)</label><input type="text" id="cAdmN"></div><div class="fg"><label>CallMeBot Key</label><input type="text" id="cAdmK"></div></div>
       <div class="sep">&#x1F510; Cleaner Permissions</div>
-      <div class="prow"><span>Toggle payment</span><label class="toggle"><input type="checkbox" id="pPay" checked><span class="ttrack"></span></label></div>
+      <div class="prow"><span>Allow cleaner to mark cleaned</span><label class="toggle"><input type="checkbox" id="pCleaned" checked><span class="ttrack"></span></label></div>
       <div class="prow"><span>View notes</span><label class="toggle"><input type="checkbox" id="pNotes" checked><span class="ttrack"></span></label></div>
       <div class="sep">&#x1F511; Admin PIN</div>
       <div class="fg"><label>New PIN (4 digits)</label><input type="text" id="newPin" placeholder="Leave blank to keep current" maxlength="4" inputmode="numeric"></div>
       <button class="btn1" id="saveCfgBtn">&#x1F4BE; Save Settings</button>
       <button class="btn2" onclick="closeModal('cfgOverlay')">Cancel</button>
-      <div class="sep" style="margin-top:16px;border-color:#fecaca;color:var(--red)">&#x26A0;&#xFE0F; Danger Zone</div>
-      <button class="btn2" style="color:var(--red);border-color:#fecaca" id="clearAllBtn">&#x1F5D1;&#xFE0F; Clear all bookings</button>
-      <button class="btn2" style="color:var(--red);border-color:#fecaca;margin-top:6px" id="signOutBtn">&#x1F6AA; Sign out</button>
+      <button class="btn2" style="color:var(--red);border-color:#fecaca;margin-top:16px" id="signOutBtn">&#x1F6AA; Sign out</button>
     </div>
   </div>
-</div>
+  </div>
 <script>
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
@@ -712,7 +708,7 @@ function mkClCard(b){
     '<div class="cl-ctop"><div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+(isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+'</div>'+
     '<div class="cl-dates"><div class="cl-db"><span class="cl-dlbl">'+T('checkin')+'</span><span class="cl-dval">'+fmtD(b.checkin)+'</span><span class="cl-dday">'+fmtWd(b.checkin)+'</span></div><div class="cl-darr">></div><div class="cl-db r"><span class="cl-dlbl">'+T('checkout')+'</span><span class="cl-dval">'+fmtD(b.checkout)+'</span><span class="cl-dday">'+fmtWd(b.checkout)+'</span></div></div>'+
     (info?'<div class="cl-info">'+info+'</div>':'')+
-    (isActive?'<div class="cl-foot"><button class="cl-cbtn '+(isCleaned?'cleaned':'uncleaned')+'" data-id="'+b.id+'">'+(isCleaned?T('cleaned'):T('notCleaned'))+'</button></div>':'');
+    (isActive&&cleanerWorkspace&&(cleanerWorkspace.settings||{}).pCleaned!==false?'<div class="cl-foot"><button class="cl-cbtn '+(isCleaned?'cleaned':'uncleaned')+'" data-id="'+b.id+'">'+(isCleaned?T('cleaned'):T('notCleaned'))+'</button></div>':'');
   if(isActive){
     var btn=el.querySelector('.cl-cbtn');
     if(btn)btn.addEventListener('click',function(){
@@ -938,9 +934,9 @@ document.getElementById('saveAptsBtn').addEventListener('click',function(){
   saveWorkspaceSettings().then(function(){toast('Apartments saved','ok');}).catch(function(){toast('Save error','err');});
   populateAptSelects();buildAptFilters();render();if(viewMode==='calendar')renderCal();closeModal('aptsOverlay');
 });
-function openCfg(){document.getElementById('cWaN').value=cfg.waN||'';document.getElementById('cWaK').value=cfg.waK||'';document.getElementById('cAdmN').value=cfg.admN||'';document.getElementById('cAdmK').value=cfg.admK||'';document.getElementById('pPay').checked=cfg.pPay!==false;document.getElementById('pNotes').checked=cfg.pNotes!==false;document.getElementById('newPin').value='';document.getElementById('cfgOverlay').classList.add('show');}
+function openCfg(){document.getElementById('pCleaned').checked=cfg.pCleaned!==false;document.getElementById('pNotes').checked=cfg.pNotes!==false;document.getElementById('newPin').value='';document.getElementById('cfgOverlay').classList.add('show');}
 document.getElementById('saveCfgBtn').addEventListener('click',function(){
-  cfg.waN=document.getElementById('cWaN').value.trim();cfg.waK=document.getElementById('cWaK').value.trim();cfg.admN=document.getElementById('cAdmN').value.trim();cfg.admK=document.getElementById('cAdmK').value.trim();cfg.pPay=document.getElementById('pPay').checked;cfg.pNotes=document.getElementById('pNotes').checked;
+  cfg.pCleaned=document.getElementById('pCleaned').checked;cfg.pNotes=document.getElementById('pNotes').checked;
   var np=document.getElementById('newPin').value.trim();if(np){if(/^\d{4}$/.test(np)){cfg.pin=np;PIN=np;}else{alert('PIN must be 4 digits.');return;}}
   saveWorkspaceSettings().then(function(){toast('Settings saved','ok');}).catch(function(e){toast('Error: '+e.message,'err');});closeModal('cfgOverlay');
 });
@@ -1019,17 +1015,7 @@ document.getElementById('logoutBtn').addEventListener('click',function(){
   showPage('authPage');
 });
 document.getElementById('fabAdd').addEventListener('click',openAdd);
-document.getElementById('syncBtn').addEventListener('click',function(){
-  var btn=this;btn.classList.add('spin');
-  if(!workspace){btn.classList.remove('spin');return;}
-  sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkout.asc').then(function(data){
-    var cloudBks=data.map(r2l);
-    var cloudIds=new Set(cloudBks.map(function(b){return b.id;}));
-    var localOnly=bks.filter(function(b){return!cloudIds.has(b.id);});
-    bks=cloudBks.concat(localOnly);
-    setSS(bks.length+' '+T('loaded'));render();btn.classList.remove('spin');
-  }).catch(function(e){setSS('Error: '+e.message);btn.classList.remove('spin');});
-});
+
 document.getElementById('fabWA').href='https://wa.me/'+(cfg.admN||'351924477353');
 </script>
 </body>
