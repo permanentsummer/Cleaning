@@ -156,12 +156,12 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .cmlbl{font-size:15px;font-weight:900}
 .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;border:2px solid var(--border)}
 .cdh{background:#0f172a;color:#fff;text-align:center;font-size:9px;font-weight:800;padding:6px 2px;text-transform:uppercase}
-.cday{background:#fff;min-height:58px;padding:4px 3px;cursor:default}
+.cday{background:#fff;min-height:74px;padding:5px 4px;cursor:default}
 .cday.om{background:#f8fafc}.cday.nt{background:#fffbeb}
 .cday.hasbk{cursor:pointer}.cday.hasbk:active{background:#f0f4ff}
-.cnum{font-size:11px;font-weight:800;color:var(--text);display:block;margin-bottom:2px}
+.cnum{font-size:12px;font-weight:900;color:var(--text);display:block;margin-bottom:3px}
 .cday.om .cnum{color:#cbd5e1}.cday.nt .cnum{color:var(--yellow);font-weight:900}
-.cbar{border-radius:4px;padding:2px 4px;font-size:8px;font-weight:800;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.cbar{border-radius:5px;padding:3px 5px;font-size:9px;font-weight:800;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
 .clgd{display:flex;flex-wrap:wrap;gap:8px;padding:8px 2px 0;font-size:11px;font-weight:700;color:var(--muted)}
 .ldot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:3px;vertical-align:middle}
 #calPopup{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
@@ -253,7 +253,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
   </div>
   <div id="clPinBox">
     <h2>&#x1F510; Cleaner Access</h2>
-    <p>Enter the PIN provided by your host</p>
+    <p id='clPinHint'>Enter the PIN provided by your host</p>
     <div class="cl-pindots"><div class="cl-pd" id="cp0"></div><div class="cl-pd" id="cp1"></div><div class="cl-pd" id="cp2"></div><div class="cl-pd" id="cp3"></div></div>
     <div class="cl-pkpad">
       <button class="cl-pk" data-n="1">1</button><button class="cl-pk" data-n="2">2</button><button class="cl-pk" data-n="3">3</button>
@@ -281,9 +281,9 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
   <div id="adminBar">
     <span>&#x1F510; Admin</span>
     <div class="abtns">
-      <button class="abarbtn" onclick="openImport()">&#x1F4E5; Import</button>
-      <button class="abarbtn" onclick="openApts()">&#x1F3E0; Apts</button>
-      <button class="abarbtn" onclick="openShare()">&#x1F517; Share</button>
+      <button class="abarbtn" onclick="openImport()">&#x1F4E5; <span class='abl' data-k='import_'></span></button>
+      <button class="abarbtn" onclick="openApts()">&#x1F3E0; <span class='abl' data-k='apts_'></span></button>
+      <button class="abarbtn" onclick="openShare()">&#x1F517; <span class='abl' data-k='share_'></span></button>
     </div>
   </div>
   <div id="syncStatus"></div>
@@ -396,13 +396,13 @@ var cleanerToken=null,cleanerWorkspace=null,clPinBuf='';
 var S={
   en:{syncing:'Syncing...',loaded:'bookings loaded',upcoming:'Upcoming & Today',previous:'Previous',checkin:'Check-in',checkout:'Check-out',paid:'Paid',unpaid:'Unpaid',today:'Today',allSrc:'All sources',uncleanedToday:'unit(s) need cleaning today:',allUnpaid:'Unpaid',list:'List',calendar:'Calendar',cleaned:'Cleaned',notCleaned:'Mark as cleaned',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings?',empty:'All clean!',emptySub:'No bookings in this filter.',
     months:['January','February','March','April','May','June','July','August','September','October','November','December'],
-    wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']},
+    wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],todayActive:'Today & Active',comingUp:'Coming up',allCleaned:'All cleaned today!',inOut:'In & Out',staying:'Staying',guests:'Guests',dirty:'Dirty',edit:'Edit',del:'Del',noCleanings:'No upcoming cleanings',import_:'Import',apts_:'Apts',share_:'Share',signOut:'Sign out',saveSettings:'Save Settings',enterPin:'Enter the PIN provided by your host',wrongPin:'Wrong PIN'},
   fr:{syncing:'Chargement...',loaded:'reservations chargees',upcoming:'A venir & Aujourd\'hui',previous:'Precedentes',checkin:'Arrivee',checkout:'Depart',paid:'Paye',unpaid:'Impaye',today:'Aujourd\'hui',allSrc:'Toutes sources',uncleanedToday:'unite(s) a nettoyer aujourd\'hui :',allUnpaid:'Impaye',list:'Liste',calendar:'Calendrier',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',deleteQ:'Supprimer ?',clearQ:'Supprimer TOUTES les reservations ?',empty:'Tout propre !',emptySub:'Aucune reservation.',
     months:['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'],
-    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi']},
+    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],todayActive:"Aujourd'hui & Actif",comingUp:'A venir',allCleaned:'Tout nettoye !',inOut:'Arrivee & Depart',staying:'Sejour',guests:'Voyageurs',dirty:'Sale',edit:'Modifier',del:'Suppr.',noCleanings:'Aucun menage a venir',import_:'Importer',apts_:'Apparts',share_:'Partager',signOut:'Deconnexion',saveSettings:'Enregistrer',enterPin:'Entrez le code fourni par votre hote',wrongPin:'Code incorrect'},
   pt:{syncing:'A sincronizar...',loaded:'reservas carregadas',upcoming:'Proximas & Hoje',previous:'Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'Pago',unpaid:'Por pagar',today:'Hoje',allSrc:'Todas as fontes',uncleanedToday:'unidade(s) por limpar hoje:',allUnpaid:'Por pagar',list:'Lista',calendar:'Calendario',cleaned:'Limpo',notCleaned:'Marcar como limpo',deleteQ:'Eliminar?',clearQ:'Eliminar TODAS as reservas?',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',
     months:['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado']}
+    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'],todayActive:'Hoje & Ativo',comingUp:'Proximas',allCleaned:'Tudo limpo hoje!',inOut:'Entrada & Saida',staying:'Estadia',guests:'Hospedes',dirty:'Sujo',edit:'Editar',del:'Apagar',noCleanings:'Sem limpezas previstas',import_:'Importar',apts_:'Aptos',share_:'Partilhar',signOut:'Sair',saveSettings:'Guardar',enterPin:'Introduza o PIN do seu anfitriao',wrongPin:'PIN errado'}
 };
 function T(k){return(S[LANG]||S.en)[k]||k;}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
@@ -702,15 +702,15 @@ function renderCleanerView(){
   var uncleaned=todBks.filter(function(b){return b.cleaned!=='yes';});
   var banner=document.getElementById('clBanner');
   if(uncleaned.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';document.getElementById('clBannerCount').textContent=uncleaned.length+' '+T('uncleanedToday');document.getElementById('clBannerApts').textContent=uncleaned.map(function(b){return aptById(b.apt).short;}).join(' - ');}
-  else if(todBks.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';document.getElementById('clBannerCount').textContent='All cleaned today!';document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');}
+  else if(todBks.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';document.getElementById('clBannerCount').textContent=T('allCleaned');document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');}
   else banner.classList.remove('show');
   // Show all bookings from today onwards
   // Show if not cleaned yet OR if future booking; hide once cleaned and past
   var visible=bks.filter(function(b){return!(b.cleaned==='yes'&&b.checkout<tod);});
-  if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>No upcoming cleanings.</p></div>';return;}
+  if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>'+T('noCleanings')+'</p></div>';return;}
   var active=visible.filter(function(b){return b.checkin<=tod;}),upcoming=visible.filter(function(b){return b.checkin>tod;});
-  if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent='Today & Active';container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
-  if(upcoming.length){var l2=document.createElement('div');l2.className='cl-section';l2.textContent='Coming up';container.appendChild(l2);upcoming.forEach(function(b){container.appendChild(mkClCard(b));});}
+  if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent=T('todayActive');container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
+  if(upcoming.length){var l2=document.createElement('div');l2.className='cl-section';l2.textContent=T('comingUp');container.appendChild(l2);upcoming.forEach(function(b){container.appendChild(mkClCard(b));});}
 }
 function mkClCard(b){
   var tod=today(),isT=b.checkout===tod,apt=aptById(b.apt),el=document.createElement('div');
@@ -718,7 +718,7 @@ function mkClCard(b){
   // Active = checkout is today or past — apartment needs cleaning
   var isActive=b.checkout<=tod,isCleaned=b.cleaned==='yes';
   var canNotesCl=cfg.pNotes!==false;var canClean=cfg.pCleaned!==false;
-  var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes&&canNotesCl)info+='<span class="cl-chip note">'+b.notes+'</span>';
+  var info='';if(b.guests)info+='<span class="cl-chip">'+T('guests')+': '+b.guests+'</span>';if(b.notes&&canNotesCl)info+='<span class="cl-chip note">'+b.notes+'</span>';
   el.innerHTML=
     '<div class="cl-ctop"><div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+(isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+'</div>'+
     '<div class="cl-dates"><div class="cl-db"><span class="cl-dlbl">'+T('checkin')+'</span><span class="cl-dval">'+fmtD(b.checkin)+'</span><span class="cl-dday">'+fmtWd(b.checkin)+'</span></div><div class="cl-darr">></div><div class="cl-db r"><span class="cl-dlbl">'+T('checkout')+'</span><span class="cl-dval">'+fmtD(b.checkout)+'</span><span class="cl-dday">'+fmtWd(b.checkout)+'</span></div></div>'+
@@ -740,7 +740,7 @@ function mkClCard(b){
   }
   return el;
 }
-document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();renderCleanerView();});
+document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();applyLangUI();renderCleanerView();});
 function initApp(){
   // Logged-in user is always admin — no PIN needed for their own account
   isAdmin=true;
@@ -768,7 +768,7 @@ function render(){
   if(todBks.length){
     tb.classList.add('show');
     if(unclBks.length){document.getElementById('tbCount').textContent=unclBks.length+' '+T('uncleanedToday');document.getElementById('tbApts').textContent=unclBks.map(function(b){return aptById(b.apt).short;}).join(' - ');tb.style.background='linear-gradient(135deg,#f59e0b,#ef4444)';}
-    else{document.getElementById('tbCount').textContent='All cleaned today!';document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');tb.style.background='linear-gradient(135deg,#22c55e,#16a34a)';}
+    else{document.getElementById('tbCount').textContent=T('allCleaned');document.getElementById('tbApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');tb.style.background='linear-gradient(135deg,#22c55e,#16a34a)';}
   }else tb.classList.remove('show');
   buildAptFilters();
   var list=sorted.filter(function(b){
@@ -803,16 +803,16 @@ function mkCard(b,isPast){
       footHtml=editDel;
     } else if(isCleaned){
       // Cleaned — show payment button + cleaned badge
-      var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?'Paid':'Unpaid';
-      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">Cleaned</span>'+editDel;
+      var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
+      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">'+T('cleaned')+'</span>'+editDel;
     } else {
       // Not cleaned — show Dirty badge only, no payment button
-      footHtml='<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">Dirty</span>'+editDel;
+      footHtml='<button class="pbtn uncleaned" style="max-width:90px">'+T('dirty')+'</button>'+editDel;
     }
   } else if(isActive){
     // Cleaner sees Cleaned/Not cleaned ONLY for active bookings (checkout <= today or currently staying)
     var cCls=isCleaned?'cleaned':'uncleaned';
-    var cLbl=isCleaned?'Cleaned':'Mark as cleaned';
+    var cLbl=isCleaned?T('cleaned'):T('notCleaned');
     footHtml='<button class="pbtn '+cCls+'" data-id="'+b.id+'">'+cLbl+'</button>';
   }
   // Future bookings (checkin > today): no footer button for cleaner
@@ -881,7 +881,7 @@ function renderCal(){
   for(var d=1;d<=dim;d++){
     var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),isT=ds===tod;
     var dayBks=bks.filter(function(b){if(!b.checkin||!b.checkout)return false;if(curFilter!=='all'&&curFilter!=='today'&&curFilter!=='unpaid'&&b.apt!==curFilter)return false;if(curSrc!=='all'&&b.source!==curSrc)return false;return b.checkin<=ds&&b.checkout>=ds;});
-    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var lbl=isIn&&isOut?'in+out '+sht:isIn?'in '+sht:isOut?'out '+sht:sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+lbl+'</span>';}).join('');
+    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var lbl=isIn&&isOut?T('inOut')+' '+sht:isIn?T('checkin')+' '+sht:isOut?T('checkout')+' '+sht:sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+lbl+'</span>';}).join('');
     cells+='<div class="cday'+(isT?' nt':'')+(dayBks.length?' hasbk':'')+'" data-ds="'+ds+'"><span class="cnum">'+d+'</span>'+bars+'</div>';
   }
   var rem=(first+dim)%7===0?0:7-(first+dim)%7;for(var r=1;r<=rem;r++)cells+='<div class="cday om"><span class="cnum">'+r+'</span></div>';
@@ -891,7 +891,7 @@ function renderCal(){
 function showCalPopup(ds,db){
   var d=new Date(ds+'T12:00:00');document.getElementById('cpDate').textContent=T('wdL')[d.getDay()]+', '+fmtD(ds)+' '+d.getFullYear();
   var cc=document.getElementById('cpCards');cc.innerHTML='';
-  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?'In+Out':isOut?T('checkout'):isIn?T('checkin'):'Staying';var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>Guests: <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>'+b.notes:'')+'</div>';cc.appendChild(div);});
+  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?T('inOut'):isOut?T('checkout'):isIn?T('checkin'):T('staying');var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>Guests: <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>'+b.notes:'')+'</div>';cc.appendChild(div);});
   document.getElementById('calPopup').classList.add('show');
 }
 document.getElementById('calPopup').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
@@ -1003,7 +1003,16 @@ function buildAptFilters(){
   mkFb('unpaid',T('allUnpaid')+' ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
 }
 function populateAptSelects(){['eApt','iApt'].forEach(function(sid){var sel=document.getElementById(sid);if(!sel)return;var cur=sel.value;sel.innerHTML='';apts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.short;sel.appendChild(o);});if(cur)sel.value=cur;});}
-function applyLangUI(){document.getElementById('langBtn').textContent=LANG.toUpperCase();document.getElementById('vList').textContent=T('list');document.getElementById('vCal').textContent=T('calendar');document.getElementById('srcAll').textContent=T('allSrc');}
+function applyLangUI(){
+  document.getElementById('langBtn').textContent=LANG.toUpperCase();
+  document.getElementById('vList').textContent=T('list');
+  document.getElementById('vCal').textContent=T('calendar');
+  document.getElementById('srcAll').textContent=T('allSrc');
+  document.querySelectorAll('.abl').forEach(function(el){el.textContent=T(el.getAttribute('data-k'));});
+  var so=document.getElementById('signOutBtn');if(so)so.innerHTML='<span style="color:var(--red)">'+T('signOut')+'</span>';
+  var sc=document.getElementById('saveCfgBtn');if(sc)sc.textContent=T('saveSettings');
+  var ph=document.getElementById('clPinHint');if(ph)ph.textContent=T('enterPin');
+}
 document.getElementById('langBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);applyLangUI();render();if(viewMode==='calendar')renderCal();});
 document.querySelectorAll('#srcRow .fb').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('#srcRow .fb').forEach(function(b){b.classList.remove('on');});this.classList.add('on');curSrc=this.getAttribute('data-src');render();if(viewMode==='calendar')renderCal();});});
 document.getElementById('vList').addEventListener('click',function(){viewMode='list';this.classList.add('on');document.getElementById('vCal').classList.remove('on');document.getElementById('list').style.display='flex';document.getElementById('calView').style.display='none';render();});
