@@ -399,10 +399,10 @@ var S={
     wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],todayActive:'Today & Active',comingUp:'Coming up',allCleaned:'All cleaned today!',inOut:'In+Out',staying:'Staying',guests:'Guests',dirty:'Dirty',edit:'Edit',del:'Del',noCleanings:'No upcoming cleanings',import_:'Import',apts_:'Apts',share_:'Share',signOut:'Sign out',saveSettings:'Save Settings',enterPin:'Enter the PIN provided by your host',wrongPin:T('wrongPin')},
   fr:{syncing:'Chargement...',loaded:'reservations chargees',upcoming:'A venir & Aujourd\'hui',previous:'Precedentes',checkin:'Arrivee',checkout:'Depart',paid:'Paye',unpaid:'Impaye',today:'Aujourd\'hui',allSrc:'Toutes sources',uncleanedToday:'unite(s) a nettoyer aujourd\'hui :',allUnpaid:'Impaye',list:'Liste',calendar:'Calendrier',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',deleteQ:'Supprimer ?',clearQ:'Supprimer TOUTES les reservations ?',empty:'Tout propre !',emptySub:'Aucune reservation.',
     months:['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'],
-    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],todayActive:"Aujourd'hui & Actif",comingUp:'A venir',allCleaned:'Tout nettoye !',inOut:'Arr+Dep',staying:'Sejour',guests:'Voyageurs',dirty:'Sale',edit:'Modifier',del:'Suppr.',noCleanings:'Aucun menage a venir',import_:'Importer',apts_:'Apparts',share_:'Partager',signOut:'Deconnexion',saveSettings:'Enregistrer',enterPin:'Entrez le code fourni par votre hote',wrongPin:'Code incorrect'},
+    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],todayActive:'Aujourd hui & Actif',comingUp:'A venir',allCleaned:'Tout nettoye !',inOut:'Arr+Dep',staying:'Sejour',guests:'Voyageurs',dirty:'Sale',edit:'Modifier',del:'Suppr.',noCleanings:'Aucun menage a venir',import_:'Importer',apts_:'Apparts',share_:'Partager',signOut:'Deconnexion',saveSettings:'Enregistrer',enterPin:'Entrez le code fourni par votre hote',wrongPin:'Code incorrect'},
   pt:{syncing:'A sincronizar...',loaded:'reservas carregadas',upcoming:'Proximas & Hoje',previous:'Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'Pago',unpaid:'Por pagar',today:'Hoje',allSrc:'Todas as fontes',uncleanedToday:'unidade(s) por limpar hoje:',allUnpaid:'Por pagar',list:'Lista',calendar:'Calendario',cleaned:'Limpo',notCleaned:'Marcar como limpo',deleteQ:'Eliminar?',clearQ:'Eliminar TODAS as reservas?',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',
     months:['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'],todayActive:'Hoje & Ativo',comingUp:'Proximas',allCleaned:'Tudo limpo hoje!',inOut:'Ent+Sai',staying:'Estadia',guests:'Hospedes',dirty:'Sujo',edit:'Editar',del:'Apagar',noCleanings:'Sem limpezas previstas',import_:'Importar',apts_:'Aptos',share_:'Partilhar',signOut:'Sair',saveSettings:'Guardar',enterPin:'Introduza o PIN do seu anfitriao',wrongPin:'PIN errado'}
+    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'],todayActive:'Hoje e Ativo',comingUp:'Proximas',allCleaned:'Tudo limpo hoje!',inOut:'Ent+Sai',staying:'Estadia',guests:'Hospedes',dirty:'Sujo',edit:'Editar',del:'Apagar',noCleanings:'Sem limpezas previstas',import_:'Importar',apts_:'Aptos',share_:'Partilhar',signOut:'Sair',saveSettings:'Guardar',enterPin:'Introduza o PIN do seu anfitriao',wrongPin:'PIN errado'}
 };
 function T(k){return(S[LANG]||S.en)[k]||k;}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
@@ -797,17 +797,13 @@ function mkCard(b,isPast){
   if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">'+b.guests+' guests</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
   var footHtml='';
   if(isAdmin){
-    // Edit/Del always on the RIGHT
     var editDel='<div class="adm show" style="margin-left:auto"><button class="ibtn e" data-id="'+b.id+'"><strong>'+T('edit')+'</strong></button><button class="ibtn d" data-id="'+b.id+'"><strong>'+T('del')+'</strong></button></div>';
     if(!isActive){
-      // Future booking — edit/del only
       footHtml=editDel;
     } else if(isCleaned){
-      // Cleaned — Paid/Unpaid button + Cleaned badge + Edit/Del
       var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
       footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px;flex-shrink:0">'+T('cleaned')+'</span>'+editDel;
     } else {
-      // Not cleaned — Dirty red button on LEFT + Edit/Del on RIGHT
       footHtml='<button class="pbtn uncleaned" style="max-width:90px;flex-shrink:0">'+T('dirty')+'</button>'+editDel;
     }
   } else if(isActive){
