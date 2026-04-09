@@ -90,7 +90,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 #adminBar.show{display:flex}
 #adminBar span{font-size:11px;font-weight:800;color:#92400e}
 #adminBar .abtns{display:flex;gap:4px;flex-wrap:wrap}
-.abarbtn{background:#0f172a;color:#fff;border:none;padding:5px 10px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer}
+.abarbtn{background:#0f172a;color:#fff;border:none;padding:5px 10px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer}.abarbtn span{color:#fff}
 #toast{position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:800;font-family:'Nunito',sans-serif;white-space:nowrap;display:none;box-shadow:0 4px 20px rgba(0,0,0,.2);max-width:92vw;text-align:center}
 #toast.ok{background:#dcfce7;color:#15803d}
 #toast.err{background:#fee2e2;color:#dc2626}
@@ -154,14 +154,14 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .cnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .cnbtn{width:34px;height:34px;border-radius:9px;border:2px solid var(--border);background:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cmlbl{font-size:15px;font-weight:900}
-.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden;border:2px solid var(--border)}
-.cdh{background:#0f172a;color:#fff;text-align:center;font-size:9px;font-weight:800;padding:6px 2px;text-transform:uppercase}
-.cday{background:#fff;min-height:74px;padding:5px 4px;cursor:default}
+.cgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--border);border-radius:14px;overflow:hidden;border:2px solid var(--border)}
+.cdh{background:#0f172a;color:#fff;text-align:center;font-size:9px;font-weight:800;padding:8px 2px;text-transform:uppercase}
+.cday{background:#fff;min-height:76px;padding:5px 4px;cursor:default;overflow:hidden}
 .cday.om{background:#f8fafc}.cday.nt{background:#fffbeb}
 .cday.hasbk{cursor:pointer}.cday.hasbk:active{background:#f0f4ff}
 .cnum{font-size:12px;font-weight:900;color:var(--text);display:block;margin-bottom:3px}
 .cday.om .cnum{color:#cbd5e1}.cday.nt .cnum{color:var(--yellow);font-weight:900}
-.cbar{border-radius:5px;padding:3px 5px;font-size:9px;font-weight:800;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.cbar{border-radius:4px;padding:2px 4px;font-size:9px;font-weight:800;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
 .clgd{display:flex;flex-wrap:wrap;gap:8px;padding:8px 2px 0;font-size:11px;font-weight:700;color:var(--muted)}
 .ldot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:3px;vertical-align:middle}
 #calPopup{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
@@ -253,7 +253,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
   </div>
   <div id="clPinBox">
     <h2>&#x1F510; Cleaner Access</h2>
-    <p id='clPinHint'>Enter the PIN provided by your host</p>
+    <p>Enter the PIN provided by your host</p>
     <div class="cl-pindots"><div class="cl-pd" id="cp0"></div><div class="cl-pd" id="cp1"></div><div class="cl-pd" id="cp2"></div><div class="cl-pd" id="cp3"></div></div>
     <div class="cl-pkpad">
       <button class="cl-pk" data-n="1">1</button><button class="cl-pk" data-n="2">2</button><button class="cl-pk" data-n="3">3</button>
@@ -396,13 +396,13 @@ var cleanerToken=null,cleanerWorkspace=null,clPinBuf='';
 var S={
   en:{syncing:'Syncing...',loaded:'bookings loaded',upcoming:'Upcoming & Today',previous:'Previous',checkin:'Check-in',checkout:'Check-out',paid:'Paid',unpaid:'Unpaid',today:'Today',allSrc:'All sources',uncleanedToday:'unit(s) need cleaning today:',allUnpaid:'Unpaid',list:'List',calendar:'Calendar',cleaned:'Cleaned',notCleaned:'Mark as cleaned',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings?',empty:'All clean!',emptySub:'No bookings in this filter.',
     months:['January','February','March','April','May','June','July','August','September','October','November','December'],
-    wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],todayActive:'Today & Active',comingUp:'Coming up',allCleaned:'All cleaned today!',inOut:'In & Out',staying:'Staying',guests:'Guests',dirty:'Dirty',edit:'Edit',del:'Del',noCleanings:'No upcoming cleanings',import_:'Import',apts_:'Apts',share_:'Share',signOut:'Sign out',saveSettings:'Save Settings',enterPin:'Enter the PIN provided by your host',wrongPin:'Wrong PIN'},
+    wdS:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],wdL:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],todayActive:'Today & Active',comingUp:'Coming up',allCleaned:'All cleaned today!',inOut:'In+Out',staying:'Staying',guests:'Guests',dirty:'Dirty',edit:'Edit',del:'Del',noCleanings:'No upcoming cleanings',import_:'Import',apts_:'Apts',share_:'Share',signOut:'Sign out',saveSettings:'Save Settings',enterPin:'Enter the PIN provided by your host',wrongPin:T('wrongPin')},
   fr:{syncing:'Chargement...',loaded:'reservations chargees',upcoming:'A venir & Aujourd\'hui',previous:'Precedentes',checkin:'Arrivee',checkout:'Depart',paid:'Paye',unpaid:'Impaye',today:'Aujourd\'hui',allSrc:'Toutes sources',uncleanedToday:'unite(s) a nettoyer aujourd\'hui :',allUnpaid:'Impaye',list:'Liste',calendar:'Calendrier',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',deleteQ:'Supprimer ?',clearQ:'Supprimer TOUTES les reservations ?',empty:'Tout propre !',emptySub:'Aucune reservation.',
     months:['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'],
-    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],todayActive:"Aujourd'hui & Actif",comingUp:'A venir',allCleaned:'Tout nettoye !',inOut:'Arrivee & Depart',staying:'Sejour',guests:'Voyageurs',dirty:'Sale',edit:'Modifier',del:'Suppr.',noCleanings:'Aucun menage a venir',import_:'Importer',apts_:'Apparts',share_:'Partager',signOut:'Deconnexion',saveSettings:'Enregistrer',enterPin:'Entrez le code fourni par votre hote',wrongPin:'Code incorrect'},
+    wdS:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],wdL:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],todayActive:"Aujourd'hui & Actif",comingUp:'A venir',allCleaned:'Tout nettoye !',inOut:'Arr+Dep',staying:'Sejour',guests:'Voyageurs',dirty:'Sale',edit:'Modifier',del:'Suppr.',noCleanings:'Aucun menage a venir',import_:'Importer',apts_:'Apparts',share_:'Partager',signOut:'Deconnexion',saveSettings:'Enregistrer',enterPin:'Entrez le code fourni par votre hote',wrongPin:'Code incorrect'},
   pt:{syncing:'A sincronizar...',loaded:'reservas carregadas',upcoming:'Proximas & Hoje',previous:'Anteriores',checkin:'Check-in',checkout:'Check-out',paid:'Pago',unpaid:'Por pagar',today:'Hoje',allSrc:'Todas as fontes',uncleanedToday:'unidade(s) por limpar hoje:',allUnpaid:'Por pagar',list:'Lista',calendar:'Calendario',cleaned:'Limpo',notCleaned:'Marcar como limpo',deleteQ:'Eliminar?',clearQ:'Eliminar TODAS as reservas?',empty:'Tudo limpo!',emptySub:'Sem reservas neste filtro.',
     months:['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],
-    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'],todayActive:'Hoje & Ativo',comingUp:'Proximas',allCleaned:'Tudo limpo hoje!',inOut:'Entrada & Saida',staying:'Estadia',guests:'Hospedes',dirty:'Sujo',edit:'Editar',del:'Apagar',noCleanings:'Sem limpezas previstas',import_:'Importar',apts_:'Aptos',share_:'Partilhar',signOut:'Sair',saveSettings:'Guardar',enterPin:'Introduza o PIN do seu anfitriao',wrongPin:'PIN errado'}
+    wdS:['Dom','Seg','Ter','Qua','Qui','Sex','Sab'],wdL:['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'],todayActive:'Hoje & Ativo',comingUp:'Proximas',allCleaned:'Tudo limpo hoje!',inOut:'Ent+Sai',staying:'Estadia',guests:'Hospedes',dirty:'Sujo',edit:'Editar',del:'Apagar',noCleanings:'Sem limpezas previstas',import_:'Importar',apts_:'Aptos',share_:'Partilhar',signOut:'Sair',saveSettings:'Guardar',enterPin:'Introduza o PIN do seu anfitriao',wrongPin:'PIN errado'}
 };
 function T(k){return(S[LANG]||S.en)[k]||k;}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
@@ -658,7 +658,7 @@ function startCleanerFlow(){
             cfg=s;
             loadCleanerBookings();
           }else{
-            document.getElementById('clPinErr').textContent='Wrong PIN (expected '+correctPin.length+' digits)';
+            document.getElementById('clPinErr').textContent=T('wrongPin');
             clPinBuf='';updClDots();
           }
         },200);
@@ -797,17 +797,18 @@ function mkCard(b,isPast){
   if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">'+b.guests+' guests</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
   var footHtml='';
   if(isAdmin){
-    var editDel='<div class="adm show"><button class="ibtn e" data-id="'+b.id+'"><strong>Edit</strong></button><button class="ibtn d" data-id="'+b.id+'"><strong>Del</strong></button></div>';
+    // Edit/Del always on the RIGHT
+    var editDel='<div class="adm show" style="margin-left:auto"><button class="ibtn e" data-id="'+b.id+'"><strong>'+T('edit')+'</strong></button><button class="ibtn d" data-id="'+b.id+'"><strong>'+T('del')+'</strong></button></div>';
     if(!isActive){
-      // Future booking — no payment status, just edit/del
+      // Future booking — edit/del only
       footHtml=editDel;
     } else if(isCleaned){
-      // Cleaned — show payment button + cleaned badge
+      // Cleaned — Paid/Unpaid button + Cleaned badge + Edit/Del
       var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
-      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">'+T('cleaned')+'</span>'+editDel;
+      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px;flex-shrink:0">'+T('cleaned')+'</span>'+editDel;
     } else {
-      // Not cleaned — show Dirty badge only, no payment button
-      footHtml='<button class="pbtn uncleaned" style="max-width:90px">'+T('dirty')+'</button>'+editDel;
+      // Not cleaned — Dirty red button on LEFT + Edit/Del on RIGHT
+      footHtml='<button class="pbtn uncleaned" style="max-width:90px;flex-shrink:0">'+T('dirty')+'</button>'+editDel;
     }
   } else if(isActive){
     // Cleaner sees Cleaned/Not cleaned ONLY for active bookings (checkout <= today or currently staying)
@@ -881,7 +882,7 @@ function renderCal(){
   for(var d=1;d<=dim;d++){
     var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),isT=ds===tod;
     var dayBks=bks.filter(function(b){if(!b.checkin||!b.checkout)return false;if(curFilter!=='all'&&curFilter!=='today'&&curFilter!=='unpaid'&&b.apt!==curFilter)return false;if(curSrc!=='all'&&b.source!==curSrc)return false;return b.checkin<=ds&&b.checkout>=ds;});
-    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var lbl=isIn&&isOut?T('inOut')+' '+sht:isIn?T('checkin')+' '+sht:isOut?T('checkout')+' '+sht:sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+lbl+'</span>';}).join('');
+    var bars=dayBks.map(function(b){var col=aptById(b.apt).color,sht=aptById(b.apt).short;var isIn=b.checkin===ds,isOut=b.checkout===ds;var lbl=isIn&&isOut?'⚠️ '+sht:isIn?'↓ '+sht:isOut?'↑ '+sht:sht;return'<span class="cbar" style="background:'+(isIn||isOut?col:col+'aa')+'">'+lbl+'</span>';}).join('');
     cells+='<div class="cday'+(isT?' nt':'')+(dayBks.length?' hasbk':'')+'" data-ds="'+ds+'"><span class="cnum">'+d+'</span>'+bars+'</div>';
   }
   var rem=(first+dim)%7===0?0:7-(first+dim)%7;for(var r=1;r<=rem;r++)cells+='<div class="cday om"><span class="cnum">'+r+'</span></div>';
@@ -891,7 +892,7 @@ function renderCal(){
 function showCalPopup(ds,db){
   var d=new Date(ds+'T12:00:00');document.getElementById('cpDate').textContent=T('wdL')[d.getDay()]+', '+fmtD(ds)+' '+d.getFullYear();
   var cc=document.getElementById('cpCards');cc.innerHTML='';
-  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?T('inOut'):isOut?T('checkout'):isIn?T('checkin'):T('staying');var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>Guests: <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>'+b.notes:'')+'</div>';cc.appendChild(div);});
+  db.forEach(function(b){var apt=aptById(b.apt),isIn=b.checkin===ds,isOut=b.checkout===ds;var tag=isIn&&isOut?'⚠️ '+T('inOut'):isOut?'↑ '+T('checkout'):isIn?'↓ '+T('checkin'):T('staying');var div=document.createElement('div');div.className='cpmini';div.style.background=apt.color+'12';div.style.borderColor=apt.color+'44';div.innerHTML='<div class="cpm-apt" style="color:'+apt.color+'">'+apt.short+'</div><div class="cpm-tag" style="color:'+apt.color+'">'+tag+'</div><div class="cpm-info">'+T('checkin')+': <strong>'+fmtFull(b.checkin)+'</strong><br>'+T('checkout')+': <strong>'+fmtFull(b.checkout)+'</strong>'+(b.guests?'<br>Guests: <strong>'+b.guests+'</strong>':'')+(b.notes?'<br>'+b.notes:'')+'</div>';cc.appendChild(div);});
   document.getElementById('calPopup').classList.add('show');
 }
 document.getElementById('calPopup').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
@@ -1009,7 +1010,7 @@ function applyLangUI(){
   document.getElementById('vCal').textContent=T('calendar');
   document.getElementById('srcAll').textContent=T('allSrc');
   document.querySelectorAll('.abl').forEach(function(el){el.textContent=T(el.getAttribute('data-k'));});
-  var so=document.getElementById('signOutBtn');if(so)so.innerHTML='<span style="color:var(--red)">'+T('signOut')+'</span>';
+  var so=document.getElementById('signOutBtn');if(so)so.textContent=T('signOut');
   var sc=document.getElementById('saveCfgBtn');if(sc)sc.textContent=T('saveSettings');
   var ph=document.getElementById('clPinHint');if(ph)ph.textContent=T('enterPin');
 }
@@ -1023,7 +1024,7 @@ document.getElementById('pinBtn').addEventListener('click',function(){
   // Logged-in user is always admin - gear opens settings directly
   openCfg();
 });
-document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent='Wrong PIN';pinBuf='';updDots();}},200);}});});
+document.querySelectorAll('.pk').forEach(function(k){k.addEventListener('click',function(){var n=this.getAttribute('data-n');if(n==='x'){closeModal('pinOverlay');return;}if(n==='del'){pinBuf=pinBuf.slice(0,-1);updDots();return;}if(pinBuf.length>=4)return;pinBuf+=n;updDots();if(pinBuf.length===4){setTimeout(function(){if(pinBuf===PIN){isAdmin=true;closeModal('pinOverlay');updateAdminUI();}else{document.getElementById('pinErr').textContent=T('wrongPin');pinBuf='';updDots();}},200);}});});
 function updDots(){for(var i=0;i<4;i++)document.getElementById('p'+i).className='pd'+(i<pinBuf.length?' on':'');}
 function updateAdminUI(){
   document.getElementById('adminBar').className='show';
