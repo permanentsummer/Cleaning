@@ -643,6 +643,7 @@ function startCleanerFlow(){
             document.getElementById('clContent').classList.add('show');
             var s=cleanerWorkspace.settings||{};
             if(s.apts&&s.apts.length)apts=s.apts;
+            cfg=s;
             loadCleanerBookings();
           }else{
             document.getElementById('clPinErr').textContent='Wrong PIN (expected '+correctPin.length+' digits)';
@@ -703,12 +704,13 @@ function mkClCard(b){
   el.className='cl-card'+(isT?' tod':'');
   // Active = checkout is today or has passed — needs cleaning
   var isActive=b.checkout<=tod,isCleaned=b.cleaned==='yes';
-  var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes)info+='<span class="cl-chip note">'+b.notes+'</span>';
+  var canNotesCl=cfg.pNotes!==false;var canClean=cfg.pCleaned!==false;
+  var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes&&canNotesCl)info+='<span class="cl-chip note">'+b.notes+'</span>';
   el.innerHTML=
     '<div class="cl-ctop"><div class="cl-abadge" style="background:'+apt.color+'1a;color:'+apt.color+'">'+apt.short+'</div>'+(isT?'<span style="font-size:11px;font-weight:800;color:var(--yellow);background:#fef3c7;padding:3px 7px;border-radius:6px">TODAY</span>':'<span style="font-size:11px;font-weight:700;color:var(--muted)">'+fmtD(b.checkout)+'</span>')+'</div>'+
     '<div class="cl-dates"><div class="cl-db"><span class="cl-dlbl">'+T('checkin')+'</span><span class="cl-dval">'+fmtD(b.checkin)+'</span><span class="cl-dday">'+fmtWd(b.checkin)+'</span></div><div class="cl-darr">></div><div class="cl-db r"><span class="cl-dlbl">'+T('checkout')+'</span><span class="cl-dval">'+fmtD(b.checkout)+'</span><span class="cl-dday">'+fmtWd(b.checkout)+'</span></div></div>'+
     (info?'<div class="cl-info">'+info+'</div>':'')+
-    (isActive&&cleanerWorkspace&&(cleanerWorkspace.settings||{}).pCleaned!==false?'<div class="cl-foot"><button class="cl-cbtn '+(isCleaned?'cleaned':'uncleaned')+'" data-id="'+b.id+'">'+(isCleaned?T('cleaned'):T('notCleaned'))+'</button></div>':'');
+    (isActive&&canClean?'<div class="cl-foot"><button class="cl-cbtn '+(isCleaned?'cleaned':'uncleaned')+'" data-id="'+b.id+'">'+(isCleaned?T('cleaned'):T('notCleaned'))+'</button></div>':'');
   if(isActive){
     var btn=el.querySelector('.cl-cbtn');
     if(btn)btn.addEventListener('click',function(){
