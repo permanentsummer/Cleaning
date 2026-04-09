@@ -693,7 +693,8 @@ function renderCleanerView(){
   else if(todBks.length){banner.classList.add('show');banner.style.background='linear-gradient(135deg,#22c55e,#16a34a)';document.getElementById('clBannerCount').textContent='All cleaned today!';document.getElementById('clBannerApts').textContent=todBks.map(function(b){return aptById(b.apt).short;}).join(' - ');}
   else banner.classList.remove('show');
   // Show all bookings from today onwards
-  var visible=bks.filter(function(b){return b.checkout>=tod;});
+  // Show if not cleaned yet OR if future booking; hide once cleaned and past
+  var visible=bks.filter(function(b){return!(b.cleaned==='yes'&&b.checkout<tod);});
   if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>No upcoming cleanings.</p></div>';return;}
   var active=visible.filter(function(b){return b.checkin<=tod;}),upcoming=visible.filter(function(b){return b.checkin>tod;});
   if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent='Today & Active';container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
@@ -702,7 +703,7 @@ function renderCleanerView(){
 function mkClCard(b){
   var tod=today(),isT=b.checkout===tod,apt=aptById(b.apt),el=document.createElement('div');
   el.className='cl-card'+(isT?' tod':'');
-  // Active = checkout is today or has passed — needs cleaning
+  // Active = checkout is today or past — apartment needs cleaning
   var isActive=b.checkout<=tod,isCleaned=b.cleaned==='yes';
   var canNotesCl=cfg.pNotes!==false;var canClean=cfg.pCleaned!==false;
   var info='';if(b.guests)info+='<span class="cl-chip">Guests: '+b.guests+'</span>';if(b.notes&&canNotesCl)info+='<span class="cl-chip note">'+b.notes+'</span>';
@@ -784,10 +785,18 @@ function mkCard(b,isPast){
   if(b.guests||(b.notes&&canNotes)){ir='<div class="cinfo">'+(b.guests?'<span class="chip">'+b.guests+' guests</span>':'')+((b.notes&&canNotes)?'<span class="chip note">'+b.notes+'</span>':'')+'</div>';}
   var footHtml='';
   if(isAdmin){
-    // Admin always sees Paid/Unpaid + cleaned status badge on active bookings
-    var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?'Paid':'Unpaid';
-    var cBadge=isActive?(isCleaned?'<span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">Cleaned</span>':'<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">Not yet</span>'):'';
-    footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button>'+cBadge+'<div class="adm show"><button class="ibtn e" data-id="'+b.id+'">Edit</button><button class="ibtn d" data-id="'+b.id+'">Del</button></div>';
+    var editDel='<div class="adm show"><button class="ibtn e" data-id="'+b.id+'"><strong>Edit</strong></button><button class="ibtn d" data-id="'+b.id+'"><strong>Del</strong></button></div>';
+    if(!isActive){
+      // Future booking — no payment status, just edit/del
+      footHtml=editDel;
+    } else if(isCleaned){
+      // Cleaned — show payment button + cleaned badge
+      var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?'Paid':'Unpaid';
+      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px">Cleaned</span>'+editDel;
+    } else {
+      // Not cleaned — show Dirty badge only, no payment button
+      footHtml='<span style="font-size:11px;font-weight:800;color:#c2410c;background:#fff7ed;padding:4px 8px;border-radius:7px">Dirty</span>'+editDel;
+    }
   } else if(isActive){
     // Cleaner sees Cleaned/Not cleaned ONLY for active bookings (checkout <= today or currently staying)
     var cCls=isCleaned?'cleaned':'uncleaned';
