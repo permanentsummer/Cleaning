@@ -180,7 +180,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
 .overlay.show{display:flex}
 .modal{background:#fff;border-radius:22px 22px 0 0;padding:16px 16px 34px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:su .2s ease}
 @keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.mhandle{width:36px;height:4px;background:#e2e8f0;border-radius:999px;margin:0 auto 13px}
+.mhandle{width:36px;height:4px;background:#e2e8f0;border-radius:999px;margin:0 auto 13px;cursor:grab}
 .modal h2{font-size:17px;font-weight:900;margin-bottom:13px}
 .fg{margin-bottom:11px}
 .fg label{display:block;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
@@ -274,7 +274,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
     <div class="hr">
       <button class="langBtn" id="langBtn">EN</button>
       
-      <button class="hbtn" id="logoutBtn" title="Sign out">&#x1F6AA;</button>
+      <button class="hbtn" id="logoutBtn" title="Sign out" style="font-size:16px;font-weight:900">&#x23FB;</button>
       <button class="hbtn" id="pinBtn" title="Settings">&#x2699;&#xFE0F;</button>
     </div>
   </header>
@@ -1000,6 +1000,41 @@ function updateAdminUI(){
   document.getElementById('srcRow').className='show';
   render();if(viewMode==='calendar')renderCal();
 }
+// Swipe down to close any modal
+document.querySelectorAll('.modal, .pinmodal').forEach(function(modal){
+  var startY=0,isDragging=false;
+  function onStart(e){
+    var handle=modal.querySelector('.mhandle');
+    if(!handle)return;
+    var t=e.touches?e.touches[0]:e;
+    startY=t.clientY;isDragging=true;
+  }
+  function onMove(e){
+    if(!isDragging)return;
+    var t=e.touches?e.touches[0]:e;
+    var dy=t.clientY-startY;
+    if(dy>0)modal.style.transform='translateY('+dy+'px)';
+  }
+  function onEnd(e){
+    if(!isDragging)return;isDragging=false;
+    var t=e.changedTouches?e.changedTouches[0]:e;
+    var dy=t.clientY-startY;
+    if(dy>80){
+      modal.style.transform='';
+      var overlay=modal.closest('.overlay');
+      if(overlay)overlay.classList.remove('show');
+    }else{
+      modal.style.transform='';
+    }
+  }
+  modal.addEventListener('touchstart',onStart,{passive:true});
+  modal.addEventListener('touchmove',onMove,{passive:true});
+  modal.addEventListener('touchend',onEnd);
+  modal.addEventListener('mousedown',onStart);
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onEnd);
+});
+
 document.getElementById('logoutBtn').addEventListener('click',function(){
   if(!confirm('Sign out?'))return;
   var tok=session?session.access_token:null;
