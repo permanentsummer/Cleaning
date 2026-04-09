@@ -412,7 +412,19 @@ function sl(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function toast(m,t){var el=document.getElementById('toast');el.textContent=m;el.className=t||'ok';el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none';},4000);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function setSS(m){document.getElementById('syncStatus').textContent=m;}
-function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});document.getElementById(id).classList.add('active');}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  // Reset auth form whenever auth page is shown
+  if(id==='authPage'){
+    var lb=document.getElementById('loginBtn');
+    if(lb){lb.disabled=false;lb.textContent='Sign in →';}
+    var sb=document.getElementById('signupBtn');
+    if(sb){sb.disabled=false;sb.textContent='Create account →';}
+    document.getElementById('loginErr').textContent='';
+    document.getElementById('signupErr').textContent='';
+  }
+}
 function aptById(id){return apts.find(function(a){return a.id===id;})||{id:id,name:id,short:id,color:'#64748b'};}
 function fmtD(s){if(!s)return'-';var d=new Date(s+'T12:00:00');var mn=LANG==='fr'?['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec']:LANG==='pt'?['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return String(d.getDate()).padStart(2,'0')+' '+mn[d.getMonth()];}
 function fmtWd(s){if(!s)return'';return T('wdS')[new Date(s+'T12:00:00').getDay()];}
