@@ -818,9 +818,9 @@ function mkCard(b,isPast){
       footHtml=editDel;
     } else if(isCleaned){
       var pCls=b.paid==='paid'?'paid':'unpaid',pLbl=b.paid==='paid'?T('paid'):T('unpaid');
-      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><span style="font-size:11px;font-weight:800;color:#15803d;background:#dcfce7;padding:4px 8px;border-radius:7px;flex-shrink:0">'+T('cleaned')+'</span>'+editDel;
+      footHtml='<button class="pbtn '+pCls+'" data-id="'+b.id+'">'+pLbl+'</button><button class="pbtn paid" style="max-width:110px;flex-shrink:0" data-clean="'+b.id+'">'+T('cleaned')+'</button>'+editDel;
     } else {
-      footHtml='<button class="pbtn uncleaned" style="max-width:90px;flex-shrink:0">'+T('dirty')+'</button>'+editDel;
+      footHtml='<button class="pbtn uncleaned" style="max-width:90px;flex-shrink:0" data-clean="'+b.id+'">'+T('dirty')+'</button>'+editDel;
     }
   } else if(isActive){
     // Cleaner sees Cleaned/Not cleaned ONLY for active bookings (checkout <= today or currently staying)
@@ -865,7 +865,7 @@ function mkCard(b,isPast){
     el.addEventListener('mousedown',function(){pt=setTimeout(function(){if(!bulkMode)enterBulkMode();},600);});
     el.addEventListener('touchstart',function(){pt=setTimeout(function(){if(!bulkMode)enterBulkMode();},600);},{passive:true});
     el.addEventListener('mouseup',function(){clearTimeout(pt);});el.addEventListener('touchend',function(){clearTimeout(pt);});
-    var pb=el.querySelector('.pbtn');
+    var pb=el.querySelector('.pbtn[data-id]');
     if(pb)pb.addEventListener('click',function(e){
       if(bulkMode)return;
       var id=this.getAttribute('data-id'),idx=bks.findIndex(function(x){return x.id===id;});
@@ -873,6 +873,19 @@ function mkCard(b,isPast){
       var np=bks[idx].paid==='paid'?'unpaid':'paid';
       bks[idx].paid=np;render();
       sbPatch(id,{paid:np}).catch(function(){toast('Sync error','err');});
+    });
+    // Admin toggle cleaned status — use querySelectorAll to catch all clean buttons
+    el.querySelectorAll('.pbtn[data-clean]').forEach(function(cb){
+      cb.addEventListener('click',function(){
+        if(bulkMode)return;
+        var id=this.getAttribute('data-clean'),idx=bks.findIndex(function(x){return x.id===id;});
+        if(idx===-1)return;
+        var nc=bks[idx].cleaned==='yes'?'no':'yes';
+        bks[idx].cleaned=nc;
+        if(nc==='yes')bks[idx].paid='unpaid';
+        render();
+        sbPatch(id,{cleaned:nc,paid:bks[idx].paid}).catch(function(){toast('Sync error','err');});
+      });
     });
     var eb=el.querySelector('.ibtn.e');if(eb)eb.addEventListener('click',function(){if(!bulkMode)openEdit(this.getAttribute('data-id'));});
     var db=el.querySelector('.ibtn.d');if(db)db.addEventListener('click',function(){
