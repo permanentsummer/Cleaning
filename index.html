@@ -265,6 +265,7 @@ header{background:#0f172a;color:#fff;padding:14px 16px 12px;position:sticky;top:
   </div>
   <div id="clContent">
     <div class="cl-banner" id="clBanner"><div class="bico">&#x1F305;</div><div><h3 id="clBannerCount"></h3><p id="clBannerApts"></p></div></div>
+    <div class="frow" id="clFilters" style="padding:8px 14px 6px"></div>
     <div id="clList"></div>
   </div>
 </div>
@@ -392,7 +393,7 @@ var DEFAULT_APTS=[{id:'a',name:'Unit 1',short:'Unit 1',color:'#8b5cf6'}];
 var apts=DEFAULT_APTS.slice();
 var LANG=ll('sc_lang','en'),LANGS=['en','fr','pt'];
 var selectedIds={},bulkMode=false;
-var cleanerToken=null,cleanerWorkspace=null,clPinBuf='';
+var cleanerToken=null,cleanerWorkspace=null,clPinBuf='',clFilter='all';
 var S={
   en:{syncing:'Syncing...',loaded:'bookings loaded',upcoming:'Upcoming & Today',previous:'Previous',checkin:'Check-in',checkout:'Check-out',paid:'Paid',unpaid:'Unpaid',today:'Today',allSrc:'All sources',uncleanedToday:'unit(s) need cleaning today:',allUnpaid:'Unpaid',list:'List',calendar:'Calendar',cleaned:'Cleaned',notCleaned:'Mark as cleaned',deleteQ:'Delete this booking?',clearQ:'Delete ALL bookings?',empty:'All clean!',emptySub:'No bookings in this filter.',
     months:['January','February','March','April','May','June','July','August','September','October','November','December'],
@@ -648,6 +649,7 @@ function startCleanerFlow(){
             var s=cleanerWorkspace.settings||{};
             if(s.apts&&s.apts.length)apts=s.apts;
             cfg=s;
+            buildClFilters();
             loadCleanerBookings();
           }else{
             document.getElementById('clPinErr').textContent=T('wrongPin');
@@ -682,11 +684,28 @@ function loadCleanerBookings(){
       return;
     }
     bks=data.map(r2l);
+    buildClFilters();
     renderCleanerView();
   })
   .catch(function(e){
     document.getElementById('clList').innerHTML='<p style="color:var(--red);padding:16px;font-weight:700">Error: '+e.message+'</p>';
   });
+}
+function buildClFilters(){
+  var row=document.getElementById('clFilters');
+  if(!row)return;
+  row.innerHTML='';
+  function mkCf(f,lbl,col){
+    var b=document.createElement('button');
+    b.className='fb'+(clFilter===f?' on':'');
+    b.textContent=lbl;
+    if(clFilter===f&&col){b.style.background=col;b.style.borderColor=col;b.style.color='#fff';}
+    b.addEventListener('click',function(){clFilter=f;buildClFilters();renderCleanerView();});
+    row.appendChild(b);
+  }
+  mkCf('all','All','#0f172a');
+  mkCf('today',T('today'),'#f59e0b');
+  apts.forEach(function(a){mkCf(a.id,a.short,a.color);});
 }
 function renderCleanerView(){
   var tod=today(),container=document.getElementById('clList');container.innerHTML='';
@@ -698,7 +717,12 @@ function renderCleanerView(){
   else banner.classList.remove('show');
   // Show all bookings from today onwards
   // Show if not cleaned yet OR if future booking; hide once cleaned and past
-  var visible=bks.filter(function(b){return!(b.cleaned==='yes'&&b.checkout<tod);});
+  var visible=bks.filter(function(b){
+    if(b.cleaned==='yes')return false; // hide once cleaned, whenever that happens
+    if(clFilter==='today'&&b.checkout!==tod)return false;
+    if(clFilter!=='all'&&clFilter!=='today'&&b.apt!==clFilter)return false;
+    return true;
+  });
   if(!visible.length){container.innerHTML='<div class="cl-empty"><div class="ico">ok</div><h3>'+T('empty')+'</h3><p>'+T('noCleanings')+'</p></div>';return;}
   var active=visible.filter(function(b){return b.checkin<=tod;}),upcoming=visible.filter(function(b){return b.checkin>tod;});
   if(active.length){var l=document.createElement('div');l.className='cl-section';l.textContent=T('todayActive');container.appendChild(l);active.forEach(function(b){container.appendChild(mkClCard(b));});}
@@ -732,7 +756,7 @@ function mkClCard(b){
   }
   return el;
 }
-document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();applyLangUI();renderCleanerView();});
+document.getElementById('clLangBtn').addEventListener('click',function(){var i=LANGS.indexOf(LANG);LANG=LANGS[(i+1)%LANGS.length];sl('sc_lang',LANG);this.textContent=LANG.toUpperCase();applyLangUI();buildClFilters();renderCleanerView();});
 function initApp(){
   // Logged-in user is always admin — no PIN needed for their own account
   isAdmin=true;
