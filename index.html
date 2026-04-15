@@ -455,25 +455,17 @@ function sbUpsert(arr){
   var rows=arr.map(l2r).filter(function(r){return r.workspace_id;});
   if(!rows.length)return Promise.resolve([]);
   var tok=session.access_token;
-  // Direct upsert with user's JWT token
-  return fetch(SB_URL+'/rest/v1/bookings',{
+  // Use security definer RPC — works even with RLS enabled
+  return fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
     method:'POST',
-    headers:{
-      'apikey':SB_KEY,
-      'Authorization':'Bearer '+tok,
-      'Content-Type':'application/json',
-      'Prefer':'resolution=merge-duplicates'
-    },
-    body:JSON.stringify(rows)
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
+    body:JSON.stringify({bookings_data:rows})
   }).then(function(r){
-    if(r.ok||r.status===201||r.status===204)return [];
-    return r.text().then(function(t){
-      // Log full error for debugging
-      console.error('Insert failed:',r.status,t);
-      throw new Error('Save failed ('+r.status+'): '+t);
-    });
+    if(r.ok||r.status===204)return[];
+    return r.text().then(function(t){throw new Error(t);});
   });
 }
+
 function sbPatch(id,f){return sbF('PATCH','bookings?id=eq.'+encodeURIComponent(id),f);}
 function sbDel(id){return sbF('DELETE','bookings?id=eq.'+encodeURIComponent(id));}
 function l2r(b){return{id:b.id,workspace_id:workspace.id,apt:b.apt,source:b.source||'direct',checkin:b.checkin||null,checkout:b.checkout||null,clean:b.clean||b.checkout||null,guests:b.guests||null,notes:b.notes||null,paid:b.paid||'unpaid',cleaned:b.cleaned||'no'};}
