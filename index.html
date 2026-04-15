@@ -989,7 +989,7 @@ function buildAptFilters(){
   mkFb('all','All ('+fut.length+')','#0f172a');
   apts.forEach(function(a){mkFb(a.id,a.short+' ('+fut.filter(function(b){return b.apt===a.id;}).length+')',a.color);});
   mkFb('today',T('today'),'#0f172a');
-  mkFb('unpaid',T('allUnpaid')+' ('+fut.filter(function(b){return b.paid!=='paid';}).length+')','#0f172a');
+  mkFb('unpaid',T('allUnpaid')+' ('+fut.filter(function(b){return b.paid!=='paid'&&b.cleaned==='yes';}).length+')','#0f172a');
 }
 function populateAptSelects(){['eApt','iApt'].forEach(function(sid){var sel=document.getElementById(sid);if(!sel)return;var cur=sel.value;sel.innerHTML='';apts.forEach(function(a){var o=document.createElement('option');o.value=a.id;o.textContent=a.short;sel.appendChild(o);});if(cur)sel.value=cur;});}
 function applyLangUI(){
