@@ -183,39 +183,73 @@ function calcTotal(prop,nights){
   return ((prop.ratePerNight||0)*nights)+(prop.cleanFee||0);
 }
 
-// Load workspace
+// Load workspace — uses anon key with Accept-Profile workaround
+// The workspaces table needs an anon SELECT policy for id+settings columns.
+// SQL to run once in Supabase: 
+//   CREATE POLICY "anon_read_workspace_settings" ON workspaces
+//   FOR SELECT TO anon USING (true);
 function init(){
   if(!workspaceId){
     document.getElementById('loadingPage').innerHTML=
       '<p style="padding:40px;font-size:14px;font-weight:700;color:#ef4444">No workspace specified in URL.<br>Please check your booking link.</p>';
     return;
   }
-  fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+workspaceId,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
-  }).then(function(r){return r.json();}).then(function(rows){
+
+  // Try fetching workspace with anon key
+  fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(workspaceId),{
+    headers:{
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+SB_KEY,
+      'Accept':'application/json'
+    }
+  })
+  .then(function(r){
+    if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
+    return r.json();
+  })
+  .then(function(rows){
+    // RLS may return empty array if policy not set — handle gracefully
     if(!rows||!rows.length){
-      document.getElementById('loadingPage').innerHTML=
-        '<p style="padding:40px;font-size:14px;font-weight:700;color:#ef4444">Workspace not found.</p>';
+      showRLSError();
       return;
     }
     var ws=rows[0];
     workspaceCfg=ws.settings||{};
-    properties=workspaceCfg.apts||[];
+    // Only show properties not hidden from guests
+    properties=(workspaceCfg.apts||[]).filter(function(p){return !p.hiddenFromGuests;});
     renderProps();
     showPage('bookPage');
-  }).catch(function(e){
-    document.getElementById('loadingPage').innerHTML=
-      '<p style="padding:40px;font-size:14px;font-weight:700;color:#ef4444">Error loading: '+e.message+'</p>';
+  })
+  .catch(function(e){
+    showRLSError(e.message);
   });
+}
+
+function showRLSError(msg){
+  document.getElementById('loadingPage').innerHTML=
+    '<div style="padding:32px;text-align:center;max-width:400px;margin:0 auto">'+
+    '<div style="font-size:32px;margin-bottom:16px">⚙️</div>'+
+    '<p style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">One-time setup needed</p>'+
+    '<p style="font-size:13px;color:#64748b;font-weight:600;line-height:1.6;margin-bottom:20px">'+
+    'Run this SQL in your Supabase dashboard to allow guests to load this page:</p>'+
+    '<div style="background:#0f172a;border-radius:10px;padding:14px;font-size:12px;color:#a5f3fc;text-align:left;line-height:1.8;font-family:monospace;margin-bottom:16px">'+
+    'CREATE POLICY "anon_read_workspace_settings"<br>'+
+    'ON workspaces FOR SELECT TO anon<br>'+
+    'USING (true);</div>'+
+    '<p style="font-size:11px;color:#94a3b8;font-weight:600">This only exposes your apartment names and rates — no personal data.</p>'+
+    (msg?'<p style="font-size:10px;color:#ef4444;margin-top:12px">'+msg+'</p>':'')+
+    '</div>';
 }
 
 function renderProps(){
   var grid=document.getElementById('propGrid');
-  if(!properties.length){
-    grid.innerHTML='<p style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700">No properties configured yet.</p>';
+  // Filter out properties hidden from guests
+  var visible=properties.filter(function(p){return !p.hiddenFromGuests;});
+  if(!visible.length){
+    grid.innerHTML='<p style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700">No properties available. Please contact the host.</p>';
     return;
   }
-  properties.forEach(function(p){
+  visible.forEach(function(p){
     var card=document.createElement('div');
     card.className='prop-card';
     card.innerHTML=
