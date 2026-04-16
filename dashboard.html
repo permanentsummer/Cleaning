@@ -1042,6 +1042,7 @@ function renderProps(){
           '<div style="font-size:11px;color:var(--muted);font-weight:700">'+esc(p.location||p.short||'')+'</div>'+
         '</div>'+
         (p.ratePerNight?'<span class="prop-badge">€'+p.ratePerNight+'/nt</span>':'')+
+        (p.hiddenFromGuests?'<span class="prop-badge" style="background:#f1f5f9;color:var(--muted)">🙈 Hidden</span>':'')+
       '</div>'+
       '<div class="prop-body">'+
         '<div class="prop-stat-row">'+
@@ -1227,22 +1228,54 @@ function renderWidget(){
     '<div class="widget-step">'+
       '<div class="widget-step-head">'+
         '<div class="step-num">4</div>'+
-        '<div><h3>Properties shown to guests</h3><p>These pull through to your booking page automatically</p></div>'+
+        '<div><h3>Properties shown to guests</h3><p>Toggle visibility on the public booking page</p></div>'+
       '</div>'+
-      '<div class="widget-step-body">'+
-        (properties.length?
-          properties.map(function(p){return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">'+
-            '<div style="width:12px;height:12px;border-radius:4px;background:'+p.color+';flex-shrink:0"></div>'+
-            '<div style="flex:1"><strong>'+esc(p.name)+'</strong> · <span style="color:var(--muted);font-size:11px">'+esc(p.location||'')+'</span></div>'+
-            (p.ratePerNight?'<span style="font-weight:900;font-size:13px">€'+p.ratePerNight+'/nt</span>':'')+
-            '</div>';}).join(''):
-          '<div class="empty-state" style="padding:20px"><p>No properties configured. Add them in the <strong>Properties</strong> tab.</p></div>')+
+      '<div class="widget-step-body" id="widgetPropList">'+
       '</div>'+
     '</div>';
 
   // Store embed code for copy
   window._embedCode=embedCode;
+
+  // Render the interactive property visibility toggles
+  renderWidgetPropList();
 }
+
+function renderWidgetPropList(){
+  var container=document.getElementById('widgetPropList');
+  if(!container)return;
+  if(!properties.length){
+    container.innerHTML='<div class="empty-state" style="padding:20px"><p>No properties configured. Add them in the <strong>Properties</strong> tab.</p></div>';
+    return;
+  }
+  container.innerHTML='';
+  properties.forEach(function(p,i){
+    var hidden=!!p.hiddenFromGuests;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)';
+    row.innerHTML=
+      '<div style="width:12px;height:12px;border-radius:4px;background:'+p.color+';flex-shrink:0"></div>'+
+      '<div style="flex:1">'+
+        '<strong style="'+(hidden?'opacity:.45':'')+'">'+esc(p.name)+'</strong>'+
+        ' · <span style="color:var(--muted);font-size:11px">'+esc(p.location||'')+'</span>'+
+        (hidden?'<span style="font-size:10px;font-weight:800;color:var(--muted);margin-left:8px;background:var(--bg);padding:2px 7px;border-radius:999px">Hidden from guests</span>':'')+
+      '</div>'+
+      (p.ratePerNight&&!hidden?'<span style="font-weight:900;font-size:13px;color:var(--muted)">€'+p.ratePerNight+'/nt</span>':'')+
+      '<button onclick="togglePropVisibility('+i+')" style="'+
+        'border:2px solid '+(hidden?'var(--border)':'var(--green)')+';'+
+        'background:'+(hidden?'var(--bg)':'var(--green-bg)')+';'+
+        'color:'+(hidden?'var(--muted)':'#15803d')+';'+
+        'border-radius:8px;padding:5px 11px;font-family:\'Nunito\',sans-serif;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">'+
+        (hidden?'👁 Show':'✓ Visible')+
+      '</button>';
+    container.appendChild(row);
+  });
+  // Summary
+  var visCount=properties.filter(function(p){return !p.hiddenFromGuests;}).length;
+  var summary=document.createElement('div');
+  summary.style.cssText='font-size:11px;color:var(--muted);font-weight:700;padding-top:10px;text-align:right';
+  summary.textContent=visCount+' of '+properties.length+' propert'+(properties.length===1?'y':'ies')+' visible to guests';
+  container.appendChild(summary);
 
 function copyText(text,btn){
   var t=text===document.getElementById('embedCode')?window._embedCode:text;
@@ -1820,6 +1853,16 @@ switchTab=function(tab){
   _origSwitchTab(tab);
   if(tab==='calendar')renderCalendar();
 };
+
+function togglePropVisibility(i){
+  properties[i].hiddenFromGuests=!properties[i].hiddenFromGuests;
+  var label=properties[i].hiddenFromGuests?'Hidden from guests':'Visible to guests';
+  savePropsToWorkspace().then(function(){
+    toast((properties[i].hiddenFromGuests?'🙈 ':'👁 ')+properties[i].name+' — '+label,'ok');
+    renderWidgetPropList();
+    renderProps(); // refresh property cards too
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
