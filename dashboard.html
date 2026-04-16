@@ -129,7 +129,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .prop-name{font-size:15px;font-weight:900;flex:1}
 .prop-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--green-bg);color:#15803d}
 .prop-body{padding:14px 16px}
-.prop-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .prop-stat{background:var(--bg);border-radius:10px;padding:10px 12px;text-align:center}
 .prop-stat .val{font-size:17px;font-weight:900;display:block}
 .prop-stat .lbl{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
@@ -242,11 +242,37 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-popup .lbl{color:var(--muted)}
 .cal-popup-close{position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted)}
 
+/* View toggle (Calendar / List) */
+.view-toggle{display:flex;background:var(--bg);border-radius:8px;padding:3px;gap:3px}
+.vtab{padding:6px 12px;border-radius:6px;border:none;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;background:transparent;transition:all .15s}
+.vtab.on{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+
+/* Reservations list view */
+.res-list-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;border-left:4px solid var(--border)}
+.res-list-card.src-airbnb-card{border-left-color:#e8485a}
+.res-list-card.src-booking-card{border-left-color:#003580}
+.res-list-card.src-direct-card{border-left-color:#22c55e}
+.res-list-card.src-blocked-card{border-left-color:#94a3b8}
+.res-list-top{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 16px 10px;gap:10px}
+.res-list-guest{font-size:15px;font-weight:900;margin-bottom:3px}
+.res-list-apt{font-size:11px;font-weight:700;color:var(--muted)}
+.res-list-dates{display:flex;align-items:center;gap:8px;padding:0 16px 10px;font-size:13px;font-weight:700}
+.res-list-dates .arrow{color:#cbd5e1}
+.res-list-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+.res-list-price{background:#f0fdf4;border-radius:8px;padding:10px 16px;margin:0 16px 14px;display:flex;justify-content:space-between;align-items:center;border:1px solid #bbf7d0}
+.res-list-price .plbl{font-size:10px;font-weight:800;color:#15803d;text-transform:uppercase;letter-spacing:.5px}
+.res-list-price .pval{font-size:15px;font-weight:900;color:#15803d}
+.res-list-actions{border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.res-month-sep{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:16px 0 8px;border-bottom:2px solid var(--border);margin-bottom:10px}
+.res-month-sep:first-child{padding-top:0}
+
 @media(max-width:480px){
   .stats-bar{grid-template-columns:1fr 1fr}
   .fr{grid-template-columns:1fr}
   .prop-stat-row{grid-template-columns:1fr 1fr}
   .cal-row-label{min-width:90px;font-size:11px}
+  .cal-toolbar{gap:8px}
+  .view-toggle{margin-top:4px}
 }
 </style>
 </head>
@@ -287,7 +313,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <span class="badge" id="pendingBadge" style="display:none">0</span>
     </div>
     <div class="tab" data-tab="properties" onclick="switchTab('properties')">🏡 Properties</div>
-    <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Calendar</div>
+    <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Reservations</div>
     <div class="tab" data-tab="widget" onclick="switchTab('widget')">🔗 Widget</div>
     <div class="tab" data-tab="payments" onclick="switchTab('payments')">💰 Payments</div>
   </div>
@@ -322,7 +348,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div id="propList"><div class="spinner"></div></div>
   </div>
 
-  <!-- CALENDAR -->
+  <!-- RESERVATIONS -->
   <div id="page-calendar" class="page">
     <div class="cal-toolbar">
       <div class="cal-nav">
@@ -331,15 +357,30 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
         <button class="cal-nav-btn" onclick="calNext()">›</button>
         <button class="cal-today-btn" onclick="calGoToday()">Today</button>
       </div>
-      <div class="cal-filters" id="calFilters"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="cal-filters" id="calFilters"></div>
+        <div class="view-toggle">
+          <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">📅 Calendar</button>
+          <button class="vtab" id="vtabList" onclick="setResView('list')">☰ List</button>
+        </div>
+        <button class="btn-primary" style="font-size:12px;padding:8px 12px" onclick="openNewBooking()">+ New booking</button>
+      </div>
     </div>
-    <div class="cal-scroll">
-      <div class="cal-grid" id="calGrid"></div>
+    <!-- Calendar view -->
+    <div id="resCalView">
+      <div class="cal-scroll">
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="cal-legend" id="calLegend">
+        <div class="cal-legend-item"><div class="cal-legend-dot src-airbnb"></div>Airbnb</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot src-booking"></div>Booking.com</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot src-direct"></div>Direct</div>
+        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#94a3b8"></div>Blocked</div>
+      </div>
     </div>
-    <div class="cal-legend" id="calLegend">
-      <div class="cal-legend-item"><div class="cal-legend-dot src-airbnb"></div>Airbnb</div>
-      <div class="cal-legend-item"><div class="cal-legend-dot src-booking"></div>Booking.com</div>
-      <div class="cal-legend-item"><div class="cal-legend-dot src-direct"></div>Direct</div>
+    <!-- List view -->
+    <div id="resListView" style="display:none;padding:16px">
+      <div id="resList"></div>
     </div>
   </div>
   <!-- Booking popup -->
@@ -362,9 +403,78 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <div id="payList"><div class="spinner"></div></div>
   </div>
+<!-- MODAL: New booking / Block dates -->
+<div class="overlay" id="newBookingOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="vtab on" id="nbTabBook" onclick="setNbTab('booking')" style="flex:1;padding:10px">📋 New Booking</button>
+      <button class="vtab" id="nbTabBlock" onclick="setNbTab('block')" style="flex:1;padding:10px">🚫 Block Dates</button>
+    </div>
+
+    <!-- Booking form -->
+    <div id="nbBookingForm">
+      <div class="sep">Property & Guest</div>
+      <div class="fg"><label>Property *</label><select id="nbApt"></select></div>
+      <div class="fg"><label>Guest name *</label><input type="text" id="nbGuest" placeholder="Jane Smith"></div>
+      <div class="fg"><label>Email</label><input type="email" id="nbEmail" placeholder="jane@example.com"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="nbPhone" placeholder="+351 xxx xxx xxx"></div>
+      <div class="sep">Dates & Stay</div>
+      <div class="fr">
+        <div class="fg"><label>Check-in *</label><input type="date" id="nbIn"></div>
+        <div class="fg"><label>Check-out *</label><input type="date" id="nbOut"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Guests</label><input type="number" id="nbGuests" value="2" min="1" max="30"></div>
+        <div class="fg"><label>Source</label>
+          <select id="nbSource">
+            <option value="direct">🤝 Direct</option>
+            <option value="airbnb">🏠 Airbnb</option>
+            <option value="booking">📋 Booking.com</option>
+          </select>
+        </div>
+      </div>
+      <div class="sep">Pricing</div>
+      <div class="fr">
+        <div class="fg"><label>Rate / night (€)</label><input type="number" id="nbRate" placeholder="0" min="0" oninput="calcNbTotal()"></div>
+        <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="nbCleanFee" placeholder="0" min="0" oninput="calcNbTotal()"></div>
+      </div>
+      <div id="nbTotalPreview" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;font-weight:800;color:#15803d"></div>
+      <div class="fg"><label>Payment status</label>
+        <select id="nbPaid">
+          <option value="unpaid">❌ Unpaid</option>
+          <option value="paid">✅ Paid</option>
+        </select>
+      </div>
+      <div class="fg"><label>Notes (internal)</label><textarea id="nbNotes" rows="2" placeholder="Any notes..."></textarea></div>
+    </div>
+
+    <!-- Block form -->
+    <div id="nbBlockForm" style="display:none">
+      <div class="sep">Property & Dates</div>
+      <div class="fg"><label>Property *</label><select id="nbBlockApt"></select></div>
+      <div class="fr">
+        <div class="fg"><label>From *</label><input type="date" id="nbBlockFrom"></div>
+        <div class="fg"><label>To *</label><input type="date" id="nbBlockTo"></div>
+      </div>
+      <div class="fg"><label>Reason</label>
+        <select id="nbBlockReason">
+          <option value="maintenance">🔧 Maintenance</option>
+          <option value="personal">🏠 Personal use</option>
+          <option value="renovation">🪚 Renovation</option>
+          <option value="other">📌 Other</option>
+        </select>
+      </div>
+      <div class="fg"><label>Notes</label><input type="text" id="nbBlockNotes" placeholder="Optional details"></div>
+    </div>
+
+    <div class="aerr" id="nbErr" style="margin-bottom:8px"></div>
+    <button class="btn-primary" style="width:100%" id="nbSaveBtn" onclick="saveNewBooking()">💾 Save</button>
+    <button class="btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('newBookingOverlay')">Cancel</button>
+  </div>
 </div>
 
-<!-- MODAL: Respond to request -->
+</div><!-- end appWrap -->
 <div class="overlay" id="respondOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -877,6 +987,19 @@ function sendGuestEmail(email,name,message,action){
 }
 
 // ── PROPERTIES ──────────────────────────────────────────────────────────────
+// Calendar view state
+var resView='calendar'; // 'calendar' | 'list'
+
+function setResView(v){
+  resView=v;
+  document.getElementById('vtabCal').classList.toggle('on',v==='calendar');
+  document.getElementById('vtabList').classList.toggle('on',v==='list');
+  document.getElementById('resCalView').style.display=v==='calendar'?'':'none';
+  document.getElementById('resListView').style.display=v==='list'?'':'none';
+  if(v==='calendar')drawCal();
+  else renderResList();
+}
+
 function renderProps(){
   var list=document.getElementById('propList');
   if(!properties.length){
@@ -887,11 +1010,27 @@ function renderProps(){
   }
   list.innerHTML='';
   properties.forEach(function(p,i){
-    // Count bookings for this property
-    var propReqs=requests.filter(function(r){return r.apt_id===p.id||r.apt_name===p.name;});
-    var confirmed=propReqs.filter(function(r){return r.status==='confirmed';}).length;
-    var pending=propReqs.filter(function(r){return r.status==='pending';}).length;
-    var totalRevenue=propReqs.filter(function(r){return r.status==='confirmed';}).reduce(function(a,r){return a+(r.total_amount||0);},0);
+    // Count from BOTH tables: direct_requests + allBookings (SummerClean)
+    var directReqs=requests.filter(function(r){return r.apt_id===p.id||r.apt_name===p.name;});
+    var scBookings=allBookings.filter(function(b){return b.apt===p.id||b.apt===p.short||b.apt===p.name;});
+
+    var confirmedDirect=directReqs.filter(function(r){return r.status==='confirmed';}).length;
+    var confirmedTotal=confirmedDirect+scBookings.length;
+    var pending=directReqs.filter(function(r){return r.status==='pending';}).length;
+
+    // Revenue: from direct requests (have price) + estimate from SC bookings via rate
+    var revDirect=directReqs.filter(function(r){return r.status==='confirmed';}).reduce(function(a,r){return a+(r.total_amount||0);},0);
+    var revSC=scBookings.reduce(function(a,b){
+      if(!b.checkin||!b.checkout)return a;
+      var nights=Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000);
+      return a+(nights*(p.ratePerNight||0))+(p.cleanFee||0);
+    },0);
+    var totalRevenue=revDirect+revSC;
+
+    // Upcoming bookings count
+    var today=new Date().toISOString().slice(0,10);
+    var upcoming=scBookings.filter(function(b){return b.checkout>=today;}).length+
+      directReqs.filter(function(r){return r.status==='confirmed'&&r.checkout>=today;}).length;
 
     var card=document.createElement('div');
     card.className='prop-card';
@@ -906,9 +1045,10 @@ function renderProps(){
       '</div>'+
       '<div class="prop-body">'+
         '<div class="prop-stat-row">'+
-          '<div class="prop-stat"><span class="val">'+confirmed+'</span><div class="lbl">Confirmed</div></div>'+
-          '<div class="prop-stat"><span class="val">'+pending+'</span><div class="lbl">Pending</div></div>'+
-          '<div class="prop-stat"><span class="val">'+(totalRevenue?'€'+totalRevenue.toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
+          '<div class="prop-stat"><span class="val">'+confirmedTotal+'</span><div class="lbl">Total bookings</div></div>'+
+          '<div class="prop-stat"><span class="val">'+upcoming+'</span><div class="lbl">Upcoming</div></div>'+
+          '<div class="prop-stat"><span class="val">'+(pending||'—')+'</span><div class="lbl">Pending</div></div>'+
+          '<div class="prop-stat"><span class="val">'+(totalRevenue?'€'+Math.round(totalRevenue).toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
         '</div>'+
         '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'+
           (p.features?'<span class="chip">'+esc(p.features)+'</span>':'')+
@@ -1194,15 +1334,308 @@ loadRequests=function(){origLoadRequests.apply(this,arguments);};
 var _origRenderRequests=renderRequests;
 renderRequests=function(){_origRenderRequests();renderPayments();};
 
+// ── RESERVATIONS LIST VIEW ───────────────────────────────────────────────────
+function renderResList(){
+  var container=document.getElementById('resList');
+  if(!container)return;
+
+  // Merge allBookings + confirmed direct requests into one list
+  var today=new Date().toISOString().slice(0,10);
+  var items=[];
+
+  allBookings.forEach(function(b){
+    var apt=aptById(b.apt);
+    var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
+    var rate=apt.ratePerNight||0;
+    var cleanFee=apt.cleanFee||0;
+    var total=nights*rate+cleanFee;
+    items.push({
+      id:b.id,checkin:b.checkin,checkout:b.checkout,
+      guest:b.guests||'Guest',email:'',phone:'',
+      aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
+      source:b.source||'direct',nights:nights,
+      ratePerNight:rate,cleanFee:cleanFee,total:total,
+      paid:b.paid,cleaned:b.cleaned,notes:b.notes||'',
+      origin:'summerclean',blocked:false
+    });
+  });
+
+  requests.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    var apt=aptById(r.apt_id||r.apt_name);
+    var nights=r.checkin&&r.checkout?Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000):0;
+    items.push({
+      id:r.id,checkin:r.checkin,checkout:r.checkout,
+      guest:r.guest_name||'Guest',email:r.guest_email||'',phone:r.guest_phone||'',
+      aptName:r.apt_name||apt.name,aptColor:apt.color||'#22c55e',
+      source:'direct',nights:nights,
+      ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
+      paid:r.deposit_paid?(r.balance_paid?'paid':'deposit'):'unpaid',
+      cleaned:'no',notes:r.notes||'',
+      origin:'direct',blocked:false
+    });
+  });
+
+  // Sort by checkin
+  items.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
+
+  if(!items.length){
+    container.innerHTML='<div class="empty-state"><div class="ico">📅</div><h3>No reservations yet</h3><p>Confirmed bookings will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML='';
+  var lastMonth='';
+  items.forEach(function(item){
+    // Month separator
+    if(item.checkin){
+      var m=item.checkin.slice(0,7);
+      if(m!==lastMonth){
+        lastMonth=m;
+        var dt=new Date(item.checkin+'T12:00:00');
+        var sep=document.createElement('div');
+        sep.className='res-month-sep';
+        sep.textContent=dt.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+        container.appendChild(sep);
+      }
+    }
+
+    var isPast=item.checkout&&item.checkout<today;
+    var isActive=item.checkin&&item.checkout&&item.checkin<=today&&item.checkout>today;
+
+    var srcClass='src-'+(item.source==='airbnb'?'airbnb':item.source==='booking'?'booking':'direct')+'-card';
+    var srcLabel=item.source==='airbnb'?'🏠 Airbnb':item.source==='booking'?'📋 Booking.com':'🤝 Direct';
+    var srcBg=item.source==='airbnb'?'#fee2e2;color:#9f1239':item.source==='booking'?'#dbeafe;color:#1e40af':'#dcfce7;color:#15803d';
+
+    var paidLabel=item.paid==='paid'?'✅ Paid':item.paid==='deposit'?'⏳ Deposit paid':'❌ Unpaid';
+    var paidColor=item.paid==='paid'?'#15803d':item.paid==='deposit'?'#92400e':'#dc2626';
+
+    var card=document.createElement('div');
+    card.className='res-list-card '+srcClass;
+    card.style.opacity=isPast?'0.6':'1';
+    card.innerHTML=
+      '<div class="res-list-top">'+
+        '<div>'+
+          '<div class="res-list-guest">'+esc(item.guest)+'</div>'+
+          '<div class="res-list-apt">'+
+            '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+item.aptColor+';margin-right:5px;vertical-align:middle"></span>'+
+            esc(item.aptName)+
+            (isActive?' · <strong style="color:var(--yellow)">🟡 Active now</strong>':'')+
+          '</div>'+
+        '</div>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'+
+          '<span class="status-badge" style="background:#'+srcBg+'">'+srcLabel+'</span>'+
+          (item.origin==='direct'?'<span class="status-badge status-confirmed" style="font-size:9px">📋 Direct</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="res-list-dates">'+
+        '<span>'+fmtFull(item.checkin)+'</span>'+
+        '<span class="arrow">→</span>'+
+        '<span>'+fmtFull(item.checkout)+'</span>'+
+        '<span class="chip" style="margin-left:4px">'+item.nights+'n</span>'+
+      '</div>'+
+      '<div class="res-list-chips">'+
+        (item.email?'<span class="chip">✉️ '+esc(item.email)+'</span>':'')+
+        (item.phone?'<span class="chip">📱 '+esc(item.phone)+'</span>':'')+
+        '<span class="chip">🧹 '+(item.cleaned==='yes'?'Cleaned':'Not cleaned')+'</span>'+
+        (item.notes?'<span class="chip">💬 '+esc(item.notes.slice(0,40))+(item.notes.length>40?'…':'')+'</span>':'')+
+      '</div>'+
+      (item.total?
+        '<div class="res-list-price">'+
+          '<div>'+
+            '<div class="plbl">Price breakdown</div>'+
+            '<div style="font-size:11px;color:#166534;margin-top:3px">'+
+              (item.ratePerNight?'€'+item.ratePerNight+'/nt × '+item.nights+' nights = €'+(item.ratePerNight*item.nights):'—')+
+              (item.cleanFee?' + €'+item.cleanFee+' cleaning':'')+
+            '</div>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div class="pval">€'+item.total+'</div>'+
+            '<div style="font-size:10px;font-weight:800;color:'+paidColor+'">'+paidLabel+'</div>'+
+          '</div>'+
+        '</div>':'')+(item.total===0&&item.ratePerNight===0?
+        '<div style="padding:8px 16px 12px;font-size:11px;color:var(--muted);font-weight:700">No rate set — configure in Properties tab</div>':'')+
+      '<div class="res-list-actions">'+
+        (item.email?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="mailGuest(\''+esc(item.email)+'\')">📧 Email</button>':'')+
+        (item.phone?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="whatsApp(\''+esc(item.phone)+'\')">💬 WhatsApp</button>':'')+
+        (item.origin==='summerclean'?'<span style="font-size:10px;color:var(--muted);font-weight:700;margin-left:auto">Manage in 🧹 SummerClean</span>':
+          '<button class="btn-outline" style="font-size:11px;padding:6px 10px;margin-left:auto" onclick="openRespond(\''+item.id+'\',\'confirmed\')">✏️ Edit reply</button>')+
+      '</div>';
+    container.appendChild(card);
+  });
+}
+
+// ── NEW BOOKING / BLOCK DATES ─────────────────────────────────────────────────
+function openNewBooking(){
+  // Populate apartment selects
+  ['nbApt','nbBlockApt'].forEach(function(selId){
+    var sel=document.getElementById(selId);
+    if(!sel)return;
+    sel.innerHTML='';
+    properties.forEach(function(p){
+      var o=document.createElement('option');
+      o.value=p.id;o.textContent=p.name||p.short;
+      sel.appendChild(o);
+    });
+  });
+  document.getElementById('nbErr').textContent='';
+  document.getElementById('nbIn').value='';
+  document.getElementById('nbOut').value='';
+  document.getElementById('nbGuest').value='';
+  document.getElementById('nbEmail').value='';
+  document.getElementById('nbPhone').value='';
+  document.getElementById('nbGuests').value='2';
+  document.getElementById('nbSource').value='direct';
+  document.getElementById('nbRate').value='';
+  document.getElementById('nbCleanFee').value='';
+  document.getElementById('nbPaid').value='unpaid';
+  document.getElementById('nbNotes').value='';
+  document.getElementById('nbTotalPreview').style.display='none';
+  setNbTab('booking');
+  document.getElementById('newBookingOverlay').classList.add('show');
+  // Pre-fill rate from selected property
+  document.getElementById('nbApt').addEventListener('change',prefillNbRate);
+  prefillNbRate();
+}
+
+function prefillNbRate(){
+  var sel=document.getElementById('nbApt');
+  if(!sel)return;
+  var p=properties.find(function(x){return x.id===sel.value;});
+  if(!p)return;
+  if(p.ratePerNight)document.getElementById('nbRate').value=p.ratePerNight;
+  if(p.cleanFee)document.getElementById('nbCleanFee').value=p.cleanFee;
+  calcNbTotal();
+}
+
+function setNbTab(tab){
+  document.getElementById('nbTabBook').classList.toggle('on',tab==='booking');
+  document.getElementById('nbTabBlock').classList.toggle('on',tab==='block');
+  document.getElementById('nbBookingForm').style.display=tab==='booking'?'':'none';
+  document.getElementById('nbBlockForm').style.display=tab==='block'?'':'none';
+  document.getElementById('nbSaveBtn').textContent=tab==='booking'?'💾 Save booking':'🚫 Block dates';
+  document.getElementById('nbSaveBtn').setAttribute('data-tab',tab);
+}
+
+function calcNbTotal(){
+  var ci=document.getElementById('nbIn').value;
+  var co=document.getElementById('nbOut').value;
+  var rate=parseFloat(document.getElementById('nbRate').value)||0;
+  var clean=parseFloat(document.getElementById('nbCleanFee').value)||0;
+  var preview=document.getElementById('nbTotalPreview');
+  if(!ci||!co||!rate){preview.style.display='none';return;}
+  var nights=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
+  if(nights<1){preview.style.display='none';return;}
+  var total=nights*rate+clean;
+  preview.style.display='';
+  preview.innerHTML='<strong>'+nights+' nights × €'+rate+' = €'+(nights*rate)+'</strong>'+(clean?' + €'+clean+' cleaning fee':'')+'<br>Total: <strong style="font-size:16px">€'+total+'</strong> · Deposit: €'+Math.round(total/2);
+}
+
+document.addEventListener('change',function(e){
+  if(e.target.id==='nbIn'||e.target.id==='nbOut')calcNbTotal();
+});
+
+function saveNewBooking(){
+  var tab=document.getElementById('nbSaveBtn').getAttribute('data-tab')||'booking';
+  var err=document.getElementById('nbErr');
+  err.textContent='';
+  var btn=document.getElementById('nbSaveBtn');
+  btn.disabled=true;btn.textContent='Saving...';
+
+  if(tab==='block'){
+    var aptId=document.getElementById('nbBlockApt').value;
+    var from=document.getElementById('nbBlockFrom').value;
+    var to=document.getElementById('nbBlockTo').value;
+    var reason=document.getElementById('nbBlockReason').value;
+    var bnotes=document.getElementById('nbBlockNotes').value;
+    if(!aptId||!from||!to){err.textContent='Please fill in property and dates.';btn.disabled=false;btn.textContent='🚫 Block dates';return;}
+    var apt=aptById(aptId);
+    var booking={
+      id:uid(),workspace_id:workspace.id,
+      apt:aptId,source:'direct',
+      checkin:from,checkout:to,clean:to,
+      guests:'BLOCKED – '+reason+(bnotes?' ('+bnotes+')':''),
+      notes:'Blocked: '+reason+(bnotes?'. '+bnotes:''),
+      paid:'paid',cleaned:'no'
+    };
+    var tok=session?session.access_token:SB_KEY;
+    fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
+      body:JSON.stringify({bookings_data:[booking]})
+    }).then(function(r){
+      if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
+      toast('📌 Dates blocked — visible in SummerClean','ok');
+      closeModal('newBookingOverlay');
+      loadAllBookings().then(function(){renderCalendar();renderPayments();renderProps();});
+    }).catch(function(e){err.textContent='Error: '+e.message;}).finally(function(){btn.disabled=false;btn.textContent='🚫 Block dates';});
+    return;
+  }
+
+  // New booking
+  var aptId=document.getElementById('nbApt').value;
+  var guest=document.getElementById('nbGuest').value.trim();
+  var email=document.getElementById('nbEmail').value.trim();
+  var phone=document.getElementById('nbPhone').value.trim();
+  var ci=document.getElementById('nbIn').value;
+  var co=document.getElementById('nbOut').value;
+  var guests=document.getElementById('nbGuests').value;
+  var source=document.getElementById('nbSource').value;
+  var rate=parseFloat(document.getElementById('nbRate').value)||0;
+  var clean=parseFloat(document.getElementById('nbCleanFee').value)||0;
+  var paid=document.getElementById('nbPaid').value;
+  var notes=document.getElementById('nbNotes').value.trim();
+
+  if(!aptId||!guest||!ci||!co){err.textContent='Property, guest name and dates are required.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
+  var nights=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
+  if(nights<1){err.textContent='Check-out must be after check-in.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
+  var total=nights*rate+clean;
+
+  // Write to bookings table (SummerClean) + direct_requests (dashboard)
+  var apt=aptById(aptId);
+  var scBooking={
+    id:uid(),workspace_id:workspace.id,
+    apt:aptId,source:source,
+    checkin:ci,checkout:co,clean:co,
+    guests:guests+' guests – '+guest,
+    notes:'Manual booking\nEmail: '+email+(phone?'\nPhone: '+phone:'')+(notes?'\nNotes: '+notes:''),
+    paid:paid,cleaned:'no'
+  };
+  var tok=session?session.access_token:SB_KEY;
+  // Write to bookings (shows in SummerClean)
+  fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
+    body:JSON.stringify({bookings_data:[scBooking]})
+  }).then(function(r){
+    if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
+    // Also write to direct_requests with confirmed status for dashboard tracking
+    return sbF('POST','direct_requests',{
+      workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
+      guest_name:guest,guest_email:email||null,guest_phone:phone||null,
+      checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
+      rate_per_night:rate||null,total_amount:total||null,
+      status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
+    });
+  }).then(function(){
+    toast('✅ Booking saved — visible in SummerClean & dashboard','ok');
+    closeModal('newBookingOverlay');
+    return Promise.all([loadRequests(),loadAllBookings()]);
+  }).then(function(){
+    renderCalendar();renderPayments();renderProps();
+  }).catch(function(e){err.textContent='Error: '+e.message;
+  }).finally(function(){btn.disabled=false;btn.textContent='💾 Save booking';});
+}
+
 // ── CALENDAR ─────────────────────────────────────────────────────────────────
 function renderCalendar(){
   buildCalFilters();
-  drawCal();
+  if(resView==='list')renderResList();
+  else drawCal();
 }
 
-function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}drawCal();}
-function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}drawCal();}
-function calGoToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();drawCal();}
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}if(resView==='calendar')drawCal();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}if(resView==='calendar')drawCal();}
+function calGoToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();if(resView==='calendar')drawCal();}
 
 function buildCalFilters(){
   var bar=document.getElementById('calFilters');
