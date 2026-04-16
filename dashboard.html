@@ -185,10 +185,68 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 /* ── RESPOND MODAL ────────────────────────────────────────────────────── */
 .msg-preview{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.7;color:var(--text);border:2px solid var(--border);margin-bottom:12px;white-space:pre-wrap}
 
+/* ── CALENDAR ─────────────────────────────────────────────────────────── */
+#page-calendar{padding:0}
+.cal-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;background:#fff;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;position:sticky;top:56px;z-index:100}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav-btn{width:34px;height:34px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.cal-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cal-month-lbl{font-size:16px;font-weight:900;min-width:160px;text-align:center}
+.cal-today-btn{font-size:11px;font-weight:800;padding:6px 12px;border-radius:7px;border:2px solid var(--border);background:#fff;cursor:pointer}
+.cal-today-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cal-filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.cal-filters::-webkit-scrollbar{display:none}
+.cal-fb{flex-shrink:0;padding:5px 12px;border-radius:999px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .15s}
+.cal-fb.on{color:#fff;border-color:currentColor}
+
+/* Booking.com style grid */
+.cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cal-grid{min-width:700px;font-size:12px}
+/* Header row: day names */
+.cal-head{display:grid;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;background:#fff}
+.cal-head-cell{padding:8px 4px;text-align:center;font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-right:1px solid var(--border)}
+.cal-head-cell:last-child{border-right:none}
+.cal-head-cell.today-col{background:#fef3c7;color:var(--yellow)}
+/* Property rows */
+.cal-row{display:grid;border-bottom:1px solid var(--border);min-height:56px;position:relative}
+.cal-row-label{position:sticky;left:0;z-index:5;background:#fff;border-right:2px solid var(--border);padding:8px 10px;display:flex;align-items:center;gap:7px;min-width:120px;font-size:12px;font-weight:800}
+.cal-row-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.cal-day-cell{border-right:1px solid var(--border);position:relative;min-height:56px}
+.cal-day-cell:last-child{border-right:none}
+.cal-day-cell.today-col{background:#fffbeb}
+.cal-day-cell.weekend{background:#fafafa}
+/* Booking bars inside cells */
+.cal-bar{position:absolute;top:10px;left:1px;right:1px;height:32px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;z-index:2;transition:filter .15s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.cal-bar:hover{filter:brightness(1.1)}
+/* Bar spans: start / middle / end */
+.cal-bar.bar-start{border-radius:6px 0 0 6px;left:4px;right:0}
+.cal-bar.bar-end{border-radius:0 6px 6px 0;left:0;right:4px}
+.cal-bar.bar-middle{border-radius:0;left:0;right:0}
+.cal-bar.bar-solo{border-radius:6px;left:4px;right:4px}
+/* Checkin/checkout markers */
+.cal-bar.bar-start::before{content:'↓';margin-right:4px;font-size:11px}
+.cal-bar.bar-end::before{content:'↑';margin-right:4px;font-size:11px}
+/* Legend */
+.cal-legend{display:flex;flex-wrap:wrap;gap:10px;padding:12px 20px;border-top:1px solid var(--border);background:#fff}
+.cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted)}
+.cal-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+/* Source colour coding */
+.src-airbnb{background:#e8485a}
+.src-booking{background:#003580}
+.src-direct{background:#22c55e}
+/* Tooltip / popup */
+.cal-popup{position:fixed;z-index:500;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.2);padding:16px;min-width:240px;max-width:300px;border:2px solid var(--border)}
+.cal-popup h4{font-size:13px;font-weight:900;margin-bottom:8px}
+.cal-popup-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)}
+.cal-popup-row:last-child{border:none}
+.cal-popup .lbl{color:var(--muted)}
+.cal-popup-close{position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted)}
+
 @media(max-width:480px){
   .stats-bar{grid-template-columns:1fr 1fr}
   .fr{grid-template-columns:1fr}
   .prop-stat-row{grid-template-columns:1fr 1fr}
+  .cal-row-label{min-width:90px;font-size:11px}
 }
 </style>
 </head>
@@ -229,6 +287,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <span class="badge" id="pendingBadge" style="display:none">0</span>
     </div>
     <div class="tab" data-tab="properties" onclick="switchTab('properties')">🏡 Properties</div>
+    <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Calendar</div>
     <div class="tab" data-tab="widget" onclick="switchTab('widget')">🔗 Widget</div>
     <div class="tab" data-tab="payments" onclick="switchTab('payments')">💰 Payments</div>
   </div>
@@ -262,6 +321,29 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     </div>
     <div id="propList"><div class="spinner"></div></div>
   </div>
+
+  <!-- CALENDAR -->
+  <div id="page-calendar" class="page">
+    <div class="cal-toolbar">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <span class="cal-month-lbl" id="calMonthLbl">—</span>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+        <button class="cal-today-btn" onclick="calGoToday()">Today</button>
+      </div>
+      <div class="cal-filters" id="calFilters"></div>
+    </div>
+    <div class="cal-scroll">
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <div class="cal-legend" id="calLegend">
+      <div class="cal-legend-item"><div class="cal-legend-dot src-airbnb"></div>Airbnb</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot src-booking"></div>Booking.com</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot src-direct"></div>Direct</div>
+    </div>
+  </div>
+  <!-- Booking popup -->
+  <div id="calPopup" style="display:none"></div>
 
   <!-- WIDGET -->
   <div id="page-widget" class="page">
@@ -345,10 +427,14 @@ var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
 // Hosted booking page URL — update after deploy
-var BOOKING_PAGE_URL='https://cleaning.permanentsummer.co/book.html';
+var BOOKING_PAGE_URL='https://permanentsummer.github.io/direct-booking/book.html';
 
 var session=null,workspace=null,requests=[],properties=[],reqFilter='all';
 var activeRequest=null,seasonCount=0;
+// Two-way sync: all confirmed bookings from the bookings table (SummerClean)
+var allBookings=[];
+// Calendar state
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calAptFilter='all';
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
 function sbAuth(path,body){
@@ -429,11 +515,22 @@ function loadWorkspace(){
     document.getElementById('navSub').textContent=session.user.email;
     document.getElementById('authWrap').classList.remove('show');
     document.getElementById('appWrap').classList.add('show');
-    loadRequests();
-    renderProps();
-    renderWidget();
-    renderPayments();
+    // Load everything in parallel
+    Promise.all([loadRequests(), loadAllBookings()]).then(function(){
+      renderProps();
+      renderWidget();
+      renderPayments();
+      renderCalendar();
+    });
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
+}
+
+// Load ALL bookings from the shared bookings table (SummerClean + confirmed direct)
+function loadAllBookings(){
+  if(!workspace)return Promise.resolve();
+  return sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkin.asc')
+    .then(function(rows){allBookings=rows||[];})
+    .catch(function(){allBookings=[];});
 }
 
 // ── TABS ────────────────────────────────────────────────────────────────────
@@ -446,8 +543,8 @@ function openSummerClean(){window.open('index.html','_blank');}
 
 // ── REQUESTS ────────────────────────────────────────────────────────────────
 function loadRequests(){
-  if(!workspace)return;
-  sbF('GET','direct_requests?select=*&workspace_id=eq.'+workspace.id+'&order=created_at.desc')
+  if(!workspace)return Promise.resolve();
+  return sbF('GET','direct_requests?select=*&workspace_id=eq.'+workspace.id+'&order=created_at.desc')
     .then(function(rows){
       requests=rows||[];
       updateStats();
@@ -490,22 +587,34 @@ function loadRequests(){
         '</div>'+
         '<button class="btn-primary" onclick="loadRequests()">🔄 Retry after setup</button>'+
         '</div>';
+      return Promise.resolve();
     });
 }
 
-function refreshRequests(){toast('Refreshing...','warn');loadRequests();}
+function refreshRequests(){
+  toast('Refreshing...','warn');
+  Promise.all([loadRequests(), loadAllBookings()]).then(function(){
+    renderCalendar();
+    renderPayments();
+  });
+}
 
 function updateStats(){
   var pending=requests.filter(function(r){return r.status==='pending';}).length;
-  var confirmed=requests.filter(function(r){return r.status==='confirmed';});
-  var nights=confirmed.reduce(function(acc,r){
-    if(r.checkin&&r.checkout){
-      return acc+Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000);
-    }return acc;
+  var confirmedReqs=requests.filter(function(r){return r.status==='confirmed';});
+  // Total confirmed = direct confirmed requests + all SummerClean bookings
+  var totalConfirmed=confirmedReqs.length+allBookings.length;
+  var nights=allBookings.reduce(function(acc,b){
+    if(b.checkin&&b.checkout)return acc+Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000);
+    return acc;
   },0);
-  var revenue=confirmed.reduce(function(acc,r){return acc+(r.total_amount||0);},0);
+  nights+=confirmedReqs.reduce(function(acc,r){
+    if(r.checkin&&r.checkout)return acc+Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000);
+    return acc;
+  },0);
+  var revenue=confirmedReqs.reduce(function(acc,r){return acc+(r.total_amount||0);},0);
   document.getElementById('st-pending').textContent=pending;
-  document.getElementById('st-confirmed').textContent=confirmed.length;
+  document.getElementById('st-confirmed').textContent=totalConfirmed;
   document.getElementById('st-nights').textContent=nights;
   document.getElementById('st-revenue').textContent=revenue?'€'+revenue.toLocaleString():'—';
   var badge=document.getElementById('pendingBadge');
@@ -568,9 +677,74 @@ function renderRequests(){
       '</div>';
     list.appendChild(div);
   });
+
+  // ── TWO-WAY: show SummerClean imported bookings below ──────────────────
+  renderSummerCleanBookings(list);
 }
 
-// ── RESPOND MODAL ───────────────────────────────────────────────────────────
+function renderSummerCleanBookings(list){
+  if(!allBookings||!allBookings.length)return;
+  var today=new Date().toISOString().slice(0,10);
+  // Show upcoming + recent (checkout within last 7 days)
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+  var cutoffStr=cutoff.toISOString().slice(0,10);
+  var visible=allBookings.filter(function(b){return b.checkout>=cutoffStr;});
+  if(!visible.length)return;
+
+  var section=document.createElement('div');
+  section.innerHTML=
+    '<div style="margin-top:24px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
+      '<div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'+
+        '🧹 From SummerClean ('+visible.length+' booking'+(visible.length!==1?'s':'')+')</div>'+
+      '<div style="flex:1;height:1px;background:var(--border)"></div>'+
+      '<span style="font-size:10px;font-weight:700;color:var(--muted)">Imported · read-only</span>'+
+    '</div>';
+  list.appendChild(section);
+
+  visible.forEach(function(b){
+    var apt=aptById(b.apt);
+    var nights=0;
+    if(b.checkin&&b.checkout)nights=Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000);
+    var isActive=b.checkin<=today&&b.checkout>=today;
+    var isPast=b.checkout<today;
+    var div=document.createElement('div');
+    div.className='req-card confirmed';
+    div.style.opacity=isPast?'0.5':'1';
+    div.innerHTML=
+      '<div class="req-top">'+
+        '<div>'+
+          '<div class="req-guest">'+(b.guests||'Guest')+'</div>'+
+          '<div class="req-email">'+esc(b.notes||'')+'</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<span class="status-badge" style="background:#'+(b.source==='airbnb'?'fee2e2;color:#9f1239':b.source==='booking'?'dbeafe;color:#1e40af':'dcfce7;color:#15803d')+'">'+
+            (b.source==='airbnb'?'🏠 Airbnb':b.source==='booking'?'📋 Booking.com':'🤝 Direct')+
+          '</span>'+
+          (isActive?'<span class="status-badge" style="background:#fef3c7;color:#92400e">🟡 Active</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="req-dates">'+
+        '<div class="rdb"><div class="rdlbl">Check-in</div><div class="rdval">'+fmtShort(b.checkin)+'</div><div class="rdday">'+fmtDay(b.checkin)+'</div></div>'+
+        '<div class="rdarr">→</div>'+
+        '<div class="rdb r"><div class="rdlbl">Check-out</div><div class="rdval">'+fmtShort(b.checkout)+'</div><div class="rdday">'+fmtDay(b.checkout)+'</div></div>'+
+      '</div>'+
+      '<div class="req-info">'+
+        '<span class="chip" style="background:'+apt.color+'22;color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</span>'+
+        '<span class="chip">🌙 '+nights+' night'+(nights!==1?'s':'')+'</span>'+
+        '<span class="chip '+(b.cleaned==='yes'?'':'')+'">🧹 '+(b.cleaned==='yes'?'Cleaned':'Not cleaned')+'</span>'+
+        '<span class="chip '+(b.paid==='paid'?'':'')+'">💶 '+(b.paid==='paid'?'Paid':'Unpaid')+'</span>'+
+      '</div>'+
+      '<div class="req-actions" style="justify-content:flex-end">'+
+        '<span style="font-size:10px;color:var(--muted);font-weight:700">Manage in 🧹 SummerClean</span>'+
+      '</div>';
+    list.appendChild(div);
+  });
+}
+
+function aptById(id){
+  return properties.find(function(p){return p.id===id||p.short===id||p.name===id;})||
+    {id:id,name:id,short:id,color:'#64748b'};
+}
 function openRespond(id,defaultAction){
   activeRequest=requests.find(function(r){return r.id===id;});
   if(!activeRequest)return;
@@ -1019,6 +1193,200 @@ loadRequests=function(){origLoadRequests.apply(this,arguments);};
 // Override renderRequests to also re-render payments
 var _origRenderRequests=renderRequests;
 renderRequests=function(){_origRenderRequests();renderPayments();};
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+function renderCalendar(){
+  buildCalFilters();
+  drawCal();
+}
+
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}drawCal();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}drawCal();}
+function calGoToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();drawCal();}
+
+function buildCalFilters(){
+  var bar=document.getElementById('calFilters');
+  if(!bar)return;
+  bar.innerHTML='';
+  function mkBtn(id,label,col){
+    var b=document.createElement('button');
+    b.className='cal-fb'+(calAptFilter===id?' on':'');
+    b.textContent=label;
+    if(calAptFilter===id&&col){b.style.background=col;b.style.borderColor=col;b.style.color='#fff';}
+    b.addEventListener('click',function(){calAptFilter=id;buildCalFilters();drawCal();});
+    bar.appendChild(b);
+  }
+  mkBtn('all','All properties','#0f172a');
+  properties.forEach(function(p){mkBtn(p.id,p.name||p.short,p.color);});
+}
+
+function drawCal(){
+  var grid=document.getElementById('calGrid');
+  var lbl=document.getElementById('calMonthLbl');
+  if(!grid||!lbl)return;
+
+  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  lbl.textContent=months[calMonth]+' '+calYear;
+
+  var today=new Date().toISOString().slice(0,10);
+  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+
+  // Build array of all days in month
+  var dayDates=[];
+  for(var d=1;d<=daysInMonth;d++){
+    var ds=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    dayDates.push(ds);
+  }
+
+  // Determine which properties to show
+  var visibleProps=calAptFilter==='all'?properties:properties.filter(function(p){return p.id===calAptFilter;});
+  // If no properties configured, infer from bookings
+  if(!visibleProps.length){
+    var aptIds={};
+    allBookings.forEach(function(b){if(b.apt)aptIds[b.apt]=true;});
+    visibleProps=Object.keys(aptIds).map(function(id){return{id:id,name:id,short:id,color:'#64748b'};});
+  }
+  if(!visibleProps.length){
+    grid.innerHTML='<div class="empty-state" style="padding:40px"><div class="ico">🏡</div><h3>No properties yet</h3><p>Add properties in the Properties tab to see them here.</p></div>';
+    return;
+  }
+
+  // Columns: label col + one per day
+  var totalCols=1+daysInMonth;
+  var colTemplate='120px '+dayDates.map(function(){return'minmax(38px,1fr)';}).join(' ');
+
+  // ── Header row ─────────────────────────────────────────────────────────
+  var headHTML='<div class="cal-head" style="grid-template-columns:'+colTemplate+'">'+
+    '<div class="cal-head-cell" style="position:sticky;left:0;z-index:11;background:#fff;border-right:2px solid var(--border)"></div>';
+  dayDates.forEach(function(ds){
+    var dt=new Date(ds+'T12:00:00');
+    var dow=days[(dt.getDay()+6)%7]; // Mon=0
+    var isToday=ds===today;
+    var isWknd=dt.getDay()===0||dt.getDay()===6;
+    headHTML+='<div class="cal-head-cell'+(isToday?' today-col':'')+(isWknd&&!isToday?' weekend':'')+'">'+
+      '<div style="font-size:8px">'+dow+'</div>'+
+      '<div style="font-size:13px;font-weight:900;margin-top:1px">'+dt.getDate()+'</div>'+
+      '</div>';
+  });
+  headHTML+='</div>';
+
+  // ── Property rows ──────────────────────────────────────────────────────
+  var rowsHTML='';
+  visibleProps.forEach(function(prop){
+    // Get bookings for this property
+    var propBookings=allBookings.filter(function(b){
+      if(calAptFilter!=='all'&&b.apt!==calAptFilter&&b.apt!==prop.id)return false;
+      return b.apt===prop.id||b.apt===prop.short||b.apt===prop.name;
+    });
+
+    rowsHTML+='<div class="cal-row" style="grid-template-columns:'+colTemplate+'">';
+    // Label cell
+    rowsHTML+='<div class="cal-row-label">'+
+      '<div class="cal-row-dot" style="background:'+prop.color+'"></div>'+
+      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(prop.short||prop.name)+'</span>'+
+      '</div>';
+
+    // Day cells
+    dayDates.forEach(function(ds){
+      var dt=new Date(ds+'T12:00:00');
+      var isToday=ds===today;
+      var isWknd=dt.getDay()===0||dt.getDay()===6;
+      rowsHTML+='<div class="cal-day-cell'+(isToday?' today-col':isWknd?' weekend':'')+'">'+
+        renderBarForDay(propBookings,ds,prop.color)+
+        '</div>';
+    });
+    rowsHTML+='</div>';
+  });
+
+  grid.innerHTML=headHTML+rowsHTML;
+
+  // Attach click listeners to bars
+  grid.querySelectorAll('.cal-bar').forEach(function(bar){
+    bar.addEventListener('click',function(e){
+      e.stopPropagation();
+      var id=bar.getAttribute('data-id');
+      var b=allBookings.find(function(x){return x.id===id;});
+      if(b)showCalPopup(b,e);
+    });
+  });
+
+  // Close popup on grid click
+  grid.addEventListener('click',function(){hideCalPopup();});
+}
+
+function renderBarForDay(bookings,ds,aptColor){
+  // Find bookings that are active on this day
+  var active=bookings.filter(function(b){
+    return b.checkin&&b.checkout&&b.checkin<=ds&&b.checkout>ds;
+    // Note: checkout day = guest leaves, so not "staying" on checkout day
+    // checkin day through (checkout-1) = occupied
+  });
+  if(!active.length)return'';
+
+  return active.map(function(b){
+    var isStart=b.checkin===ds;
+    var yesterday=new Date(ds+'T12:00:00');yesterday.setDate(yesterday.getDate()-1);
+    var yds=yesterday.toISOString().slice(0,10);
+    var isEnd=b.checkout===ds; // checkout day = departure
+    // checkout day — show as departure
+    var endOfStay=new Date(b.checkout+'T12:00:00');endOfStay.setDate(endOfStay.getDate()-1);
+    var lastNight=endOfStay.toISOString().slice(0,10);
+    var isLastNight=ds===lastNight;
+
+    var posClass=isStart&&isLastNight?'bar-solo':isStart?'bar-start':isLastNight?'bar-end':'bar-middle';
+    var src=b.source||'direct';
+    var srcClass='src-'+src;
+    // Guest name from "N guests – Name" format or raw
+    var label=b.guests||'Guest';
+    if(label.indexOf('–')!==-1)label=label.split('–')[1].trim();
+    else if(label.indexOf('-')!==-1&&label.indexOf('guest')===-1)label=label.split('-')[1].trim();
+    if(label.length>18)label=label.slice(0,17)+'…';
+
+    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(b.guests||'')+'">'+
+      (isStart||posClass==='bar-solo'?esc(label):'')+
+      '</div>';
+  }).join('');
+}
+
+function showCalPopup(b,e){
+  hideCalPopup();
+  var apt=aptById(b.apt);
+  var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
+  var popup=document.getElementById('calPopup');
+  popup.className='cal-popup';
+  popup.innerHTML=
+    '<button class="cal-popup-close" onclick="hideCalPopup()">✕</button>'+
+    '<h4 style="color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</h4>'+
+    '<div class="cal-popup-row"><span class="lbl">Guest</span><span>'+esc(b.guests||'—')+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Check-in</span><span>'+fmtFull(b.checkin)+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Check-out</span><span>'+fmtFull(b.checkout)+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Nights</span><span>'+nights+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Source</span><span>'+(b.source||'direct')+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Payment</span><span>'+(b.paid||'unpaid')+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Cleaned</span><span>'+(b.cleaned==='yes'?'✅ Yes':'❌ No')+'</span></div>'+
+    (b.notes?'<div class="cal-popup-row" style="flex-direction:column;gap:4px"><span class="lbl">Notes</span><span style="font-size:11px">'+esc(b.notes)+'</span></div>':'')+
+    '<p style="font-size:10px;color:var(--muted);margin-top:10px;font-weight:700">Manage cleaning in 🧹 SummerClean</p>';
+  // Position near click
+  var x=e.clientX,y=e.clientY;
+  var pw=280,ph=260;
+  popup.style.left=Math.min(x+10,window.innerWidth-pw-10)+'px';
+  popup.style.top=Math.min(y+10,window.innerHeight-ph-10)+'px';
+  popup.style.display='block';
+  setTimeout(function(){document.addEventListener('click',hideCalPopup,{once:true});},100);
+}
+
+function hideCalPopup(){
+  var p=document.getElementById('calPopup');
+  if(p)p.style.display='none';
+}
+
+// Re-render calendar when switching to that tab
+var _origSwitchTab=switchTab;
+switchTab=function(tab){
+  _origSwitchTab(tab);
+  if(tab==='calendar')renderCalendar();
+};
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
