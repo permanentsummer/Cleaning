@@ -433,7 +433,7 @@ function buildBlockedMap(){
     if(!b.checkin||!b.checkout||!b.apt)return;
     if(!blockedMap[b.apt])blockedMap[b.apt]=[];
     var d=new Date(b.checkin+'T12:00:00'),end=new Date(b.checkout+'T12:00:00');
-    while(d<end){blockedMap[b.apt].push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
+    while(d<end){var ds2=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');blockedMap[b.apt].push(ds2);d.setDate(d.getDate()+1);}
   });
 }
 
@@ -441,7 +441,7 @@ function isAvail(prop,ci,co){
   var dates=blockedMap[prop.id]||[];
   if(!dates.length)return true;
   var d=new Date(ci+'T12:00:00'),end=new Date(co+'T12:00:00');
-  while(d<end){if(dates.indexOf(d.toISOString().slice(0,10))!==-1)return false;d.setDate(d.getDate()+1);}
+  while(d<end){var da=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(dates.indexOf(da)!==-1)return false;d.setDate(d.getDate()+1);}
   return true;
 }
 
@@ -478,7 +478,7 @@ function buildMonth(today,offset){
   var dim=new Date(ref.getFullYear(),ref.getMonth()+1,0).getDate();
   for(var day=1;day<=dim;day++){
     var dt=new Date(ref.getFullYear(),ref.getMonth(),day);dt.setHours(0,0,0,0);
-    var ds=dt.toISOString().slice(0,10);
+    var ds=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
     var cell=document.createElement('div');cell.className='cd';cell.textContent=day;
     var past=dt<today,isToday=dt.getTime()===today.getTime();
     if(past&&!isToday){cell.classList.add('disabled');}
@@ -775,7 +775,7 @@ function sendMail(to,replyTo,subj,html){
   if(replyTo)b.reply_to=replyTo;
   return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
     body:JSON.stringify(b)
   }).then(function(r){
     return r.text().then(function(txt){
