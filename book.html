@@ -3,441 +3,568 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Book Direct</title>
+<title>Book Direct — Permanent Summer</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--green:#22c55e;--green-bg:#dcfce7;--red:#ef4444;--red-bg:#fee2e2;--blue:#3b82f6;--bg:#f8fafc;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--r:14px;--shadow:0 2px 16px rgba(0,0,0,.08);--accent:#6366f1}
+:root{
+  --accent:#2563eb;--accent-light:#dbeafe;--accent-dark:#1d4ed8;
+  --green:#16a34a;--green-bg:#dcfce7;
+  --red:#dc2626;--border:#e2e8f0;
+  --bg:#f8fafc;--text:#0f172a;--muted:#64748b;
+  --r:14px;--shadow:0 2px 16px rgba(0,0,0,.08);
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.page{display:none;min-height:100vh}
-.page.on{display:block}
-#loadingPage.on{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
-.spinner{width:38px;height:38px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+
+#loadingScreen{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+#loadingScreen.hidden{display:none}
+.spinner{width:36px;height:36px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-header{background:#0f172a;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
-.logo-ico{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.logo-txt h1{font-size:15px;font-weight:900}
-.logo-txt p{font-size:10px;color:#94a3b8;font-weight:700}
-.hero{padding:24px 16px 16px;text-align:center}
-.hero h2{font-size:22px;font-weight:900;margin-bottom:8px}
-.hero p{font-size:13px;color:var(--muted);font-weight:600;line-height:1.5}
-.perks{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:12px 16px;margin-bottom:8px}
-.perk{display:flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:6px 12px;font-size:11px;font-weight:800;box-shadow:var(--shadow)}
+
+.site-header{background:#fff;border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header-logo{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.header-txt h1{font-size:16px;font-weight:900}
+.header-txt p{font-size:10px;color:var(--muted);font-weight:700}
+.header-perks{display:flex;gap:10px;margin-left:auto}
+.hperk{font-size:10px;font-weight:800;color:var(--muted)}
+
+.steps{display:flex;align-items:center;padding:14px 20px;background:#fff;border-bottom:1px solid var(--border)}
+.step{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted)}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--border);color:var(--muted);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step.active .step-num{background:var(--accent);color:#fff}
+.step.active{color:var(--text)}
+.step.done .step-num{background:var(--green);color:#fff}
+.step.done{color:var(--green)}
+.step-line{flex:1;height:2px;background:var(--border);margin:0 6px}
+.step-line.done{background:var(--green)}
+
+.section{display:none;padding:20px;max-width:720px;margin:0 auto}
+.section.active{display:block}
+
+/* Calendar */
+.cal-wrap{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.cal-top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.cal-top h2{font-size:15px;font-weight:900}
+.cal-top p{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.cal-nav-row{display:flex;gap:8px}
+.cnbtn{width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1}
+.cnbtn:hover{border-color:var(--accent);color:var(--accent)}
+.cnbtn:disabled{opacity:.3;cursor:default}
+.cal-months{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0 4px 16px}
+@media(max-width:520px){.cal-months{grid-template-columns:1fr}}
+.cal-month{padding:12px 14px}
+.cal-month-name{font-size:14px;font-weight:900;margin-bottom:10px;text-align:center}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{font-size:9px;font-weight:800;color:var(--muted);text-align:center;padding:3px 0;text-transform:uppercase}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;position:relative;border:2px solid transparent;user-select:none}
+.cd:hover:not(.disabled):not(.empty){background:var(--accent-light);color:var(--accent)}
+.cd.empty,.cd.disabled{cursor:default;color:#cbd5e1}
+.cd.today{color:var(--accent);font-weight:900}
+.cd.in-range{background:var(--accent-light);color:var(--accent);border-radius:0}
+.cd.range-start{background:var(--accent)!important;color:#fff!important;border-radius:8px 0 0 8px}
+.cd.range-end{background:var(--accent)!important;color:#fff!important;border-radius:0 8px 8px 0}
+.cd.range-start.range-end{border-radius:8px}
+.cd.selecting:hover:not(.disabled):not(.empty){background:var(--accent-light);color:var(--accent)}
+
+/* Selection bar */
+.sel-bar{background:var(--accent);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-radius:var(--r);margin-bottom:14px}
+.sel-bar.hidden{display:none}
+.sel-dates-lbl{font-size:11px;opacity:.8;font-weight:700;margin-bottom:2px}
+.sel-dates-val{font-size:14px;font-weight:900}
+.sel-go-btn{background:#fff;color:var(--accent);border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;padding:9px 18px;cursor:pointer;white-space:nowrap}
+.sel-go-btn:hover{background:var(--accent-light)}
+
+.guests-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.guests-lbl{font-size:14px;font-weight:800}
+.guests-sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+.g-ctrl{display:flex;align-items:center;gap:14px}
+.g-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.g-btn:hover{border-color:var(--accent);color:var(--accent)}
+.g-num{font-size:18px;font-weight:900;min-width:22px;text-align:center}
+
 /* Properties */
-.section-lbl{font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:0 16px 8px}
-.prop-grid{display:flex;flex-direction:column;gap:10px;padding:0 16px 16px}
-.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:16px;border:2px solid var(--border);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
-.prop-card:hover{border-color:var(--accent);box-shadow:0 4px 20px rgba(99,102,241,.15)}
-.prop-card.sel{border-color:var(--accent);background:#f5f3ff}
-.prop-dot{width:14px;height:14px;border-radius:4px;flex-shrink:0}
-.prop-info{flex:1}
-.prop-name{font-size:15px;font-weight:900}
-.prop-sub{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
-.prop-rate{font-size:14px;font-weight:900;color:var(--accent)}
-.prop-check{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0);transition:all .2s}
-.prop-card.sel .prop-check{opacity:1;transform:scale(1)}
+.avail-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.avail-hd h2{font-size:17px;font-weight:900}
+.avail-hd p{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
+.dates-chip{background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
+
+.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:2px solid transparent;transition:border-color .15s}
+.prop-card:hover{border-color:var(--accent)}
+.prop-photo{height:190px;background:#f1f5f9;position:relative;overflow:hidden}
+.prop-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.prop-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px}
+.ph-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px;pointer-events:none}
+.ph-btn{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;border:none;font-size:13px;cursor:pointer;pointer-events:all;display:flex;align-items:center;justify-content:center}
+.ph-btn:hover{background:rgba(0,0,0,.6)}
+.ph-dots{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+.ph-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.5)}
+.ph-dot.on{background:#fff}
+.prop-body{padding:16px}
+.prop-name{font-size:17px;font-weight:900;margin-bottom:3px}
+.prop-loc{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px}
+.prop-feats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.fc{font-size:11px;font-weight:700;color:var(--muted);background:var(--bg);border-radius:6px;padding:3px 8px}
+.prop-price-row{display:flex;align-items:flex-end;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border);gap:12px}
+.plabel{font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.pstrike{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:700;margin-bottom:1px}
+.pmain{font-size:22px;font-weight:900}
+.pnights{font-size:11px;color:var(--muted);font-weight:700;margin-top:1px}
+.pdeposit{font-size:10px;color:var(--muted);font-weight:700;margin-top:2px}
+.sel-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;padding:12px 22px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.sel-btn:hover{background:var(--accent-dark)}
+
+.no-avail{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);text-align:center;padding:48px 20px}
+.no-avail .ico{font-size:44px;margin-bottom:12px}
+.no-avail h3{font-size:17px;font-weight:900;margin-bottom:8px}
+.no-avail p{font-size:13px;color:var(--muted);font-weight:600;line-height:1.6;margin-bottom:18px}
+.wa-link{display:inline-block;background:#25d366;color:#fff;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;text-decoration:none}
+
 /* Form */
-.form-wrap{padding:0 16px 32px}
+.form-summary{background:var(--accent);color:#fff;border-radius:var(--r);padding:16px 20px;margin-bottom:14px}
+.form-summary h3{font-size:15px;font-weight:900;margin-bottom:4px}
+.form-summary p{font-size:12px;opacity:.85;font-weight:600;line-height:1.5}
 .form-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:12px}
-.form-card h3{font-size:15px;font-weight:900;margin-bottom:14px}
+.form-card h3{font-size:14px;font-weight:900;margin-bottom:14px}
 .fg{margin-bottom:12px}
 .fg label{display:block;font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fg input,.fg select,.fg textarea{width:100%;padding:11px 12px;border:2px solid var(--border);border-radius:11px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);background:#fff;outline:none;-webkit-appearance:none}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:10px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);background:#fff;outline:none;-webkit-appearance:none}
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent)}
-.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.summary{background:#f0fdf4;border:2px solid #bbf7d0;border-radius:11px;padding:12px 14px;margin-bottom:12px;font-size:12px;line-height:1.7;display:none}
-.summary.show{display:block}
-.summary strong{font-weight:900}
-.submit-btn{width:100%;padding:15px;background:#0f172a;color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer}
+.fg textarea{resize:vertical;min-height:80px;line-height:1.5}
+.submit-btn{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer}
 .submit-btn:disabled{opacity:.5;cursor:wait}
-.submit-btn:hover:not(:disabled){background:#1e293b}
-.ferr{font-size:12px;font-weight:700;color:var(--red);margin-top:8px;min-height:16px}
-.no-sel-hint{font-size:12px;color:var(--muted);font-weight:700;text-align:center;padding:12px;background:#fff;border-radius:11px;border:2px dashed var(--border);margin-bottom:12px}
+.submit-btn:hover:not(:disabled){background:var(--accent-dark)}
+.ferr{font-size:12px;font-weight:700;color:var(--red);text-align:center;min-height:16px;margin-top:8px}
+.fnote{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;font-weight:600;line-height:1.5}
+
+.back-btn{display:flex;align-items:center;gap:5px;background:none;border:2px solid var(--border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;padding:7px 13px;margin-bottom:16px}
+.back-btn:hover{border-color:var(--text);color:var(--text)}
+
 /* Success */
-#successPage{background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;flex-direction:column;text-align:center;color:#fff;gap:0}
-.success-ico{font-size:64px;margin-bottom:20px}
-.success-title{font-size:28px;font-weight:900;margin-bottom:12px}
-.success-sub{font-size:14px;color:#94a3b8;font-weight:600;line-height:1.6;max-width:340px;margin:0 auto 28px}
-.success-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px;width:100%;max-width:340px;margin:0 auto 24px;text-align:left}
-.srow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
-.srow:last-child{border:none}.srow .lbl{color:#94a3b8}.srow .val{font-weight:800}
-.wa-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;color:#fff;border:none;border-radius:13px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;padding:14px 24px;cursor:pointer;text-decoration:none;width:100%;max-width:340px}
+#successSection{display:none;padding:40px 20px;text-align:center;max-width:440px;margin:0 auto}
+.sico{font-size:60px;margin-bottom:20px}
+.stitle{font-size:26px;font-weight:900;margin-bottom:10px}
+.ssub{font-size:13px;color:var(--muted);font-weight:600;line-height:1.7;margin-bottom:28px}
+.sbox{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;text-align:left;margin-bottom:20px}
+.srow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.srow:last-child{border:none}
+.srow .l{color:var(--muted);font-weight:700}.srow .v{font-weight:900}
+.wa-btn2{display:flex;align-items:center;justify-content:center;gap:9px;background:#25d366;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;padding:15px;cursor:pointer;text-decoration:none;width:100%}
 </style>
 </head>
 <body>
 
-<div id="loadingPage" class="page on">
+<div id="loadingScreen">
   <div class="spinner"></div>
-  <p style="font-size:13px;font-weight:700;color:var(--muted)">Loading...</p>
+  <div style="font-size:17px;font-weight:900;color:var(--text)">Permanent Summer</div>
 </div>
 
-<div id="bookPage" class="page">
-  <header>
-    <div class="logo-ico">🏡</div>
-    <div class="logo-txt"><h1 id="hostName">Direct Bookings</h1><p>Book direct · Save fees · Same host</p></div>
-  </header>
+<div class="site-header" id="siteHeader" style="display:none">
+  <div class="header-logo">🏡</div>
+  <div class="header-txt"><h1>Book Direct</h1><p>No fees · Direct with host</p></div>
+  <div class="header-perks"><div class="hperk">💰 No fees</div><div class="hperk">📱 WhatsApp</div></div>
+</div>
 
-  <div class="hero">
-    <h2>Book Direct &amp; Save 💰</h2>
-    <p>No platform fees. Direct contact with your host from day one.</p>
-  </div>
+<div class="steps" id="stepsBar" style="display:none">
+  <div class="step active" id="s1ind"><div class="step-num">1</div><span>Dates</span></div>
+  <div class="step-line" id="line1"></div>
+  <div class="step" id="s2ind"><div class="step-num">2</div><span>Property</span></div>
+  <div class="step-line" id="line2"></div>
+  <div class="step" id="s3ind"><div class="step-num">3</div><span>Details</span></div>
+</div>
 
-  <div class="perks">
-    <div class="perk">💰 No service fees</div>
-    <div class="perk">📱 Direct WhatsApp</div>
-    <div class="perk">🤝 Flexible payment</div>
-  </div>
-
-  <div class="section-lbl">Choose a property</div>
-  <div class="prop-grid" id="propGrid"></div>
-
-  <div class="form-wrap">
-    <div class="no-sel-hint" id="noSelHint">↑ Select a property to continue</div>
-
-    <div id="formCards" style="display:none">
-      <div class="form-card">
-        <h3>📅 Your dates</h3>
-        <div class="fr">
-          <div class="fg"><label>Check-in *</label><input type="date" id="checkin"></div>
-          <div class="fg"><label>Check-out *</label><input type="date" id="checkout"></div>
-        </div>
-        <div class="fg"><label>Number of guests *</label>
-          <select id="guests">
-            <option value="1">1 guest</option><option value="2" selected>2 guests</option>
-            <option value="3">3 guests</option><option value="4">4 guests</option>
-            <option value="5">5 guests</option><option value="6">6 guests</option>
-            <option value="7">7 guests</option><option value="8">8 guests</option>
-            <option value="9">9 guests</option><option value="10">10+ guests</option>
-          </select>
-        </div>
-        <div class="summary" id="staySummary"></div>
+<!-- Step 1: Dates -->
+<div class="section active" id="step1">
+  <div class="cal-wrap">
+    <div class="cal-top">
+      <div><h2>When are you staying?</h2><p id="calHint">Select your check-in date</p></div>
+      <div class="cal-nav-row">
+        <button class="cnbtn" id="prevBtn" onclick="calShift(-1)">‹</button>
+        <button class="cnbtn" onclick="calShift(1)">›</button>
       </div>
-
-      <div class="form-card">
-        <h3>👤 Your details</h3>
-        <div class="fg"><label>Full name *</label><input type="text" id="guestName" placeholder="Jane Smith"></div>
-        <div class="fg"><label>Email *</label><input type="email" id="guestEmail" placeholder="jane@example.com" autocomplete="email"></div>
-        <div class="fg"><label>Phone (WhatsApp preferred)</label><input type="tel" id="guestPhone" placeholder="+351 xxx xxx xxx"></div>
-        <div class="fg"><label>Special requests</label><textarea id="notes" rows="3" placeholder="Early check-in, baby cot, allergies..."></textarea></div>
-      </div>
-
-      <div class="ferr" id="formErr"></div>
-      <button class="submit-btn" id="submitBtn">Request Booking</button>
-      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;font-weight:600">
-        No payment required now. Your host will confirm and share payment details.
-      </p>
+    </div>
+    <div class="cal-months" id="calMonths"></div>
+  </div>
+  <div class="guests-card">
+    <div><div class="guests-lbl">Guests</div><div class="guests-sub">How many people?</div></div>
+    <div class="g-ctrl">
+      <button class="g-btn" onclick="changeGuests(-1)">−</button>
+      <span class="g-num" id="gNum">2</span>
+      <button class="g-btn" onclick="changeGuests(1)">+</button>
     </div>
   </div>
+  <div class="sel-bar hidden" id="selBar">
+    <div><div class="sel-dates-lbl">Your stay</div><div class="sel-dates-val" id="selVal">—</div></div>
+    <button class="sel-go-btn" onclick="goStep2()">See available properties →</button>
+  </div>
 </div>
 
-<div id="successPage" class="page" style="display:none">
-  <div class="success-ico">🌅</div>
-  <div class="success-title">Request sent!</div>
-  <div class="success-sub">Your host will confirm within 24 hours and reach out with payment details.</div>
-  <div class="success-card" id="successCard"></div>
-  <a id="waLink" href="#" class="wa-btn" target="_blank">💬 Message host on WhatsApp</a>
+<!-- Step 2: Properties -->
+<div class="section" id="step2">
+  <button class="back-btn" onclick="goStep1()">‹ Change dates</button>
+  <div class="avail-hd">
+    <div><h2>Available options</h2><p id="availSub"></p></div>
+    <div class="dates-chip" onclick="goStep1()"><span id="chipTxt">—</span> ✎</div>
+  </div>
+  <div id="propList"></div>
+</div>
+
+<!-- Step 3: Details -->
+<div class="section" id="step3">
+  <button class="back-btn" onclick="goStep2()">‹ Change property</button>
+  <div class="form-summary" id="fSummary"></div>
+  <div class="form-card">
+    <h3>👤 Your details</h3>
+    <div class="fg"><label>Full name *</label><input type="text" id="fName" placeholder="Jane Smith" autocomplete="name"></div>
+    <div class="fg"><label>Email *</label><input type="email" id="fEmail" placeholder="jane@example.com" autocomplete="email"></div>
+    <div class="fg"><label>Phone (WhatsApp preferred)</label><input type="tel" id="fPhone" placeholder="+351 xxx xxx xxx" autocomplete="tel"></div>
+    <div class="fg"><label>Special requests</label><textarea id="fNotes" placeholder="Early check-in, baby cot, allergies…"></textarea></div>
+  </div>
+  <div class="ferr" id="fErr"></div>
+  <button class="submit-btn" id="subBtn" onclick="doSubmit()">Request Booking</button>
+  <p class="fnote">No payment required now. Host will confirm within 24 hours.</p>
+</div>
+
+<!-- Success -->
+<div id="successSection">
+  <div class="sico">🌅</div>
+  <div class="stitle">Request sent!</div>
+  <div class="ssub">Your host will confirm within 24 hours and reach out with payment details. Check your email for a confirmation.</div>
+  <div class="sbox" id="sBox"></div>
+  <a id="waLink" href="#" class="wa-btn2" target="_blank">💬 Message host on WhatsApp</a>
 </div>
 
 <script>
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
+var HOST_WA='351924477353';
+var HOST_EMAIL='chris@permanentsummer.co';
 
-var workspaceId=null,workspaceCfg={},properties=[],selectedProp=null;
+var wsId=new URLSearchParams(window.location.search).get('ws');
+var properties=[],existingBookings=[],blockedMap={};
+var checkIn=null,checkOut=null,guests=2,selProp=null;
+var calOff=0,photoIdx={};
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-// Read workspace ID from URL
-var params=new URLSearchParams(window.location.search);
-workspaceId=params.get('ws');
-
-function showPage(id){
-  document.querySelectorAll('.page').forEach(function(p){
-    p.classList.remove('on');p.style.display='';
-  });
-  document.getElementById(id).classList.add('on');
-  if(id==='successPage')document.getElementById(id).style.display='flex';
-}
-
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
-function fmtD(d){if(!d)return'—';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
-function fmtFull(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
-
-function calcNights(){
-  var ci=document.getElementById('checkin').value;
-  var co=document.getElementById('checkout').value;
-  if(!ci||!co)return 0;
-  return Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
-}
-
-function calcTotal(prop,nights){
-  if(!prop||!nights)return 0;
-  // Check seasonal rates
-  var ci=document.getElementById('checkin').value;
-  if(prop.seasonRates&&prop.seasonRates.length&&ci){
-    for(var i=0;i<prop.seasonRates.length;i++){
-      var sr=prop.seasonRates[i];
-      if(ci>=sr.from&&ci<=sr.to){
-        return (sr.rate*nights)+(prop.cleanFee||0);
-      }
-    }
-  }
-  return ((prop.ratePerNight||0)*nights)+(prop.cleanFee||0);
-}
-
-// Load workspace — uses anon key with Accept-Profile workaround
-// The workspaces table needs an anon SELECT policy for id+settings columns.
-// SQL to run once in Supabase: 
-//   CREATE POLICY "anon_read_workspace_settings" ON workspaces
-//   FOR SELECT TO anon USING (true);
-function init(){
-  if(!workspaceId){
-    document.getElementById('loadingPage').innerHTML=
-      '<p style="padding:40px;font-size:14px;font-weight:700;color:#ef4444">No workspace specified in URL.<br>Please check your booking link.</p>';
-    return;
-  }
-
-  // Try fetching workspace with anon key
-  fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(workspaceId),{
-    headers:{
-      'apikey':SB_KEY,
-      'Authorization':'Bearer '+SB_KEY,
-      'Accept':'application/json'
-    }
-  })
-  .then(function(r){
-    if(!r.ok)return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t);});
-    return r.json();
-  })
-  .then(function(rows){
-    // RLS may return empty array if policy not set — handle gracefully
-    if(!rows||!rows.length){
-      showRLSError();
-      return;
-    }
-    var ws=rows[0];
-    workspaceCfg=ws.settings||{};
-    // Only show properties not hidden from guests
-    properties=(workspaceCfg.apts||[]).filter(function(p){return !p.hiddenFromGuests;});
-    renderProps();
-    showPage('bookPage');
-  })
-  .catch(function(e){
-    showRLSError(e.message);
-  });
-}
-
-function showRLSError(msg){
-  document.getElementById('loadingPage').innerHTML=
-    '<div style="padding:32px;text-align:center;max-width:400px;margin:0 auto">'+
-    '<div style="font-size:32px;margin-bottom:16px">⚙️</div>'+
-    '<p style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:8px">One-time setup needed</p>'+
-    '<p style="font-size:13px;color:#64748b;font-weight:600;line-height:1.6;margin-bottom:20px">'+
-    'Run this SQL in your Supabase dashboard to allow guests to load this page:</p>'+
-    '<div style="background:#0f172a;border-radius:10px;padding:14px;font-size:12px;color:#a5f3fc;text-align:left;line-height:1.8;font-family:monospace;margin-bottom:16px">'+
-    'CREATE POLICY "anon_read_workspace_settings"<br>'+
-    'ON workspaces FOR SELECT TO anon<br>'+
-    'USING (true);</div>'+
-    '<p style="font-size:11px;color:#94a3b8;font-weight:600">This only exposes your apartment names and rates — no personal data.</p>'+
-    (msg?'<p style="font-size:10px;color:#ef4444;margin-top:12px">'+msg+'</p>':'')+
-    '</div>';
-}
-
-function renderProps(){
-  var grid=document.getElementById('propGrid');
-  // Filter out properties hidden from guests
-  var visible=properties.filter(function(p){return !p.hiddenFromGuests;});
-  if(!visible.length){
-    grid.innerHTML='<p style="text-align:center;padding:16px;color:var(--muted);font-size:13px;font-weight:700">No properties available. Please contact the host.</p>';
-    return;
-  }
-  visible.forEach(function(p){
-    var card=document.createElement('div');
-    card.className='prop-card';
-    card.innerHTML=
-      '<div class="prop-dot" style="background:'+p.color+'"></div>'+
-      '<div class="prop-info">'+
-        '<div class="prop-name">'+p.name+'</div>'+
-        '<div class="prop-sub">'+(p.location||p.features||'')+'</div>'+
-      '</div>'+
-      (p.ratePerNight?'<div class="prop-rate">€'+p.ratePerNight+'/nt</div>':'')+
-      '<div class="prop-check">✓</div>';
-    card.addEventListener('click',function(){selectProp(p,card);});
-    grid.appendChild(card);
-  });
-}
-
-function selectProp(p,card){
-  selectedProp=p;
-  document.querySelectorAll('.prop-card').forEach(function(c){c.classList.remove('sel');});
-  card.classList.add('sel');
-  // Update max guests select if needed
-  if(p.maxGuests){
-    var g=document.getElementById('guests');
-    Array.from(g.options).forEach(function(o){
-      o.disabled=parseInt(o.value)>p.maxGuests;
-    });
-  }
-  document.getElementById('noSelHint').style.display='none';
-  document.getElementById('formCards').style.display='';
-  document.getElementById('formCards').scrollIntoView({behavior:'smooth',block:'start'});
-  updateSummary();
-}
-
-function updateSummary(){
-  var nights=calcNights();
-  var summary=document.getElementById('staySummary');
-  if(!nights||!selectedProp){summary.classList.remove('show');return;}
-  if(nights<1){summary.classList.remove('show');return;}
-  var total=calcTotal(selectedProp,nights);
-  var guests=document.getElementById('guests').value;
-  summary.innerHTML=
-    '<strong>'+selectedProp.name+'</strong> · '+nights+' nights · '+guests+' guest'+(guests>1?'s':'')+'<br>'+
-    fmtFull(document.getElementById('checkin').value)+' → '+fmtFull(document.getElementById('checkout').value)+
-    (total?'<br><strong>Estimated total: €'+total+(selectedProp.cleanFee?' (incl. €'+selectedProp.cleanFee+' cleaning fee)':'')+' · 50% deposit to confirm</strong>':'');
-  summary.classList.add('show');
-}
-
-document.getElementById('checkin').addEventListener('change',function(){
-  // Auto-set min checkout
-  var ci=this.value;
-  var co=document.getElementById('checkout');
-  if(ci){
-    var minOut=new Date(ci+'T12:00:00');
-    minOut.setDate(minOut.getDate()+(selectedProp?selectedProp.minNights||1:1));
-    co.min=minOut.toISOString().slice(0,10);
-    if(co.value&&co.value<=ci)co.value='';
-  }
-  updateSummary();
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('load',function(){
+  if(!wsId){showErr('No workspace ID in URL. Check your booking link.');return;}
+  Promise.all([
+    fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(wsId),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j),
+    fetch(SB_URL+'/rest/v1/bookings?select=apt,checkin,checkout&workspace_id=eq.'+encodeURIComponent(wsId),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j)
+  ]).then(function(res){
+    var wsRows=res[0]||[],bkRows=res[1]||[];
+    if(!wsRows.length){showRLSErr();return;}
+    var cfg=wsRows[0].settings||{};
+    properties=(cfg.apts||[]).filter(function(p){return !p.hiddenFromGuests;});
+    existingBookings=bkRows;
+    buildBlockedMap();
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('siteHeader').style.display='flex';
+    document.getElementById('stepsBar').style.display='flex';
+    drawCal();
+  }).catch(function(e){showRLSErr(e.message);});
 });
-document.getElementById('checkout').addEventListener('change',updateSummary);
-document.getElementById('guests').addEventListener('change',updateSummary);
 
-document.getElementById('submitBtn').addEventListener('click',function(){
-  var name=document.getElementById('guestName').value.trim();
-  var email=document.getElementById('guestEmail').value.trim();
-  var ci=document.getElementById('checkin').value;
-  var co=document.getElementById('checkout').value;
-  var guests=parseInt(document.getElementById('guests').value)||2;
-  var phone=document.getElementById('guestPhone').value.trim();
-  var notes=document.getElementById('notes').value.trim();
-  var err=document.getElementById('formErr');
-  err.textContent='';
+function r2j(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
 
-  if(!selectedProp){err.textContent='Please select a property.';return;}
-  if(!name){err.textContent='Please enter your name.';return;}
-  if(!email||!email.includes('@')){err.textContent='Please enter a valid email.';return;}
-  if(!ci||!co){err.textContent='Please select your dates.';return;}
-  var nights=calcNights();
-  if(nights<1){err.textContent='Check-out must be after check-in.';return;}
-  if(selectedProp.minNights&&nights<selectedProp.minNights){
-    err.textContent='Minimum stay is '+selectedProp.minNights+' nights for this property.';return;
+function buildBlockedMap(){
+  blockedMap={};
+  existingBookings.forEach(function(b){
+    if(!b.checkin||!b.checkout||!b.apt)return;
+    if(!blockedMap[b.apt])blockedMap[b.apt]=[];
+    var d=new Date(b.checkin+'T12:00:00'),end=new Date(b.checkout+'T12:00:00');
+    while(d<end){blockedMap[b.apt].push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
+  });
+}
+
+function isAvail(prop,ci,co){
+  var dates=blockedMap[prop.id]||[];
+  if(!dates.length)return true;
+  var d=new Date(ci+'T12:00:00'),end=new Date(co+'T12:00:00');
+  while(d<end){if(dates.indexOf(d.toISOString().slice(0,10))!==-1)return false;d.setDate(d.getDate()+1);}
+  return true;
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────────────────────
+function calShift(dir){calOff+=dir;if(calOff<0)calOff=0;drawCal();}
+
+function drawCal(){
+  var container=document.getElementById('calMonths');
+  container.innerHTML='';
+  var today=new Date();today.setHours(0,0,0,0);
+  document.getElementById('prevBtn').disabled=(calOff===0);
+  for(var m=0;m<2;m++)container.appendChild(buildMonth(today,m));
+}
+
+function buildMonth(today,offset){
+  var ref=new Date(today.getFullYear(),today.getMonth()+calOff+offset,1);
+  var wrap=document.createElement('div');wrap.className='cal-month';
+  var title=document.createElement('div');title.className='cal-month-name';
+  title.textContent=MONTHS[ref.getMonth()]+' '+ref.getFullYear();
+  wrap.appendChild(title);
+  var grid=document.createElement('div');grid.className='cal-grid';
+  DAYS.forEach(function(d){var h=document.createElement('div');h.className='cal-dow';h.textContent=d;grid.appendChild(h);});
+  var firstDow=(ref.getDay()+6)%7;
+  for(var i=0;i<firstDow;i++){var b=document.createElement('div');b.className='cd empty';grid.appendChild(b);}
+  var dim=new Date(ref.getFullYear(),ref.getMonth()+1,0).getDate();
+  for(var day=1;day<=dim;day++){
+    var dt=new Date(ref.getFullYear(),ref.getMonth(),day);dt.setHours(0,0,0,0);
+    var ds=dt.toISOString().slice(0,10);
+    var cell=document.createElement('div');cell.className='cd';cell.textContent=day;
+    var past=dt<today,isToday=dt.getTime()===today.getTime();
+    if(past&&!isToday){cell.classList.add('disabled');}
+    else{
+      if(isToday)cell.classList.add('today');
+      if(checkIn&&checkOut){
+        if(ds===checkIn)cell.classList.add('range-start');
+        else if(ds===checkOut)cell.classList.add('range-end');
+        else if(ds>checkIn&&ds<checkOut)cell.classList.add('in-range');
+      }else if(checkIn&&ds===checkIn)cell.classList.add('range-start','range-end');
+      (function(d2){cell.addEventListener('click',function(){onDay(d2);});})(ds);
+    }
+    grid.appendChild(cell);
   }
+  wrap.appendChild(grid);return wrap;
+}
 
-  var btn=this;btn.disabled=true;btn.textContent='Sending...';
+function onDay(ds){
+  var today=new Date();today.setHours(0,0,0,0);
+  var clicked=new Date(ds+'T12:00:00');
+  if(clicked<today)return;
+  if(!checkIn||checkOut||(checkIn&&ds<=checkIn)){
+    checkIn=ds;checkOut=null;
+    document.getElementById('calHint').textContent='Now select your check-out date';
+  }else{checkOut=ds;document.getElementById('calHint').textContent='Dates selected ✓';}
+  drawCal();updateSelBar();
+}
 
-  var total=calcTotal(selectedProp,nights);
+function updateSelBar(){
+  var bar=document.getElementById('selBar'),val=document.getElementById('selVal');
+  if(checkIn&&checkOut){
+    var n=nights(checkIn,checkOut);
+    val.textContent=fmtS(checkIn)+' → '+fmtS(checkOut)+'  ·  '+n+' night'+(n!==1?'s':'');
+    bar.classList.remove('hidden');
+  }else if(checkIn){val.textContent=fmtS(checkIn)+' → select check-out';bar.classList.remove('hidden');}
+  else bar.classList.add('hidden');
+}
 
-  var record={
-    workspace_id:workspaceId,
-    apt_id:selectedProp.id,
-    apt_name:selectedProp.name,
+function changeGuests(d){guests=Math.max(1,Math.min(20,guests+d));document.getElementById('gNum').textContent=guests;}
+
+// ── STEPS ─────────────────────────────────────────────────────────────────────
+function setStep(n){
+  ['step1','step2','step3'].forEach(function(id,i){document.getElementById(id).classList.toggle('active',i+1===n);});
+  [1,2,3].forEach(function(i){
+    var el=document.getElementById('s'+i+'ind');
+    el.classList.remove('active','done');
+    if(i<n)el.classList.add('done');else if(i===n)el.classList.add('active');
+  });
+  document.getElementById('line1').classList.toggle('done',n>1);
+  document.getElementById('line2').classList.toggle('done',n>2);
+  window.scrollTo(0,0);
+}
+
+function goStep1(){setStep(1);}
+
+function goStep2(){
+  if(!checkIn||!checkOut){document.getElementById('calHint').textContent='Please select both check-in and check-out dates';return;}
+  renderProps();
+  setStep(2);
+  var n=nights(checkIn,checkOut);
+  var chip=fmtS(checkIn)+' – '+fmtS(checkOut)+' · '+n+'n · '+guests+' guest'+(guests>1?'s':'');
+  document.getElementById('chipTxt').textContent=chip;
+  document.getElementById('availSub').textContent=n+' nights · '+guests+' guest'+(guests>1?'s':'')+' · '+fmtS(checkIn)+' – '+fmtS(checkOut);
+}
+
+function goStep3(prop){
+  selProp=prop;
+  var n=nights(checkIn,checkOut),total=calcTotal(prop,n),dep=Math.round(total/2);
+  document.getElementById('fSummary').innerHTML=
+    '<h3>'+esc(prop.name)+'</h3>'+
+    '<p>'+fmtF(checkIn)+' → '+fmtF(checkOut)+' · '+n+' nights · '+guests+' guest'+(guests>1?'s':'')+
+    (total?'<br><strong>Total: €'+total+'</strong> · Deposit: <strong>€'+dep+'</strong>':'')+
+    '</p>';
+  setStep(3);
+}
+
+// ── RENDER PROPERTIES ─────────────────────────────────────────────────────────
+function renderProps(){
+  var list=document.getElementById('propList');list.innerHTML='';
+  var n=nights(checkIn,checkOut);
+  var avail=properties.filter(function(p){return isAvail(p,checkIn,checkOut);});
+  if(!avail.length){
+    list.innerHTML='<div class="no-avail"><div class="ico">😔</div><h3>No properties available</h3><p>All properties are booked for those dates. Try different dates or contact the host.</p><a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link">💬 Contact host on WhatsApp</a></div>';
+    return;
+  }
+  avail.forEach(function(prop,idx){
+    var seasonal=getSeasonalRate(prop,checkIn);
+    var rate=seasonal||prop.ratePerNight||0;
+    var baseRate=prop.ratePerNight||0;
+    var total=rate*n+(prop.cleanFee||0);
+    var baseTotal=baseRate*n+(prop.cleanFee||0);
+    var hasDisc=total>0&&total<baseTotal&&baseTotal>0;
+    var discPct=hasDisc?Math.round((1-total/baseTotal)*100):0;
+    var dep=Math.round(total/2);
+
+    var photos=prop.photos||[];
+    var pidx=idx; // capture for closures
+
+    var photoHtml='';
+    if(photos.length){
+      photoHtml='<div class="prop-photo" id="pp_'+idx+'">'+
+        '<img src="'+esc(photos[0])+'" id="pimg_'+idx+'" alt="'+esc(prop.name)+'" onerror="this.parentNode.innerHTML=\'<div class=\\\"prop-photo-ph\\\">🏡</div>\'">'+
+        (photos.length>1?
+          '<div class="ph-nav">'+
+            '<button class="ph-btn" onclick="phPrev('+idx+','+photos.length+')">‹</button>'+
+            '<button class="ph-btn" onclick="phNext('+idx+','+photos.length+')">›</button>'+
+          '</div>'+
+          '<div class="ph-dots" id="pdots_'+idx+'">'+photos.map(function(_,i){return'<div class="ph-dot'+(i===0?' on':'')+'"></div>';}).join('')+'</div>':'')+
+        '</div>';
+    }else{photoHtml='<div class="prop-photo-ph">🏡</div>';}
+
+    var feats=[];
+    if(prop.maxGuests)feats.push('👥 Max '+prop.maxGuests+' guests');
+    if(prop.minNights)feats.push('🌙 Min '+prop.minNights+' nights');
+    if(prop.cleanFee)feats.push('🧹 €'+prop.cleanFee+' cleaning fee');
+    if(prop.features)feats.push(prop.features);
+
+    var card=document.createElement('div');card.className='prop-card';
+    card.innerHTML=photoHtml+
+      '<div class="prop-body">'+
+        '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:3px">'+
+          '<div class="prop-name" style="flex:1">'+esc(prop.name)+'</div>'+
+          (discPct?'<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;flex-shrink:0">'+discPct+'% OFF</span>':'')+
+        '</div>'+
+        (prop.location?'<div class="prop-loc">📍 '+esc(prop.location)+'</div>':'')+
+        (feats.length?'<div class="prop-feats">'+feats.map(function(f){return'<span class="fc">'+esc(f)+'</span>';}).join('')+'</div>':'')+
+        '<div class="prop-price-row">'+
+          '<div>'+
+            '<div class="plabel">'+(seasonal&&seasonal<baseRate?'Low season rate':'Direct booking rate')+'</div>'+
+            (hasDisc?'<div class="pstrike">€'+baseTotal+'.00</div>':'')+
+            (total?'<div class="pmain">€'+total+'.00</div><div class="pnights">for '+n+' night'+(n!==1?'s':'')+'</div><div class="pdeposit">Deposit to confirm: €'+dep+'</div>':
+              '<div class="pmain" style="font-size:16px;color:var(--muted)">Contact for price</div>')+
+          '</div>'+
+          '<button class="sel-btn" onclick="goStep3(properties['+properties.indexOf(prop)+'])">Select</button>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(card);
+    photoIdx[idx]=0;
+  });
+}
+
+function phNext(idx,total){photoIdx[idx]=(photoIdx[idx]+1)%total;updatePhoto(idx,total);}
+function phPrev(idx,total){photoIdx[idx]=(photoIdx[idx]-1+total)%total;updatePhoto(idx,total);}
+function updatePhoto(idx,total){
+  var prop=properties[idx];if(!prop||!prop.photos)return;
+  var i=photoIdx[idx];
+  var img=document.getElementById('pimg_'+idx);if(img)img.src=prop.photos[i];
+  var dots=document.getElementById('pdots_'+idx);
+  if(dots)Array.from(dots.children).forEach(function(d,j){d.classList.toggle('on',j===i);});
+}
+
+// ── PRICING ───────────────────────────────────────────────────────────────────
+function getSeasonalRate(prop,ci){
+  if(!prop.seasonRates||!ci)return null;
+  for(var i=0;i<prop.seasonRates.length;i++){var sr=prop.seasonRates[i];if(ci>=sr.from&&ci<=sr.to)return sr.rate;}
+  return null;
+}
+function calcTotal(prop,n){
+  if(!n)return 0;
+  var rate=getSeasonalRate(prop,checkIn)||prop.ratePerNight||0;
+  return rate*n+(prop.cleanFee||0);
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+function doSubmit(){
+  var name=document.getElementById('fName').value.trim();
+  var email=document.getElementById('fEmail').value.trim();
+  var phone=document.getElementById('fPhone').value.trim();
+  var notes=document.getElementById('fNotes').value.trim();
+  var err=document.getElementById('fErr');err.textContent='';
+  if(!name){err.textContent='Please enter your full name.';return;}
+  if(!email||!email.includes('@')){err.textContent='Please enter a valid email.';return;}
+  var btn=document.getElementById('subBtn');btn.disabled=true;btn.textContent='Sending…';
+  var n=nights(checkIn,checkOut),total=calcTotal(selProp,n);
+  var record={workspace_id:wsId,apt_id:selProp.id,apt_name:selProp.name,
     guest_name:name,guest_email:email,guest_phone:phone||null,
-    checkin:ci,checkout:co,guests:guests,notes:notes||null,
-    rate_per_night:selectedProp.ratePerNight||null,
-    total_amount:total||null,
-    status:'pending',deposit_paid:false,balance_paid:false
-  };
-
+    checkin:checkIn,checkout:checkOut,guests:guests,notes:notes||null,
+    rate_per_night:getSeasonalRate(selProp,checkIn)||selProp.ratePerNight||null,
+    total_amount:total||null,status:'pending',deposit_paid:false,balance_paid:false};
   fetch(SB_URL+'/rest/v1/direct_requests',{
     method:'POST',
-    headers:{
-      'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,
-      'Content-Type':'application/json','Prefer':'return=minimal'
-    },
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify(record)
   }).then(function(r){
     if(!r.ok&&r.status!==201)return r.text().then(function(t){throw new Error(t);});
-    // Send emails
-    return Promise.all([
-      notifyHost(name,email,phone,ci,co,guests,selectedProp.name,notes,total,nights),
-      confirmGuest(name,email,ci,co,selectedProp.name,total)
-    ]);
-  }).then(function(){
-    showSuccessScreen(name,ci,co,selectedProp.name,nights,total,phone);
-  }).catch(function(e){
-    err.textContent='Submission failed: '+e.message+'. Please email us directly.';
-    btn.disabled=false;btn.textContent='Request Booking';
-  });
-});
-
-function showSuccessScreen(name,ci,co,aptName,nights,total,phone){
-  var card=document.getElementById('successCard');
-  card.innerHTML=[
-    srow('Property',aptName),
-    srow('Check-in',fmtFull(ci)),
-    srow('Check-out',fmtFull(co)),
-    srow('Duration',nights+' nights'),
-    total?srow('Estimated total','€'+total+' (50% deposit to confirm)'):''
-  ].join('');
-  // WhatsApp link
-  var waMsg='Hi, I just submitted a direct booking request for '+aptName+' ('+fmtD(ci)+' → '+fmtD(co)+').\n\nName: '+name+'\nEmail: '+document.getElementById('guestEmail').value;
-  document.getElementById('waLink').href='https://wa.me/351924477353?text='+encodeURIComponent(waMsg);
-  showPage('successPage');
+    return Promise.all([emailHost(name,email,phone,n,total,notes),emailGuest(name,email,n,total)]);
+  }).then(function(){showSuccess(name,n,total);})
+  .catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Request Booking';});
 }
 
-function srow(l,v){return v?'<div class="srow"><span class="lbl">'+l+'</span><span class="val">'+v+'</span></div>':'';}
+function showSuccess(name,n,total){
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('stepsBar').style.display='none';
+  var rows=[sr('Property',selProp.name),sr('Check-in',fmtF(checkIn)),sr('Check-out',fmtF(checkOut)),sr('Nights',''+n),sr('Guests',''+guests),total?sr('Total','€'+total+' · 50% deposit to confirm'):''].join('');
+  document.getElementById('sBox').innerHTML=rows;
+  var msg='Hi! Booking request:\nProperty: '+selProp.name+'\nDates: '+fmtS(checkIn)+' → '+fmtS(checkOut)+'\nGuests: '+guests+'\nName: '+name;
+  document.getElementById('waLink').href='https://wa.me/'+HOST_WA+'?text='+encodeURIComponent(msg);
+  document.getElementById('successSection').style.display='block';
+  window.scrollTo(0,0);
+}
 
-function notifyHost(name,email,phone,ci,co,guests,apt,notes,total,nights){
-  var html='<div style="font-family:monospace;max-width:560px;background:#f8fafc;padding:28px;border-radius:8px;color:#1e293b">'+
-    '<p style="font-size:20px;font-family:Georgia,serif;font-weight:300;margin:0 0 20px">New direct booking request 📥</p>'+
+function emailHost(name,email,phone,n,total,notes){
+  var h='<div style="font-family:sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
+    '<h2 style="margin:0 0 16px;font-size:19px">New booking request 📥</h2>'+
     '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
-    row2('Property',apt)+row2('Guest',name)+row2('Email',email)+
-    (phone?row2('Phone',phone):'')+
-    row2('Check-in',fmtFull(ci))+row2('Check-out',fmtFull(co))+
-    row2('Duration',nights+' nights')+row2('Guests',guests)+
-    (total?row2('Est. total','€'+total):'')+
-    (notes?row2('Requests',notes):'')+
-    '</table>'+
-    '<p style="margin-top:20px;font-size:11px;color:#64748b">Review and respond in your <strong>Direct Bookings Dashboard</strong>. This request is already in your inbox.</p>'+
-    '</div>';
-  return fetch('https://api.resend.com/emails',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      from:'Direct Bookings <bookings@permanentsummer.co>',
-      to:['chris@permanentsummer.co'],
-      reply_to:email,
-      subject:'📥 New request: '+apt+' · '+fmtD(ci)+' → '+fmtD(co)+' ('+nights+'n)',
-      html:html
-    })
-  }).catch(function(){});
+    tr2('Property',selProp.name)+tr2('Guest',name)+tr2('Email',email)+
+    (phone?tr2('Phone',phone):'')+
+    tr2('Check-in',fmtF(checkIn))+tr2('Check-out',fmtF(checkOut))+
+    tr2('Nights',''+n)+tr2('Guests',''+guests)+
+    (total?tr2('Total','€'+total):'')+(notes?tr2('Notes',notes):'')+
+    '</table></div>';
+  return sendMail(HOST_EMAIL,email,'📥 New request: '+selProp.name+' · '+fmtS(checkIn)+'–'+fmtS(checkOut)+' ('+n+'n)',h);
 }
-
-function confirmGuest(name,email,ci,co,apt,total){
-  var firstName=name.split(' ')[0];
-  var html='<div style="font-family:monospace;max-width:560px;background:#f8fafc;padding:28px;border-radius:8px;color:#1e293b">'+
-    '<p style="font-size:20px;font-family:Georgia,serif;font-weight:300;margin:0 0 12px">Thanks, '+firstName+' ☀️</p>'+
-    '<p style="font-size:13px;line-height:1.8;color:#64748b;margin:0 0 20px">We\'ve received your booking request for <strong>'+apt+'</strong>. Your host will confirm within 24 hours and reach out with payment details.</p>'+
+function emailGuest(name,email,n,total){
+  var fn=name.split(' ')[0];
+  var h='<div style="font-family:sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
+    '<h2 style="margin:0 0 8px;font-size:19px">Thanks, '+esc(fn)+' ☀️</h2>'+
+    '<p style="font-size:13px;color:#64748b;margin:0 0 18px;line-height:1.6">We\'ve received your request for <strong>'+esc(selProp.name)+'</strong>. Your host will confirm within 24 hours.</p>'+
     '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
-    row2('Property',apt)+row2('Check-in',fmtFull(ci))+row2('Check-out',fmtFull(co))+
-    (total?row2('Estimated total','€'+total+' · 50% deposit to confirm'):'')+
-    '</table>'+
-    '<p style="margin-top:20px;font-size:12px;color:#64748b">Questions? WhatsApp us: <a href="https://wa.me/351924477353" style="color:#6366f1">+351 924 477 353</a></p>'+
-    '</div>';
-  return fetch('https://api.resend.com/emails',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({
-      from:'Permanent Summer <bookings@permanentsummer.co>',
-      to:[email],
-      subject:'Your booking request for '+apt+' · '+fmtD(ci)+' – '+fmtD(co),
-      html:html
-    })
-  }).catch(function(){});
+    tr2('Property',selProp.name)+tr2('Check-in',fmtF(checkIn))+tr2('Check-out',fmtF(checkOut))+tr2('Nights',''+n)+tr2('Guests',''+guests)+
+    (total?tr2('Total','€'+total+' · 50% deposit to confirm'):'')+
+    '</table></div>';
+  return sendMail(email,null,'Booking request · '+selProp.name+' · '+fmtS(checkIn)+'–'+fmtS(checkOut),h);
+}
+function sendMail(to,replyTo,subj,html){
+  var b={from:'Permanent Summer <bookings@permanentsummer.co>',to:[to],subject:subj,html:html};
+  if(replyTo)b.reply_to=replyTo;
+  return fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).catch(function(){});
 }
 
-function row2(l,v){return '<tr><td style="padding:7px 0;color:#64748b;border-bottom:1px solid #e2e8f0">'+l+'</td><td style="padding:7px 0;border-bottom:1px solid #e2e8f0;font-weight:700">'+v+'</td></tr>';}
+// ── ERROR SCREENS ─────────────────────────────────────────────────────────────
+function showRLSErr(msg){
+  document.getElementById('loadingScreen').innerHTML=
+    '<div style="padding:28px;text-align:center;max-width:420px">'+
+    '<div style="font-size:30px;margin-bottom:12px">⚙️</div>'+
+    '<p style="font-size:15px;font-weight:800;margin-bottom:8px">One-time Supabase setup needed</p>'+
+    '<p style="font-size:12px;color:#64748b;line-height:1.6;margin-bottom:16px">Run these two SQL policies in your Supabase SQL Editor:</p>'+
+    '<div style="background:#0f172a;border-radius:9px;padding:13px;font-size:11px;color:#a5f3fc;text-align:left;line-height:1.9;font-family:monospace;overflow-x:auto">'+
+    'CREATE POLICY "anon_read_workspaces"<br>ON workspaces FOR SELECT TO anon USING (true);<br><br>'+
+    'CREATE POLICY "anon_read_bookings"<br>ON bookings FOR SELECT TO anon USING (true);'+
+    '</div>'+
+    (msg?'<p style="font-size:11px;color:#ef4444;margin-top:10px">'+esc(msg)+'</p>':'')+
+    '</div>';
+}
+function showErr(msg){document.getElementById('loadingScreen').innerHTML='<div style="padding:28px;text-align:center"><div style="font-size:30px;margin-bottom:10px">⚠️</div><p style="font-size:14px;font-weight:700;color:#dc2626">'+esc(msg)+'</p></div>';}
 
-window.addEventListener('load',init);
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function nights(ci,co){if(!ci||!co)return 0;return Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);}
+function fmtS(d){if(!d)return'—';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
+function fmtF(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sr(l,v){return v?'<div class="srow"><span class="l">'+l+'</span><span class="v">'+esc(v)+'</span></div>':'';}
+function tr2(l,v){return'<tr><td style="padding:7px 0;color:#64748b;border-bottom:1px solid #e2e8f0;width:38%">'+l+'</td><td style="padding:7px 0;border-bottom:1px solid #e2e8f0;font-weight:700">'+esc(v)+'</td></tr>';}
 </script>
 </body>
 </html>
