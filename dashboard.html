@@ -242,7 +242,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cal-popup .lbl{color:var(--muted)}
 .cal-popup-close{position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--muted)}
 
-/* View toggle (Calendar / List) */
+/* Toggle switch */
+input[type=checkbox]:checked + span{background:var(--green)!important}
+input[type=checkbox]:checked + span::before{transform:translateX(20px)}
+span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+/* Settings page code style */
+code{font-family:monospace}
 .view-toggle{display:flex;background:var(--bg);border-radius:8px;padding:3px;gap:3px}
 .vtab{padding:6px 12px;border-radius:6px;border:none;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;background:transparent;transition:all .15s}
 .vtab.on{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1)}
@@ -316,6 +322,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Reservations</div>
     <div class="tab" data-tab="widget" onclick="switchTab('widget')">🔗 Widget</div>
     <div class="tab" data-tab="payments" onclick="switchTab('payments')">💰 Payments</div>
+    <div class="tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</div>
   </div>
 
   <!-- REQUESTS -->
@@ -474,6 +481,58 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
 </div>
 
+  <!-- SETTINGS -->
+  <div id="page-settings" class="page">
+    <div class="section-head">
+      <div><h2>Settings</h2><p>Email templates, branding & preferences</p></div>
+    </div>
+
+    <!-- Email templates -->
+    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+      <div class="sep" style="margin-top:0">📧 Email Templates</div>
+      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">
+        These templates are used when you confirm or decline a booking request. Use variables: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{deposit}</code>
+      </p>
+
+      <!-- Confirmed template -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span>
+        </div>
+        <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed! 🎉"></div>
+        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplConfirmedBody" rows="7" placeholder="Hi {guest_name},&#10;&#10;Great news — your booking is confirmed! 🎉&#10;&#10;📍 {property}&#10;📅 {checkin} → {checkout}&#10;🌙 {nights} nights&#10;&#10;..."></textarea></div>
+      </div>
+
+      <!-- Declined template -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span>
+        </div>
+        <div class="fg"><label>Subject line</label><input type="text" id="tmplDeclinedSubject" placeholder="About your booking request"></div>
+        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplDeclinedBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Unfortunately those dates are not available..."></textarea></div>
+      </div>
+
+      <!-- Pending template -->
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending / Info</span>
+        </div>
+        <div class="fg"><label>Subject line</label><input type="text" id="tmplPendingSubject" placeholder="Your booking request — update"></div>
+        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplPendingBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Thank you for your request. I'll confirm within 24 hours..."></textarea></div>
+      </div>
+
+      <button class="btn-primary" onclick="saveEmailTemplates()">💾 Save templates</button>
+    </div>
+
+    <!-- Resend config -->
+    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+      <div class="sep" style="margin-top:0">📬 Email Sender</div>
+      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">Currently sending from: <strong id="currentFromEmail">bookings@mail.permanentsummer.co</strong></p>
+      <button class="btn-outline" style="font-size:12px" onclick="testEmail()">🧪 Send test email to yourself</button>
+      <div id="testEmailResult" style="font-size:12px;font-weight:700;margin-top:8px"></div>
+    </div>
+  </div>
+
 </div><!-- end appWrap -->
 <div class="overlay" id="respondOverlay">
   <div class="modal">
@@ -526,6 +585,21 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="sep">Seasonal rates (optional)</div>
     <div id="seasonRates"></div>
     <button class="btn-outline" style="width:100%;margin-bottom:14px;font-size:12px" onclick="addSeasonRate()">+ Add seasonal rate</button>
+    <div class="sep">Deposit & Payment</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:800">Require deposit</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Show 50% deposit amount on booking page</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+        <input type="checkbox" id="pDeposit" style="opacity:0;width:0;height:0">
+        <span onclick="this.previousElementSibling.click()" style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:999px;transition:.2s" id="pDepositSlider"></span>
+      </label>
+    </div>
+    <div class="sep">Photos (max 5 URLs)</div>
+    <p style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.5">Paste direct image URLs (e.g. from Google Drive, Cloudinary, Imgur, or your GitHub repo raw links).</p>
+    <div id="photoInputs"></div>
+    <button class="btn-outline" style="width:100%;margin-bottom:14px;font-size:12px" onclick="addPhotoInput()">+ Add photo URL</button>
     <button class="btn-primary" style="width:100%" onclick="saveProp()">💾 Save property</button>
     <button class="btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('propOverlay')">Cancel</button>
   </div>
@@ -536,8 +610,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
+var FROM_EMAIL='Permanent Summer <bookings@mail.permanentsummer.co>';
 // Hosted booking page URL — update after deploy
-var BOOKING_PAGE_URL='https://cleaning.permanentsummer.co/book.html';
+var BOOKING_PAGE_URL='https://permanentsummer.github.io/direct-booking/book.html';
 
 var session=null,workspace=null,requests=[],properties=[],reqFilter='all';
 var activeRequest=null,seasonCount=0;
@@ -631,6 +706,7 @@ function loadWorkspace(){
       renderWidget();
       renderPayments();
       renderCalendar();
+      loadEmailTemplates();
     });
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
 }
@@ -888,12 +964,19 @@ function setReplyTemplate(action){
   var nights=0;
   if(activeRequest.checkin&&activeRequest.checkout)nights=Math.round((new Date(activeRequest.checkout+'T12:00:00')-new Date(activeRequest.checkin+'T12:00:00'))/86400000);
   var apt=activeRequest.apt_name||'the property';
-  var templates={
-    confirmed:'Hi '+name+',\n\nGreat news — your booking request has been confirmed! 🎉\n\n📍 '+apt+'\n📅 '+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n🌙 '+nights+' nights\n\nTo secure your reservation, please transfer the deposit (50%) to:\n• Bank transfer: [YOUR IBAN]\n• Wise / Revolut: [YOUR DETAILS]\n\nTotal: €'+(activeRequest.total_amount||'TBD')+' · Deposit due: €'+Math.round((activeRequest.total_amount||0)/2)+'\n\nLooking forward to hosting you!\n\nBest,\nChristopher\nPermanent Summer',
-    declined:'Hi '+name+',\n\nThank you for your interest in '+apt+'.\n\nUnfortunately those dates are not available. I\'d love to host you another time — feel free to check alternative dates and send a new request.\n\nApologies for the inconvenience.\n\nBest,\nChristopher\nPermanent Summer',
-    pending:'Hi '+name+',\n\nThank you for your booking request for '+apt+' ('+fmtShort(activeRequest.checkin)+' – '+fmtShort(activeRequest.checkout)+').\n\nI\'m reviewing your request and will confirm within 24 hours.\n\nBest,\nChristopher\nPermanent Summer'
-  };
-  document.getElementById('replyMsg').value=templates[action]||templates.confirmed;
+  // Use saved templates with variables substituted
+  var cfg=workspace&&workspace.settings||{};
+  var tmpl=cfg.emailTemplates||{};
+  var bodyKey=action+'Body';
+  var savedBody=tmpl[bodyKey];
+  var msg=savedBody?applyTemplateVars(savedBody,activeRequest):(
+    action==='confirmed'?
+      'Hi '+name+',\n\nGreat news — your booking is confirmed! 🎉\n\n📍 '+apt+'\n📅 '+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n🌙 '+nights+' nights\n\nDeposit (50%): €'+Math.round((activeRequest.total_amount||0)/2)+'\nTotal: €'+(activeRequest.total_amount||'TBD')+'\n\nPayment: [YOUR IBAN / WISE / REVOLUT]\n\nBest,\nChristopher\nPermanent Summer':
+    action==='declined'?
+      'Hi '+name+',\n\nThank you for your interest in '+apt+'.\n\nUnfortunately those dates are not available.\n\nBest,\nChristopher\nPermanent Summer':
+      'Hi '+name+',\n\nThank you for your request for '+apt+'. I will confirm within 24 hours.\n\nBest,\nChristopher\nPermanent Summer'
+  );
+  document.getElementById('replyMsg').value=msg;
   // Highlight the active action button
   ['actionConfirm','actionDecline','actionWaitlist'].forEach(function(id){
     document.getElementById(id).style.opacity='0.5';
@@ -976,14 +1059,17 @@ function sendGuestEmail(email,name,message,action){
     method:'POST',
     headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
     body:JSON.stringify({
-      from:'Permanent Summer <bookings@permanentsummer.co>',
+      from:FROM_EMAIL,
       to:[email],
       subject:subjects[action]||'Update on your booking request',
       html:html
     })
   }).then(function(r){
-    if(!r.ok)return r.text().then(function(t){console.warn('Email warn:',t);});
-  }).catch(function(e){console.warn('Email failed:',e);});
+    return r.text().then(function(t){
+      if(!r.ok)throw new Error('Email failed ('+r.status+'): '+t);
+      console.log('Email sent:',t);
+    });
+  });
 }
 
 // ── PROPERTIES ──────────────────────────────────────────────────────────────
@@ -1078,8 +1164,11 @@ function openAddProp(){
   document.getElementById('pMinNights').value='3';
   document.getElementById('pMaxGuests').value='6';
   document.getElementById('pCleanFee').value='';
+  document.getElementById('pDeposit').checked=true;
   document.getElementById('seasonRates').innerHTML='';
+  document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
+  addPhotoInput();addPhotoInput();
   document.getElementById('propOverlay').classList.add('show');
 }
 
@@ -1096,10 +1185,24 @@ function editProp(i){
   document.getElementById('pMinNights').value=p.minNights||'3';
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
   document.getElementById('pCleanFee').value=p.cleanFee||'';
+  document.getElementById('pDeposit').checked=(p.requireDeposit!==false);
   document.getElementById('seasonRates').innerHTML='';
+  document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
   if(p.seasonRates){p.seasonRates.forEach(function(sr){addSeasonRate(sr);});}
+  var photos=p.photos||[];
+  photos.forEach(function(url){addPhotoInput(url);});
+  while(document.querySelectorAll('#photoInputs .purl').length<2)addPhotoInput();
   document.getElementById('propOverlay').classList.add('show');
+}
+
+function addPhotoInput(url){
+  if(document.querySelectorAll('#photoInputs .purl').length>=5){toast('Maximum 5 photos','warn');return;}
+  var div=document.createElement('div');div.className='purl';
+  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML='<input type="url" placeholder="https://... image URL" value="'+(url||'')+'" style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-family:\'Nunito\',sans-serif;font-size:13px;font-weight:600;outline:none">'+
+    '<button onclick="this.parentNode.remove()" style="background:var(--red-bg);color:var(--red);border:none;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13px;flex-shrink:0">✕</button>';
+  document.getElementById('photoInputs').appendChild(div);
 }
 
 function addSeasonRate(existing){
@@ -1129,6 +1232,10 @@ function saveProp(){
     var rate=parseInt(document.getElementById('srRate'+id).value)||0;
     if(from&&to&&rate)seasonRates.push({from:from,to:to,rate:rate});
   });
+  var photos=[];
+  document.querySelectorAll('#photoInputs .purl input').forEach(function(inp){
+    var v=inp.value.trim();if(v&&photos.length<5)photos.push(v);
+  });
   var prop={
     id:editIdx!==''?properties[parseInt(editIdx)].id:uid(),
     name:name,short:document.getElementById('pShort').value||name,
@@ -1139,10 +1246,14 @@ function saveProp(){
     minNights:parseInt(document.getElementById('pMinNights').value)||3,
     maxGuests:parseInt(document.getElementById('pMaxGuests').value)||6,
     cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
-    seasonRates:seasonRates
+    requireDeposit:document.getElementById('pDeposit').checked,
+    seasonRates:seasonRates,
+    photos:photos
   };
-  if(editIdx!==''){properties[parseInt(editIdx)]=prop;}
-  else{properties.push(prop);}
+  if(editIdx!==''){
+    prop.hiddenFromGuests=properties[parseInt(editIdx)].hiddenFromGuests||false;
+    properties[parseInt(editIdx)]=prop;
+  }else{properties.push(prop);}
   savePropsToWorkspace().then(function(){
     toast('Property saved','ok');
     closeModal('propOverlay');
@@ -1863,6 +1974,78 @@ function togglePropVisibility(i){
     renderWidgetPropList();
     renderProps(); // refresh property cards too
   }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function loadEmailTemplates(){
+  var cfg=workspace&&workspace.settings||{};
+  var t=cfg.emailTemplates||{};
+  // Default confirmed template
+  var defConfirmed='Hi {guest_name},\n\nGreat news — your booking is confirmed! 🎉\n\n📍 {property}\n📅 {checkin} → {checkout}\n🌙 {nights} nights\n\nTo confirm your reservation, please transfer the deposit:\n• Total: €{total}\n• Deposit (50%): €{deposit}\n• Payment details: [YOUR IBAN / WISE / REVOLUT]\n\nLooking forward to welcoming you!\n\nBest,\nChristopher\nPermanent Summer';
+  var defDeclined='Hi {guest_name},\n\nThank you for your interest in {property}.\n\nUnfortunately those dates are not available. Feel free to send a new request for different dates — I\'d love to host you.\n\nApologies for the inconvenience.\n\nBest,\nChristopher\nPermanent Summer';
+  var defPending='Hi {guest_name},\n\nThank you for your booking request for {property} ({checkin} – {checkout}).\n\nI\'m reviewing your request and will confirm within 24 hours.\n\nBest,\nChristopher\nPermanent Summer';
+  var el=function(id){return document.getElementById(id);};
+  if(el('tmplConfirmedSubject'))el('tmplConfirmedSubject').value=t.confirmedSubject||'Your booking is confirmed! 🎉';
+  if(el('tmplConfirmedBody'))el('tmplConfirmedBody').value=t.confirmedBody||defConfirmed;
+  if(el('tmplDeclinedSubject'))el('tmplDeclinedSubject').value=t.declinedSubject||'About your booking request';
+  if(el('tmplDeclinedBody'))el('tmplDeclinedBody').value=t.declinedBody||defDeclined;
+  if(el('tmplPendingSubject'))el('tmplPendingSubject').value=t.pendingSubject||'Your booking request — update';
+  if(el('tmplPendingBody'))el('tmplPendingBody').value=t.pendingBody||defPending;
+}
+
+function saveEmailTemplates(){
+  var el=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+  sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var s=(rows&&rows.length&&rows[0].settings)||{};
+    s.emailTemplates={
+      confirmedSubject:el('tmplConfirmedSubject'),
+      confirmedBody:   el('tmplConfirmedBody'),
+      declinedSubject: el('tmplDeclinedSubject'),
+      declinedBody:    el('tmplDeclinedBody'),
+      pendingSubject:  el('tmplPendingSubject'),
+      pendingBody:     el('tmplPendingBody')
+    };
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s});
+  }).then(function(rows){
+    if(rows&&rows.length)workspace=rows[0];
+    toast('✅ Email templates saved','ok');
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function applyTemplateVars(template,req){
+  if(!template)return'';
+  var nights=0;
+  if(req.checkin&&req.checkout)nights=Math.round((new Date(req.checkout+'T12:00:00')-new Date(req.checkin+'T12:00:00'))/86400000);
+  var total=req.total_amount||0;
+  return template
+    .replace(/\{guest_name\}/g,(req.guest_name||'Guest').split(' ')[0])
+    .replace(/\{property\}/g,req.apt_name||'—')
+    .replace(/\{checkin\}/g,fmtFull(req.checkin))
+    .replace(/\{checkout\}/g,fmtFull(req.checkout))
+    .replace(/\{nights\}/g,String(nights))
+    .replace(/\{total\}/g,String(total))
+    .replace(/\{deposit\}/g,String(Math.round(total/2)))
+    .replace(/\{guests\}/g,String(req.guests||''));
+}
+
+function testEmail(){
+  var result=document.getElementById('testEmailResult');
+  result.textContent='Sending...';result.style.color='var(--muted)';
+  fetch('https://api.resend.com/emails',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      from:FROM_EMAIL,
+      to:[session.user.email],
+      subject:'✅ Test email from Permanent Summer Dashboard',
+      html:'<div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a"><h2>Email is working! 🎉</h2><p>Your dashboard email setup is configured correctly.</p><p style="font-size:12px;color:#64748b;margin-top:16px">Sent from: '+FROM_EMAIL+'</p></div>'
+    })
+  }).then(function(r){return r.text().then(function(t){return{ok:r.ok,text:t};});})
+  .then(function(res){
+    if(res.ok){result.textContent='✅ Test email sent to '+session.user.email;result.style.color='var(--green)';}
+    else{result.textContent='❌ Resend error: '+res.text;result.style.color='var(--red)';}
+  }).catch(function(e){result.textContent='❌ '+e.message;result.style.color='var(--red)';});
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
