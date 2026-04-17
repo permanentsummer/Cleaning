@@ -1155,9 +1155,9 @@ function sendGuestEmail(email,name,message,action){
     esc(message)+'</div>'+
     '<p style="margin-top:20px;font-size:11px;color:#64748b">Permanent Summer · Algarve, Portugal · <a href="https://wa.me/351924477353" style="color:#6366f1">WhatsApp</a></p>'+
     '</div>';
-  return fetch('https://api.resend.com/emails',{
+  return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','apikey':SB_KEY},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[email],
@@ -1888,6 +1888,9 @@ function saveNewBooking(){
 // ── CALENDAR ─────────────────────────────────────────────────────────────────
 function renderCalendar(){
   buildCalFilters();
+  // Ensure toolbar/filter visibility matches current view
+  var ct=document.getElementById('calToolbar');if(ct)ct.style.display=resView==='calendar'?'':'none';
+  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display=resView==='list'?'flex':'none';
   if(resView==='list')renderResList();
   else drawCal();
 }
@@ -2214,9 +2217,9 @@ function applyTemplateVars(template,req){
 function testEmail(){
   var result=document.getElementById('testEmailResult');
   result.textContent='Sending...';result.style.color='var(--muted)';
-  fetch('https://api.resend.com/emails',{
+  fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','apikey':SB_KEY},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[session.user.email],
