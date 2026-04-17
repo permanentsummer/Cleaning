@@ -514,10 +514,10 @@ function updateSelBar(){
   var bar=document.getElementById('selBar'),val=document.getElementById('selVal');
   if(checkIn&&checkOut){
     var n=nights(checkIn,checkOut);
-    val.textContent=T('checkin')+': '+fmtS(checkIn)+'  \u2192  '+T('checkout')+': '+fmtS(checkOut)+'  \u00b7  '+n+' '+(n===1?T('nights'):T('nightsp'));
+    val.innerHTML='<span style="opacity:.75;font-size:11px">'+T('checkin')+'</span><br><strong>'+fmtS(checkIn)+'</strong>'+'<span style="margin:0 12px;opacity:.6">&rarr;</span>'+'<span style="opacity:.75;font-size:11px">'+T('checkout')+'</span><br><strong>'+fmtS(checkOut)+'</strong>'+'<span style="margin-left:14px;opacity:.75;font-size:12px">&middot; '+n+' '+(n===1?T('nights'):T('nightsp'))+'</span>';
     bar.classList.remove('hidden');
   }else if(checkIn){
-    val.textContent=T('checkin')+': '+fmtS(checkIn)+'  \u2192  '+T('selCheckout');
+    val.innerHTML='<span style="opacity:.75;font-size:11px">'+T('checkin')+'</span><br><strong>'+fmtS(checkIn)+'</strong><span style="margin:0 12px;opacity:.6">&rarr;</span><span style="opacity:.75;font-size:12px">'+T('selCheckout')+'</span>';
     bar.classList.remove('hidden');
   }else{
     bar.classList.add('hidden');
@@ -526,8 +526,12 @@ function updateSelBar(){
 
 // ── GUESTS ────────────────────────────────────────────────────────────────────
 function changeGuests(d){
-  // Cap at the max of the selected property if on step 3, otherwise global max
-  var maxG=selProp?selProp.maxGuests||20:20;
+  // Use selected property max, or min across all properties, or 20
+  var maxG=20;
+  if(selProp&&selProp.maxGuests){maxG=selProp.maxGuests;}
+  else if(properties.length){
+    maxG=properties.reduce(function(m,p){return p.maxGuests?Math.min(m,p.maxGuests):m;},20);
+  }
   guests=Math.max(1,Math.min(maxG,guests+d));
   document.getElementById('gNum').textContent=guests;
 }
@@ -648,7 +652,7 @@ function renderProps(){
             (hasDisc?'<div class="pstrike">\u20ac'+baseTotal+'.00</div>':'')+
             (total?
               '<div class="pmain">\u20ac'+total+'.00</div>'+
-              '<div class="pnights">'+T('totalFor')||'for'+' '+n+' '+(n===1?T('nights'):T('nightsp'))+'</div>'+
+              '<div class="pnights">'+n+' '+(n===1?T('nights'):T('nightsp'))+'</div>'+
               (showDeposit?'<div class="pdeposit">'+T('deposit')+': \u20ac'+dep+'</div>':''):
               '<div class="pmain" style="font-size:16px;color:var(--muted)">Contact for price</div>')+
           '</div>'+
@@ -769,9 +773,9 @@ function emailGuest(name,email,n,total){
 function sendMail(to,replyTo,subj,html){
   var b={from:FROM_EMAIL,to:[to],subject:subj,html:html};
   if(replyTo)b.reply_to=replyTo;
-  return fetch('https://api.resend.com/emails',{
+  return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','apikey':SB_KEY},
     body:JSON.stringify(b)
   }).then(function(r){
     return r.text().then(function(txt){
