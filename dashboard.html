@@ -203,7 +203,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 /* ── CALENDAR ─────────────────────────────────────────────────────────── */
 #page-calendar{padding:0}
-.cal-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;background:#fff;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;position:sticky;top:56px;z-index:100}
+.cal-toolbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;background:#fff;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
 .cal-nav{display:flex;align-items:center;gap:8px}
 .cal-nav-btn{width:34px;height:34px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 .cal-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -690,7 +690,7 @@ code{font-family:monospace}
         <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Show 50% deposit amount on booking page</div>
       </div>
       <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-        <input type="checkbox" id="pDeposit" style="opacity:0;width:0;height:0">
+        <input type="checkbox" id="pDeposit" style="opacity:0;width:0;height:0" onchange="var s=document.getElementById('pDepositSlider');s.style.background=this.checked?'#16a34a':'var(--border)'">
         <span onclick="this.previousElementSibling.click()" style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:999px;transition:.2s" id="pDepositSlider"></span>
       </label>
     </div>
@@ -1157,7 +1157,7 @@ function sendGuestEmail(email,name,message,action){
     '</div>';
   return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[email],
@@ -1268,7 +1268,7 @@ function openAddProp(){
   document.getElementById('pMinNights').value='3';
   document.getElementById('pMaxGuests').value='6';
   document.getElementById('pCleanFee').value='';
-  document.getElementById('pDeposit').checked=true;
+  document.getElementById('pDeposit').checked=true;document.getElementById('pDepositSlider').style.background='#16a34a';
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
@@ -1289,7 +1289,9 @@ function editProp(i){
   document.getElementById('pMinNights').value=p.minNights||'3';
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
   document.getElementById('pCleanFee').value=p.cleanFee||'';
-  document.getElementById('pDeposit').checked=(p.requireDeposit!==false);
+  var dep=p.requireDeposit!==false;
+  document.getElementById('pDeposit').checked=dep;
+  document.getElementById('pDepositSlider').style.background=dep?'#16a34a':'var(--border)';
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
@@ -2219,7 +2221,7 @@ function testEmail(){
   result.textContent='Sending...';result.style.color='var(--muted)';
   fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SB_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[session.user.email],
