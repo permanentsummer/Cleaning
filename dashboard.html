@@ -39,29 +39,45 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 #appWrap.show{display:flex}
 
 /* Top nav */
-.topnav{background:var(--primary);color:#fff;padding:0 20px;height:56px;display:flex;
-  align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:200}
-.nav-logo{display:flex;align-items:center;gap:9px}
-.nav-logo .ico{width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
-.nav-logo h1{font-size:15px;font-weight:900}
-.nav-logo span{font-size:10px;color:#94a3b8;font-weight:700}
-.nav-right{display:flex;align-items:center;gap:8px}
-.nav-pill{font-size:10px;font-weight:800;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
-  color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;letter-spacing:.3px}
-.nav-pill:hover{background:rgba(255,255,255,.2)}
-
-/* Tab bar */
-.tabbar{background:#fff;border-bottom:2px solid var(--border);display:flex;padding:0 20px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
-.tabbar::-webkit-scrollbar{display:none}
-.tab{display:flex;align-items:center;gap:6px;padding:14px 16px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s}
-.tab:hover{color:var(--text)}
-.tab.on{color:var(--accent);border-bottom-color:var(--accent)}
-.tab .badge{background:var(--red);color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:999px;min-width:16px;text-align:center}
-.tab .badge.green{background:var(--green)}
-
-/* Page content */
+/* ── SIDEBAR LAYOUT ─────────────────────────────────────────────────── */
+#appWrap{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--primary);color:#fff;display:flex;flex-direction:column;
+  flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo-ico{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-logo-name{font-size:13px;font-weight:900;line-height:1.2}
+.sb-logo-sub{font-size:10px;color:#94a3b8;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.sb-nav{flex:1;padding:12px 8px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:9px;
+  font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer;margin-bottom:2px;transition:all .15s;user-select:none}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.on{background:rgba(255,255,255,.12);color:#fff;font-weight:800}
+.sb-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.sb-item .badge{background:var(--red);color:#fff;font-size:9px;font-weight:900;padding:2px 6px;border-radius:999px;margin-left:auto}
+.sb-bottom{padding:12px 8px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.sb-action{display:block;width:100%;padding:9px 10px;background:transparent;border:1px solid rgba(255,255,255,.15);
+  border-radius:8px;color:#94a3b8;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
+  cursor:pointer;text-align:left;margin-bottom:6px;transition:all .15s}
+.sb-action:hover{background:rgba(255,255,255,.08);color:#fff}
+.main-content{margin-left:220px;flex:1;min-width:0;display:flex;flex-direction:column}
 .page{display:none;padding:20px;flex:1}
 .page.on{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.page-header h2{font-size:18px;font-weight:900}
+.page-header p{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+/* Reservations top bar */
+.res-topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;
+  border-bottom:1px solid var(--border);flex-wrap:wrap}
+/* Mobile sidebar */
+@media(max-width:700px){
+  .sidebar{width:64px}
+  .sb-logo-name,.sb-logo-sub,.sb-item span:not(.sb-icon),.sb-action{display:none}
+  .sb-logo{padding:16px 14px}
+  .sb-item{justify-content:center;padding:12px}
+  .main-content{margin-left:64px}
+  .sb-bottom{padding:8px 4px}
+}
 
 /* ── SHARED COMPONENTS ────────────────────────────────────────────────── */
 .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
@@ -302,40 +318,57 @@ code{font-family:monospace}
 
 <!-- APP -->
 <div id="appWrap">
-  <nav class="topnav">
-    <div class="nav-logo">
-      <div class="ico">📋</div>
-      <div><h1>Direct Bookings</h1><span id="navSub">Dashboard</span></div>
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-ico">📋</div>
+      <div>
+        <div class="sb-logo-name">Direct Bookings</div>
+        <div class="sb-logo-sub" id="navSub">Dashboard</div>
+      </div>
     </div>
-    <div class="nav-right">
-      <button class="nav-pill" onclick="openSummerClean()">🧹 SummerClean</button>
-      <button class="nav-pill" id="signOutBtn">Sign out</button>
+    <nav class="sb-nav">
+      <div class="sb-item on" data-tab="requests" onclick="switchTab('requests')">
+        <span class="sb-icon">📥</span>
+        <span>Requests</span>
+        <span class="badge" id="pendingBadge" style="display:none">0</span>
+      </div>
+      <div class="sb-item" data-tab="properties" onclick="switchTab('properties')">
+        <span class="sb-icon">🏡</span><span>Properties</span>
+      </div>
+      <div class="sb-item" data-tab="calendar" onclick="switchTab('calendar')">
+        <span class="sb-icon">📅</span><span>Reservations</span>
+      </div>
+      <div class="sb-item" data-tab="widget" onclick="switchTab('widget')">
+        <span class="sb-icon">🔗</span><span>Widget</span>
+      </div>
+      <div class="sb-item" data-tab="payments" onclick="switchTab('payments')">
+        <span class="sb-icon">💰</span><span>Payments</span>
+      </div>
+      <div class="sb-item" data-tab="settings" onclick="switchTab('settings')">
+        <span class="sb-icon">⚙️</span><span>Settings</span>
+      </div>
+    </nav>
+    <div class="sb-bottom">
+      <button class="sb-action" onclick="openSummerClean()">🧹 SummerClean</button>
+      <button class="sb-action" id="signOutBtn">→ Sign out</button>
     </div>
-  </nav>
-
-  <div class="tabbar">
-    <div class="tab on" data-tab="requests" onclick="switchTab('requests')">
-      <span>📥 Requests</span>
-      <span class="badge" id="pendingBadge" style="display:none">0</span>
-    </div>
-    <div class="tab" data-tab="properties" onclick="switchTab('properties')">🏡 Properties</div>
-    <div class="tab" data-tab="calendar" onclick="switchTab('calendar')">📅 Reservations</div>
-    <div class="tab" data-tab="widget" onclick="switchTab('widget')">🔗 Widget</div>
-    <div class="tab" data-tab="payments" onclick="switchTab('payments')">💰 Payments</div>
-    <div class="tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</div>
   </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
 
   <!-- REQUESTS -->
   <div id="page-requests" class="page on">
+    <div class="page-header">
+      <div><h2>Booking Requests</h2><p>All incoming direct booking requests</p></div>
+      <button class="btn-primary" onclick="refreshRequests()">🔄 Refresh</button>
+    </div>
     <div class="stats-bar" id="statsBar">
       <div class="stat-card"><span class="sval" id="st-pending">—</span><div class="slbl">Pending</div></div>
       <div class="stat-card"><span class="sval" id="st-confirmed">—</span><div class="slbl">Confirmed</div></div>
       <div class="stat-card"><span class="sval" id="st-nights">—</span><div class="slbl">Nights booked</div></div>
       <div class="stat-card"><span class="sval" id="st-revenue">—</span><div class="slbl">Est. Revenue</div></div>
-    </div>
-    <div class="section-head">
-      <div><h2>Booking Requests</h2><p id="reqSubtitle">All incoming direct booking requests</p></div>
-      <button class="btn-primary" onclick="refreshRequests()">🔄 Refresh</button>
     </div>
     <div class="filter-row">
       <button class="fbtn on" data-rf="all" onclick="filterReqs('all',this)">All</button>
@@ -348,7 +381,7 @@ code{font-family:monospace}
 
   <!-- PROPERTIES -->
   <div id="page-properties" class="page">
-    <div class="section-head">
+    <div class="page-header">
       <div><h2>Properties</h2><p>Manage your listings, rates & availability</p></div>
       <button class="btn-primary" onclick="openAddProp()">+ Add property</button>
     </div>
@@ -356,8 +389,9 @@ code{font-family:monospace}
   </div>
 
   <!-- RESERVATIONS -->
-  <div id="page-calendar" class="page">
-    <div class="cal-toolbar">
+  <div id="page-calendar" class="page" style="padding:0">
+    <!-- Calendar toolbar (only shown in calendar view) -->
+    <div class="cal-toolbar" id="calToolbar">
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calPrev()">‹</button>
         <span class="cal-month-lbl" id="calMonthLbl">—</span>
@@ -366,12 +400,24 @@ code{font-family:monospace}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div class="cal-filters" id="calFilters"></div>
-        <div class="view-toggle">
-          <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">📅 Calendar</button>
-          <button class="vtab" id="vtabList" onclick="setResView('list')">☰ List</button>
-        </div>
-        <button class="btn-primary" style="font-size:12px;padding:8px 12px" onclick="openNewBooking()">+ New booking</button>
       </div>
+    </div>
+    <!-- Shared top bar for both views -->
+    <div class="res-topbar">
+      <div class="view-toggle">
+        <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">📅 Calendar</button>
+        <button class="vtab" id="vtabList" onclick="setResView('list')">☰ List</button>
+      </div>
+      <!-- List filters (only shown in list view) -->
+      <div class="filter-row" id="listFilterRow" style="display:none;margin:0;flex:1">
+        <button class="fbtn on" onclick="filterList('all',this)">All</button>
+        <button class="fbtn" onclick="filterList('upcoming',this)">Upcoming</button>
+        <button class="fbtn" onclick="filterList('past',this)">Past</button>
+        <button class="fbtn" onclick="filterList('direct',this)">Direct</button>
+        <button class="fbtn" onclick="filterList('airbnb',this)">Airbnb</button>
+        <button class="fbtn" onclick="filterList('booking',this)">Booking.com</button>
+      </div>
+      <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
     </div>
     <!-- Calendar view -->
     <div id="resCalView">
@@ -395,7 +441,7 @@ code{font-family:monospace}
 
   <!-- WIDGET -->
   <div id="page-widget" class="page">
-    <div class="section-head">
+    <div class="page-header">
       <div><h2>Booking Widget</h2><p>Share your direct booking link or embed it anywhere</p></div>
     </div>
     <div class="widget-flow" id="widgetFlow">
@@ -405,7 +451,7 @@ code{font-family:monospace}
 
   <!-- PAYMENTS -->
   <div id="page-payments" class="page">
-    <div class="section-head">
+    <div class="page-header">
       <div><h2>Payments</h2><p>Track deposits & balances for confirmed bookings</p></div>
     </div>
     <div id="payList"><div class="spinner"></div></div>
@@ -483,8 +529,8 @@ code{font-family:monospace}
 
   <!-- SETTINGS -->
   <div id="page-settings" class="page">
-    <div class="section-head">
-      <div><h2>Settings</h2><p>Email templates, branding & preferences</p></div>
+    <div class="page-header">
+      <div><h2>Settings</h2><p>Email templates & preferences</p></div>
     </div>
 
     <!-- Email templates -->
@@ -531,8 +577,58 @@ code{font-family:monospace}
       <button class="btn-outline" style="font-size:12px" onclick="testEmail()">🧪 Send test email to yourself</button>
       <div id="testEmailResult" style="font-size:12px;font-weight:700;margin-top:8px"></div>
     </div>
+
+    <!-- WhatsApp templates -->
+    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+      <div class="sep" style="margin-top:0">💬 WhatsApp Templates</div>
+      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">
+        Shorter versions for WhatsApp. Same variables work: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{deposit}</code>
+      </p>
+      <div style="margin-bottom:12px;padding:10px;background:var(--bg);border-radius:10px;font-size:12px;font-weight:700;color:var(--muted)">
+        💡 Tip: Enable "Use email template for WhatsApp too" per action below to skip maintaining two versions.
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
+            <input type="checkbox" id="waUseEmailConfirmed"> Same as email template
+          </label>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
+          <textarea id="tmplWaConfirmed" rows="4" placeholder="Hi {guest_name} ✅ Your booking is confirmed!&#10;📍 {property} | {checkin} → {checkout}&#10;💶 Total: €{total} | Deposit: €{deposit}&#10;Payment details to follow shortly."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
+            <input type="checkbox" id="waUseEmailDeclined"> Same as email template
+          </label>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
+          <textarea id="tmplWaDeclined" rows="3" placeholder="Hi {guest_name}, unfortunately {property} is not available for those dates. Please try other dates!"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending</span>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
+            <input type="checkbox" id="waUseEmailPending"> Same as email template
+          </label>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
+          <textarea id="tmplWaPending" rows="3" placeholder="Hi {guest_name}, thanks for your request for {property}. I'll confirm within 24 hours!"></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="saveWaTemplates()">💾 Save WhatsApp templates</button>
+    </div>
   </div>
 
+  </div><!-- end main-content -->
 </div><!-- end appWrap -->
 <div class="overlay" id="respondOverlay">
   <div class="modal">
@@ -545,6 +641,7 @@ code{font-family:monospace}
       <button class="btn-green" id="actionConfirm" onclick="doAction('confirmed')">✅ Confirm booking</button>
       <button class="btn-red" id="actionDecline" onclick="doAction('declined')">❌ Decline</button>
       <button class="btn-yellow" id="actionWaitlist" onclick="doAction('pending')">⏳ Keep pending</button>
+      <button class="btn-outline" style="color:var(--red);border-color:var(--red-bg);margin-left:auto" onclick="deleteRequest()">🗑️ Delete</button>
     </div>
 
     <div class="sep">Message to guest</div>
@@ -552,8 +649,9 @@ code{font-family:monospace}
       <label>Customize your reply</label>
       <textarea id="replyMsg" rows="6"></textarea>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn-primary" style="flex:1" onclick="sendReply()">📧 Send & update</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary" style="flex:1" onclick="sendReply()">📧 Send email & update</button>
+      <button class="btn-outline" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendWaFromRespond()">💬 WhatsApp</button>
       <button class="btn-outline" onclick="closeModal('respondOverlay')">Cancel</button>
     </div>
   </div>
@@ -612,7 +710,7 @@ var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
 var FROM_EMAIL='Permanent Summer <bookings@mail.permanentsummer.co>';
 // Hosted booking page URL — update after deploy
-var BOOKING_PAGE_URL='https://permanentsummer.github.io/direct-booking/book.html';
+var BOOKING_PAGE_URL='https://cleaning.permanentsummer.co/book.html';
 
 var session=null,workspace=null,requests=[],properties=[],reqFilter='all';
 var activeRequest=null,seasonCount=0;
@@ -707,6 +805,7 @@ function loadWorkspace(){
       renderPayments();
       renderCalendar();
       loadEmailTemplates();
+      loadWaTemplates();
     });
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
 }
@@ -721,8 +820,9 @@ function loadAllBookings(){
 
 // ── TABS ────────────────────────────────────────────────────────────────────
 function switchTab(tab){
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===tab);});
+  document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===tab);});
   document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-'+tab);});
+  if(tab==='calendar')renderCalendar();
 }
 
 function openSummerClean(){window.open('index.html','_blank');}
@@ -855,7 +955,7 @@ function renderRequests(){
         (req.status==='pending'?
           '<button class="btn-green" onclick="openRespond(\''+req.id+'\',\'confirmed\')">✅ Confirm</button>'+
           '<button class="btn-red" onclick="openRespond(\''+req.id+'\',\'declined\')">❌ Decline</button>':
-          '<button class="btn-outline" onclick="openRespond(\''+req.id+'\',\'"+req.status+"\')">✏️ Update</button>')+
+          '<button class="btn-outline" onclick="openRespond(\''+req.id+'\',\''+req.status+'\')">✏️ Update</button>')+
         '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">📧 Email</button>'+
         (req.guest_phone?'<button class="btn-outline" onclick="whatsApp(\''+esc(req.guest_phone)+'\')">💬 WhatsApp</button>':'')+
         '<span style="flex:1"></span>'+
@@ -1082,6 +1182,10 @@ function setResView(v){
   document.getElementById('vtabList').classList.toggle('on',v==='list');
   document.getElementById('resCalView').style.display=v==='calendar'?'':'none';
   document.getElementById('resListView').style.display=v==='list'?'':'none';
+  // Show calendar toolbar only in calendar view
+  var ct=document.getElementById('calToolbar');if(ct)ct.style.display=v==='calendar'?'':'none';
+  // Show list filters only in list view
+  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display=v==='list'?'flex':'none';
   if(v==='calendar')drawCal();
   else renderResList();
 }
@@ -1453,8 +1557,8 @@ function renderPayments(){
         '</div>'+
       '</div>'+
       '<div class="pay-actions">'+
-        (!req.deposit_paid?'<button class="btn-green" onclick="markPaid(\''+req.id+'\',\'deposit\')">✅ Mark deposit paid</button>':'')+
-        (req.deposit_paid&&!req.balance_paid?'<button class="btn-green" onclick="markPaid(\''+req.id+'\',\'balance\')">✅ Mark balance paid</button>':'')+
+        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'✅ Mark deposit paid')+'</button>'+
+        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'✅ Mark balance paid')+'</button>'+
         '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">📧 Send reminder</button>'+
       '</div>';
     list.appendChild(card);
@@ -1462,11 +1566,13 @@ function renderPayments(){
 }
 
 function markPaid(id,type){
+  var req=requests.find(function(r){return r.id===id;});
+  if(!req)return;
   var upd={updated_at:new Date().toISOString()};
-  if(type==='deposit')upd.deposit_paid=true;
-  if(type==='balance'){upd.deposit_paid=true;upd.balance_paid=true;}
+  if(type==='deposit')upd.deposit_paid=!req.deposit_paid;
+  if(type==='balance'){upd.balance_paid=!req.balance_paid;if(upd.balance_paid)upd.deposit_paid=true;}
   sbF('PATCH','direct_requests?id=eq.'+id,upd).then(function(){
-    toast('Payment recorded','ok');
+    toast('Payment updated','ok');
     loadRequests();
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
@@ -1519,6 +1625,14 @@ function renderResList(){
       origin:'direct',blocked:false
     });
   });
+
+  // Apply list filter
+  var today2=new Date().toISOString().slice(0,10);
+  if(listFilter==='upcoming')items=items.filter(function(i){return i.checkout>=today2;});
+  else if(listFilter==='past')items=items.filter(function(i){return i.checkout<today2;});
+  else if(listFilter==='airbnb')items=items.filter(function(i){return i.source==='airbnb';});
+  else if(listFilter==='booking')items=items.filter(function(i){return i.source==='booking';});
+  else if(listFilter==='direct')items=items.filter(function(i){return i.source==='direct';});
 
   // Sort by checkin
   items.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
@@ -1959,12 +2073,7 @@ function hideCalPopup(){
   if(p)p.style.display='none';
 }
 
-// Re-render calendar when switching to that tab
-var _origSwitchTab=switchTab;
-switchTab=function(tab){
-  _origSwitchTab(tab);
-  if(tab==='calendar')renderCalendar();
-};
+// switchTab handles calendar rendering directly
 
 function togglePropVisibility(i){
   properties[i].hiddenFromGuests=!properties[i].hiddenFromGuests;
@@ -1977,7 +2086,80 @@ function togglePropVisibility(i){
 }
 
 
+// ── DELETE REQUEST ────────────────────────────────────────────────────────────
+function deleteRequest(){
+  if(!activeRequest)return;
+  if(!confirm('Delete this request from '+activeRequest.guest_name+'? This cannot be undone.'))return;
+  sbF('DELETE','direct_requests?id=eq.'+activeRequest.id).then(function(){
+    toast('Request deleted','ok');
+    closeModal('respondOverlay');
+    loadRequests();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+// List view filter state
+var listFilter='all'; // 'all' | 'upcoming' | 'past' | 'airbnb' | 'booking' | 'direct'
+
+function filterList(f,btn){
+  listFilter=f;
+  var row=document.getElementById('listFilterRow');
+  if(row)row.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderResList();
+}
+
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
+function saveWaTemplates(){
+  sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var s=(rows&&rows.length&&rows[0].settings)||{};
+    if(!s.emailTemplates)s.emailTemplates={};
+    s.emailTemplates.waConfirmedBody=document.getElementById('tmplWaConfirmed').value.trim();
+    s.emailTemplates.waDeclinedBody=document.getElementById('tmplWaDeclined').value.trim();
+    s.emailTemplates.waPendingBody=document.getElementById('tmplWaPending').value.trim();
+    s.emailTemplates.waUseEmailConfirmed=document.getElementById('waUseEmailConfirmed').checked;
+    s.emailTemplates.waUseEmailDeclined=document.getElementById('waUseEmailDeclined').checked;
+    s.emailTemplates.waUseEmailPending=document.getElementById('waUseEmailPending').checked;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s});
+  }).then(function(rows){
+    if(rows&&rows.length)workspace=rows[0];
+    toast('✅ WhatsApp templates saved','ok');
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function getWaMessage(action,req){
+  var cfg=workspace&&workspace.settings||{};
+  var tmpl=cfg.emailTemplates||{};
+  var useEmail=tmpl['waUseEmail'+action.charAt(0).toUpperCase()+action.slice(1)];
+  var body=useEmail?tmpl[action+'Body']:tmpl['wa'+action.charAt(0).toUpperCase()+action.slice(1)+'Body'];
+  if(body&&req)return applyTemplateVars(body,req);
+  // Fallback short message
+  if(action==='confirmed')return 'Hi '+((req&&req.guest_name||'').split(' ')[0]||'there')+', your booking for '+(req&&req.apt_name||'the property')+' is confirmed! Payment details to follow.';
+  if(action==='declined')return 'Hi '+((req&&req.guest_name||'').split(' ')[0]||'there')+', unfortunately those dates are not available. Please try other dates!';
+  return 'Hi '+((req&&req.guest_name||'').split(' ')[0]||'there')+', thanks for your request. Confirming within 24 hours.';
+}
+
+function sendWaFromRespond(){
+  if(!activeRequest)return;
+  var action=document.getElementById('replyMsg').getAttribute('data-action')||'pending';
+  var msg=getWaMessage(action,activeRequest);
+  var phone=(activeRequest.guest_phone||'').replace(/\D/g,'');
+  if(!phone){toast('No phone number for this guest','err');return;}
+  if(!phone.startsWith('351')&&!phone.startsWith('+'))phone='351'+phone;
+  window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function loadWaTemplates(){
+  var cfg=workspace&&workspace.settings||{};
+  var t=cfg.emailTemplates||{};
+  function el(id){return document.getElementById(id);}
+  if(el('tmplWaConfirmed'))el('tmplWaConfirmed').value=t.waConfirmedBody||'';
+  if(el('tmplWaDeclined'))el('tmplWaDeclined').value=t.waDeclinedBody||'';
+  if(el('tmplWaPending'))el('tmplWaPending').value=t.waPendingBody||'';
+  if(el('waUseEmailConfirmed'))el('waUseEmailConfirmed').checked=!!t.waUseEmailConfirmed;
+  if(el('waUseEmailDeclined'))el('waUseEmailDeclined').checked=!!t.waUseEmailDeclined;
+  if(el('waUseEmailPending'))el('waUseEmailPending').checked=!!t.waUseEmailPending;
+}
+
 function loadEmailTemplates(){
   var cfg=workspace&&workspace.settings||{};
   var t=cfg.emailTemplates||{};
