@@ -8,27 +8,26 @@
 <style>
 :root{
   --accent:#2563eb;--accent-light:#dbeafe;--accent-dark:#1d4ed8;
-  --green:#16a34a;--green-bg:#dcfce7;
-  --red:#dc2626;--border:#e2e8f0;
+  --green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;
   --bg:#f8fafc;--text:#0f172a;--muted:#64748b;
-  --r:14px;--shadow:0 2px 16px rgba(0,0,0,.08);
+  --border:#e2e8f0;--r:14px;--shadow:0 2px 16px rgba(0,0,0,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
+/* Loading */
 #loadingScreen{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
 #loadingScreen.hidden{display:none}
 .spinner{width:36px;height:36px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.site-header{background:#fff;border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.header-logo{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.header-txt h1{font-size:16px;font-weight:900}
-.header-txt p{font-size:10px;color:var(--muted);font-weight:700}
-.header-perks{display:flex;gap:10px;margin-left:auto}
-.hperk{font-size:10px;font-weight:800;color:var(--muted)}
+/* Lang bar */
+.lang-bar{background:#fff;border-bottom:1px solid var(--border);padding:8px 20px;display:flex;justify-content:flex-end;gap:6px}
+.lb{padding:4px 11px;border-radius:6px;border:2px solid var(--border);background:#fff;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--muted);cursor:pointer}
+.lb.on{background:var(--accent);border-color:var(--accent);color:#fff}
 
-.steps{display:flex;align-items:center;padding:14px 20px;background:#fff;border-bottom:1px solid var(--border)}
+/* Steps */
+.steps{display:flex;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border)}
 .step{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted)}
 .step-num{width:24px;height:24px;border-radius:50%;background:var(--border);color:var(--muted);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .step.active .step-num{background:var(--accent);color:#fff}
@@ -38,25 +37,26 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .step-line{flex:1;height:2px;background:var(--border);margin:0 6px}
 .step-line.done{background:var(--green)}
 
+/* Sections */
 .section{display:none;padding:20px;max-width:720px;margin:0 auto}
 .section.active{display:block}
 
 /* Calendar */
 .cal-wrap{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
-.cal-top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.cal-top{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);gap:12px}
 .cal-top h2{font-size:15px;font-weight:900}
 .cal-top p{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
-.cal-nav-row{display:flex;gap:8px}
+.cal-nav-row{display:flex;gap:8px;flex-shrink:0}
 .cnbtn{width:32px;height:32px;border-radius:8px;border:2px solid var(--border);background:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1}
 .cnbtn:hover{border-color:var(--accent);color:var(--accent)}
 .cnbtn:disabled{opacity:.3;cursor:default}
-.cal-months{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:0 4px 16px}
+.cal-months{display:grid;grid-template-columns:1fr 1fr;padding:0 4px 16px}
 @media(max-width:520px){.cal-months{grid-template-columns:1fr}}
 .cal-month{padding:12px 14px}
 .cal-month-name{font-size:14px;font-weight:900;margin-bottom:10px;text-align:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .cal-dow{font-size:9px;font-weight:800;color:var(--muted);text-align:center;padding:3px 0;text-transform:uppercase}
-.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;position:relative;border:2px solid transparent;user-select:none}
+.cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border-radius:8px;cursor:pointer;user-select:none}
 .cd:hover:not(.disabled):not(.empty){background:var(--accent-light);color:var(--accent)}
 .cd.empty,.cd.disabled{cursor:default;color:#cbd5e1}
 .cd.today{color:var(--accent);font-weight:900}
@@ -64,25 +64,25 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .cd.range-start{background:var(--accent)!important;color:#fff!important;border-radius:8px 0 0 8px}
 .cd.range-end{background:var(--accent)!important;color:#fff!important;border-radius:0 8px 8px 0}
 .cd.range-start.range-end{border-radius:8px}
-.cd.selecting:hover:not(.disabled):not(.empty){background:var(--accent-light);color:var(--accent)}
 
-/* Selection bar */
+/* Selection summary */
 .sel-bar{background:var(--accent);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-radius:var(--r);margin-bottom:14px}
 .sel-bar.hidden{display:none}
-.sel-dates-lbl{font-size:11px;opacity:.8;font-weight:700;margin-bottom:2px}
-.sel-dates-val{font-size:14px;font-weight:900}
-.sel-go-btn{background:#fff;color:var(--accent);border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;padding:9px 18px;cursor:pointer;white-space:nowrap}
-.sel-go-btn:hover{background:var(--accent-light)}
+.sel-lbl{font-size:11px;opacity:.8;font-weight:700;margin-bottom:2px}
+.sel-val{font-size:14px;font-weight:900}
+.sel-go{background:#fff;color:var(--accent);border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;padding:9px 18px;cursor:pointer;white-space:nowrap}
+.sel-go:hover{background:var(--accent-light)}
 
+/* Guests */
 .guests-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .guests-lbl{font-size:14px;font-weight:800}
-.guests-sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+.guests-sub{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
 .g-ctrl{display:flex;align-items:center;gap:14px}
 .g-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:20px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
 .g-btn:hover{border-color:var(--accent);color:var(--accent)}
 .g-num{font-size:18px;font-weight:900;min-width:22px;text-align:center}
 
-/* Properties */
+/* Properties step */
 .avail-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
 .avail-hd h2{font-size:17px;font-weight:900}
 .avail-hd p{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
@@ -90,9 +90,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 .prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:2px solid transparent;transition:border-color .15s}
 .prop-card:hover{border-color:var(--accent)}
-.prop-photo{height:190px;background:#f1f5f9;position:relative;overflow:hidden}
+.prop-photo{height:200px;background:#f1f5f9;position:relative;overflow:hidden}
 .prop-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.prop-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:48px}
+.prop-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;background:linear-gradient(135deg,#e2e8f0,#f1f5f9)}
 .ph-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px;pointer-events:none}
 .ph-btn{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.38);color:#fff;border:none;font-size:13px;cursor:pointer;pointer-events:all;display:flex;align-items:center;justify-content:center}
 .ph-btn:hover{background:rgba(0,0,0,.6)}
@@ -117,7 +117,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .no-avail .ico{font-size:44px;margin-bottom:12px}
 .no-avail h3{font-size:17px;font-weight:900;margin-bottom:8px}
 .no-avail p{font-size:13px;color:var(--muted);font-weight:600;line-height:1.6;margin-bottom:18px}
-.wa-link{display:inline-block;background:#25d366;color:#fff;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;text-decoration:none}
+.wa-link-btn{display:inline-block;background:#25d366;color:#fff;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;text-decoration:none}
 
 /* Form */
 .form-summary{background:var(--accent);color:#fff;border-radius:var(--r);padding:16px 20px;margin-bottom:14px}
@@ -135,8 +135,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .submit-btn:hover:not(:disabled){background:var(--accent-dark)}
 .ferr{font-size:12px;font-weight:700;color:var(--red);text-align:center;min-height:16px;margin-top:8px}
 .fnote{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;font-weight:600;line-height:1.5}
-
-.back-btn{display:flex;align-items:center;gap:5px;background:none;border:2px solid var(--border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;padding:7px 13px;margin-bottom:16px}
+.back-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:2px solid var(--border);border-radius:9px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;padding:7px 13px;margin-bottom:16px}
 .back-btn:hover{border-color:var(--text);color:var(--text)}
 
 /* Success */
@@ -148,7 +147,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .srow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
 .srow:last-child{border:none}
 .srow .l{color:var(--muted);font-weight:700}.srow .v{font-weight:900}
-.wa-btn2{display:flex;align-items:center;justify-content:center;gap:9px;background:#25d366;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;padding:15px;cursor:pointer;text-decoration:none;width:100%}
+.wa-btn-big{display:flex;align-items:center;justify-content:center;gap:9px;background:#25d366;color:#fff;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;padding:15px;cursor:pointer;text-decoration:none;width:100%}
 </style>
 </head>
 <body>
@@ -158,101 +157,259 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div style="font-size:17px;font-weight:900;color:var(--text)">Permanent Summer</div>
 </div>
 
-<div class="site-header" id="siteHeader" style="display:none">
-  <div class="header-logo">🏡</div>
-  <div class="header-txt"><h1>Book Direct</h1><p>No fees · Direct with host</p></div>
-  <div class="header-perks"><div class="hperk">💰 No fees</div><div class="hperk">📱 WhatsApp</div></div>
+<!-- Language bar -->
+<div class="lang-bar" id="langBar" style="display:none">
+  <button class="lb on" onclick="setLang('en')">EN</button>
+  <button class="lb" onclick="setLang('pt')">PT</button>
+  <button class="lb" onclick="setLang('fr')">FR</button>
 </div>
 
+<!-- Step indicators -->
 <div class="steps" id="stepsBar" style="display:none">
-  <div class="step active" id="s1ind"><div class="step-num">1</div><span>Dates</span></div>
+  <div class="step active" id="s1ind"><div class="step-num">1</div><span id="step1Lbl">Dates</span></div>
   <div class="step-line" id="line1"></div>
-  <div class="step" id="s2ind"><div class="step-num">2</div><span>Property</span></div>
+  <div class="step" id="s2ind"><div class="step-num">2</div><span id="step2Lbl">Property</span></div>
   <div class="step-line" id="line2"></div>
-  <div class="step" id="s3ind"><div class="step-num">3</div><span>Details</span></div>
+  <div class="step" id="s3ind"><div class="step-num">3</div><span id="step3Lbl">Details</span></div>
 </div>
 
-<!-- Step 1: Dates -->
+<!-- STEP 1: Dates -->
 <div class="section active" id="step1">
   <div class="cal-wrap">
     <div class="cal-top">
-      <div><h2>When are you staying?</h2><p id="calHint">Select your check-in date</p></div>
+      <div>
+        <h2 id="calWhenLbl">When are you staying?</h2>
+        <p id="calHint">Select your check-in date</p>
+      </div>
       <div class="cal-nav-row">
-        <button class="cnbtn" id="prevBtn" onclick="calShift(-1)">‹</button>
-        <button class="cnbtn" onclick="calShift(1)">›</button>
+        <button class="cnbtn" id="prevBtn" onclick="calShift(-1)">&#8249;</button>
+        <button class="cnbtn" onclick="calShift(1)">&#8250;</button>
       </div>
     </div>
     <div class="cal-months" id="calMonths"></div>
   </div>
+
   <div class="guests-card">
-    <div><div class="guests-lbl">Guests</div><div class="guests-sub">How many people?</div></div>
+    <div>
+      <div class="guests-lbl" id="guestsLbl">Guests</div>
+      <div class="guests-sub" id="guestsSub">How many people?</div>
+    </div>
     <div class="g-ctrl">
-      <button class="g-btn" onclick="changeGuests(-1)">−</button>
+      <button class="g-btn" onclick="changeGuests(-1)">&#8722;</button>
       <span class="g-num" id="gNum">2</span>
       <button class="g-btn" onclick="changeGuests(1)">+</button>
     </div>
   </div>
+
   <div class="sel-bar hidden" id="selBar">
-    <div><div class="sel-dates-lbl">Your stay</div><div class="sel-dates-val" id="selVal">—</div></div>
-    <button class="sel-go-btn" onclick="goStep2()">See available properties →</button>
+    <div>
+      <div class="sel-lbl" id="selBarLbl">Your stay</div>
+      <div class="sel-val" id="selVal"></div>
+    </div>
+    <button class="sel-go" onclick="goStep2()"><span id="selGoBtnTxt">See available properties &#8594;</span></button>
   </div>
 </div>
 
-<!-- Step 2: Properties -->
+<!-- STEP 2: Properties -->
 <div class="section" id="step2">
-  <button class="back-btn" onclick="goStep1()">‹ Change dates</button>
+  <button class="back-btn" onclick="goStep1()"><span id="backBtn1Txt">&#8249; Change dates</span></button>
   <div class="avail-hd">
-    <div><h2>Available options</h2><p id="availSub"></p></div>
-    <div class="dates-chip" onclick="goStep1()"><span id="chipTxt">—</span> ✎</div>
+    <div>
+      <h2 id="availHdTitle">Available options</h2>
+      <p id="availSub"></p>
+    </div>
+    <div class="dates-chip" onclick="goStep1()"><span id="chipTxt"></span> &#x270E;</div>
   </div>
   <div id="propList"></div>
 </div>
 
-<!-- Step 3: Details -->
+<!-- STEP 3: Details -->
 <div class="section" id="step3">
-  <button class="back-btn" onclick="goStep2()">‹ Change property</button>
+  <button class="back-btn" onclick="goStep2()"><span id="backBtn2Txt">&#8249; Change property</span></button>
   <div class="form-summary" id="fSummary"></div>
   <div class="form-card">
-    <h3>👤 Your details</h3>
-    <div class="fg"><label>Full name *</label><input type="text" id="fName" placeholder="Jane Smith" autocomplete="name"></div>
-    <div class="fg"><label>Email *</label><input type="email" id="fEmail" placeholder="jane@example.com" autocomplete="email"></div>
-    <div class="fg"><label>Phone (WhatsApp preferred)</label><input type="tel" id="fPhone" placeholder="+351 xxx xxx xxx" autocomplete="tel"></div>
-    <div class="fg"><label>Special requests</label><textarea id="fNotes" placeholder="Early check-in, baby cot, allergies…"></textarea></div>
+    <h3 id="detailsTitle">&#128100; Your details</h3>
+    <div class="fg"><label id="fNameLbl">Full name *</label><input type="text" id="fName" placeholder="Jane Smith" autocomplete="name"></div>
+    <div class="fg"><label id="fEmailLbl">Email *</label><input type="email" id="fEmail" placeholder="jane@example.com" autocomplete="email"></div>
+    <div class="fg"><label id="fPhoneLbl">Phone (WhatsApp preferred)</label><input type="tel" id="fPhone" placeholder="+351 xxx xxx xxx" autocomplete="tel"></div>
+    <div class="fg"><label id="fNotesLbl">Special requests</label><textarea id="fNotes" placeholder="Early check-in, baby cot, allergies..."></textarea></div>
   </div>
   <div class="ferr" id="fErr"></div>
   <button class="submit-btn" id="subBtn" onclick="doSubmit()">Request Booking</button>
-  <p class="fnote">No payment required now. Host will confirm within 24 hours.</p>
+  <p class="fnote" id="fNoteBottom">No payment required now. Host will confirm within 24 hours.</p>
 </div>
 
-<!-- Success -->
+<!-- SUCCESS -->
 <div id="successSection">
-  <div class="sico">🌅</div>
-  <div class="stitle">Request sent!</div>
-  <div class="ssub">Your host will confirm within 24 hours and reach out with payment details. Check your email for a confirmation.</div>
+  <div class="sico">&#127749;</div>
+  <div class="stitle" id="successTitle">Request sent!</div>
+  <div class="ssub" id="successSub2">Your host will confirm within 24 hours and reach out with payment details.</div>
   <div class="sbox" id="sBox"></div>
-  <a id="waLink" href="#" class="wa-btn2" target="_blank">💬 Message host on WhatsApp</a>
+  <a id="waLink" href="#" class="wa-btn-big" target="_blank"><span id="waLinkTxt">Message host on WhatsApp</span></a>
 </div>
 
 <script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
+var FROM_EMAIL='Permanent Summer <bookings@mail.permanentsummer.co>';
 var HOST_WA='351924477353';
 var HOST_EMAIL='chris@permanentsummer.co';
 
+// ── STATE ─────────────────────────────────────────────────────────────────────
 var wsId=new URLSearchParams(window.location.search).get('ws');
 var properties=[],existingBookings=[],blockedMap={};
 var checkIn=null,checkOut=null,guests=2,selProp=null;
 var calOff=0,photoIdx={};
-var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-// ── BOOT ─────────────────────────────────────────────────────────────────────
+// ── I18N ─────────────────────────────────────────────────────────────────────
+var lang='en';
+var I={
+  en:{
+    when:'When are you staying?',
+    selCheckin:'Select your check-in date',
+    selCheckout:'Now select your check-out date',
+    doneHint:'Dates selected',
+    guests:'Guests',howMany:'How many people?',
+    yourStay:'Your stay',
+    seeProps:'See available properties',
+    changeDates:'Change dates',
+    available:'Available options',
+    changeProp:'Change property',
+    yourDetails:'Your details',
+    name:'Full name *',namePh:'Jane Smith',
+    email:'Email *',emailPh:'jane@example.com',
+    phone:'Phone (WhatsApp preferred)',phonePh:'+351 xxx xxx xxx',
+    requests:'Special requests',requestsPh:'Early check-in, baby cot, allergies...',
+    submit:'Request Booking',sending:'Sending...',
+    noPayNow:'No payment required now. Host will confirm within 24 hours.',
+    noProps:'No properties available',
+    noPropsSub:'All properties are booked for those dates. Try different dates or contact the host.',
+    contactHost:'Contact host on WhatsApp',
+    requestSent:'Request sent!',successSub:'Your host will confirm within 24 hours.',
+    waBtn:'Message host on WhatsApp',
+    checkin:'Check-in',checkout:'Check-out',
+    nights:'night',nightsp:'nights',
+    deposit:'50% deposit to confirm',
+    step1:'Dates',step2:'Property',step3:'Details',
+    errName:'Please enter your full name.',errEmail:'Please enter a valid email.',
+    directRate:'Direct booking rate',lowRate:'Low season rate',
+    maxG:'Max',minN:'Min',cleaning:'cleaning fee'
+  },
+  pt:{
+    when:'Quando vai ficar?',
+    selCheckin:'Selecione a data de entrada',
+    selCheckout:'Selecione a data de saida',
+    doneHint:'Datas selecionadas',
+    guests:'Hospedes',howMany:'Quantas pessoas?',
+    yourStay:'A sua estadia',
+    seeProps:'Ver propriedades disponiveis',
+    changeDates:'Alterar datas',
+    available:'Opcoes disponiveis',
+    changeProp:'Alterar propriedade',
+    yourDetails:'Os seus dados',
+    name:'Nome completo *',namePh:'Joao Silva',
+    email:'Email *',emailPh:'joao@exemplo.com',
+    phone:'Telefone (WhatsApp preferivel)',phonePh:'+351 xxx xxx xxx',
+    requests:'Pedidos especiais',requestsPh:'Check-in antecipado, berce, alergias...',
+    submit:'Solicitar Reserva',sending:'A enviar...',
+    noPayNow:'Nenhum pagamento necessario agora. O anfitriao confirma em 24 horas.',
+    noProps:'Sem propriedades disponiveis',
+    noPropsSub:'Todas as propriedades estao reservadas para essas datas.',
+    contactHost:'Contactar anfitriao no WhatsApp',
+    requestSent:'Pedido enviado!',successSub:'O anfitriao confirmara em 24 horas.',
+    waBtn:'Contactar anfitriao no WhatsApp',
+    checkin:'Check-in',checkout:'Check-out',
+    nights:'noite',nightsp:'noites',
+    deposit:'50% de deposito para confirmar',
+    step1:'Datas',step2:'Propriedade',step3:'Dados',
+    errName:'Por favor, introduza o seu nome completo.',errEmail:'Por favor, introduza um email valido.',
+    directRate:'Reserva direta',lowRate:'Preco baixa temporada',
+    maxG:'Max',minN:'Min',cleaning:'taxa de limpeza'
+  },
+  fr:{
+    when:'Quand sejournez-vous ?',
+    selCheckin:"Selectionnez votre date d'arrivee",
+    selCheckout:'Selectionnez votre date de depart',
+    doneHint:'Dates selectionnees',
+    guests:'Voyageurs',howMany:'Combien de personnes ?',
+    yourStay:'Votre sejour',
+    seeProps:'Voir les logements disponibles',
+    changeDates:'Modifier les dates',
+    available:'Options disponibles',
+    changeProp:'Changer de logement',
+    yourDetails:'Vos informations',
+    name:'Nom complet *',namePh:'Jean Dupont',
+    email:'Email *',emailPh:'jean@exemple.com',
+    phone:'Telephone (WhatsApp de preference)',phonePh:'+351 xxx xxx xxx',
+    requests:'Demandes speciales',requestsPh:"Arrivee anticipee, lit bebe, allergies...",
+    submit:'Demander une reservation',sending:'Envoi en cours...',
+    noPayNow:"Aucun paiement requis. L'hote confirmera sous 24h.",
+    noProps:'Aucun logement disponible',
+    noPropsSub:'Tous les logements sont reserves pour ces dates.',
+    contactHost:"Contacter l'hote sur WhatsApp",
+    requestSent:'Demande envoyee !',successSub:"Votre hote confirmera sous 24h.",
+    waBtn:"Message a l'hote sur WhatsApp",
+    checkin:'Arrivee',checkout:'Depart',
+    nights:'nuit',nightsp:'nuits',
+    deposit:"50% d'acompte pour confirmer",
+    step1:'Dates',step2:'Logement',step3:'Details',
+    errName:'Veuillez entrer votre nom complet.',errEmail:'Veuillez entrer un email valide.',
+    directRate:'Tarif reservation directe',lowRate:'Tarif basse saison',
+    maxG:'Max',minN:'Min',cleaning:'frais de menage'
+  }
+};
+function T(k){return (I[lang]&&I[lang][k])||I.en[k]||k;}
+
+function setLang(l){
+  lang=l;
+  try{localStorage.setItem('ps_lang',l);}catch(e){}
+  document.querySelectorAll('.lb').forEach(function(b){b.classList.toggle('on',b.textContent===l.toUpperCase());});
+  applyLang();
+}
+
+function applyLang(){
+  function s(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  function p(id,v){var e=document.getElementById(id);if(e)e.placeholder=v;}
+  s('calWhenLbl',T('when'));
+  // Only update hint if not mid-selection
+  if(!checkIn)s('calHint',T('selCheckin'));
+  else if(!checkOut)s('calHint',T('selCheckout'));
+  else s('calHint',T('doneHint'));
+  s('guestsLbl',T('guests'));s('guestsSub',T('howMany'));
+  s('selBarLbl',T('yourStay'));s('selGoBtnTxt',T('seeProps')+' \u2192');
+  s('backBtn1Txt','\u2039 '+T('changeDates'));s('backBtn2Txt','\u2039 '+T('changeProp'));
+  s('availHdTitle',T('available'));
+  s('step1Lbl',T('step1'));s('step2Lbl',T('step2'));s('step3Lbl',T('step3'));
+  s('detailsTitle',T('yourDetails'));
+  s('fNameLbl',T('name'));p('fName',T('namePh'));
+  s('fEmailLbl',T('email'));p('fEmail',T('emailPh'));
+  s('fPhoneLbl',T('phone'));p('fPhone',T('phonePh'));
+  s('fNotesLbl',T('requests'));p('fNotes',T('requestsPh'));
+  var sb=document.getElementById('subBtn');if(sb&&!sb.disabled)sb.textContent=T('submit');
+  s('fNoteBottom',T('noPayNow'));
+  s('waLinkTxt',T('waBtn'));
+  s('successTitle',T('requestSent'));s('successSub2',T('successSub'));
+  // Update sel bar text
+  updateSelBar();
+  // Re-render props if on step 2
+  if(checkIn&&checkOut&&document.getElementById('step2').classList.contains('active'))renderProps();
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
 window.addEventListener('load',function(){
+  // Restore saved language
+  try{var sl=localStorage.getItem('ps_lang');if(sl&&I[sl])lang=sl;}catch(e){}
+  document.querySelectorAll('.lb').forEach(function(b){b.classList.toggle('on',b.textContent===lang.toUpperCase());});
+
   if(!wsId){showErr('No workspace ID in URL. Check your booking link.');return;}
+
   Promise.all([
-    fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(wsId),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j),
-    fetch(SB_URL+'/rest/v1/bookings?select=apt,checkin,checkout&workspace_id=eq.'+encodeURIComponent(wsId),{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j)
+    fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(wsId),
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j),
+    fetch(SB_URL+'/rest/v1/bookings?select=apt,checkin,checkout&workspace_id=eq.'+encodeURIComponent(wsId),
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){if(!r.ok)return[];return r.json();})
   ]).then(function(res){
     var wsRows=res[0]||[],bkRows=res[1]||[];
     if(!wsRows.length){showRLSErr();return;}
@@ -261,8 +418,9 @@ window.addEventListener('load',function(){
     existingBookings=bkRows;
     buildBlockedMap();
     document.getElementById('loadingScreen').classList.add('hidden');
-    document.getElementById('siteHeader').style.display='flex';
+    document.getElementById('langBar').style.display='flex';
     document.getElementById('stepsBar').style.display='flex';
+    applyLang();
     drawCal();
   }).catch(function(e){showRLSErr(e.message);});
 });
@@ -287,7 +445,14 @@ function isAvail(prop,ci,co){
   return true;
 }
 
-// ── CALENDAR ─────────────────────────────────────────────────────────────────
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+var MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MONTHS_PT=['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var MONTHS_FR=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+var DAYS_EN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+var DAYS_PT=['Seg','Ter','Qua','Qui','Sex','Sab','Dom'];
+var DAYS_FR=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
 function calShift(dir){calOff+=dir;if(calOff<0)calOff=0;drawCal();}
 
 function drawCal(){
@@ -300,6 +465,8 @@ function drawCal(){
 
 function buildMonth(today,offset){
   var ref=new Date(today.getFullYear(),today.getMonth()+calOff+offset,1);
+  var MONTHS=lang==='pt'?MONTHS_PT:lang==='fr'?MONTHS_FR:MONTHS_EN;
+  var DAYS=lang==='pt'?DAYS_PT:lang==='fr'?DAYS_FR:DAYS_EN;
   var wrap=document.createElement('div');wrap.className='cal-month';
   var title=document.createElement('div');title.className='cal-month-name';
   title.textContent=MONTHS[ref.getMonth()]+' '+ref.getFullYear();
@@ -321,7 +488,7 @@ function buildMonth(today,offset){
         if(ds===checkIn)cell.classList.add('range-start');
         else if(ds===checkOut)cell.classList.add('range-end');
         else if(ds>checkIn&&ds<checkOut)cell.classList.add('in-range');
-      }else if(checkIn&&ds===checkIn)cell.classList.add('range-start','range-end');
+      }else if(checkIn&&ds===checkIn){cell.classList.add('range-start','range-end');}
       (function(d2){cell.addEventListener('click',function(){onDay(d2);});})(ds);
     }
     grid.appendChild(cell);
@@ -335,8 +502,11 @@ function onDay(ds){
   if(clicked<today)return;
   if(!checkIn||checkOut||(checkIn&&ds<=checkIn)){
     checkIn=ds;checkOut=null;
-    document.getElementById('calHint').textContent='Now select your check-out date';
-  }else{checkOut=ds;document.getElementById('calHint').textContent='Dates selected ✓';}
+    document.getElementById('calHint').textContent=T('selCheckout');
+  }else{
+    checkOut=ds;
+    document.getElementById('calHint').textContent=T('doneHint')+' \u2713';
+  }
   drawCal();updateSelBar();
 }
 
@@ -344,13 +514,23 @@ function updateSelBar(){
   var bar=document.getElementById('selBar'),val=document.getElementById('selVal');
   if(checkIn&&checkOut){
     var n=nights(checkIn,checkOut);
-    val.textContent=fmtS(checkIn)+' → '+fmtS(checkOut)+'  ·  '+n+' night'+(n!==1?'s':'');
+    val.textContent=T('checkin')+': '+fmtS(checkIn)+'  \u2192  '+T('checkout')+': '+fmtS(checkOut)+'  \u00b7  '+n+' '+(n===1?T('nights'):T('nightsp'));
     bar.classList.remove('hidden');
-  }else if(checkIn){val.textContent=fmtS(checkIn)+' → select check-out';bar.classList.remove('hidden');}
-  else bar.classList.add('hidden');
+  }else if(checkIn){
+    val.textContent=T('checkin')+': '+fmtS(checkIn)+'  \u2192  '+T('selCheckout');
+    bar.classList.remove('hidden');
+  }else{
+    bar.classList.add('hidden');
+  }
 }
 
-function changeGuests(d){guests=Math.max(1,Math.min(20,guests+d));document.getElementById('gNum').textContent=guests;}
+// ── GUESTS ────────────────────────────────────────────────────────────────────
+function changeGuests(d){
+  // Cap at the max of the selected property if on step 3, otherwise global max
+  var maxG=selProp?selProp.maxGuests||20:20;
+  guests=Math.max(1,Math.min(maxG,guests+d));
+  document.getElementById('gNum').textContent=guests;
+}
 
 // ── STEPS ─────────────────────────────────────────────────────────────────────
 function setStep(n){
@@ -368,22 +548,33 @@ function setStep(n){
 function goStep1(){setStep(1);}
 
 function goStep2(){
-  if(!checkIn||!checkOut){document.getElementById('calHint').textContent='Please select both check-in and check-out dates';return;}
+  if(!checkIn||!checkOut){
+    document.getElementById('calHint').textContent=T('selCheckin');
+    return;
+  }
   renderProps();
   setStep(2);
   var n=nights(checkIn,checkOut);
-  var chip=fmtS(checkIn)+' – '+fmtS(checkOut)+' · '+n+'n · '+guests+' guest'+(guests>1?'s':'');
+  var chip=T('checkin')+': '+fmtS(checkIn)+'  \u2013  '+T('checkout')+': '+fmtS(checkOut)+'  \u00b7  '+n+'n';
   document.getElementById('chipTxt').textContent=chip;
-  document.getElementById('availSub').textContent=n+' nights · '+guests+' guest'+(guests>1?'s':'')+' · '+fmtS(checkIn)+' – '+fmtS(checkOut);
+  document.getElementById('availSub').textContent=
+    n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+guests+' '+T('guests').toLowerCase();
 }
 
-function goStep3(prop){
-  selProp=prop;
-  var n=nights(checkIn,checkOut),total=calcTotal(prop,n),dep=Math.round(total/2);
+function goStep3(propIdx){
+  selProp=properties[propIdx];
+  // Cap guests to this property's max
+  if(selProp.maxGuests&&guests>selProp.maxGuests){
+    guests=selProp.maxGuests;
+    document.getElementById('gNum').textContent=guests;
+  }
+  var n=nights(checkIn,checkOut),total=calcTotal(selProp,n);
+  var dep=selProp.requireDeposit!==false?Math.round(total/2):0;
   document.getElementById('fSummary').innerHTML=
-    '<h3>'+esc(prop.name)+'</h3>'+
-    '<p>'+fmtF(checkIn)+' → '+fmtF(checkOut)+' · '+n+' nights · '+guests+' guest'+(guests>1?'s':'')+
-    (total?'<br><strong>Total: €'+total+'</strong> · Deposit: <strong>€'+dep+'</strong>':'')+
+    '<h3>'+esc(selProp.name)+'</h3>'+
+    '<p>'+T('checkin')+': <strong>'+fmtF(checkIn)+'</strong>  \u2192  '+T('checkout')+': <strong>'+fmtF(checkOut)+'</strong>'+
+    '<br>'+n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+guests+' '+T('guests').toLowerCase()+
+    (total?'<br>Total: <strong>\u20ac'+total+'</strong>'+(dep?' \u00b7 '+T('deposit')+': <strong>\u20ac'+dep+'</strong>':''): '')+
     '</p>';
   setStep(3);
 }
@@ -394,10 +585,17 @@ function renderProps(){
   var n=nights(checkIn,checkOut);
   var avail=properties.filter(function(p){return isAvail(p,checkIn,checkOut);});
   if(!avail.length){
-    list.innerHTML='<div class="no-avail"><div class="ico">😔</div><h3>No properties available</h3><p>All properties are booked for those dates. Try different dates or contact the host.</p><a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link">💬 Contact host on WhatsApp</a></div>';
+    list.innerHTML=
+      '<div class="no-avail">'+
+        '<div class="ico">&#128532;</div>'+
+        '<h3>'+T('noProps')+'</h3>'+
+        '<p>'+T('noPropsSub')+'</p>'+
+        '<a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link-btn">'+T('contactHost')+'</a>'+
+      '</div>';
     return;
   }
-  avail.forEach(function(prop,idx){
+  avail.forEach(function(prop){
+    var propIdx=properties.indexOf(prop);
     var seasonal=getSeasonalRate(prop,checkIn);
     var rate=seasonal||prop.ratePerNight||0;
     var baseRate=prop.ratePerNight||0;
@@ -405,28 +603,34 @@ function renderProps(){
     var baseTotal=baseRate*n+(prop.cleanFee||0);
     var hasDisc=total>0&&total<baseTotal&&baseTotal>0;
     var discPct=hasDisc?Math.round((1-total/baseTotal)*100):0;
+    var showDeposit=(prop.requireDeposit!==false)&&total>0;
     var dep=Math.round(total/2);
 
+    // Photos
     var photos=prop.photos||[];
-    var pidx=idx; // capture for closures
-
     var photoHtml='';
     if(photos.length){
-      photoHtml='<div class="prop-photo" id="pp_'+idx+'">'+
-        '<img src="'+esc(photos[0])+'" id="pimg_'+idx+'" alt="'+esc(prop.name)+'" onerror="this.parentNode.innerHTML=\'<div class=\\\"prop-photo-ph\\\">🏡</div>\'">'+
+      photoHtml='<div class="prop-photo" id="pp_'+propIdx+'">'+
+        '<img src="'+esc(photos[0])+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'" '+
+          'onerror="this.parentNode.innerHTML=\'<div class=\\\"prop-photo-ph\\\">&#127968;</div>\'">'+
         (photos.length>1?
           '<div class="ph-nav">'+
-            '<button class="ph-btn" onclick="phPrev('+idx+','+photos.length+')">‹</button>'+
-            '<button class="ph-btn" onclick="phNext('+idx+','+photos.length+')">›</button>'+
+            '<button class="ph-btn" onclick="phPrev('+propIdx+','+photos.length+')">&#8249;</button>'+
+            '<button class="ph-btn" onclick="phNext('+propIdx+','+photos.length+')">&#8250;</button>'+
           '</div>'+
-          '<div class="ph-dots" id="pdots_'+idx+'">'+photos.map(function(_,i){return'<div class="ph-dot'+(i===0?' on':'')+'"></div>';}).join('')+'</div>':'')+
+          '<div class="ph-dots" id="pdots_'+propIdx+'">'+
+            photos.map(function(_,i){return'<div class="ph-dot'+(i===0?' on':'')+'"></div>';}).join('')+
+          '</div>':'')+ 
         '</div>';
-    }else{photoHtml='<div class="prop-photo-ph">🏡</div>';}
+    }else{
+      photoHtml='<div class="prop-photo-ph">&#127968;</div>';
+    }
 
+    // Features — guest max comes from property config
     var feats=[];
-    if(prop.maxGuests)feats.push('👥 Max '+prop.maxGuests+' guests');
-    if(prop.minNights)feats.push('🌙 Min '+prop.minNights+' nights');
-    if(prop.cleanFee)feats.push('🧹 €'+prop.cleanFee+' cleaning fee');
+    if(prop.maxGuests)feats.push(T('maxG')+' '+prop.maxGuests+' '+T('guests').toLowerCase());
+    if(prop.minNights)feats.push(T('minN')+' '+prop.minNights+' '+(prop.minNights===1?T('nights'):T('nightsp')));
+    if(prop.cleanFee)feats.push('\u20ac'+prop.cleanFee+' '+T('cleaning'));
     if(prop.features)feats.push(prop.features);
 
     var card=document.createElement('div');card.className='prop-card';
@@ -436,23 +640,27 @@ function renderProps(){
           '<div class="prop-name" style="flex:1">'+esc(prop.name)+'</div>'+
           (discPct?'<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px;flex-shrink:0">'+discPct+'% OFF</span>':'')+
         '</div>'+
-        (prop.location?'<div class="prop-loc">📍 '+esc(prop.location)+'</div>':'')+
+        (prop.location?'<div class="prop-loc">&#128205; '+esc(prop.location)+'</div>':'')+
         (feats.length?'<div class="prop-feats">'+feats.map(function(f){return'<span class="fc">'+esc(f)+'</span>';}).join('')+'</div>':'')+
         '<div class="prop-price-row">'+
           '<div>'+
-            '<div class="plabel">'+(seasonal&&seasonal<baseRate?'Low season rate':'Direct booking rate')+'</div>'+
-            (hasDisc?'<div class="pstrike">€'+baseTotal+'.00</div>':'')+
-            (total?'<div class="pmain">€'+total+'.00</div><div class="pnights">for '+n+' night'+(n!==1?'s':'')+'</div><div class="pdeposit">Deposit to confirm: €'+dep+'</div>':
+            '<div class="plabel">'+(seasonal&&seasonal<baseRate?T('lowRate'):T('directRate'))+'</div>'+
+            (hasDisc?'<div class="pstrike">\u20ac'+baseTotal+'.00</div>':'')+
+            (total?
+              '<div class="pmain">\u20ac'+total+'.00</div>'+
+              '<div class="pnights">'+T('totalFor')||'for'+' '+n+' '+(n===1?T('nights'):T('nightsp'))+'</div>'+
+              (showDeposit?'<div class="pdeposit">'+T('deposit')+': \u20ac'+dep+'</div>':''):
               '<div class="pmain" style="font-size:16px;color:var(--muted)">Contact for price</div>')+
           '</div>'+
-          '<button class="sel-btn" onclick="goStep3(properties['+properties.indexOf(prop)+'])">Select</button>'+
+          '<button class="sel-btn" onclick="goStep3('+propIdx+')">Select</button>'+
         '</div>'+
       '</div>';
     list.appendChild(card);
-    photoIdx[idx]=0;
+    photoIdx[propIdx]=0;
   });
 }
 
+// Photo navigation
 function phNext(idx,total){photoIdx[idx]=(photoIdx[idx]+1)%total;updatePhoto(idx,total);}
 function phPrev(idx,total){photoIdx[idx]=(photoIdx[idx]-1+total)%total;updatePhoto(idx,total);}
 function updatePhoto(idx,total){
@@ -471,8 +679,7 @@ function getSeasonalRate(prop,ci){
 }
 function calcTotal(prop,n){
   if(!n)return 0;
-  var rate=getSeasonalRate(prop,checkIn)||prop.ratePerNight||0;
-  return rate*n+(prop.cleanFee||0);
+  return ((getSeasonalRate(prop,checkIn)||prop.ratePerNight)||0)*n+(prop.cleanFee||0);
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────────────────────
@@ -482,15 +689,18 @@ function doSubmit(){
   var phone=document.getElementById('fPhone').value.trim();
   var notes=document.getElementById('fNotes').value.trim();
   var err=document.getElementById('fErr');err.textContent='';
-  if(!name){err.textContent='Please enter your full name.';return;}
-  if(!email||!email.includes('@')){err.textContent='Please enter a valid email.';return;}
-  var btn=document.getElementById('subBtn');btn.disabled=true;btn.textContent='Sending…';
+  if(!name){err.textContent=T('errName');return;}
+  if(!email||!email.includes('@')){err.textContent=T('errEmail');return;}
+  var btn=document.getElementById('subBtn');
+  btn.disabled=true;btn.textContent=T('sending');
   var n=nights(checkIn,checkOut),total=calcTotal(selProp,n);
-  var record={workspace_id:wsId,apt_id:selProp.id,apt_name:selProp.name,
+  var record={
+    workspace_id:wsId,apt_id:selProp.id,apt_name:selProp.name,
     guest_name:name,guest_email:email,guest_phone:phone||null,
     checkin:checkIn,checkout:checkOut,guests:guests,notes:notes||null,
     rate_per_night:getSeasonalRate(selProp,checkIn)||selProp.ratePerNight||null,
-    total_amount:total||null,status:'pending',deposit_paid:false,balance_paid:false};
+    total_amount:total||null,status:'pending',deposit_paid:false,balance_paid:false
+  };
   fetch(SB_URL+'/rest/v1/direct_requests',{
     method:'POST',
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
@@ -499,54 +709,82 @@ function doSubmit(){
     if(!r.ok&&r.status!==201)return r.text().then(function(t){throw new Error(t);});
     return Promise.all([emailHost(name,email,phone,n,total,notes),emailGuest(name,email,n,total)]);
   }).then(function(){showSuccess(name,n,total);})
-  .catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Request Booking';});
+  .catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent=T('submit');});
 }
 
 function showSuccess(name,n,total){
-  document.getElementById('step3').classList.remove('active');
+  ['step1','step2','step3'].forEach(function(id){document.getElementById(id).classList.remove('active');});
   document.getElementById('stepsBar').style.display='none';
-  var rows=[sr('Property',selProp.name),sr('Check-in',fmtF(checkIn)),sr('Check-out',fmtF(checkOut)),sr('Nights',''+n),sr('Guests',''+guests),total?sr('Total','€'+total+' · 50% deposit to confirm'):''].join('');
+  document.getElementById('langBar').style.display='none';
+  var showDeposit=selProp.requireDeposit!==false&&total>0;
+  var dep=Math.round(total/2);
+  var rows=[
+    sr(T('checkin'),fmtF(checkIn)),
+    sr(T('checkout'),fmtF(checkOut)),
+    sr(n+' '+(n===1?T('nights'):T('nightsp')),selProp.name),
+    sr(T('guests'),''+guests),
+    total?sr('Total','\u20ac'+total+(showDeposit?' \u00b7 '+T('deposit')+': \u20ac'+dep:'')):'',
+  ].join('');
   document.getElementById('sBox').innerHTML=rows;
-  var msg='Hi! Booking request:\nProperty: '+selProp.name+'\nDates: '+fmtS(checkIn)+' → '+fmtS(checkOut)+'\nGuests: '+guests+'\nName: '+name;
+  var msg=T('checkin')+': '+fmtS(checkIn)+' \u2192 '+T('checkout')+': '+fmtS(checkOut)+'\n'+selProp.name+'\n'+name;
   document.getElementById('waLink').href='https://wa.me/'+HOST_WA+'?text='+encodeURIComponent(msg);
   document.getElementById('successSection').style.display='block';
   window.scrollTo(0,0);
 }
 
+// ── EMAILS ────────────────────────────────────────────────────────────────────
 function emailHost(name,email,phone,n,total,notes){
-  var h='<div style="font-family:sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
-    '<h2 style="margin:0 0 16px;font-size:19px">New booking request 📥</h2>'+
+  var showDep=selProp.requireDeposit!==false&&total>0;
+  var h='<div style="font-family:Arial,sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
+    '<h2 style="margin:0 0 16px;font-size:19px">New booking request</h2>'+
     '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
     tr2('Property',selProp.name)+tr2('Guest',name)+tr2('Email',email)+
     (phone?tr2('Phone',phone):'')+
     tr2('Check-in',fmtF(checkIn))+tr2('Check-out',fmtF(checkOut))+
     tr2('Nights',''+n)+tr2('Guests',''+guests)+
-    (total?tr2('Total','€'+total):'')+(notes?tr2('Notes',notes):'')+
-    '</table></div>';
-  return sendMail(HOST_EMAIL,email,'📥 New request: '+selProp.name+' · '+fmtS(checkIn)+'–'+fmtS(checkOut)+' ('+n+'n)',h);
+    (total?tr2('Total','\u20ac'+total+(showDep?' (\u20ac'+Math.round(total/2)+' deposit)':'')):'')+
+    (notes?tr2('Notes',notes):'')+
+    '</table>'+
+    '<p style="margin-top:16px;font-size:12px;color:#64748b">Review and respond in your Direct Bookings Dashboard.</p>'+
+    '</div>';
+  return sendMail(HOST_EMAIL,email,'New request: '+selProp.name+' | '+fmtS(checkIn)+' - '+fmtS(checkOut)+'('+n+'n)',h);
 }
+
 function emailGuest(name,email,n,total){
   var fn=name.split(' ')[0];
-  var h='<div style="font-family:sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
-    '<h2 style="margin:0 0 8px;font-size:19px">Thanks, '+esc(fn)+' ☀️</h2>'+
-    '<p style="font-size:13px;color:#64748b;margin:0 0 18px;line-height:1.6">We\'ve received your request for <strong>'+esc(selProp.name)+'</strong>. Your host will confirm within 24 hours.</p>'+
+  var showDep=selProp.requireDeposit!==false&&total>0;
+  var h='<div style="font-family:Arial,sans-serif;max-width:520px;color:#0f172a;padding:24px">'+
+    '<h2 style="margin:0 0 8px;font-size:19px">Thanks, '+esc(fn)+' !</h2>'+
+    '<p style="font-size:13px;color:#64748b;margin:0 0 18px;line-height:1.6">Your booking request for <strong>'+esc(selProp.name)+'</strong> has been received. Your host will confirm within 24 hours.</p>'+
     '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
-    tr2('Property',selProp.name)+tr2('Check-in',fmtF(checkIn))+tr2('Check-out',fmtF(checkOut))+tr2('Nights',''+n)+tr2('Guests',''+guests)+
-    (total?tr2('Total','€'+total+' · 50% deposit to confirm'):'')+
-    '</table></div>';
-  return sendMail(email,null,'Booking request · '+selProp.name+' · '+fmtS(checkIn)+'–'+fmtS(checkOut),h);
+    tr2('Check-in',fmtF(checkIn))+tr2('Check-out',fmtF(checkOut))+
+    tr2('Nights',''+n)+tr2('Guests',''+guests)+
+    (total?tr2('Total','\u20ac'+total+(showDep?'  (50% deposit to confirm)':'')):'')+
+    '</table>'+
+    '<p style="margin-top:16px;font-size:12px;color:#64748b">Questions? WhatsApp: <a href="https://wa.me/'+HOST_WA+'" style="color:#2563eb">+'+HOST_WA+'</a></p>'+
+    '</div>';
+  return sendMail(email,null,'Booking request - '+selProp.name+' | '+fmtS(checkIn)+' - '+fmtS(checkOut),h);
 }
+
 function sendMail(to,replyTo,subj,html){
-  var b={from:'Permanent Summer <bookings@permanentsummer.co>',to:[to],subject:subj,html:html};
+  var b={from:FROM_EMAIL,to:[to],subject:subj,html:html};
   if(replyTo)b.reply_to=replyTo;
-  return fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).catch(function(){});
+  return fetch('https://api.resend.com/emails',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+RESEND_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify(b)
+  }).then(function(r){
+    return r.text().then(function(txt){
+      if(!r.ok)console.warn('Email warn ('+r.status+'):',txt);
+    });
+  }).catch(function(e){console.warn('Email error:',e);});
 }
 
 // ── ERROR SCREENS ─────────────────────────────────────────────────────────────
 function showRLSErr(msg){
   document.getElementById('loadingScreen').innerHTML=
     '<div style="padding:28px;text-align:center;max-width:420px">'+
-    '<div style="font-size:30px;margin-bottom:12px">⚙️</div>'+
+    '<div style="font-size:30px;margin-bottom:12px">&#9881;&#65039;</div>'+
     '<p style="font-size:15px;font-weight:800;margin-bottom:8px">One-time Supabase setup needed</p>'+
     '<p style="font-size:12px;color:#64748b;line-height:1.6;margin-bottom:16px">Run these two SQL policies in your Supabase SQL Editor:</p>'+
     '<div style="background:#0f172a;border-radius:9px;padding:13px;font-size:11px;color:#a5f3fc;text-align:left;line-height:1.9;font-family:monospace;overflow-x:auto">'+
@@ -556,14 +794,19 @@ function showRLSErr(msg){
     (msg?'<p style="font-size:11px;color:#ef4444;margin-top:10px">'+esc(msg)+'</p>':'')+
     '</div>';
 }
-function showErr(msg){document.getElementById('loadingScreen').innerHTML='<div style="padding:28px;text-align:center"><div style="font-size:30px;margin-bottom:10px">⚠️</div><p style="font-size:14px;font-weight:700;color:#dc2626">'+esc(msg)+'</p></div>';}
+function showErr(msg){
+  document.getElementById('loadingScreen').innerHTML=
+    '<div style="padding:28px;text-align:center">'+
+    '<div style="font-size:30px;margin-bottom:10px">&#9888;&#65039;</div>'+
+    '<p style="font-size:14px;font-weight:700;color:#dc2626">'+esc(msg)+'</p></div>';
+}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function nights(ci,co){if(!ci||!co)return 0;return Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);}
-function fmtS(d){if(!d)return'—';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
-function fmtF(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function fmtS(d){if(!d)return'';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
+function fmtF(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString(lang==='fr'?'fr-FR':lang==='pt'?'pt-PT':'en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function sr(l,v){return v?'<div class="srow"><span class="l">'+l+'</span><span class="v">'+esc(v)+'</span></div>':'';}
+function sr(l,v){return v?'<div class="srow"><span class="l">'+esc(l)+'</span><span class="v">'+esc(v)+'</span></div>':'';}
 function tr2(l,v){return'<tr><td style="padding:7px 0;color:#64748b;border-bottom:1px solid #e2e8f0;width:38%">'+l+'</td><td style="padding:7px 0;border-bottom:1px solid #e2e8f0;font-weight:700">'+esc(v)+'</td></tr>';}
 </script>
 </body>
