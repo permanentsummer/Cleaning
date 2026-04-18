@@ -689,10 +689,10 @@ code{font-family:monospace}
         <div style="font-size:13px;font-weight:800">Require deposit</div>
         <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:2px">Show 50% deposit amount on booking page</div>
       </div>
-      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
-        <input type="checkbox" id="pDeposit" style="opacity:0;width:0;height:0" onchange="var s=document.getElementById('pDepositSlider');s.style.background=this.checked?'#16a34a':'var(--border)'">
-        <span onclick="this.previousElementSibling.click()" style="position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:999px;transition:.2s" id="pDepositSlider"></span>
-      </label>
+      <div onclick="toggleDeposit()" id="pDepositBtn" style="width:52px;height:28px;border-radius:999px;cursor:pointer;position:relative;transition:background .25s;background:#16a34a;flex-shrink:0;user-select:none">
+        <div id="pDepositKnob" style="position:absolute;top:3px;left:25px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+      </div>
+      <input type="hidden" id="pDeposit" value="1">
     </div>
     <div class="sep">Photos (max 5 URLs)</div>
     <p style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.5">Paste direct image URLs (e.g. from Google Drive, Cloudinary, Imgur, or your GitHub repo raw links).</p>
@@ -1166,9 +1166,16 @@ function sendGuestEmail(email,name,message,action){
     })
   }).then(function(r){
     return r.text().then(function(t){
-      if(!r.ok)throw new Error('Email failed ('+r.status+'): '+t);
-      console.log('Email sent:',t);
+      if(!r.ok){
+        toast('Email error '+r.status+': '+t.slice(0,80),'err');
+        console.error('Email failed:',r.status,t);
+      }else{
+        console.log('Email sent OK:',t);
+      }
     });
+  }).catch(function(e){
+    toast('Email network error: '+e.message,'err');
+    console.error('Email network error:',e);
   });
 }
 
@@ -1268,7 +1275,7 @@ function openAddProp(){
   document.getElementById('pMinNights').value='3';
   document.getElementById('pMaxGuests').value='6';
   document.getElementById('pCleanFee').value='';
-  document.getElementById('pDeposit').checked=true;document.getElementById('pDepositSlider').style.background='#16a34a';
+  setDepositToggle(true);
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
@@ -1289,9 +1296,7 @@ function editProp(i){
   document.getElementById('pMinNights').value=p.minNights||'3';
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
   document.getElementById('pCleanFee').value=p.cleanFee||'';
-  var dep=p.requireDeposit!==false;
-  document.getElementById('pDeposit').checked=dep;
-  document.getElementById('pDepositSlider').style.background=dep?'#16a34a':'var(--border)';
+  setDepositToggle(p.requireDeposit!==false);
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
@@ -1352,7 +1357,7 @@ function saveProp(){
     minNights:parseInt(document.getElementById('pMinNights').value)||3,
     maxGuests:parseInt(document.getElementById('pMaxGuests').value)||6,
     cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
-    requireDeposit:document.getElementById('pDeposit').checked,
+    requireDeposit:document.getElementById('pDeposit').value==='1',
     seasonRates:seasonRates,
     photos:photos
   };
@@ -2219,20 +2224,35 @@ function applyTemplateVars(template,req){
 function testEmail(){
   var result=document.getElementById('testEmailResult');
   result.textContent='Sending...';result.style.color='var(--muted)';
-  fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
+  var edgeUrl='https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email';
+  fetch(edgeUrl,{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[session.user.email],
-      subject:'✅ Test email from Permanent Summer Dashboard',
-      html:'<div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a"><h2>Email is working! 🎉</h2><p>Your dashboard email setup is configured correctly.</p><p style="font-size:12px;color:#64748b;margin-top:16px">Sent from: '+FROM_EMAIL+'</p></div>'
+      subject:'Test email - Permanent Summer Dashboard',
+      html:'<div style="font-family:Arial,sans-serif;padding:24px"><h2>Email working!</h2><p>Sent from: '+FROM_EMAIL+'</p></div>'
     })
-  }).then(function(r){return r.text().then(function(t){return{ok:r.ok,text:t};});})
-  .then(function(res){
-    if(res.ok){result.textContent='✅ Test email sent to '+session.user.email;result.style.color='var(--green)';}
-    else{result.textContent='❌ Resend error: '+res.text;result.style.color='var(--red)';}
-  }).catch(function(e){result.textContent='❌ '+e.message;result.style.color='var(--red)';});
+  }).then(function(r){
+    return r.text().then(function(t){return{ok:r.ok,status:r.status,text:t};});
+  }).then(function(res){
+    if(res.ok){result.textContent='Sent to '+session.user.email;result.style.color='var(--green)';}
+    else{result.textContent='Error '+res.status+': '+res.text;result.style.color='var(--red)';}
+  }).catch(function(e){
+    result.textContent='Network error: '+e.message+' | URL: '+edgeUrl;
+    result.style.color='var(--red)';
+  });
+}
+
+function toggleDeposit(){
+  var cur=document.getElementById('pDeposit').value==='1';
+  setDepositToggle(!cur);
+}
+function setDepositToggle(on){
+  document.getElementById('pDeposit').value=on?'1':'0';
+  document.getElementById('pDepositBtn').style.background=on?'#16a34a':'#cbd5e1';
+  document.getElementById('pDepositKnob').style.left=on?'25px':'3px';
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
