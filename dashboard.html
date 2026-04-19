@@ -330,6 +330,96 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   .prop-stat-row{grid-template-columns:1fr 1fr}
   .page{padding:16px}
 }
+
+/* ── OVERVIEW PAGE ─────────────────────────────────────────────────────────── */
+.ov-greeting{
+  background:linear-gradient(135deg,var(--primary) 0%,#243047 100%);
+  border-radius:16px;padding:28px 32px;margin-bottom:24px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.ov-greeting-title{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:4px}
+.ov-greeting-sub{font-size:14px;color:#94a3b8;font-weight:400}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi-card{
+  background:#fff;border-radius:14px;padding:20px;border:1px solid var(--border);
+  box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;
+  position:relative;overflow:hidden;transition:box-shadow .15s;cursor:default;
+}
+.kpi-card:hover{box-shadow:var(--shadow-md)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-yellow::before{background:var(--yellow)}
+.kpi-blue::before{background:var(--blue)}
+.kpi-green::before{background:var(--green)}
+.kpi-purple::before{background:var(--purple)}
+.kpi-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kpi-yellow .kpi-icon{background:#fef9ec} .kpi-yellow .kpi-icon svg{stroke:var(--yellow)}
+.kpi-blue .kpi-icon{background:#eff6ff} .kpi-blue .kpi-icon svg{stroke:var(--blue)}
+.kpi-green .kpi-icon{background:#ecfdf5} .kpi-green .kpi-icon svg{stroke:var(--green)}
+.kpi-purple .kpi-icon{background:#f5f3ff} .kpi-purple .kpi-icon svg{stroke:var(--purple)}
+.kpi-icon svg{width:20px;height:20px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kpi-body{flex:1}
+.kpi-val{font-size:32px;font-weight:800;color:var(--primary);letter-spacing:-1px;line-height:1}
+.kpi-lbl{font-size:12px;color:var(--muted);font-weight:500;margin-top:4px}
+.kpi-action{font-size:11px;font-weight:600;color:var(--accent);cursor:pointer;padding-top:8px;border-top:1px solid var(--border)}
+.kpi-action:hover{text-decoration:underline}
+
+/* Two column layout */
+.ov-cols{display:grid;grid-template-columns:1fr 360px;gap:16px}
+.ov-panel{background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.ov-panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.ov-panel-title{font-size:13px;font-weight:700;color:var(--primary)}
+.ov-panel-link{font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer;padding:0}
+.ov-panel-link:hover{text-decoration:underline}
+
+/* Upcoming stays list */
+.ov-stay{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border);transition:background .1s}
+.ov-stay:last-child{border-bottom:none}
+.ov-stay:hover{background:#fafafa}
+.ov-stay-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ov-stay-name{font-size:13px;font-weight:600;color:var(--primary)}
+.ov-stay-meta{font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+.ov-stay-date{margin-left:auto;text-align:right;flex-shrink:0}
+.ov-stay-day{font-size:12px;font-weight:700;color:var(--primary)}
+.ov-stay-rel{font-size:10px;font-weight:500;color:var(--muted);margin-top:1px}
+.ov-stay-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px}
+.ov-stay-badge.in{background:#dcfce7;color:#166534}
+.ov-stay-badge.out{background:#fee2e2;color:#991b1b}
+.ov-stay-badge.stay{background:#dbeafe;color:#1e40af}
+
+/* Occupancy bars */
+.occ-row{padding:12px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.occ-row:last-child{border-bottom:none}
+.occ-name{font-size:12px;font-weight:600;color:var(--primary);width:100px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.occ-bar-wrap{flex:1;background:var(--bg);border-radius:999px;height:8px;overflow:hidden}
+.occ-bar{height:100%;border-radius:999px;transition:width .4s ease}
+.occ-pct{font-size:11px;font-weight:700;color:var(--muted);width:36px;text-align:right;flex-shrink:0}
+
+/* Quick actions */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px}
+.qa-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  padding:14px;border-radius:10px;border:1.5px solid var(--border);
+  background:#fff;cursor:pointer;transition:all .15s;text-align:left;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:var(--text);
+}
+.qa-btn:hover{border-color:var(--accent);background:#f0f7ff;color:var(--accent)}
+.qa-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Filter dot */
+.fbtn-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle;margin-top:-1px}
+
+@media(max-width:1100px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .ov-cols{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .ov-greeting{padding:20px}
+  .ov-greeting-title{font-size:18px}
+}
+
 </style>
 
 </head>
@@ -368,6 +458,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
     </div>
     <nav class="sb-nav">
+      <div class="sb-item" data-tab="home" onclick="switchTab('home')">
+        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+        <span>Overview</span>
+      </div>
       <div class="sb-item on" data-tab="requests" onclick="switchTab('requests')">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1-1.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16l.19.92z"/></svg></span>
         <span>Requests</span>
@@ -383,7 +477,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
       <div class="sb-item" data-tab="widget" onclick="switchTab('widget')">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-        <span>Widget</span>
+        <span>Direct Booking</span>
       </div>
       <div class="sb-item" data-tab="payments" onclick="switchTab('payments')">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
@@ -409,11 +503,116 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- MAIN CONTENT -->
   <div class="main-content">
 
+  <!-- OVERVIEW / HOME -->
+  <div id="page-home" class="page">
+    <!-- Top greeting bar -->
+    <div class="ov-greeting" id="ovGreeting">
+      <div>
+        <div class="ov-greeting-title" id="ovGreetingTitle">Good morning</div>
+        <div class="ov-greeting-sub">Here's what's happening at your properties today.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-primary" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          View reservations
+        </button>
+        <button class="btn-outline" onclick="switchTab('requests')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72"/></svg>
+          View requests
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row" id="ovKpi">
+      <div class="kpi-card kpi-yellow">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-pending">—</div><div class="kpi-lbl">Awaiting response</div></div>
+        <div class="kpi-action" onclick="switchTab('requests');filterReqs('pending',null)">Review →</div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-checkins">—</div><div class="kpi-lbl">Check-ins today</div></div>
+        <div class="kpi-action" onclick="switchTab('calendar');setResView('list')">See guests →</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-occupied">—</div><div class="kpi-lbl">Units occupied now</div></div>
+        <div class="kpi-action" onclick="switchTab('calendar')">View calendar →</div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-revenue">—</div><div class="kpi-lbl">Revenue this month</div></div>
+        <div class="kpi-action" onclick="switchTab('payments')">See payments →</div>
+      </div>
+    </div>
+
+    <!-- Two columns: Upcoming + Quick actions -->
+    <div class="ov-cols">
+      <!-- Upcoming check-ins/outs -->
+      <div class="ov-panel">
+        <div class="ov-panel-head">
+          <div class="ov-panel-title">Upcoming stays</div>
+          <button class="ov-panel-link" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)">View all</button>
+        </div>
+        <div id="ovUpcoming"><div class="spinner" style="margin:24px auto"></div></div>
+      </div>
+
+      <!-- Right column -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Occupancy by property -->
+        <div class="ov-panel">
+          <div class="ov-panel-head">
+            <div class="ov-panel-title">Occupancy — next 30 days</div>
+          </div>
+          <div id="ovOccupancy" style="padding:4px 0"></div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="ov-panel">
+          <div class="ov-panel-head">
+            <div class="ov-panel-title">Quick actions</div>
+          </div>
+          <div class="qa-grid">
+            <button class="qa-btn" onclick="switchTab('calendar');setTimeout(function(){openNewBooking();},100)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+              New booking
+            </button>
+            <button class="qa-btn" onclick="switchTab('widget')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Share booking link
+            </button>
+            <button class="qa-btn" onclick="switchTab('properties');setTimeout(openAddProp,100)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+              Add property
+            </button>
+            <button class="qa-btn" onclick="switchTab('payments')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Track payments
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REQUESTS -->
+  <div id="page-requests" class="page on">
+
   <!-- REQUESTS -->
   <div id="page-requests" class="page on">
     <div class="page-header">
-      <div><h2>Booking Requests</h2><p>All incoming direct booking requests</p></div>
-      <button class="btn-primary" onclick="refreshRequests()">🔄 Refresh</button>
+      <div>
+        <h2>Booking Requests</h2>
+        <p>Review and respond to direct booking requests from guests</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-outline" onclick="switchTab('home')" style="font-size:12px;padding:7px 14px">← Overview</button>
+        <button class="btn-primary" onclick="refreshRequests()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
     </div>
     <div class="stats-bar" id="statsBar">
       <div class="stat-card">
@@ -434,10 +633,16 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
     </div>
     <div class="filter-row">
-      <button class="fbtn on" data-rf="all" onclick="filterReqs('all',this)">All</button>
-      <button class="fbtn" data-rf="pending" onclick="filterReqs('pending',this)">⏳ Pending</button>
-      <button class="fbtn" data-rf="confirmed" onclick="filterReqs('confirmed',this)">✅ Confirmed</button>
-      <button class="fbtn" data-rf="declined" onclick="filterReqs('declined',this)">❌ Declined</button>
+      <button class="fbtn on" data-rf="all" onclick="filterReqs('all',this)">All requests</button>
+      <button class="fbtn" data-rf="pending" onclick="filterReqs('pending',this)">
+        <span class="fbtn-dot" style="background:var(--yellow)"></span> Awaiting response
+      </button>
+      <button class="fbtn" data-rf="confirmed" onclick="filterReqs('confirmed',this)">
+        <span class="fbtn-dot" style="background:var(--green)"></span> Confirmed
+      </button>
+      <button class="fbtn" data-rf="declined" onclick="filterReqs('declined',this)">
+        <span class="fbtn-dot" style="background:var(--red)"></span> Declined
+      </button>
     </div>
     <div id="reqList"><div class="spinner"></div></div>
   </div>
@@ -468,8 +673,8 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <!-- Shared top bar for both views -->
     <div class="res-topbar">
       <div class="view-toggle">
-        <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">📅 Calendar</button>
-        <button class="vtab" id="vtabList" onclick="setResView('list')">☰ List</button>
+        <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">Calendar</button>
+        <button class="vtab" id="vtabList" onclick="setResView('list')">List view</button>
       </div>
       <!-- List filters (only shown in list view) -->
       <div class="filter-row" id="listFilterRow" style="display:none;margin:0;flex:1">
@@ -505,7 +710,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- WIDGET -->
   <div id="page-widget" class="page">
     <div class="page-header">
-      <div><h2>Booking Widget</h2><p>Share your direct booking link or embed it anywhere</p></div>
+      <div><h2>Direct Booking</h2><p>Share your booking link and generate your embeddable widget</p></div>
     </div>
     <div class="widget-flow" id="widgetFlow">
       <!-- filled by JS -->
@@ -515,7 +720,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- PAYMENTS -->
   <div id="page-payments" class="page">
     <div class="page-header">
-      <div><h2>Payments</h2><p>Track deposits & balances for confirmed bookings</p></div>
+      <div>
+        <h2>Payments</h2>
+        <p>Track deposits and balance payments for all confirmed bookings</p>
+      </div>
     </div>
     <div id="payList"><div class="spinner"></div></div>
   </div>
@@ -869,6 +1077,8 @@ function loadWorkspace(){
       renderCalendar();
       loadEmailTemplates();
       loadWaTemplates();
+      // Start on Overview tab
+      switchTab('home');
     });
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
 }
@@ -886,6 +1096,7 @@ function switchTab(tab){
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===tab);});
   document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-'+tab);});
   if(tab==='calendar')renderCalendar();
+  if(tab==='home')renderOverview();
 }
 
 function openSummerClean(){window.open('index.html','_blank');}
@@ -945,6 +1156,7 @@ function refreshRequests(){
   Promise.all([loadRequests(), loadAllBookings()]).then(function(){
     renderCalendar();
     renderPayments();
+    renderOverview();
   });
 }
 
@@ -2221,6 +2433,146 @@ function filterList(f,btn){
   if(row)row.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
   if(btn)btn.classList.add('on');
   renderResList();
+}
+
+// ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
+function renderOverview(){
+  renderGreeting();
+  renderKPIs();
+  renderUpcoming();
+  renderOccupancy();
+}
+
+function renderGreeting(){
+  var h=new Date().getHours();
+  var greet=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  var el=document.getElementById('ovGreetingTitle');
+  if(el)el.textContent=greet;
+}
+
+function renderKPIs(){
+  var today=new Date().toISOString().slice(0,10);
+  var thisMonthStart=today.slice(0,7)+'-01';
+
+  // Pending requests
+  var pending=(requests||[]).filter(function(r){return r.status==='pending';}).length;
+  var el=document.getElementById('ov-pending');
+  if(el)el.textContent=pending||'0';
+
+  // Check-ins today
+  var checkins=(allBookings||[]).filter(function(b){return b.checkin===today;}).length;
+  var el2=document.getElementById('ov-checkins');
+  if(el2)el2.textContent=checkins||'0';
+
+  // Currently occupied
+  var occupied=(allBookings||[]).filter(function(b){return b.checkin<=today&&b.checkout>today;}).length;
+  var el3=document.getElementById('ov-occupied');
+  if(el3)el3.textContent=occupied+' / '+properties.length;
+
+  // Revenue this month (from direct_requests only - have price data)
+  var rev=(requests||[]).filter(function(r){
+    return r.status==='confirmed'&&r.checkin&&r.checkin>=thisMonthStart;
+  }).reduce(function(a,r){return a+(r.total_amount||0);},0);
+  var el4=document.getElementById('ov-revenue');
+  if(el4)el4.textContent=rev?'€'+rev.toLocaleString():'—';
+}
+
+function renderUpcoming(){
+  var container=document.getElementById('ovUpcoming');
+  if(!container)return;
+  var today=new Date().toISOString().slice(0,10);
+
+  // Merge bookings: check-ins and check-outs in next 14 days
+  var items=[];
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()+14);
+  var cutoffStr=cutoff.toISOString().slice(0,10);
+
+  (allBookings||[]).forEach(function(b){
+    if(b.checkin>=today&&b.checkin<=cutoffStr){
+      var apt=aptById(b.apt);
+      items.push({type:'in',date:b.checkin,name:b.guests||'Guest',apt:apt.name||b.apt,color:apt.color});
+    }
+    if(b.checkout>=today&&b.checkout<=cutoffStr){
+      var apt2=aptById(b.apt);
+      items.push({type:'out',date:b.checkout,name:b.guests||'Guest',apt:apt2.name||b.apt,color:apt2.color});
+    }
+  });
+
+  // Add currently staying
+  (allBookings||[]).forEach(function(b){
+    if(b.checkin<today&&b.checkout>today){
+      var apt=aptById(b.apt);
+      items.push({type:'stay',date:b.checkout,name:b.guests||'Guest',apt:apt.name||b.apt,color:apt.color,checkout:b.checkout});
+    }
+  });
+
+  items.sort(function(a,b){return a.date.localeCompare(b.date);});
+  items=items.slice(0,8);
+
+  if(!items.length){
+    container.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">No upcoming stays in the next 14 days</div>';
+    return;
+  }
+
+  container.innerHTML='';
+  items.forEach(function(item){
+    var dt=new Date(item.date+'T12:00:00');
+    var isToday=item.date===today;
+    var isTomorrow=item.date===new Date(Date.now()+86400000).toISOString().slice(0,10);
+    var rel=isToday?'Today':isTomorrow?'Tomorrow':fmtShort(item.date);
+    var typeLabel=item.type==='in'?'Check-in':item.type==='out'?'Check-out':'Staying';
+    var badgeClass=item.type==='in'?'in':item.type==='out'?'out':'stay';
+    var row=document.createElement('div');row.className='ov-stay';
+    row.innerHTML=
+      '<div class="ov-stay-dot" style="background:'+item.color+'"></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="ov-stay-name">'+esc(item.name.split('–')[1]||item.name)+'</div>'+
+        '<div class="ov-stay-meta">'+esc(item.apt)+'</div>'+
+      '</div>'+
+      '<div class="ov-stay-date">'+
+        '<div class="ov-stay-day">'+rel+'</div>'+
+        '<div style="margin-top:3px"><span class="ov-stay-badge '+badgeClass+'">'+typeLabel+'</span></div>'+
+      '</div>';
+    container.appendChild(row);
+  });
+}
+
+function renderOccupancy(){
+  var container=document.getElementById('ovOccupancy');
+  if(!container||!properties.length)return;
+  var today=new Date().toISOString().slice(0,10);
+  var future=new Date();future.setDate(future.getDate()+30);
+  var futureStr=future.toISOString().slice(0,10);
+
+  // Count booked nights per property in next 30 days
+  container.innerHTML='';
+  properties.forEach(function(p){
+    var booked=0;
+    var d=new Date(today+'T12:00:00');
+    var end=new Date(futureStr+'T12:00:00');
+    var total=0;
+    while(d<end){
+      var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      total++;
+      var isBooked=(allBookings||[]).some(function(b){
+        return (b.apt===p.id||b.apt===p.short||b.apt===p.name)&&b.checkin<=ds&&b.checkout>ds;
+      });
+      if(isBooked)booked++;
+      d.setDate(d.getDate()+1);
+    }
+    var pct=total?Math.round(booked/total*100):0;
+    var barColor=pct>=80?'#059669':pct>=50?'#2563eb':'#94a3b8';
+    var row=document.createElement('div');row.className='occ-row';
+    row.innerHTML=
+      '<div class="occ-name" title="'+esc(p.name)+'">'+esc(p.short||p.name)+'</div>'+
+      '<div class="occ-bar-wrap"><div class="occ-bar" style="width:'+pct+'%;background:'+barColor+'"></div></div>'+
+      '<div class="occ-pct">'+pct+'%</div>';
+    container.appendChild(row);
+  });
+
+  if(!properties.length){
+    container.innerHTML='<div style="padding:16px 20px;font-size:12px;color:var(--muted)">Add properties to see occupancy</div>';
+  }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
