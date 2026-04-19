@@ -1721,10 +1721,51 @@ function renderResList(){
       '<div class="res-list-actions">'+
         (item.email?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="mailGuest(\''+esc(item.email)+'\')">📧 Email</button>':'')+
         (item.phone?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="whatsApp(\''+esc(item.phone)+'\')">💬 WhatsApp</button>':'')+
-        (item.origin==='summerclean'?'<span style="font-size:10px;color:var(--muted);font-weight:700;margin-left:auto">Manage in 🧹 SummerClean</span>':
-          '<button class="btn-outline" style="font-size:11px;padding:6px 10px;margin-left:auto" onclick="openRespond(\''+item.id+'\',\'confirmed\')">✏️ Edit reply</button>')+
+        (item.origin==='direct'?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openRespond(\''+item.id+'\',\'confirmed\')">✏️ Edit</button>':'')+
+        '<span style="flex:1"></span>'+
+        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
       '</div>';
     container.appendChild(card);
+  });
+}
+
+// ── DELETE RESERVATION ───────────────────────────────────────────────────────
+function deleteReservation(id, origin, guestName){
+  if(!confirm('Delete reservation for ' + (guestName||'this guest') + '?\n\nThis will remove it from both the dashboard and SummerClean.'))return;
+
+  var tasks=[];
+
+  if(origin==='summerclean'){
+    // Booking is in the bookings table - delete it (SummerClean will see it gone)
+    tasks.push(sbF('DELETE','bookings?id=eq.'+id));
+  } else if(origin==='direct'){
+    // Direct booking: exists in direct_requests AND bookings table
+    // Delete from direct_requests
+    tasks.push(sbF('DELETE','direct_requests?id=eq.'+id));
+    // Also find and delete the corresponding bookings entry
+    // It was inserted with the same guest info - find by workspace+checkin+checkout
+    var req=requests.find(function(r){return r.id===id;});
+    if(req&&req.checkin&&req.checkout){
+      tasks.push(
+        sbF('GET','bookings?workspace_id=eq.'+workspace.id+'&checkin=eq.'+req.checkin+'&checkout=eq.'+req.checkout+'&source=eq.direct')
+        .then(function(rows){
+          if(!rows||!rows.length)return;
+          return Promise.all(rows.map(function(b){return sbF('DELETE','bookings?id=eq.'+b.id);}));
+        })
+      );
+    }
+  }
+
+  Promise.all(tasks).then(function(){
+    toast('Reservation deleted — removed from SummerClean too','ok');
+    // Reload both data sources
+    return Promise.all([loadRequests(), loadAllBookings()]);
+  }).then(function(){
+    renderResList();
+    renderPayments();
+    renderProps();
+  }).catch(function(e){
+    toast('Error: '+e.message,'err');
   });
 }
 
