@@ -2210,15 +2210,13 @@ function setDashLang(l){
     var b=document.getElementById('dLang-'+lg);
     if(b)b.classList.toggle('on',lg===l);
   });
+  // Re-render whatever tab is currently active so CT() strings update immediately
+  var activeItem=document.querySelector('.sb-item.on');
+  var activeTab=activeItem?activeItem.getAttribute('data-tab'):'';
+  if(activeTab==='cleaning')renderCleaning();
 }
 function setCleanLang(l){
   cleanLang=l;
-  ['en','pt','fr'].forEach(function(lg){
-    var b=document.getElementById('clLang-'+lg);
-    if(b)b.classList.toggle('on',lg===l);
-  });
-  buildCleanFilters();
-  renderCleaningList();
 }
 
 function refreshCleaning(){
@@ -2545,7 +2543,7 @@ function dashProcessImport(text,source,apt){
   var delPromises=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
   Promise.all(delPromises).then(function(){
     if(!toInsert.length)return Promise.resolve();
-    return sbF('POST','rpc/insert_bookings',{bookings:toInsert});
+    return sbF('POST','rpc/insert_bookings',{bookings_data:toInsert});
   }).then(function(){
     closeModal('dashImportOverlay');
     var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
