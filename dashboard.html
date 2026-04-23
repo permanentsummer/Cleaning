@@ -2391,12 +2391,15 @@ function mkCleanCard(b,tod){
 function openDashImport(){
   document.getElementById('diFile').value='';
   setDIS('','');
-  // Populate property dropdown
+  // Populate property dropdown from `properties` (= workspace.settings.apts)
   var sel=document.getElementById('diApt');
   sel.innerHTML='';
-  (workspace&&workspace.apts?workspace.apts:[]).forEach(function(a){
-    var o=document.createElement('option');o.value=a.id;o.textContent=a.name||a.short;sel.appendChild(o);
+  (properties||[]).forEach(function(a){
+    var o=document.createElement('option');o.value=a.id;o.textContent=a.name||a.short||a.id;sel.appendChild(o);
   });
+  if(!sel.options.length){
+    var o=document.createElement('option');o.value='';o.textContent='(no properties configured)';sel.appendChild(o);
+  }
   document.getElementById('dashImportOverlay').classList.add('show');
   if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
 }
@@ -2427,30 +2430,132 @@ function _duid(){return Math.random().toString(36).slice(2,10);}
 function dashProcessImport(text,source,apt){
   var rows=_dpCSV(text);if(rows.length<2){setDIS('File appears empty.','err');return;}
   var h=rows[0],parsed=[],skipped=0;
+  var isPlatform=(source==='airbnb'||source==='booking'); // OTA = golden data
+
   if(source==='airbnb'){
-    var iIn=-1,iOut=-1;for(var hi=0;hi<h.length;hi++){var hs=_dsa(h[hi]).toLowerCase();if(iIn===-1&&(hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1))iIn=hi;if(iOut===-1&&(hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1))iOut=hi;}
+    var iIn=-1,iOut=-1;
+    for(var hi=0;hi<h.length;hi++){var hs=_dsa(h[hi]).toLowerCase();if(iIn===-1&&(hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1))iIn=hi;if(iOut===-1&&(hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1))iOut=hi;}
     var iCode=_dfc(h,'code','confirmation'),iStat=_dfc(h,'statut','status'),iName=_dfc(h,'voyageur','guestname','nom'),iAdu=_dfc(h,'adultes','adults'),iChi=_dfc(h,'enfants','children');
     if(iIn===-1||iOut===-1){setDIS('Cannot find date columns. Is the source set to Airbnb?','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat=iStat>=0?_dsa(r[iStat]).toLowerCase():'confirm';if(stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1){skipped++;continue;}var ci=_dISO(r[iIn]),co=_dISO(r[iOut]);if(!ci||!co||ci>=co){skipped++;continue;}var ad=iAdu>=0?(parseInt(r[iAdu])||0):0,kd=iChi>=0?(parseInt(r[iChi])||0):0,code=iCode>=0&&r[iCode]?r[iCode].trim():_duid();parsed.push({id:'ab_'+code,apt:apt,workspace_id:workspace.id,source:'airbnb',checkin:ci,checkout:co,clean:co,guests:(ad+kd)>0?String(ad+kd)+(iName>=0&&r[iName]?' – '+r[iName].trim():''):'',notes:'',paid:'unpaid',cleaned:'no'});}
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;
+      var stat=iStat>=0?_dsa(r[iStat]).toLowerCase():'confirm';
+      if(stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1){skipped++;continue;}
+      var ci=_dISO(r[iIn]),co=_dISO(r[iOut]);if(!ci||!co||ci>=co){skipped++;continue;}
+      var ad=iAdu>=0?(parseInt(r[iAdu])||0):0,kd=iChi>=0?(parseInt(r[iChi])||0):0;
+      var code=iCode>=0&&r[iCode]?r[iCode].trim():_duid();
+      var gName=iName>=0?r[iName].trim():'';
+      parsed.push({id:'ab_'+code,apt:apt,workspace_id:workspace.id,source:'airbnb',
+        checkin:ci,checkout:co,clean:co,
+        guests:(ad+kd)>0?String(ad+kd):'',
+        notes:gName,  // name in notes (SummerClean convention)
+        paid:'unpaid',cleaned:'no'});
+    }
   } else if(source==='booking'){
-    var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure'),iName2=_dfc(h,'guestname','nomduclient','clientname'),iP=_dfc(h,'persons','personnes'),iS2=_dfc(h,'status','statut'),iC=_dfc(h,'cancellation','annulation'),iN=_dfc(h,'booknumber','numeroreservation','numero');
+    var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure');
+    var iName2=_dfc(h,'guestname','nomduclient','clientname','guest'),iP=_dfc(h,'persons','personnes'),iS2=_dfc(h,'status','statut'),iC=_dfc(h,'cancellation','annulation'),iN=_dfc(h,'booknumber','numeroreservation','numero','reservation');
     if(iIn2===-1||iOut2===-1){setDIS('Cannot find date columns. Is the source set to Booking.com?','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var s2=iS2>=0?r[iS2].toLowerCase():'ok',cc=iC>=0?r[iC].trim():'';if(cc||s2.indexOf('cancel')!==-1||s2.indexOf('annul')!==-1){skipped++;continue;}var ci2=_dISO(r[iIn2]),co2=_dISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}var nm=iN>=0&&r[iN]?r[iN].trim():_duid();var gName=iName2>=0?r[iName2].trim():'';parsed.push({id:'bk_'+nm,apt:apt,workspace_id:workspace.id,source:'booking',checkin:ci2,checkout:co2,clean:co2,guests:(iP>=0&&r[iP]?r[iP].trim():'')+(gName?' – '+gName:''),notes:'',paid:'unpaid',cleaned:'no'});}
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;
+      var s2=iS2>=0?r[iS2].toLowerCase():'ok',cc=iC>=0?r[iC].trim():'';
+      if(cc||s2.indexOf('cancel')!==-1||s2.indexOf('annul')!==-1){skipped++;continue;}
+      var ci2=_dISO(r[iIn2]),co2=_dISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}
+      var nm=iN>=0&&r[iN]?r[iN].trim():_duid();
+      var gName2=iName2>=0?r[iName2].trim():'';
+      parsed.push({id:'bk_'+nm,apt:apt,workspace_id:workspace.id,source:'booking',
+        checkin:ci2,checkout:co2,clean:co2,
+        guests:iP>=0&&r[iP]?r[iP].trim():'',
+        notes:gName2,  // name in notes
+        paid:'unpaid',cleaned:'no'});
+    }
   } else {
-    var iIn3=_dfc(h,'startdate','start','checkin','arrivee','arrival'),iOut3=_dfc(h,'enddate','end','checkout','depart','departure'),iN3=_dfc(h,'guest','nom','name','client'),iP3=_dfc(h,'persons','personnes','adults','adultes'),iS3=_dfc(h,'status','statut');
+    // Direct: secondary source — only add if no OTA booking overlaps on this property
+    var iIn3=_dfc(h,'startdate','start','checkin','arrivee','arrival'),iOut3=_dfc(h,'enddate','end','checkout','depart','departure');
+    var iN3=_dfc(h,'guest','nom','name','client'),iP3=_dfc(h,'persons','personnes','adults','adultes'),iS3=_dfc(h,'status','statut');
     if(iIn3===-1||iOut3===-1){setDIS('Cannot find date columns.','err');return;}
-    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var s3=iS3>=0?r[iS3].toLowerCase():'';if(s3.indexOf('cancel')!==-1||s3.indexOf('refund')!==-1){skipped++;continue;}var ci3=_dISO(r[iIn3]),co3=_dISO(r[iOut3]);if(!ci3||!co3||ci3>=co3){skipped++;continue;}var c3=_duid(),n3=iN3>=0?r[iN3].trim():'';parsed.push({id:'dir_'+c3,apt:apt,workspace_id:workspace.id,source:'direct',checkin:ci3,checkout:co3,clean:co3,guests:(iP3>=0&&r[iP3]?r[iP3].trim():'')+(n3?' – '+n3:''),notes:'',paid:'unpaid',cleaned:'no'});}
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;
+      var s3=iS3>=0?r[iS3].toLowerCase():'';
+      if(s3.indexOf('cancel')!==-1||s3.indexOf('refund')!==-1){skipped++;continue;}
+      var ci3=_dISO(r[iIn3]),co3=_dISO(r[iOut3]);if(!ci3||!co3||ci3>=co3){skipped++;continue;}
+      var n3=iN3>=0?r[iN3].trim():'';
+      parsed.push({id:'dir_'+_duid(),apt:apt,workspace_id:workspace.id,source:'direct',
+        checkin:ci3,checkout:co3,clean:co3,
+        guests:iP3>=0&&r[iP3]?r[iP3].trim():'',
+        notes:n3,
+        paid:'unpaid',cleaned:'no'});
+    }
   }
+
   if(!parsed.length){setDIS('No valid bookings found ('+skipped+' skipped).','err');return;}
-  setDIS('Saving '+parsed.length+' bookings…','warn');
-  sbF('POST','rpc/insert_bookings',{bookings:parsed}).then(function(){
+
+  // ── Conflict resolution & priority logic ──────────────────────────────────
+  // Rules:
+  // 1. Airbnb & Booking.com = GOLDEN source — always wins.
+  // 2. A new OTA file is authoritative for that property: remove old same-apt OTA bookings
+  //    that overlap with dates in this file (could be cancellations or updates).
+  // 3. Direct bookings are secondary: only accepted if no OTA booking already covers those dates.
+  // 4. NEVER two bookings on the same property for overlapping dates.
+
+  var toDelete=[];   // IDs to delete from DB (replaced/cancelled OTA entries)
+  var toInsert=[];   // Bookings to upsert
+  var conflictSkipped=0;
+
+  parsed.forEach(function(nb){
+    var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
+
+    if(isPlatform){
+      // OTA import: this booking is authoritative.
+      // Find any existing booking on same apt that overlaps these exact dates
+      aptBks.forEach(function(ex){
+        if(!ex.checkin||!ex.checkout)return;
+        var overlaps=(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
+        if(overlaps&&ex.id!==nb.id){
+          // OTA vs OTA same dates: deduplicate (same stay, different ref?) — keep new
+          // OTA vs Direct: OTA wins, remove direct
+          toDelete.push(ex.id);
+        }
+      });
+      toInsert.push(nb);
+    } else {
+      // Direct import: only add if NO OTA booking overlaps
+      var hasOTAConflict=aptBks.some(function(ex){
+        if(!ex.checkin||!ex.checkout)return false;
+        var isOTA=(ex.source==='airbnb'||ex.source==='booking');
+        return isOTA&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
+      });
+      // Also check other direct bookings for exact duplicate dates
+      var hasDirectConflict=aptBks.some(function(ex){
+        if(!ex.checkin||!ex.checkout)return false;
+        return ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
+      });
+      if(hasOTAConflict||hasDirectConflict){conflictSkipped++;return;}
+      toInsert.push(nb);
+    }
+  });
+
+  if(!toInsert.length&&!toDelete.length){
+    setDIS('Nothing new to import ('+parsed.length+' parsed, '+conflictSkipped+' skipped — conflict with existing OTA bookings)','warn');
+    return;
+  }
+
+  setDIS('Processing '+toInsert.length+' bookings'+(toDelete.length?' (removing '+toDelete.length+' superseded)…':'…'),'warn');
+
+  // Delete superseded bookings first, then upsert new ones
+  var delPromises=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
+  Promise.all(delPromises).then(function(){
+    if(!toInsert.length)return Promise.resolve();
+    return sbF('POST','rpc/insert_bookings',{bookings:toInsert});
+  }).then(function(){
     closeModal('dashImportOverlay');
-    var msg=parsed.length+' bookings imported';if(skipped)msg+=', '+skipped+' skipped';
+    var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
+    if(toDelete.length)msg+=', '+toDelete.length+' superseded removed';
+    if(skipped)msg+=', '+skipped+' skipped (cancelled/invalid)';
+    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (OTA conflict)';
     toast(msg,'ok');
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
   }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
-
 // ── DELETE RESERVATION ───────────────────────────────────────────────────────
 function deleteReservation(id, origin, guestName){
   if(!confirm('Delete reservation for ' + (guestName||'this guest') + '?\n\nThis will remove it from both the dashboard and SummerClean.'))return;
@@ -2818,15 +2923,27 @@ function renderBarForDay(bookings,ds,aptColor){
     var posClass=isStart&&isLastNight?'bar-solo':isStart?'bar-start':isLastNight?'bar-end':'bar-middle';
     var src=b.source||'direct';
     var srcClass='src-'+src;
-    // Guest name from "N guests – Name" format or raw
-    var label=b.guests||'Guest';
-    if(label.indexOf('–')!==-1)label=label.split('–')[1].trim();
-    else if(label.indexOf('-')!==-1&&label.indexOf('guest')===-1)label=label.split('-')[1].trim();
-    if(label.length>18)label=label.slice(0,17)+'…';
+    // Guest name: SummerClean stores name in notes, count in guests.
+    // Dashboard import stores name in notes too (fixed below).
+    var label='';
+    var _n=(b.notes||'').trim();
+    var _g=(b.guests||'').trim();
+    if(_n&&!/^\d+$/.test(_n)){
+      label=_n; // notes has real name
+    } else if(_g.indexOf('\u2013')!==-1){
+      label=_g.split('\u2013')[1].trim();
+    } else if(_g.indexOf('-')!==-1&&_g.indexOf('guest')===-1){
+      label=_g.split('-')[1].trim();
+    } else if(_g&&!/^\d+$/.test(_g)){
+      label=_g;
+    }
+    if(!label)label='Guest';
+    if(label.length>16)label=label.slice(0,15)+'\u2026';
 
     // Always show name — full on start/solo, smaller on middle/end
     var showFull=isStart||posClass==='bar-solo';
-    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(b.guests||'')+'">'+
+    var titleTip=(_n||_g)||'';
+    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(titleTip)+'">'+
       (showFull?esc(label):'<span style="opacity:.65;font-size:9px">'+esc(label)+'</span>')+
       '</div>';
   }).join('');
