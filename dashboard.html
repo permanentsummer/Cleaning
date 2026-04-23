@@ -124,7 +124,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .section-head p{font-size:12px;color:var(--muted);margin-top:2px}
 .card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:14px;border:1px solid var(--border)}
 
-.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s;letter-spacing:.1px}
+.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;letter-spacing:.1px}
 .btn-primary:hover{background:var(--primary-light)}
 .btn-accent{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;transition:background .15s}
 .btn-accent:hover{background:#1d4ed8}
@@ -493,7 +493,11 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
     </nav>
     <div class="sb-bottom">
-
+      <div id="dashLangRow" style="display:flex;gap:4px;justify-content:center;margin-bottom:10px">
+        <button class="fbtn on" id="dLang-en" onclick="setDashLang('en')" style="flex:1;font-size:11px;padding:5px 0">EN</button>
+        <button class="fbtn" id="dLang-pt" onclick="setDashLang('pt')" style="flex:1;font-size:11px;padding:5px 0">PT</button>
+        <button class="fbtn" id="dLang-fr" onclick="setDashLang('fr')" style="flex:1;font-size:11px;padding:5px 0">FR</button>
+      </div>
       <button class="sb-action" id="signOutBtn">
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Sign out</span>
@@ -684,6 +688,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <button class="fbtn" onclick="filterList('booking',this)">Booking.com</button>
       </div>
       <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
+      <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()">📥 Import CSV/XLS</button>
     </div>
     <!-- Calendar view -->
     <div id="resCalView">
@@ -726,6 +731,34 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Direct booking payments</div>
     <div id="payList"><div class="spinner"></div></div>
   </div>
+<!-- MODAL: Import Bookings -->
+<div class="overlay" id="dashImportOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Bookings</h3>
+    <div class="fg"><label>Platform / Source</label>
+      <select id="diSrc">
+        <option value="airbnb">Airbnb (CSV)</option>
+        <option value="booking">Booking.com (CSV or XLS)</option>
+        <option value="direct">Direct (CSV)</option>
+      </select>
+    </div>
+    <div class="fg"><label>Property (default if not detected)</label>
+      <select id="diApt"></select>
+    </div>
+    <div class="fg"><label>File (CSV or XLS/XLSX)</label>
+      <input type="file" id="diFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box">
+    </div>
+    <div style="padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+      <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
+      <strong>Airbnb:</strong> Reservations → Export CSV<br>
+      <strong>Direct:</strong> Any CSV with check-in / check-out columns
+    </div>
+    <div id="diStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doDashImport()">📥 Import Now</button>
+    <button class="btn-outline" style="width:100%" onclick="closeModal('dashImportOverlay')">Cancel</button>
+  </div>
+</div>
 <!-- MODAL: New booking / Block dates -->
 <div class="overlay" id="newBookingOverlay">
   <div class="modal">
@@ -804,11 +837,6 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div class="page-header">
       <div><h2>Cleaning Schedule</h2><p>Manage cleaning tasks across all your properties</p></div>
       <div style="display:flex;gap:8px;align-items:center">
-        <div id="cleanLangRow" style="display:flex;gap:4px">
-          <button class="fbtn on" id="clLang-en" onclick="setCleanLang('en')">EN</button>
-          <button class="fbtn" id="clLang-pt" onclick="setCleanLang('pt')">PT</button>
-          <button class="fbtn" id="clLang-fr" onclick="setCleanLang('fr')">FR</button>
-        </div>
         <button class="btn-primary" onclick="refreshCleaning()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Refresh
@@ -1831,99 +1859,100 @@ function renderRevenueAnalytics(){
   var container=document.getElementById('revenueAnalytics');
   if(!container)return;
 
-  var today=new Date().toISOString().slice(0,10);
   var now=new Date();
+  var today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   var thisMonthStart=today.slice(0,7)+'-01';
   var lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
   var lastMonthStart=lastMonthDate.getFullYear()+'-'+String(lastMonthDate.getMonth()+1).padStart(2,'0')+'-01';
-  var lastMonthEnd=today.slice(0,7)+'-01';
+  var lastMonthEnd=thisMonthStart;
 
-  // Revenue from allBookings (SummerClean imports - NO price data, use 0 unless we have it)
-  // Revenue from direct_requests (have real total_amount)
-  // We use ONLY real numbers: total_amount from direct_requests, nothing from allBookings unless price stored
-
-  var allRevItems=[];
-
-  // Direct requests - confirmed, have total_amount
+  // ── Revenue: only from confirmed direct_requests (real amounts) ──
+  var revItems=[];
   (requests||[]).filter(function(r){return r.status==='confirmed'&&r.total_amount;}).forEach(function(r){
-    allRevItems.push({
-      date:r.checkin||'',
-      amount:r.total_amount||0,
-      source:r.apt_name||'Direct',
-      platform:'direct'
-    });
+    revItems.push({date:r.checkin||'',amount:r.total_amount||0,platform:'direct',name:r.guest_name||''});
   });
 
-  // allBookings from SummerClean - Airbnb/Booking.com don't have amounts stored
-  // But the notes field may contain clues - skip for now, only use direct_requests amounts
-  // This is accurate: we only show what we actually know
+  var totalRev=revItems.reduce(function(a,i){return a+i.amount;},0);
+  var thisMonthRev=revItems.filter(function(i){return i.date>=thisMonthStart;}).reduce(function(a,i){return a+i.amount;},0);
+  var lastMonthRev=revItems.filter(function(i){return i.date>=lastMonthStart&&i.date<lastMonthEnd;}).reduce(function(a,i){return a+i.amount;},0);
+  var outstanding=(requests||[]).filter(function(r){return r.status==='confirmed'&&r.total_amount&&!r.balance_paid;})
+    .reduce(function(a,r){return a+(r.deposit_paid?Math.round(r.total_amount/2):r.total_amount);},0);
 
-  // This month
-  var thisMonth=allRevItems.filter(function(i){return i.date&&i.date>=thisMonthStart;});
-  var lastMonth=allRevItems.filter(function(i){return i.date&&i.date>=lastMonthStart&&i.date<lastMonthEnd;});
-  var total=allRevItems.reduce(function(a,i){return a+i.amount;},0);
-  var thisMonthTotal=thisMonth.reduce(function(a,i){return a+i.amount;},0);
-  var lastMonthTotal=lastMonth.reduce(function(a,i){return a+i.amount;},0);
+  // ── Bookings: ALL sources (allBookings = SummerClean imports) ──
+  var allBks=(allBookings||[]);
+  var past=allBks.filter(function(b){return b.checkout&&b.checkout<today;});
+  var current=allBks.filter(function(b){return b.checkin&&b.checkout&&b.checkin<=today&&b.checkout>today;});
+  var future=allBks.filter(function(b){return b.checkin&&b.checkin>today;});
 
-  // Outstanding (confirmed but not fully paid)
-  var outstanding=(requests||[]).filter(function(r){return r.status==='confirmed'&&!r.balance_paid&&r.total_amount;})
-    .reduce(function(a,r){return a+(r.balance_paid?0:r.deposit_paid?Math.round(r.total_amount/2):r.total_amount);},0);
+  // By platform
+  var byPlat={airbnb:0,booking:0,direct:0};
+  allBks.forEach(function(b){var s=b.source||'direct';byPlat[s]=(byPlat[s]||0)+1;});
+  var totalBks=allBks.length;
 
-  // By platform breakdown (from allBookings = all sources)
-  var byPlatform={airbnb:0,booking:0,direct:0};
-  (allBookings||[]).forEach(function(b){
-    var src=b.source||'direct';
-    byPlatform[src]=(byPlatform[src]||0)+1;
-  });
-  var totalBookings=(allBookings||[]).length+(requests||[]).filter(function(r){return r.status==='confirmed';}).length;
-
-  // Monthly revenue for last 6 months
-  var months=[];
+  // 6-month occupancy bar (nights occupied / nights in month)
+  var months6=[];
   for(var m=5;m>=0;m--){
-    var d=new Date(now.getFullYear(),now.getMonth()-m,1);
-    var mStart=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';
-    var d2=new Date(now.getFullYear(),now.getMonth()-m+1,1);
-    var mEnd=d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-01';
-    var mRev=allRevItems.filter(function(i){return i.date>=mStart&&i.date<mEnd;}).reduce(function(a,i){return a+i.amount;},0);
-    months.push({label:d.toLocaleDateString('en-GB',{month:'short'}),rev:mRev});
+    var md=new Date(now.getFullYear(),now.getMonth()-m,1);
+    var mEnd=new Date(now.getFullYear(),now.getMonth()-m+1,1);
+    var mStart=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01';
+    var mEndStr=mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01';
+    var mDays=Math.round((mEnd-md)/86400000);
+    var numProps=(workspace&&workspace.apts)?workspace.apts.length:1;
+    var totalNights=mDays*numProps;
+    var occupiedNights=0;
+    allBks.forEach(function(b){
+      if(!b.checkin||!b.checkout)return;
+      var bIn=b.checkin>mStart?b.checkin:mStart;
+      var bOut=b.checkout<mEndStr?b.checkout:mEndStr;
+      if(bIn<bOut)occupiedNights+=Math.round((new Date(bOut+'T12:00:00')-new Date(bIn+'T12:00:00'))/86400000);
+    });
+    var mRev=revItems.filter(function(i){return i.date>=mStart&&i.date<mEndStr;}).reduce(function(a,i){return a+i.amount;},0);
+    var occ=totalNights>0?Math.min(100,Math.round(occupiedNights/totalNights*100)):0;
+    months6.push({label:md.toLocaleDateString('en-GB',{month:'short'}),occ:occ,rev:mRev,nights:occupiedNights,totalNights:totalNights});
   }
-  var maxRev=Math.max.apply(null,months.map(function(m){return m.rev;}));
+  var maxOcc=Math.max.apply(null,months6.map(function(x){return x.occ;}));
 
-  // Render
+  // ── Render ──
   container.innerHTML=
-    // KPI row
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">'+
-      revKpi('This month','€'+(thisMonthTotal.toLocaleString()||'0'),'var(--blue)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
-      revKpi('Last month','€'+(lastMonthTotal.toLocaleString()||'0'),'var(--muted)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
-      revKpi('Outstanding','€'+(outstanding.toLocaleString()||'0'),'var(--yellow)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+
-      revKpi('Total (all time)','€'+(total.toLocaleString()||'0'),'var(--green)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>')+
+    // Row 1: Revenue KPIs
+    '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Revenue (direct bookings)</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
+      revKpi('This month','€'+thisMonthRev.toLocaleString(),'var(--blue)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
+      revKpi('Last month','€'+lastMonthRev.toLocaleString(),'var(--muted)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
+      revKpi('Outstanding','€'+outstanding.toLocaleString(),'var(--yellow)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+
+      revKpi('All-time','€'+totalRev.toLocaleString(),'var(--green)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>')+
     '</div>'+
-    // Two columns: bar chart + platform breakdown
-    '<div style="display:grid;grid-template-columns:1fr 280px;gap:14px">'+
-      // Bar chart
+    // Row 2: Bookings KPIs
+    '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">All bookings (imported)</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">'+
+      revKpi('Past stays',past.length,'#7c3aed','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>')+
+      revKpi('Currently staying',current.length,'var(--green)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+
+      revKpi('Upcoming',future.length,'var(--blue)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>')+
+    '</div>'+
+    // Row 3: Occupancy chart + platform breakdown
+    '<div style="display:grid;grid-template-columns:1fr 260px;gap:14px;margin-bottom:20px">'+
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:16px">Monthly revenue — last 6 months</div>'+
-        '<div style="display:flex;align-items:flex-end;gap:8px;height:100px">'+
-          months.map(function(m){
-            var h=maxRev>0?Math.round(m.rev/maxRev*90):4;
-            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'+
-              '<div style="font-size:10px;font-weight:700;color:var(--muted)">'+
-                (m.rev>0?'€'+(m.rev>=1000?Math.round(m.rev/100)/10+'k':m.rev):'')+'</div>'+
-              '<div style="width:100%;background:'+(m.rev>0?'var(--blue)':'var(--border)')+
-                ';border-radius:4px 4px 0 0;height:'+Math.max(h,4)+'px;transition:height .3s"></div>'+
-              '<div style="font-size:11px;color:var(--muted);font-weight:500">'+m.label+'</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px">Occupancy — last 6 months</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">All imported bookings across all properties</div>'+
+        '<div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+
+          months6.map(function(m){
+            var h=maxOcc>0?Math.round(m.occ/maxOcc*80):4;
+            var col=m.occ>=80?'#059669':m.occ>=50?'var(--blue)':'var(--yellow)';
+            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
+              '<div style="font-size:10px;font-weight:700;color:var(--muted)">'+m.occ+'%</div>'+
+              '<div style="width:100%;background:'+col+';border-radius:4px 4px 0 0;height:'+Math.max(h,4)+'px;transition:height .3s" title="'+m.nights+'/'+m.totalNights+' nights"></div>'+
+              '<div style="font-size:10px;color:var(--muted);font-weight:500">'+m.label+'</div>'+
             '</div>';
           }).join('')+
         '</div>'+
-        (maxRev===0?'<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted)">Revenue data comes from confirmed direct bookings with a set price.</div>':'')+
+        (months6[5]&&months6[5].rev>0?'<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">Direct booking revenue shown on the revenue chart. Import Airbnb / Booking.com CSV to see full occupancy.</div>':'')+
       '</div>'+
-      // Platform breakdown (booking counts)
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:16px">Bookings by source</div>'+
-        revPlatform('Airbnb',byPlatform.airbnb||0,totalBookings,'#e8485a')+
-        revPlatform('Booking.com',byPlatform.booking||0,totalBookings,'#003580')+
-        revPlatform('Direct',byPlatform.direct||0,totalBookings,'var(--green)')+
-        '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px;font-size:12px;font-weight:700;color:var(--muted)">'+totalBookings+' total confirmed bookings</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Bookings by platform</div>'+
+        revPlatform('Airbnb',byPlat.airbnb||0,totalBks,'#e8485a')+
+        revPlatform('Booking.com',byPlat.booking||0,totalBks,'#003580')+
+        revPlatform('Direct',byPlat.direct||0,totalBks,'var(--green)')+
+        '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;font-size:12px;font-weight:700;color:var(--muted)">'+totalBks+' total bookings</div>'+
       '</div>'+
     '</div>';
 }
@@ -2175,6 +2204,13 @@ function CT(k){return(CLEAN_T[cleanLang]||CLEAN_T.en)[k]||k;}
 
 var cleanFilter='all';
 
+function setDashLang(l){
+  setCleanLang(l);
+  ['en','pt','fr'].forEach(function(lg){
+    var b=document.getElementById('dLang-'+lg);
+    if(b)b.classList.toggle('on',lg===l);
+  });
+}
 function setCleanLang(l){
   cleanLang=l;
   ['en','pt','fr'].forEach(function(lg){
@@ -2349,6 +2385,70 @@ function mkCleanCard(b,tod){
   }
 
   return card;
+}
+
+// ── IMPORT BOOKINGS ──────────────────────────────────────────────────────────
+function openDashImport(){
+  document.getElementById('diFile').value='';
+  setDIS('','');
+  // Populate property dropdown
+  var sel=document.getElementById('diApt');
+  sel.innerHTML='';
+  (workspace&&workspace.apts?workspace.apts:[]).forEach(function(a){
+    var o=document.createElement('option');o.value=a.id;o.textContent=a.name||a.short;sel.appendChild(o);
+  });
+  document.getElementById('dashImportOverlay').classList.add('show');
+  if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
+}
+function setDIS(m,t){var el=document.getElementById('diStatus');if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
+function doDashImport(){
+  var fi=document.getElementById('diFile');
+  if(!fi.files||!fi.files[0]){setDIS('Please select a file.','warn');return;}
+  var file=fi.files[0],apt=document.getElementById('diApt').value,source=document.getElementById('diSrc').value,fname=file.name.toLowerCase();
+  setDIS('Reading file…','warn');
+  if(fname.endsWith('.xls')||fname.endsWith('.xlsx')){
+    if(typeof XLSX==='undefined'){setDIS('XLS reader loading — wait 3 s then try again.','warn');return;}
+    var r=new FileReader();
+    r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});dashProcessImport(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]),source,apt);}catch(err){setDIS('XLS error: '+err.message,'err');}};
+    r.onerror=function(){setDIS('Cannot read file.','err');};
+    r.readAsArrayBuffer(file);
+  } else {
+    var r2=new FileReader();
+    r2.onload=function(e){try{dashProcessImport(e.target.result,source,apt);}catch(err){setDIS('Error: '+err.message,'err');}};
+    r2.onerror=function(){setDIS('Cannot read.','err');};
+    r2.readAsText(file,'UTF-8');
+  }
+}
+function _dsa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
+function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
+function _dpCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
+function _dISO(s){if(!s)return'';s=String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();if(!s||s.length<6)return'';if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');var n=parseInt(s);if(!isNaN(n)&&/^\d+$/.test(s)&&n>40000&&n<60000){var d=new Date((n-25569)*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}try{var d2=new Date(s);if(!isNaN(d2.getTime())&&d2.getFullYear()>2020)return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');}catch(e){}return'';}
+function _duid(){return Math.random().toString(36).slice(2,10);}
+function dashProcessImport(text,source,apt){
+  var rows=_dpCSV(text);if(rows.length<2){setDIS('File appears empty.','err');return;}
+  var h=rows[0],parsed=[],skipped=0;
+  if(source==='airbnb'){
+    var iIn=-1,iOut=-1;for(var hi=0;hi<h.length;hi++){var hs=_dsa(h[hi]).toLowerCase();if(iIn===-1&&(hs.indexOf('debut')!==-1||hs.indexOf('start')!==-1||hs.indexOf('checkin')!==-1||hs.indexOf('check-in')!==-1))iIn=hi;if(iOut===-1&&(hs.indexOf('fin')!==-1||hs.indexOf('end')!==-1||hs.indexOf('checkout')!==-1||hs.indexOf('check-out')!==-1))iOut=hi;}
+    var iCode=_dfc(h,'code','confirmation'),iStat=_dfc(h,'statut','status'),iName=_dfc(h,'voyageur','guestname','nom'),iAdu=_dfc(h,'adultes','adults'),iChi=_dfc(h,'enfants','children');
+    if(iIn===-1||iOut===-1){setDIS('Cannot find date columns. Is the source set to Airbnb?','err');return;}
+    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var stat=iStat>=0?_dsa(r[iStat]).toLowerCase():'confirm';if(stat.indexOf('annul')!==-1||stat.indexOf('cancel')!==-1){skipped++;continue;}var ci=_dISO(r[iIn]),co=_dISO(r[iOut]);if(!ci||!co||ci>=co){skipped++;continue;}var ad=iAdu>=0?(parseInt(r[iAdu])||0):0,kd=iChi>=0?(parseInt(r[iChi])||0):0,code=iCode>=0&&r[iCode]?r[iCode].trim():_duid();parsed.push({id:'ab_'+code,apt:apt,workspace_id:workspace.id,source:'airbnb',checkin:ci,checkout:co,clean:co,guests:(ad+kd)>0?String(ad+kd)+(iName>=0&&r[iName]?' – '+r[iName].trim():''):'',notes:'',paid:'unpaid',cleaned:'no'});}
+  } else if(source==='booking'){
+    var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure'),iName2=_dfc(h,'guestname','nomduclient','clientname'),iP=_dfc(h,'persons','personnes'),iS2=_dfc(h,'status','statut'),iC=_dfc(h,'cancellation','annulation'),iN=_dfc(h,'booknumber','numeroreservation','numero');
+    if(iIn2===-1||iOut2===-1){setDIS('Cannot find date columns. Is the source set to Booking.com?','err');return;}
+    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var s2=iS2>=0?r[iS2].toLowerCase():'ok',cc=iC>=0?r[iC].trim():'';if(cc||s2.indexOf('cancel')!==-1||s2.indexOf('annul')!==-1){skipped++;continue;}var ci2=_dISO(r[iIn2]),co2=_dISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}var nm=iN>=0&&r[iN]?r[iN].trim():_duid();var gName=iName2>=0?r[iName2].trim():'';parsed.push({id:'bk_'+nm,apt:apt,workspace_id:workspace.id,source:'booking',checkin:ci2,checkout:co2,clean:co2,guests:(iP>=0&&r[iP]?r[iP].trim():'')+(gName?' – '+gName:''),notes:'',paid:'unpaid',cleaned:'no'});}
+  } else {
+    var iIn3=_dfc(h,'startdate','start','checkin','arrivee','arrival'),iOut3=_dfc(h,'enddate','end','checkout','depart','departure'),iN3=_dfc(h,'guest','nom','name','client'),iP3=_dfc(h,'persons','personnes','adults','adultes'),iS3=_dfc(h,'status','statut');
+    if(iIn3===-1||iOut3===-1){setDIS('Cannot find date columns.','err');return;}
+    for(var i=1;i<rows.length;i++){var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;var s3=iS3>=0?r[iS3].toLowerCase():'';if(s3.indexOf('cancel')!==-1||s3.indexOf('refund')!==-1){skipped++;continue;}var ci3=_dISO(r[iIn3]),co3=_dISO(r[iOut3]);if(!ci3||!co3||ci3>=co3){skipped++;continue;}var c3=_duid(),n3=iN3>=0?r[iN3].trim():'';parsed.push({id:'dir_'+c3,apt:apt,workspace_id:workspace.id,source:'direct',checkin:ci3,checkout:co3,clean:co3,guests:(iP3>=0&&r[iP3]?r[iP3].trim():'')+(n3?' – '+n3:''),notes:'',paid:'unpaid',cleaned:'no'});}
+  }
+  if(!parsed.length){setDIS('No valid bookings found ('+skipped+' skipped).','err');return;}
+  setDIS('Saving '+parsed.length+' bookings…','warn');
+  sbF('POST','rpc/insert_bookings',{bookings:parsed}).then(function(){
+    closeModal('dashImportOverlay');
+    var msg=parsed.length+' bookings imported';if(skipped)msg+=', '+skipped+' skipped';
+    toast(msg,'ok');
+    loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
+  }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
 
 // ── DELETE RESERVATION ───────────────────────────────────────────────────────
@@ -2711,7 +2811,8 @@ function renderBarForDay(bookings,ds,aptColor){
     var isEnd=b.checkout===ds; // checkout day = departure
     // checkout day — show as departure
     var endOfStay=new Date(b.checkout+'T12:00:00');endOfStay.setDate(endOfStay.getDate()-1);
-    var lastNight=endOfStay.toISOString().slice(0,10);
+    var _ey=endOfStay.getFullYear(),_em=String(endOfStay.getMonth()+1).padStart(2,'0'),_ed=String(endOfStay.getDate()).padStart(2,'0');
+    var lastNight=_ey+'-'+_em+'-'+_ed;
     var isLastNight=ds===lastNight;
 
     var posClass=isStart&&isLastNight?'bar-solo':isStart?'bar-start':isLastNight?'bar-end':'bar-middle';
@@ -2723,11 +2824,10 @@ function renderBarForDay(bookings,ds,aptColor){
     else if(label.indexOf('-')!==-1&&label.indexOf('guest')===-1)label=label.split('-')[1].trim();
     if(label.length>18)label=label.slice(0,17)+'…';
 
-    // Show name on start and every visible cell (truncated on middle cells)
-    var showLabel=isStart||posClass==='bar-solo';
-    var middleLabel=posClass==='bar-middle'||posClass==='bar-end';
+    // Always show name — full on start/solo, smaller on middle/end
+    var showFull=isStart||posClass==='bar-solo';
     return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(b.guests||'')+'">'+
-      (showLabel?esc(label):(middleLabel?'<span style="opacity:.7;font-size:9px">'+esc(label)+'</span>':''))+
+      (showFull?esc(label):'<span style="opacity:.65;font-size:9px">'+esc(label)+'</span>')+
       '</div>';
   }).join('');
 }
