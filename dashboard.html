@@ -532,22 +532,22 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div class="kpi-row" id="ovKpi">
       <div class="kpi-card kpi-yellow">
         <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="kpi-body"><div class="kpi-val" id="ov-pending">—</div><div class="kpi-lbl">Awaiting response</div></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-pending">—</div><div class="kpi-lbl" id="ov-pending-lbl">Awaiting response</div></div>
         <div class="kpi-action" onclick="switchTab('requests');filterReqs('pending',null)">Review →</div>
       </div>
       <div class="kpi-card kpi-blue">
         <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <div class="kpi-body"><div class="kpi-val" id="ov-checkins">—</div><div class="kpi-lbl">Check-ins today</div></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-checkins">—</div><div class="kpi-lbl" id="ov-checkins-lbl">Check-ins today</div></div>
         <div class="kpi-action" onclick="switchTab('calendar');setResView('list')">See guests →</div>
       </div>
       <div class="kpi-card kpi-green">
         <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-        <div class="kpi-body"><div class="kpi-val" id="ov-occupied">—</div><div class="kpi-lbl">Units occupied now</div></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-occupied">—</div><div class="kpi-lbl" id="ov-occupied-lbl">Units occupied now</div></div>
         <div class="kpi-action" onclick="switchTab('calendar')">View calendar →</div>
       </div>
       <div class="kpi-card kpi-purple">
         <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-        <div class="kpi-body"><div class="kpi-val" id="ov-revenue">—</div><div class="kpi-lbl">Revenue this month</div></div>
+        <div class="kpi-body"><div class="kpi-val" id="ov-revenue">—</div><div class="kpi-lbl" id="ov-revenue-lbl">Revenue this month</div></div>
         <div class="kpi-action" onclick="switchTab('payments')">See payments →</div>
       </div>
     </div>
@@ -1136,6 +1136,7 @@ function loadWorkspace(){
       renderCalendar();
       loadEmailTemplates();
       loadWaTemplates();
+      applyTranslations();
       // Start on Overview tab
       switchTab('home');
     });
@@ -1939,20 +1940,30 @@ function renderRevenueAnalytics(){
   var occRate=totalAvailableNights>0?Math.min(100,Math.round(totalOccNights/totalAvailableNights*100)):0;
 
   var grossRev=0,commTotal=0,netRev=0,cleanFeeTotal=0;
-  yBks.forEach(function(b){
+  // OTA bookings (Airbnb + Booking.com): financial data from __€__ marker in notes
+  yBks.filter(function(b){return b.source==='airbnb'||b.source==='booking';}).forEach(function(b){
     var fin=parseFin(b);
-    var cf=getFinCleanFee(b.apt);
     grossRev+=fin.gross;
     commTotal+=fin.commission;
-    cleanFeeTotal+=cf;
     netRev+=(fin.gross-fin.commission);
+    cleanFeeTotal+=getFinCleanFee(b.apt);
   });
-  // Add direct booking revenue (already net of nothing — full amount)
+  // Direct bookings: revenue from direct_requests records (have total_amount)
+  // Also count direct bookings in allBookings that have no matching request (manual/imported)
+  var directReqAptDates={};
   yDirect.forEach(function(r){
     grossRev+=r.total_amount||0;
-    netRev+=r.total_amount||0;
-    var cf=getFinCleanFee(r.apt);
-    cleanFeeTotal+=cf;
+    netRev+=r.total_amount||0; // no commission on direct
+    cleanFeeTotal+=getFinCleanFee(r.apt);
+    directReqAptDates[r.apt+'|'+r.checkin]=true;
+  });
+  // Direct bookings imported via CSV (source=direct, not in requests)
+  yBks.filter(function(b){return b.source==='direct';}).forEach(function(b){
+    if(directReqAptDates[b.apt+'|'+b.checkin])return; // already counted via requests
+    var fin=parseFin(b);
+    grossRev+=fin.gross;
+    netRev+=fin.gross; // direct = 0 commission
+    cleanFeeTotal+=getFinCleanFee(b.apt);
   });
 
   var adr=totalOccNights>0?(grossRev/totalOccNights):0;
@@ -1979,16 +1990,25 @@ function renderRevenueAnalytics(){
     var mDays=Math.round((mEnd-md)/86400000);
     var avail=mDays*numProps;
     var occ=0,mGross=0,mComm=0,mClean=0;
-    yBks.forEach(function(b){
-      if(!b.checkin||b.checkin<mStart||b.checkin>=mEndStr)return;
-      var fin=parseFin(b);
-      var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
-      occ+=Math.max(0,Math.round((co-ci)/86400000));
-      mGross+=fin.gross;mComm+=fin.commission;mClean+=getFinCleanFee(b.apt);
-    });
+    var mDirectKeys={};
     yDirect.forEach(function(r){
       if(!r.checkin||r.checkin<mStart||r.checkin>=mEndStr)return;
       mGross+=r.total_amount||0;mClean+=getFinCleanFee(r.apt);
+      mDirectKeys[r.apt+'|'+r.checkin]=true;
+      occ+=Math.max(0,Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000));
+    });
+    yBks.forEach(function(b){
+      if(!b.checkin||b.checkin<mStart||b.checkin>=mEndStr)return;
+      var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
+      var nights=Math.max(0,Math.round((co-ci)/86400000));
+      if(b.source==='airbnb'||b.source==='booking'){
+        var fin=parseFin(b);
+        occ+=nights;mGross+=fin.gross;mComm+=fin.commission;mClean+=getFinCleanFee(b.apt);
+      } else if(!mDirectKeys[b.apt+'|'+b.checkin]){
+        // direct import not in requests
+        var fin=parseFin(b);
+        occ+=nights;mGross+=fin.gross;mClean+=getFinCleanFee(b.apt);
+      }
     });
     var mOcc=avail>0?Math.min(100,Math.round(occ/avail*100)):0;
     months12.push({label:md.toLocaleDateString('en-GB',{month:'short'}),occ:mOcc,gross:mGross,net:mGross-mComm,nights:occ,avail:avail});
@@ -2027,18 +2047,18 @@ function renderRevenueAnalytics(){
 
     // ── Row 1: Core KPIs ──
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
-      kpiCard('Occupancy Rate',fmtPct(occRate),totalOccNights+' / '+totalAvailableNights+' nights','var(--blue)')+
-      kpiCard('ADR (avg/night)',fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
-      kpiCard('Gross Revenue',fmt(grossRev),'Before commissions','')+
-      kpiCard('Net Revenue',fmt(netRev),'After platform commissions','var(--green)')+
+      kpiCard(CT('occRate'),fmtPct(occRate),totalOccNights+' / '+totalAvailableNights+' nights','var(--blue)')+
+      kpiCard(CT('adr'),fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
+      kpiCard(CT('grossRev'),fmt(grossRev),CT('beforeComm'),'')+
+      kpiCard(CT('netRev'),fmt(netRev),CT('afterComm'),'var(--green)')+
     '</div>'+
 
     // ── Row 2: Cost KPIs ──
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
-      kpiCard('Platform Commissions',fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
-      kpiCard('Cleaning Fees',fmt(cleanFeeTotal),yBks.length+yDirect.length+' stays × default €50','#7c3aed')+
-      kpiCard('Other Expenses',fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
-      kpiCard('P &amp; L',fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
+      kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
+      kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),yBks.length+yDirect.length+' stays × default €50','#7c3aed')+
+      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
+      kpiCard(CT('pandl'),fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
 
     // ── Row 3: Monthly chart + Platform breakdown ──
@@ -2414,27 +2434,144 @@ function renderResList(){
 // ── CLEANING TAB (SummerClean integrated) ─────────────────────────────────────
 var cleanLang='en';
 var CLEAN_T={
-  en:{today:'Today',upcoming:'Upcoming',all:'All',dirty:'Needs cleaning',cleaned:'Cleaned',notCleaned:'Mark as cleaned',checkin:'Check-in',checkout:'Check-out',noClean:'All clean — no tasks today',guests:'Guests',airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'},
-  pt:{today:'Hoje',upcoming:'Proximas',all:'Todas',dirty:'Para limpar',cleaned:'Limpo',notCleaned:'Marcar como limpo',checkin:'Check-in',checkout:'Check-out',noClean:'Tudo limpo hoje',guests:'Hospedes',airbnb:'Airbnb',booking:'Booking.com',direct:'Direto'},
-  fr:{today:"Aujourd'hui",upcoming:'A venir',all:'Toutes',dirty:'A nettoyer',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',checkin:'Arrivee',checkout:'Depart',noClean:'Tout est propre',guests:'Voyageurs',airbnb:'Airbnb',booking:'Booking.com',direct:'Direct'}
+  en:{
+    // Cleaning tab
+    today:'Today',upcoming:'Upcoming',all:'All',dirty:'Needs cleaning',cleaned:'Cleaned',notCleaned:'Mark as cleaned',checkin:'Check-in',checkout:'Check-out',noClean:'All clean — no tasks today',guests:'Guests',airbnb:'Airbnb',booking:'Booking.com',direct:'Direct',
+    // Sidebar
+    sbHome:'Home',sbRequests:'Requests',sbProperties:'Properties',sbCalendar:'Reservations',sbBooking:'Direct Booking',sbFinance:'Finance',sbSettings:'Settings',sbCleaning:'Cleaning',sbSignOut:'Sign out',
+    // Overview
+    greeting_morning:'Good morning',greeting_afternoon:'Good afternoon',greeting_evening:'Good evening',
+    pendingRequests:'Pending requests',checkinsToday:'Check-ins today',occupiedUnits:'Occupied units',revenueMonth:'Revenue this month',
+    upcomingStays:'Upcoming stays',quickActions:'Quick actions',
+    checkIn:'Check in',checkOut:'Check out',staying:'Staying',
+    noUpcoming:'No stays in the next 14 days',
+    newRequest:'New booking request',addBooking:'Add booking',viewCalendar:'View calendar',viewPayments:'View finances',
+    // Requests tab
+    reqTitle:'Booking Requests',reqSub:'Manage incoming direct booking requests',
+    filterAll:'All',filterPending:'Pending',filterConfirmed:'Confirmed',filterDeclined:'Declined',
+    refresh:'Refresh',back:'← Overview',
+    // Calendar / Reservations tab
+    calTitle:'Reservations',calSub:'View and manage all bookings across properties',
+    // Finance tab
+    finTitle:'Finance',finSub:'CFO dashboard — revenue, occupancy, ADR, commissions & P&L',
+    allProps:'All properties',
+    occRate:'Occupancy Rate',adr:'ADR (avg/night)',revpar:'RevPAR',grossRev:'Gross Revenue',beforeComm:'Before commissions',netRev:'Net Revenue',afterComm:'After platform commissions',
+    platformComm:'Platform Commissions',cleaningFees:'Cleaning Fees',otherExp:'Other Expenses',pandl:'P & L',
+    monthlyRev:'Monthly Revenue',grossVsNet:'Gross (dark) vs Net after commissions (light)',
+    platformBreakdown:'Platform Breakdown',totalComm:'Total commissions',
+    // Settings
+    settingsTitle:'Settings',settingsSub:'Configure your workspace and properties',
+    // Cleaning page
+    cleanTitle:'Cleaning Schedule',cleanSub:'Manage cleaning tasks across all your properties'
+  },
+  pt:{
+    today:'Hoje',upcoming:'Proximas',all:'Todas',dirty:'Para limpar',cleaned:'Limpo',notCleaned:'Marcar como limpo',checkin:'Check-in',checkout:'Check-out',noClean:'Tudo limpo hoje',guests:'Hospedes',airbnb:'Airbnb',booking:'Booking.com',direct:'Direto',
+    sbHome:'Inicio',sbRequests:'Pedidos',sbProperties:'Propriedades',sbCalendar:'Reservas',sbBooking:'Reserva Direta',sbFinance:'Financas',sbSettings:'Definicoes',sbCleaning:'Limpeza',sbSignOut:'Sair',
+    greeting_morning:'Bom dia',greeting_afternoon:'Boa tarde',greeting_evening:'Boa noite',
+    pendingRequests:'Pedidos pendentes',checkinsToday:'Check-ins hoje',occupiedUnits:'Unidades ocupadas',revenueMonth:'Receita este mes',
+    upcomingStays:'Proximas estadias',quickActions:'Acoes rapidas',
+    checkIn:'Chegada',checkOut:'Saida',staying:'A ficar',
+    noUpcoming:'Sem estadias nos proximos 14 dias',
+    newRequest:'Novo pedido de reserva',addBooking:'Adicionar reserva',viewCalendar:'Ver calendario',viewPayments:'Ver financas',
+    reqTitle:'Pedidos de Reserva',reqSub:'Gerir pedidos de reserva direta',
+    filterAll:'Todos',filterPending:'Pendentes',filterConfirmed:'Confirmados',filterDeclined:'Recusados',
+    refresh:'Atualizar',back:'← Inicio',
+    calTitle:'Reservas',calSub:'Ver e gerir todas as reservas',
+    finTitle:'Financas',finSub:'Painel CFO — receitas, ocupacao, ADR, comissoes e P&L',
+    allProps:'Todas as propriedades',
+    occRate:'Taxa de Ocupacao',adr:'ADR (media/noite)',revpar:'RevPAR',grossRev:'Receita Bruta',beforeComm:'Antes de comissoes',netRev:'Receita Liquida',afterComm:'Apos comissoes da plataforma',
+    platformComm:'Comissoes das Plataformas',cleaningFees:'Taxas de Limpeza',otherExp:'Outras Despesas',pandl:'Resultado',
+    monthlyRev:'Receita Mensal',grossVsNet:'Bruto (escuro) vs Liquido apos comissoes (claro)',
+    platformBreakdown:'Por Plataforma',totalComm:'Total de comissoes',
+    settingsTitle:'Definicoes',settingsSub:'Configurar o seu espaco de trabalho',
+    cleanTitle:'Calendario de Limpeza',cleanSub:'Gerir tarefas de limpeza em todas as propriedades'
+  },
+  fr:{
+    today:"Aujourd'hui",upcoming:'A venir',all:'Toutes',dirty:'A nettoyer',cleaned:'Nettoye',notCleaned:'Marquer comme nettoye',checkin:'Arrivee',checkout:'Depart',noClean:'Tout est propre',guests:'Voyageurs',airbnb:'Airbnb',booking:'Booking.com',direct:'Direct',
+    sbHome:'Accueil',sbRequests:'Demandes',sbProperties:'Proprietes',sbCalendar:'Reservations',sbBooking:'Reservation Directe',sbFinance:'Finances',sbSettings:'Parametres',sbCleaning:'Menage',sbSignOut:'Deconnexion',
+    greeting_morning:'Bonjour',greeting_afternoon:'Bon apres-midi',greeting_evening:'Bonsoir',
+    pendingRequests:'Demandes en attente',checkinsToday:"Check-ins aujourd'hui",occupiedUnits:'Unites occupees',revenueMonth:'Revenu ce mois',
+    upcomingStays:'Sejours a venir',quickActions:'Actions rapides',
+    checkIn:'Arrivee',checkOut:'Depart',staying:'En cours',
+    noUpcoming:'Aucun sejour dans les 14 prochains jours',
+    newRequest:'Nouvelle demande de reservation',addBooking:'Ajouter reservation',viewCalendar:'Voir calendrier',viewPayments:'Voir finances',
+    reqTitle:'Demandes de Reservation',reqSub:'Gerer les demandes de reservation directe',
+    filterAll:'Tous',filterPending:'En attente',filterConfirmed:'Confirmes',filterDeclined:'Refuses',
+    refresh:'Actualiser',back:'← Accueil',
+    calTitle:'Reservations',calSub:'Voir et gerer toutes les reservations',
+    finTitle:'Finances',finSub:'Tableau de bord CFO — revenus, occupation, ADR, commissions & P&L',
+    allProps:'Toutes les proprietes',
+    occRate:"Taux d'Occupation",adr:'ADR (moy./nuit)',revpar:'RevPAR',grossRev:'Revenu Brut',beforeComm:'Avant commissions',netRev:'Revenu Net',afterComm:'Apres commissions plateforme',
+    platformComm:'Commissions Plateformes',cleaningFees:'Frais de Menage',otherExp:'Autres Charges',pandl:'Resultat',
+    monthlyRev:'Revenu Mensuel',grossVsNet:'Brut (fonce) vs Net apres commissions (clair)',
+    platformBreakdown:'Par Plateforme',totalComm:'Total commissions',
+    settingsTitle:'Parametres',settingsSub:'Configurer votre espace de travail',
+    cleanTitle:'Planning Menage',cleanSub:'Gerer les taches de menage sur toutes les proprietes'
+  }
 };
 function CT(k){return(CLEAN_T[cleanLang]||CLEAN_T.en)[k]||k;}
 
 var cleanFilter='all';
 
 function setDashLang(l){
-  setCleanLang(l);
+  cleanLang=l;
+  // Update sidebar buttons
   ['en','pt','fr'].forEach(function(lg){
     var b=document.getElementById('dLang-'+lg);
     if(b)b.classList.toggle('on',lg===l);
   });
-  // Re-render whatever tab is currently active so CT() strings update immediately
+  // Update static DOM text via CT()
+  applyTranslations();
+  // Re-render dynamic tab content
   var activeItem=document.querySelector('.sb-item.on');
   var activeTab=activeItem?activeItem.getAttribute('data-tab'):'';
-  if(activeTab==='cleaning')renderCleaning();
+  if(activeTab==='home')renderOverview();
+  else if(activeTab==='requests')renderRequests();
+  else if(activeTab==='cleaning')renderCleaning();
+  else if(activeTab==='payments')renderRevenueAnalytics();
 }
-function setCleanLang(l){
-  cleanLang=l;
+function setCleanLang(l){cleanLang=l;}
+
+function applyTranslations(){
+  // Sidebar labels
+  function st(id,k){var el=document.getElementById(id);if(el)el.textContent=CT(k);}
+  function sq(sel,k){var el=document.querySelector(sel);if(el)el.textContent=CT(k);}
+  // Sidebar nav items (find by data-tab)
+  var tabMap={home:'sbHome',requests:'sbRequests',properties:'sbProperties',calendar:'sbCalendar',widget:'sbBooking',payments:'sbFinance',settings:'sbSettings',cleaning:'sbCleaning'};
+  document.querySelectorAll('.sb-item[data-tab]').forEach(function(el){
+    var tab=el.getAttribute('data-tab');
+    if(tabMap[tab]){
+      var span=el.querySelector('span:not(.sb-icon-wrap):not(.badge)');
+      if(span)span.textContent=CT(tabMap[tab]);
+    }
+  });
+  // Sign out button
+  var soBtn=document.getElementById('signOutBtn');
+  if(soBtn){var soSpan=soBtn.querySelector('span');if(soSpan)soSpan.textContent=CT('sbSignOut');}
+  // Page headers — static HTML headings
+  var pageHeaders={
+    'page-home':['Home',''],
+    'page-requests':[CT('reqTitle'),CT('reqSub')],
+    'page-calendar':[CT('calTitle'),CT('calSub')],
+    'page-payments':[CT('finTitle'),CT('finSub')],
+    'page-settings':[CT('settingsTitle'),CT('settingsSub')],
+    'page-cleaning':[CT('cleanTitle'),CT('cleanSub')]
+  };
+  Object.keys(pageHeaders).forEach(function(pgId){
+    var pg=document.getElementById(pgId);if(!pg)return;
+    var h2=pg.querySelector('.page-header h2');
+    var p=pg.querySelector('.page-header p');
+    if(h2&&pageHeaders[pgId][0])h2.textContent=pageHeaders[pgId][0];
+    if(p&&pageHeaders[pgId][1])p.textContent=pageHeaders[pgId][1];
+  });
+  // Overview static labels
+  var lblMap={'ov-pending-lbl':'pendingRequests','ov-checkins-lbl':'checkinsToday','ov-occupied-lbl':'occupiedUnits','ov-revenue-lbl':'revenueMonth'};
+  Object.keys(lblMap).forEach(function(id){st(id,lblMap[id]);});
+  // Overview panel titles
+  document.querySelectorAll('.ov-panel-title').forEach(function(el,i){
+    if(i===0)el.textContent=CT('upcomingStays');
+    if(i===1)el.textContent=CT('quickActions');
+  });
 }
 
 function refreshCleaning(){
@@ -2678,27 +2815,35 @@ function dashProcessImport(text,source,apt){
     var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure');
     var iName2=_dfc(h,'guestname','nomduclient','clientname','guest'),iP=_dfc(h,'persons','personnes'),iS2=_dfc(h,'status','statut'),iC=_dfc(h,'cancellation','annulation'),iN=_dfc(h,'booknumber','numeroreservation','numero','reservation');
     if(iIn2===-1||iOut2===-1){setDIS('Cannot find date columns. Is the source set to Booking.com?','err');return;}
+    // Pre-detect financial columns from header (not inside loop)
+    var iTarif=_dfc(h,'price','tarif','prix','amount','montant','total');
+    var iComm2=_dfc(h,'commission amount','commissionamount','commission','comm','frais','fee');
     for(var i=1;i<rows.length;i++){
-      var r=rows[i];if(!r[0]||r.join('').trim()==='')continue;
-      var s2=iS2>=0?r[iS2].toLowerCase():'ok',cc=iC>=0?r[iC].trim():'';
+      var r=rows[i];if(!r||!r[0]||r.join('').trim()==='')continue;
+      // Safe field access — row may be shorter than header
+      function _rv(idx){return(idx>=0&&r[idx]!=null)?String(r[idx]).trim():'';}
+      var s2=_rv(iS2).toLowerCase()||'ok', cc=_rv(iC);
       if(cc||s2.indexOf('cancel')!==-1||s2.indexOf('annul')!==-1){skipped++;continue;}
-      var ci2=_dISO(r[iIn2]),co2=_dISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}
-      var nm=iN>=0&&r[iN]?r[iN].trim():_duid();
-      var gName2=iName2>=0?r[iName2].trim():'';
-      // Booking.com: Tarif column = gross, commission column = platform fee
-      var iTarif=_dfc(h,'tarif','prix','price','amount','montant','total');
-      var iComm=_dfc(h,'comm','commission','frais','fee');
-      var tarifRaw=iTarif>=0?r[iTarif].trim():'';
-      var commRaw=iComm>=0?r[iComm].trim():'';
-      // Strip currency and special chars: "311.76 EUR" → 311.76
-      var grossNum=parseFloat(tarifRaw.replace(/[^0-9.]/g,'').split('.').slice(0,2).join('.'))||0;
-      if(!grossNum&&tarifRaw){var m2=tarifRaw.match(/([\d]+[.,][\d]{2})/);if(m2)grossNum=parseFloat(m2[1].replace(',','.'));}
-      var commNum=parseFloat(commRaw.replace(/[^0-9.]/g,'').split('.').slice(0,2).join('.'))||0;
-      if(!commNum&&commRaw){var m3=commRaw.match(/([\d]+[.,][\d]{2,4})/);if(m3)commNum=parseFloat(m3[1].replace(',','.'));}
+      var ci2=_dISO(_rv(iIn2)),co2=_dISO(_rv(iOut2));if(!ci2||!co2||ci2>=co2){skipped++;continue;}
+      var nm=_rv(iN)||_duid();
+      var gName2=_rv(iName2);
+      // Parse amount: "311.76 EUR" or "153 EUR" → number
+      function _parseAmt(raw){
+        if(!raw)return 0;
+        // Try "digits.digits" pattern first (handles "311.76 EUR", "153 EUR", "46.764 EUR")
+        var m=raw.match(/(\d[\d\s]*[.,]?\d*)/);
+        if(!m)return 0;
+        var clean=m[1].replace(/\s/g,'').replace(',','.');
+        // Handle case like "46.764" (3 decimals = thousands sep in some locales)
+        // If more than 2 decimals and value > 1000 unlikely → treat as decimal
+        return parseFloat(clean)||0;
+      }
+      var grossNum=_parseAmt(_rv(iTarif));
+      var commNum=_parseAmt(_rv(iComm2));
       var finSuffix2=grossNum>0?'\n__€__'+grossNum.toFixed(2)+'|'+commNum.toFixed(2):'';
       parsed.push({id:'bk_'+nm,apt:apt,workspace_id:workspace.id,source:'booking',
         checkin:ci2,checkout:co2,clean:co2,
-        guests:iP>=0&&r[iP]?r[iP].trim():'',
+        guests:_rv(iP),
         notes:gName2+finSuffix2,
         paid:'unpaid',cleaned:'no'});
     }
@@ -3260,7 +3405,7 @@ function renderOverview(){
 
 function renderGreeting(){
   var h=new Date().getHours();
-  var greet=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  var greet=h<12?CT('greeting_morning'):h<18?CT('greeting_afternoon'):CT('greeting_evening');
   var el=document.getElementById('ovGreetingTitle');
   if(el)el.textContent=greet;
 }
