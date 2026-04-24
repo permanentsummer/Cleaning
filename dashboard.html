@@ -480,8 +480,8 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <span>Direct Booking</span>
       </div>
       <div class="sb-item" data-tab="payments" onclick="switchTab('payments')">
-        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
-        <span>Payments</span>
+        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></span>
+        <span>Finance</span>
       </div>
       <div class="sb-item" data-tab="settings" onclick="switchTab('settings')">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 1.42 1.42M20.49 9A10 10 0 0 1 21 12M19.07 19.07a10 10 0 0 1-1.42 1.42M15 20.49A10 10 0 0 1 12 21M4.93 19.07a10 10 0 0 1-1.42-1.42M3.51 15A10 10 0 0 1 3 12M4.93 4.93a10 10 0 0 1 1.42-1.42M9 3.51A10 10 0 0 1 12 3"/></svg></span>
@@ -723,7 +723,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- PAYMENTS -->
   <div id="page-payments" class="page">
     <div class="page-header">
-      <div><h2>Payments &amp; Revenue</h2><p>Track income from all sources — direct bookings, Airbnb, Booking.com</p></div>
+      <div><h2>Finance</h2><p>CFO dashboard — revenue, occupancy, ADR, commissions &amp; P&amp;L</p></div>
     </div>
     <!-- Revenue analytics -->
     <div id="revenueAnalytics" style="margin-bottom:24px"></div>
@@ -1855,107 +1855,325 @@ function genQR(url){
 }
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
+function parseFin(b){
+  // Extract __€__gross|commission from end of notes field
+  var n=b.notes||'';
+  var idx=n.indexOf('\n__€__');
+  if(idx===-1)return{gross:0,commission:0};
+  var fin=n.slice(idx+6).split('|');
+  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0};
+}
+function cleanNotesDisplay(n){
+  if(!n)return'';
+  var idx=n.indexOf('\n__€__');
+  return idx===-1?n:n.slice(0,idx);
+}
+
+var _finExpenses=null; // cached expenses from workspace.settings
+var _finYear=new Date().getFullYear();
+var _finApt='all';
+
+function getFinExpenses(){
+  if(!workspace||!workspace.settings)return[];
+  return workspace.settings.expenses||[];
+}
+function saveFinExpenses(expenses){
+  if(!workspace)return;
+  return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    fresh.expenses=expenses;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
+  }).then(function(){
+    if(workspace.settings)workspace.settings.expenses=expenses;
+    else workspace.settings={expenses:expenses};
+  });
+}
+function getFinCleanFee(aptId){
+  if(!workspace||!workspace.settings)return 50;
+  var apts=workspace.settings.apts||[];
+  var a=apts.find(function(x){return x.id===aptId;});
+  return(a&&a.cleanFee)?parseFloat(a.cleanFee)||50:50;
+}
+
 function renderRevenueAnalytics(){
   var container=document.getElementById('revenueAnalytics');
   if(!container)return;
 
-  var now=new Date();
-  var today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var thisMonthStart=today.slice(0,7)+'-01';
-  var lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
-  var lastMonthStart=lastMonthDate.getFullYear()+'-'+String(lastMonthDate.getMonth()+1).padStart(2,'0')+'-01';
-  var lastMonthEnd=thisMonthStart;
+  // Build available years from all bookings
+  var allBks=allBookings||[];
+  var years=[];
+  allBks.forEach(function(b){
+    var y=b.checkin?parseInt(b.checkin.slice(0,4)):0;
+    if(y>2020&&y<2035&&years.indexOf(y)===-1)years.push(y);
+  });
+  (requests||[]).forEach(function(r){
+    var y=r.checkin?parseInt(r.checkin.slice(0,4)):0;
+    if(y>2020&&y<2035&&years.indexOf(y)===-1)years.push(y);
+  });
+  years.sort(function(a,b){return a-b;});
+  if(years.indexOf(_finYear)===-1&&years.length)_finYear=years[years.length-1];
 
-  // ── Revenue: only from confirmed direct_requests (real amounts) ──
-  var revItems=[];
-  (requests||[]).filter(function(r){return r.status==='confirmed'&&r.total_amount;}).forEach(function(r){
-    revItems.push({date:r.checkin||'',amount:r.total_amount||0,platform:'direct',name:r.guest_name||''});
+  // Year and property filter controls
+  var yearOpts=years.map(function(y){return '<option value="'+y+'"'+(y===_finYear?' selected':'')+'>'+y+'</option>';}).join('');
+  var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
+
+  var yearStr=String(_finYear);
+  var yStart=yearStr+'-01-01', yEnd=yearStr+'-12-31';
+
+  // Filter bookings for selected year+apt
+  function inYear(b){return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&(_finApt==='all'||b.apt===_finApt);}
+  var yBks=allBks.filter(inYear);
+  var yDirect=(requests||[]).filter(function(r){return r.status==='confirmed'&&r.checkin&&r.checkin>=yStart&&r.checkin<=yEnd&&(_finApt==='all'||r.apt===_finApt);});
+
+  // ── KPI Calculations ──
+  var numProps=_finApt==='all'?(properties&&properties.length||1):1;
+  var numDays=((new Date(_finYear,11,31))-(new Date(_finYear,0,1)))/86400000+1;
+  var totalAvailableNights=numDays*numProps;
+
+  var totalOccNights=0;
+  yBks.forEach(function(b){
+    var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
+    var nights=Math.max(0,Math.round((co-ci)/86400000));
+    totalOccNights+=nights;
+  });
+  var occRate=totalAvailableNights>0?Math.min(100,Math.round(totalOccNights/totalAvailableNights*100)):0;
+
+  var grossRev=0,commTotal=0,netRev=0,cleanFeeTotal=0;
+  yBks.forEach(function(b){
+    var fin=parseFin(b);
+    var cf=getFinCleanFee(b.apt);
+    grossRev+=fin.gross;
+    commTotal+=fin.commission;
+    cleanFeeTotal+=cf;
+    netRev+=(fin.gross-fin.commission);
+  });
+  // Add direct booking revenue (already net of nothing — full amount)
+  yDirect.forEach(function(r){
+    grossRev+=r.total_amount||0;
+    netRev+=r.total_amount||0;
+    var cf=getFinCleanFee(r.apt);
+    cleanFeeTotal+=cf;
   });
 
-  var totalRev=revItems.reduce(function(a,i){return a+i.amount;},0);
-  var thisMonthRev=revItems.filter(function(i){return i.date>=thisMonthStart;}).reduce(function(a,i){return a+i.amount;},0);
-  var lastMonthRev=revItems.filter(function(i){return i.date>=lastMonthStart&&i.date<lastMonthEnd;}).reduce(function(a,i){return a+i.amount;},0);
-  var outstanding=(requests||[]).filter(function(r){return r.status==='confirmed'&&r.total_amount&&!r.balance_paid;})
-    .reduce(function(a,r){return a+(r.deposit_paid?Math.round(r.total_amount/2):r.total_amount);},0);
+  var adr=totalOccNights>0?(grossRev/totalOccNights):0;
+  var revPAR=totalAvailableNights>0?(grossRev/totalAvailableNights):0;
 
-  // ── Bookings: ALL sources (allBookings = SummerClean imports) ──
-  var allBks=(allBookings||[]);
-  var past=allBks.filter(function(b){return b.checkout&&b.checkout<today;});
-  var current=allBks.filter(function(b){return b.checkin&&b.checkout&&b.checkin<=today&&b.checkout>today;});
-  var future=allBks.filter(function(b){return b.checkin&&b.checkin>today;});
+  // Expenses for selected apt+year
+  var expenses=getFinExpenses().filter(function(e){
+    return _finApt==='all'||(e.apt===_finApt||e.apt==='all');
+  });
+  var totalExpenses=0;
+  expenses.forEach(function(e){
+    var monthly=e.freq==='monthly'?e.amount*12:e.freq==='weekly'?e.amount*52:e.amount;
+    totalExpenses+=parseFloat(monthly)||0;
+  });
+  var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
 
-  // By platform
-  var byPlat={airbnb:0,booking:0,direct:0};
-  allBks.forEach(function(b){var s=b.source||'direct';byPlat[s]=(byPlat[s]||0)+1;});
-  var totalBks=allBks.length;
-
-  // 6-month occupancy bar (nights occupied / nights in month)
-  var months6=[];
-  for(var m=5;m>=0;m--){
-    var md=new Date(now.getFullYear(),now.getMonth()-m,1);
-    var mEnd=new Date(now.getFullYear(),now.getMonth()-m+1,1);
+  // Monthly breakdown (12 months)
+  var months12=[];
+  for(var m=0;m<12;m++){
+    var md=new Date(_finYear,m,1);
+    var mEnd=new Date(_finYear,m+1,1);
     var mStart=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01';
     var mEndStr=mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01';
     var mDays=Math.round((mEnd-md)/86400000);
-    var numProps=(workspace&&workspace.apts)?workspace.apts.length:1;
-    var totalNights=mDays*numProps;
-    var occupiedNights=0;
-    allBks.forEach(function(b){
-      if(!b.checkin||!b.checkout)return;
-      var bIn=b.checkin>mStart?b.checkin:mStart;
-      var bOut=b.checkout<mEndStr?b.checkout:mEndStr;
-      if(bIn<bOut)occupiedNights+=Math.round((new Date(bOut+'T12:00:00')-new Date(bIn+'T12:00:00'))/86400000);
+    var avail=mDays*numProps;
+    var occ=0,mGross=0,mComm=0,mClean=0;
+    yBks.forEach(function(b){
+      if(!b.checkin||b.checkin<mStart||b.checkin>=mEndStr)return;
+      var fin=parseFin(b);
+      var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
+      occ+=Math.max(0,Math.round((co-ci)/86400000));
+      mGross+=fin.gross;mComm+=fin.commission;mClean+=getFinCleanFee(b.apt);
     });
-    var mRev=revItems.filter(function(i){return i.date>=mStart&&i.date<mEndStr;}).reduce(function(a,i){return a+i.amount;},0);
-    var occ=totalNights>0?Math.min(100,Math.round(occupiedNights/totalNights*100)):0;
-    months6.push({label:md.toLocaleDateString('en-GB',{month:'short'}),occ:occ,rev:mRev,nights:occupiedNights,totalNights:totalNights});
+    yDirect.forEach(function(r){
+      if(!r.checkin||r.checkin<mStart||r.checkin>=mEndStr)return;
+      mGross+=r.total_amount||0;mClean+=getFinCleanFee(r.apt);
+    });
+    var mOcc=avail>0?Math.min(100,Math.round(occ/avail*100)):0;
+    months12.push({label:md.toLocaleDateString('en-GB',{month:'short'}),occ:mOcc,gross:mGross,net:mGross-mComm,nights:occ,avail:avail});
   }
-  var maxOcc=Math.max.apply(null,months6.map(function(x){return x.occ;}));
+  var maxGross=Math.max.apply(null,months12.map(function(x){return x.gross;}));
 
-  // ── Render ──
+  // Platform breakdown
+  var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
+  yBks.forEach(function(b){
+    var s=b.source||'direct';if(!byPlat[s])byPlat[s]={count:0,gross:0,commission:0};
+    var fin=parseFin(b);
+    byPlat[s].count++;byPlat[s].gross+=fin.gross;byPlat[s].commission+=fin.commission;
+  });
+  yDirect.forEach(function(r){
+    byPlat.direct.count++;byPlat.direct.gross+=r.total_amount||0;
+  });
+  var totalBks=yBks.length+yDirect.length;
+
+  function fmt(n){return'€'+Math.round(n).toLocaleString('en-GB');}
+  function fmtPct(n){return n.toFixed(1)+'%';}
+  function kpiCard(label,val,sub,color){
+    return '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
+      '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">'+label+'</div>'+
+      '<div style="font-size:22px;font-weight:800;color:'+(color||'var(--primary)')+';letter-spacing:-.5px">'+val+'</div>'+
+      (sub?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+sub+'</div>':'')+
+    '</div>';
+  }
+
   container.innerHTML=
-    // Row 1: Revenue KPIs
-    '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Revenue (direct bookings)</div>'+
+    // ── Controls row ──
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">'+
+      '<select onchange="_finYear=parseInt(this.value);renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
+      '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+aptOpts+'</select>'+
+      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied</div>'+
+    '</div>'+
+
+    // ── Row 1: Core KPIs ──
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
+      kpiCard('Occupancy Rate',fmtPct(occRate),totalOccNights+' / '+totalAvailableNights+' nights','var(--blue)')+
+      kpiCard('ADR (avg/night)',fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
+      kpiCard('Gross Revenue',fmt(grossRev),'Before commissions','')+
+      kpiCard('Net Revenue',fmt(netRev),'After platform commissions','var(--green)')+
+    '</div>'+
+
+    // ── Row 2: Cost KPIs ──
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
-      revKpi('This month','€'+thisMonthRev.toLocaleString(),'var(--blue)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
-      revKpi('Last month','€'+lastMonthRev.toLocaleString(),'var(--muted)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>')+
-      revKpi('Outstanding','€'+outstanding.toLocaleString(),'var(--yellow)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+
-      revKpi('All-time','€'+totalRev.toLocaleString(),'var(--green)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>')+
+      kpiCard('Platform Commissions',fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
+      kpiCard('Cleaning Fees',fmt(cleanFeeTotal),yBks.length+yDirect.length+' stays × default €50','#7c3aed')+
+      kpiCard('Other Expenses',fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
+      kpiCard('P &amp; L',fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
-    // Row 2: Bookings KPIs
-    '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">All bookings (imported)</div>'+
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">'+
-      revKpi('Past stays',past.length,'#7c3aed','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>')+
-      revKpi('Currently staying',current.length,'var(--green)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>')+
-      revKpi('Upcoming',future.length,'var(--blue)','<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>')+
-    '</div>'+
-    // Row 3: Occupancy chart + platform breakdown
-    '<div style="display:grid;grid-template-columns:1fr 260px;gap:14px;margin-bottom:20px">'+
+
+    // ── Row 3: Monthly chart + Platform breakdown ──
+    '<div style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
+      // Monthly revenue + occupancy chart
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px">Occupancy — last 6 months</div>'+
-        '<div style="font-size:11px;color:var(--muted);margin-bottom:14px">All imported bookings across all properties</div>'+
-        '<div style="display:flex;align-items:flex-end;gap:6px;height:90px">'+
-          months6.map(function(m){
-            var h=maxOcc>0?Math.round(m.occ/maxOcc*80):4;
-            var col=m.occ>=80?'#059669':m.occ>=50?'var(--blue)':'var(--yellow)';
-            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'+
-              '<div style="font-size:10px;font-weight:700;color:var(--muted)">'+m.occ+'%</div>'+
-              '<div style="width:100%;background:'+col+';border-radius:4px 4px 0 0;height:'+Math.max(h,4)+'px;transition:height .3s" title="'+m.nights+'/'+m.totalNights+' nights"></div>'+
-              '<div style="font-size:10px;color:var(--muted);font-weight:500">'+m.label+'</div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'+
+          '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">Monthly Revenue — '+_finYear+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">Gross (dark) vs Net after commissions (light)</div></div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:flex-end;gap:4px;height:110px">'+
+          months12.map(function(mo){
+            var hg=maxGross>0?Math.max(4,Math.round(mo.gross/maxGross*95)):4;
+            var hn=maxGross>0?Math.max(2,Math.round(mo.net/maxGross*95)):2;
+            var occCol=mo.occ>=80?'#059669':mo.occ>=50?'var(--blue)':'#f59e0b';
+            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+              '<div style="font-size:9px;font-weight:700;color:var(--muted)">'+(mo.gross>0?'€'+Math.round(mo.gross/1000*10)/10+'k':'')+'</div>'+
+              '<div style="width:100%;position:relative;height:90px;display:flex;align-items:flex-end">'+
+                '<div style="position:absolute;bottom:0;left:0;right:0;background:#e2e8f0;border-radius:3px 3px 0 0;height:'+hg+'px"></div>'+
+                '<div style="position:absolute;bottom:0;left:15%;right:15%;background:'+occCol+';border-radius:3px 3px 0 0;height:'+hn+'px;opacity:.85"></div>'+
+              '</div>'+
+              '<div style="font-size:9px;color:var(--muted);font-weight:500">'+mo.label+'</div>'+
+              '<div style="font-size:9px;font-weight:700;color:'+occCol+'">'+mo.occ+'%</div>'+
             '</div>';
           }).join('')+
         '</div>'+
-        (months6[5]&&months6[5].rev>0?'<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">Direct booking revenue shown on the revenue chart. Import Airbnb / Booking.com CSV to see full occupancy.</div>':'')+
       '</div>'+
+      // Platform breakdown
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Bookings by platform</div>'+
-        revPlatform('Airbnb',byPlat.airbnb||0,totalBks,'#e8485a')+
-        revPlatform('Booking.com',byPlat.booking||0,totalBks,'#003580')+
-        revPlatform('Direct',byPlat.direct||0,totalBks,'var(--green)')+
-        '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;font-size:12px;font-weight:700;color:var(--muted)">'+totalBks+' total bookings</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:16px">Platform Breakdown</div>'+
+        finPlatCard('Airbnb',byPlat.airbnb,totalBks,'#e8485a')+
+        finPlatCard('Booking.com',byPlat.booking,totalBks,'#003580')+
+        finPlatCard('Direct',byPlat.direct,totalBks,'var(--green)')+
+        '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted)">Total commissions</div>'+
+          '<div style="font-size:18px;font-weight:800;color:#dc2626">'+fmt(commTotal)+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    // ── Row 4: Expenses manager ──
+    '<div id="expensesManagerPanel" style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);display:none">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary)">Recurring Expenses</div>'+
+        '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow()">+ Add expense</button>'+
+      '</div>'+
+      '<div id="expensesList"></div>'+
+      '<div style="margin-top:14px;display:flex;gap:10px">'+
+        '<button class="btn-primary" style="font-size:13px" onclick="saveExpenses()">Save expenses</button>'+
+        '<button class="btn-outline" style="font-size:13px" onclick="closeExpensesManager()">Cancel</button>'+
       '</div>'+
     '</div>';
+
+  // Render expenses list if panel is visible
+  if(document.getElementById('expensesManagerPanel').style.display!=='none'){
+    renderExpensesList();
+  }
 }
+
+function finPlatCard(name,data,total,color){
+  var pct=total>0?Math.round(data.count/total*100):0;
+  var net=data.gross-data.commission;
+  return '<div style="margin-bottom:14px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'+
+      '<span style="font-size:12px;font-weight:700;color:var(--primary)">'+name+'</span>'+
+      '<span style="font-size:11px;color:var(--muted)">'+data.count+' ('+pct+'%)</span>'+
+    '</div>'+
+    '<div style="background:var(--bg);border-radius:999px;height:6px;overflow:hidden;margin-bottom:4px">'+
+      '<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:999px"></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">'+
+      '<span>Gross: '+(data.gross>0?'€'+Math.round(data.gross).toLocaleString('en-GB'):'—')+'</span>'+
+      (data.commission>0?'<span style="color:#dc2626">Comm: €'+Math.round(data.commission).toLocaleString('en-GB')+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+
+// ── Expenses manager ─────────────────────────────────────────────────────────
+function openExpensesManager(e){
+  if(e)e.preventDefault();
+  var panel=document.getElementById('expensesManagerPanel');
+  panel.style.display='';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderExpensesList();
+}
+function closeExpensesManager(){
+  document.getElementById('expensesManagerPanel').style.display='none';
+}
+function renderExpensesList(){
+  var expenses=getFinExpenses();
+  var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
+  var html=expenses.map(function(ex,i){
+    return '<div class="exp-row" data-idx="'+i+'" style="display:grid;grid-template-columns:1fr 100px 110px 90px 36px;gap:8px;align-items:center;margin-bottom:8px">'+
+      '<input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="Expense name (e.g. Internet)" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
+      '<input class="exp-amount" type="number" value="'+(ex.amount||'')+'" placeholder="€" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
+      '<select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select>'+
+      '<select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select>'+
+      '<button onclick="removeExpense('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:7px;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">×</button>'+
+    '</div>';
+  }).join('');
+  if(!expenses.length)html='<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">No expenses yet. Click + Add expense to start.</div>';
+  document.getElementById('expensesList').innerHTML=html;
+}
+function addExpenseRow(){
+  var expenses=getFinExpenses();
+  expenses.push({name:'',amount:0,apt:'all',freq:'monthly'});
+  if(workspace.settings)workspace.settings.expenses=expenses;
+  renderExpensesList();
+  // Focus last name input
+  var rows=document.querySelectorAll('.exp-row');
+  if(rows.length){var inp=rows[rows.length-1].querySelector('.exp-name');if(inp)inp.focus();}
+}
+function removeExpense(idx){
+  var expenses=getFinExpenses();
+  expenses.splice(idx,1);
+  if(workspace.settings)workspace.settings.expenses=expenses;
+  renderExpensesList();
+}
+function saveExpenses(){
+  var rows=document.querySelectorAll('.exp-row');
+  var expenses=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.exp-name').value.trim();
+    var amount=parseFloat(row.querySelector('.exp-amount').value)||0;
+    var apt=row.querySelector('.exp-apt').value;
+    var freq=row.querySelector('.exp-freq').value;
+    if(name)expenses.push({name:name,amount:amount,apt:apt,freq:freq});
+  });
+  saveFinExpenses(expenses).then(function(){
+    closeExpensesManager();
+    renderRevenueAnalytics();
+  }).catch(function(e){alert('Save failed: '+e.message);});
+}
+
 
 function revKpi(label,val,color,icon){
   return '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)">'+
@@ -2443,10 +2661,17 @@ function dashProcessImport(text,source,apt){
       var ad=iAdu>=0?(parseInt(r[iAdu])||0):0,kd=iChi>=0?(parseInt(r[iChi])||0):0;
       var code=iCode>=0&&r[iCode]?r[iCode].trim():_duid();
       var gName=iName>=0?r[iName].trim():'';
+      // Airbnb Earnings column → net payout (already deducted host service fee ~3%)
+      var iEarn=_dfc(h,'earnings','payout','montant','amount','gain');
+      var earnRaw=iEarn>=0?r[iEarn].trim():'';
+      var earnNum=parseFloat(earnRaw.replace(/[^0-9.]/g,''))||0;
+      // Airbnb doesn't export commission separately; earnNum IS the net payout
+      // Store as __€__gross|commission where commission=0 (already netted)
+      var finSuffix=earnNum>0?'\n__€__'+earnNum.toFixed(2)+'|0':'';
       parsed.push({id:'ab_'+code,apt:apt,workspace_id:workspace.id,source:'airbnb',
         checkin:ci,checkout:co,clean:co,
         guests:(ad+kd)>0?String(ad+kd):'',
-        notes:gName,  // name in notes (SummerClean convention)
+        notes:gName+finSuffix,
         paid:'unpaid',cleaned:'no'});
     }
   } else if(source==='booking'){
@@ -2460,10 +2685,21 @@ function dashProcessImport(text,source,apt){
       var ci2=_dISO(r[iIn2]),co2=_dISO(r[iOut2]);if(!ci2||!co2||ci2>=co2){skipped++;continue;}
       var nm=iN>=0&&r[iN]?r[iN].trim():_duid();
       var gName2=iName2>=0?r[iName2].trim():'';
+      // Booking.com: Tarif column = gross, commission column = platform fee
+      var iTarif=_dfc(h,'tarif','prix','price','amount','montant','total');
+      var iComm=_dfc(h,'comm','commission','frais','fee');
+      var tarifRaw=iTarif>=0?r[iTarif].trim():'';
+      var commRaw=iComm>=0?r[iComm].trim():'';
+      // Strip currency and special chars: "311.76 EUR" → 311.76
+      var grossNum=parseFloat(tarifRaw.replace(/[^0-9.]/g,'').split('.').slice(0,2).join('.'))||0;
+      if(!grossNum&&tarifRaw){var m2=tarifRaw.match(/([\d]+[.,][\d]{2})/);if(m2)grossNum=parseFloat(m2[1].replace(',','.'));}
+      var commNum=parseFloat(commRaw.replace(/[^0-9.]/g,'').split('.').slice(0,2).join('.'))||0;
+      if(!commNum&&commRaw){var m3=commRaw.match(/([\d]+[.,][\d]{2,4})/);if(m3)commNum=parseFloat(m3[1].replace(',','.'));}
+      var finSuffix2=grossNum>0?'\n__€__'+grossNum.toFixed(2)+'|'+commNum.toFixed(2):'';
       parsed.push({id:'bk_'+nm,apt:apt,workspace_id:workspace.id,source:'booking',
         checkin:ci2,checkout:co2,clean:co2,
         guests:iP>=0&&r[iP]?r[iP].trim():'',
-        notes:gName2,  // name in notes
+        notes:gName2+finSuffix2,
         paid:'unpaid',cleaned:'no'});
     }
   } else {
