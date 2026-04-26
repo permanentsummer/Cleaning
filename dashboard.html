@@ -2960,6 +2960,12 @@ function doMappedImport(){
   }).catch(function(e){setDIS2('Error: '+e.message,'err');});
 }
 function _dsa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
+function _parseAmt(raw){
+  if(!raw)return 0;
+  var m=String(raw).match(/(\d[\d\s]*[.,]?\d*)/);
+  if(!m)return 0;
+  return parseFloat(m[1].replace(/\s/g,'').replace(',','.'))||0;
+}
 function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
 function _dpCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
 function _dISO(s){if(!s)return'';s=String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();if(!s||s.length<6)return'';if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');var n=parseInt(s);if(!isNaN(n)&&/^\d+$/.test(s)&&n>40000&&n<60000){var d=new Date((n-25569)*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}try{var d2=new Date(s);if(!isNaN(d2.getTime())&&d2.getFullYear()>2020)return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');}catch(e){}return'';}
@@ -3011,17 +3017,6 @@ function dashProcessImport(text,source,apt){
       var ci2=_dISO(_rv(iIn2)),co2=_dISO(_rv(iOut2));if(!ci2||!co2||ci2>=co2){skipped++;continue;}
       var nm=_rv(iN)||_duid();
       var gName2=_rv(iName2);
-      // Parse amount: "311.76 EUR" or "153 EUR" → number
-      function _parseAmt(raw){
-        if(!raw)return 0;
-        // Try "digits.digits" pattern first (handles "311.76 EUR", "153 EUR", "46.764 EUR")
-        var m=raw.match(/(\d[\d\s]*[.,]?\d*)/);
-        if(!m)return 0;
-        var clean=m[1].replace(/\s/g,'').replace(',','.');
-        // Handle case like "46.764" (3 decimals = thousands sep in some locales)
-        // If more than 2 decimals and value > 1000 unlikely → treat as decimal
-        return parseFloat(clean)||0;
-      }
       var grossNum=_parseAmt(_rv(iTarif));
       var commNum=_parseAmt(_rv(iComm2));
       var finSuffix2=grossNum>0?'\n__€__'+grossNum.toFixed(2)+'|'+commNum.toFixed(2):'';
