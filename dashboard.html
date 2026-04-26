@@ -2932,29 +2932,39 @@ function doMappedImport(){
   if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
   setDIS2('Processing '+parsed.length+' bookings…','warn');
 
-  // Conflict + priority (same logic as dashProcessImport)
+  // Conflict + priority
   var toDelete=[],toInsert=[],conflictSkipped=0;
   parsed.forEach(function(nb){
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
+    // OTA always wins — skip if any OTA booking overlaps these dates
     var hasOTAConflict=aptBks.some(function(ex){
       if(!ex.checkin||!ex.checkout)return false;
       return(ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
     });
-    var hasDirect=aptBks.some(function(ex){
-      return ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
+    if(hasOTAConflict){conflictSkipped++;return;}
+    // Existing direct booking on same dates → delete and replace (updating financial data)
+    aptBks.forEach(function(ex){
+      if(ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout){
+        toDelete.push(ex.id);
+      }
     });
-    if(hasOTAConflict||hasDirect){conflictSkipped++;return;}
     toInsert.push(nb);
   });
 
-  if(!toInsert.length){
-    setDIS2('Nothing new to import ('+conflictSkipped+' skipped — conflict or duplicate).','warn');return;
+  if(!toInsert.length&&!toDelete.length){
+    setDIS2('Nothing to import ('+conflictSkipped+' skipped — OTA conflict).','warn');return;
   }
-  sbF('POST','rpc/insert_bookings',{bookings_data:toInsert}).then(function(){
+  setDIS2('Saving '+(toInsert.length)+' bookings'+(toDelete.length?' (replacing '+toDelete.length+' existing)…':'…'),'warn');
+  var dels=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
+  Promise.all(dels).then(function(){
+    if(!toInsert.length)return Promise.resolve();
+    return sbF('POST','rpc/insert_bookings',{bookings_data:toInsert});
+  }).then(function(){
     closeModal('dashImportOverlay');
     var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
+    if(toDelete.length)msg+=', '+toDelete.length+' updated';
     if(skipped)msg+=', '+skipped+' skipped (bad dates)';
-    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (conflict)';
+    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (OTA conflict)';
     toast(msg,'ok');
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
   }).catch(function(e){setDIS2('Error: '+e.message,'err');});
@@ -3082,12 +3092,13 @@ function dashProcessImport(text,source,apt){
         var isOTA=(ex.source==='airbnb'||ex.source==='booking');
         return isOTA&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
       });
-      // Also check other direct bookings for exact duplicate dates
-      var hasDirectConflict=aptBks.some(function(ex){
-        if(!ex.checkin||!ex.checkout)return false;
-        return ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
+      // Existing direct booking on same dates → delete and replace
+      aptBks.forEach(function(ex){
+        if(ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout){
+          toDelete.push(ex.id);
+        }
       });
-      if(hasOTAConflict||hasDirectConflict){conflictSkipped++;return;}
+      if(hasOTAConflict){conflictSkipped++;return;}
       toInsert.push(nb);
     }
   });
