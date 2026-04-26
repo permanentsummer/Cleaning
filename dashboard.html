@@ -679,13 +679,23 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <button class="vtab" id="vtabList" onclick="setResView('list')">List view</button>
       </div>
       <!-- List filters (only shown in list view) -->
-      <div class="filter-row" id="listFilterRow" style="display:none;margin:0;flex:1">
-        <button class="fbtn on" onclick="filterList('all',this)">All</button>
-        <button class="fbtn" onclick="filterList('upcoming',this)">Upcoming</button>
-        <button class="fbtn" onclick="filterList('past',this)">Past</button>
-        <button class="fbtn" onclick="filterList('direct',this)">Direct</button>
-        <button class="fbtn" onclick="filterList('airbnb',this)">Airbnb</button>
-        <button class="fbtn" onclick="filterList('booking',this)">Booking.com</button>
+      <div id="listFilterRow" style="display:none;flex-direction:column;gap:6px;flex:1">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Time</span>
+          <button class="fbtn on" data-tf="all" onclick="toggleListFilter('time','all',this)">All</button>
+          <button class="fbtn" data-tf="upcoming" onclick="toggleListFilter('time','upcoming',this)">Upcoming</button>
+          <button class="fbtn" data-tf="past" onclick="toggleListFilter('time','past',this)">Past</button>
+          <span style="width:1px;height:16px;background:var(--border);margin:0 2px"></span>
+          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Source</span>
+          <button class="fbtn on" data-sf="all" onclick="toggleListFilter('source','all',this)">All</button>
+          <button class="fbtn" data-sf="direct" onclick="toggleListFilter('source','direct',this)">Direct</button>
+          <button class="fbtn" data-sf="airbnb" onclick="toggleListFilter('source','airbnb',this)">Airbnb</button>
+          <button class="fbtn" data-sf="booking" onclick="toggleListFilter('source','booking',this)">Booking.com</button>
+          <span style="width:1px;height:16px;background:var(--border);margin:0 2px"></span>
+          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Property</span>
+          <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)">All</button>
+          <div id="listPropFilters" style="display:contents"></div>
+        </div>
       </div>
       <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
       <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()">📥 Import CSV/XLS</button>
@@ -733,30 +743,44 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   </div>
 <!-- MODAL: Import Bookings -->
 <div class="overlay" id="dashImportOverlay">
-  <div class="modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
     <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Bookings</h3>
-    <div class="fg"><label>Platform / Source</label>
-      <select id="diSrc">
-        <option value="airbnb">Airbnb (CSV)</option>
-        <option value="booking">Booking.com (CSV or XLS)</option>
-        <option value="direct">Direct (CSV)</option>
-      </select>
+
+    <!-- Step 1: Source + property + file -->
+    <div id="diStep1">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Bookings</h3>
+      <div class="fg"><label>Platform / Source</label>
+        <select id="diSrc" onchange="onDiSrcChange()">
+          <option value="airbnb">Airbnb (CSV)</option>
+          <option value="booking">Booking.com (CSV or XLS)</option>
+          <option value="direct">Direct (CSV or XLS)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Property (default if not in file)</label>
+        <select id="diApt"></select>
+      </div>
+      <div class="fg"><label>File (CSV or XLS/XLSX)</label>
+        <input type="file" id="diFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box">
+      </div>
+      <div style="padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+        <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
+        <strong>Airbnb:</strong> Reservations → Export CSV<br>
+        <strong>Direct:</strong> Any CSV/XLS — you will map columns to fields
+      </div>
+      <div id="diStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doDashImport()">Next →</button>
+      <button class="btn-outline" style="width:100%" onclick="closeModal('dashImportOverlay')">Cancel</button>
     </div>
-    <div class="fg"><label>Property (default if not detected)</label>
-      <select id="diApt"></select>
+
+    <!-- Step 2: Field mapping (Direct only) -->
+    <div id="diStep2" style="display:none">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Map Columns</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Tell us which column in your file corresponds to each field. Fields marked * are required.</p>
+      <div id="diMappingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
+      <div id="diStatus2" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedImport()">📥 Import Now</button>
+      <button class="btn-outline" style="width:100%" onclick="diBackToStep1()">← Back</button>
     </div>
-    <div class="fg"><label>File (CSV or XLS/XLSX)</label>
-      <input type="file" id="diFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box">
-    </div>
-    <div style="padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
-      <strong>Booking.com:</strong> Reservations → Export → CSV or XLS<br>
-      <strong>Airbnb:</strong> Reservations → Export CSV<br>
-      <strong>Direct:</strong> Any CSV with check-in / check-out columns
-    </div>
-    <div id="diStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doDashImport()">📥 Import Now</button>
-    <button class="btn-outline" style="width:100%" onclick="closeModal('dashImportOverlay')">Cancel</button>
   </div>
 </div>
 <!-- MODAL: New booking / Block dates -->
@@ -1857,12 +1881,12 @@ function genQR(url){
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
 function parseFin(b){
-  // Extract __€__gross|commission from end of notes field
+  // Extract __€__gross|commission|cleanfee from end of notes field
   var n=b.notes||'';
   var idx=n.indexOf('\n__€__');
-  if(idx===-1)return{gross:0,commission:0};
+  if(idx===-1)return{gross:0,commission:0,cleanfee:0};
   var fin=n.slice(idx+6).split('|');
-  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0};
+  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,cleanfee:parseFloat(fin[2])||0};
 }
 function cleanNotesDisplay(n){
   if(!n)return'';
@@ -1946,7 +1970,7 @@ function renderRevenueAnalytics(){
     grossRev+=fin.gross;
     commTotal+=fin.commission;
     netRev+=(fin.gross-fin.commission);
-    cleanFeeTotal+=getFinCleanFee(b.apt);
+    cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
   });
   // Direct bookings: revenue from direct_requests records (have total_amount)
   // Also count direct bookings in allBookings that have no matching request (manual/imported)
@@ -1963,7 +1987,7 @@ function renderRevenueAnalytics(){
     var fin=parseFin(b);
     grossRev+=fin.gross;
     netRev+=fin.gross; // direct = 0 commission
-    cleanFeeTotal+=getFinCleanFee(b.apt);
+    cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
   });
 
   var adr=totalOccNights>0?(grossRev/totalOccNights):0;
@@ -2333,13 +2357,22 @@ function renderResList(){
     });
   });
 
-  // Apply list filter
+  // Populate property filter pills (idempotent)
+  populateListPropFilters();
+
+  // Apply multi-group AND filters
   var today2=new Date().toISOString().slice(0,10);
-  if(listFilter==='upcoming')items=items.filter(function(i){return i.checkout>=today2;});
-  else if(listFilter==='past')items=items.filter(function(i){return i.checkout<today2;});
-  else if(listFilter==='airbnb')items=items.filter(function(i){return i.source==='airbnb';});
-  else if(listFilter==='booking')items=items.filter(function(i){return i.source==='booking';});
-  else if(listFilter==='direct')items=items.filter(function(i){return i.source==='direct';});
+  // Time filter
+  if(listTimeFilter==='upcoming')items=items.filter(function(i){return i.checkout&&i.checkout>=today2;});
+  else if(listTimeFilter==='past')items=items.filter(function(i){return i.checkout&&i.checkout<today2;});
+  // Source filter
+  if(listSourceFilter!=='all')items=items.filter(function(i){return i.source===listSourceFilter;});
+  // Property filter
+  if(listPropFilter!=='all')items=items.filter(function(i){
+    // match on aptId stored in allBookings — need to look it up
+    var bk=allBookings.find(function(b){return b.id===i.id;});
+    return bk?bk.apt===listPropFilter:false;
+  });
 
   // Sort by checkin
   items.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
@@ -2741,9 +2774,14 @@ function mkCleanCard(b,tod){
 }
 
 // ── IMPORT BOOKINGS ──────────────────────────────────────────────────────────
+var _diParsedRows=null; // raw rows from file, used by field mapping step
+var _diHeaders=[];      // column headers detected from file
+
 function openDashImport(){
   document.getElementById('diFile').value='';
   setDIS('','');
+  setDIS2('','');
+  diBackToStep1();
   // Populate property dropdown from `properties` (= workspace.settings.apts)
   var sel=document.getElementById('diApt');
   sel.innerHTML='';
@@ -2756,24 +2794,170 @@ function openDashImport(){
   document.getElementById('dashImportOverlay').classList.add('show');
   if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
 }
+function onDiSrcChange(){
+  var src=document.getElementById('diSrc').value;
+  var btn=document.querySelector('#diStep1 .btn-primary');
+  if(btn)btn.textContent=src==='direct'?'Next →':'📥 Import Now';
+}
+function diBackToStep1(){
+  document.getElementById('diStep1').style.display='';
+  document.getElementById('diStep2').style.display='none';
+  _diParsedRows=null;_diHeaders=[];
+}
+function setDIS2(m,t){
+  var el=document.getElementById('diStatus2');if(!el)return;
+  if(!m){el.style.display='none';return;}
+  el.style.display='block';el.textContent=m;
+  el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';
+  el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';
+}
 function setDIS(m,t){var el=document.getElementById('diStatus');if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
 function doDashImport(){
   var fi=document.getElementById('diFile');
   if(!fi.files||!fi.files[0]){setDIS('Please select a file.','warn');return;}
   var file=fi.files[0],apt=document.getElementById('diApt').value,source=document.getElementById('diSrc').value,fname=file.name.toLowerCase();
   setDIS('Reading file…','warn');
-  if(fname.endsWith('.xls')||fname.endsWith('.xlsx')){
+  var isXLS=fname.endsWith('.xls')||fname.endsWith('.xlsx');
+  function onText(text){
+    try{
+      if(source==='direct'){
+        // Parse headers and go to mapping step
+        var rows=_dpCSV(text);
+        if(rows.length<2){setDIS('File appears empty.','err');return;}
+        _diParsedRows=rows;
+        _diHeaders=rows[0];
+        setDIS('','');
+        showFieldMappingStep(apt);
+      } else {
+        dashProcessImport(text,source,apt);
+      }
+    }catch(err){setDIS('Error: '+err.message,'err');}
+  }
+  if(isXLS){
     if(typeof XLSX==='undefined'){setDIS('XLS reader loading — wait 3 s then try again.','warn');return;}
     var r=new FileReader();
-    r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});dashProcessImport(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]),source,apt);}catch(err){setDIS('XLS error: '+err.message,'err');}};
+    r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});onText(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));}catch(err){setDIS('XLS error: '+err.message,'err');}};
     r.onerror=function(){setDIS('Cannot read file.','err');};
     r.readAsArrayBuffer(file);
   } else {
     var r2=new FileReader();
-    r2.onload=function(e){try{dashProcessImport(e.target.result,source,apt);}catch(err){setDIS('Error: '+err.message,'err');}};
+    r2.onload=function(e){onText(e.target.result);};
     r2.onerror=function(){setDIS('Cannot read.','err');};
     r2.readAsText(file,'UTF-8');
   }
+}
+
+// Field mapping definitions: id, label, required, hint
+var DI_FIELDS=[
+  {id:'checkin',   label:'Check-in date *',   req:true,  hint:'e.g. Check In, Arrival, Start date'},
+  {id:'checkout',  label:'Check-out date *',  req:true,  hint:'e.g. Check Out, Departure, End date'},
+  {id:'name',      label:'Guest name',        req:false, hint:'e.g. Guest name, Client, Name'},
+  {id:'gross',     label:'Gross revenue',     req:false, hint:'e.g. Gross Revenue, Price, Amount'},
+  {id:'commission',label:'Commission amount', req:false, hint:'e.g. Commission amount, Fee'},
+  {id:'cleanfee',  label:'Cleaning fee',      req:false, hint:'e.g. Cleaning Fee'},
+  {id:'guests',    label:'Number of guests',  req:false, hint:'e.g. Persons, Adults'},
+  {id:'booknum',   label:'Booking reference', req:false, hint:'e.g. Book number, Ref, ID'},
+];
+
+function showFieldMappingStep(apt){
+  document.getElementById('diStep1').style.display='none';
+  document.getElementById('diStep2').style.display='';
+  var grid=document.getElementById('diMappingGrid');
+  if(!grid)return;
+  var h=_diHeaders;
+  // Build options: blank + each column header
+  function makeOpts(autoIdx){
+    var opts='<option value="-1">— not in file —</option>';
+    h.forEach(function(col,i){
+      opts+='<option value="'+i+'"'+(i===autoIdx?' selected':'')+'>Col '+(i+1)+': '+esc(col)+'</option>';
+    });
+    return opts;
+  }
+  // Auto-detect columns using _dfc logic
+  function autoDetect(keys){return _dfc.apply(null,[h].concat(keys));}
+  var autoMap={
+    checkin:  autoDetect(['checkin','check in','check-in','arrivee','arrival','startdate','start']),
+    checkout: autoDetect(['checkout','check out','check-out','depart','departure','enddate','end']),
+    name:     autoDetect(['guestname','guest name','guest','nom','name','client','bookedby']),
+    gross:    autoDetect(['gross revenue','gross','grossrevenue','price','tarif','amount','total']),
+    commission:autoDetect(['commission amount','commissionamount','commission','comm','fee']),
+    cleanfee: autoDetect(['cleaning fee','cleaningfee','cleaning']),
+    guests:   autoDetect(['persons','personnes','adults','guests','number of guests']),
+    booknum:  autoDetect(['book number','booknumber','reservation','numero','ref','id']),
+  };
+  grid.innerHTML=DI_FIELDS.map(function(f){
+    return '<div style="display:flex;flex-direction:column;gap:4px">'+
+      '<label style="font-size:11px;font-weight:700;color:var(--muted)">'+f.label+'</label>'+
+      '<select id="diMap_'+f.id+'" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:12px">'+
+        makeOpts(autoMap[f.id])+
+      '</select>'+
+      '<span style="font-size:10px;color:var(--muted)">'+f.hint+'</span>'+
+    '</div>';
+  }).join('');
+  // Show preview
+  var previewApt=document.getElementById('diApt').value;
+  setDIS2('Auto-detected '+Object.values(autoMap).filter(function(v){return v>=0;}).length+' of '+DI_FIELDS.length+' columns. Adjust if needed, then click Import.','warn');
+}
+
+function doMappedImport(){
+  if(!_diParsedRows||!_diParsedRows.length){setDIS2('No file data.','err');return;}
+  var apt=document.getElementById('diApt').value;
+  function gm(id){var s=document.getElementById('diMap_'+id);return s?parseInt(s.value):-1;}
+  var iIn=gm('checkin'),iOut=gm('checkout');
+  if(iIn<0||iOut<0){setDIS2('Check-in and Check-out columns are required.','err');return;}
+  var iName=gm('name'),iGross=gm('gross'),iComm=gm('commission'),
+      iClean=gm('cleanfee'),iGuests=gm('guests'),iBook=gm('booknum');
+
+  var parsed=[],skipped=0;
+  for(var i=1;i<_diParsedRows.length;i++){
+    var r=_diParsedRows[i];
+    if(!r||r.join('').trim()==='')continue;
+    function _rv2(idx){return(idx>=0&&r[idx]!=null)?String(r[idx]).trim():'';}
+    var ci=_dISO(_rv2(iIn)),co=_dISO(_rv2(iOut));
+    if(!ci||!co||ci>=co){skipped++;continue;}
+    var gName=_rv2(iName);
+    var grossNum=iGross>=0?(_parseAmt(_rv2(iGross))||0):0;
+    var commNum=iComm>=0?(_parseAmt(_rv2(iComm))||0):0;
+    var cleanNum=iClean>=0?(_parseAmt(_rv2(iClean))||0):0;
+    var finSuffix=(grossNum>0||cleanNum>0)?'\n__€__'+grossNum.toFixed(2)+'|'+commNum.toFixed(2)+'|'+cleanNum.toFixed(2):'';
+    var nm=iBook>=0&&_rv2(iBook)?_rv2(iBook):_duid();
+    parsed.push({
+      id:'dir_'+nm,apt:apt,workspace_id:workspace.id,source:'direct',
+      checkin:ci,checkout:co,clean:co,
+      guests:iGuests>=0?_rv2(iGuests):'',
+      notes:gName+finSuffix,
+      paid:'unpaid',cleaned:'no'
+    });
+  }
+  if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
+  setDIS2('Processing '+parsed.length+' bookings…','warn');
+
+  // Conflict + priority (same logic as dashProcessImport)
+  var toDelete=[],toInsert=[],conflictSkipped=0;
+  parsed.forEach(function(nb){
+    var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
+    var hasOTAConflict=aptBks.some(function(ex){
+      if(!ex.checkin||!ex.checkout)return false;
+      return(ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
+    });
+    var hasDirect=aptBks.some(function(ex){
+      return ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
+    });
+    if(hasOTAConflict||hasDirect){conflictSkipped++;return;}
+    toInsert.push(nb);
+  });
+
+  if(!toInsert.length){
+    setDIS2('Nothing new to import ('+conflictSkipped+' skipped — conflict or duplicate).','warn');return;
+  }
+  sbF('POST','rpc/insert_bookings',{bookings_data:toInsert}).then(function(){
+    closeModal('dashImportOverlay');
+    var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
+    if(skipped)msg+=', '+skipped+' skipped (bad dates)';
+    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (conflict)';
+    toast(msg,'ok');
+    loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
+  }).catch(function(e){setDIS2('Error: '+e.message,'err');});
 }
 function _dsa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
 function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
@@ -3385,14 +3569,57 @@ function deleteRequest(){
 }
 
 // List view filter state
-var listFilter='all'; // 'all' | 'upcoming' | 'past' | 'airbnb' | 'booking' | 'direct'
+// Multi-select list filters
+var listTimeFilter='all';   // 'all' | 'upcoming' | 'past'
+var listSourceFilter='all'; // 'all' | 'direct' | 'airbnb' | 'booking'
+var listPropFilter='all';   // 'all' | apt.id
 
-function filterList(f,btn){
-  listFilter=f;
-  var row=document.getElementById('listFilterRow');
-  if(row)row.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
-  if(btn)btn.classList.add('on');
+function toggleListFilter(group, val, btn){
+  if(group==='time'){
+    listTimeFilter=val;
+    document.querySelectorAll('[data-tf]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tf')===val);});
+  } else if(group==='source'){
+    if(val==='all'){
+      listSourceFilter='all';
+      document.querySelectorAll('[data-sf]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-sf')==='all');});
+    } else {
+      // Toggle this source; clear 'all' highlight
+      if(listSourceFilter===val){listSourceFilter='all';}else{listSourceFilter=val;}
+      var active=listSourceFilter;
+      document.querySelectorAll('[data-sf]').forEach(function(b){
+        var v=b.getAttribute('data-sf');
+        b.classList.toggle('on', active==='all'?v==='all':v===active);
+      });
+    }
+  } else if(group==='prop'){
+    listPropFilter=val;
+    document.querySelectorAll('[data-pf]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-pf')===val);});
+  }
   renderResList();
+}
+
+// Keep legacy filterList for any external callers
+function filterList(f,btn){
+  if(f==='all'||f==='upcoming'||f==='past'){
+    listTimeFilter=f; listSourceFilter='all'; listPropFilter='all';
+  } else {
+    listTimeFilter='all'; listSourceFilter=f; listPropFilter='all';
+  }
+  renderResList();
+}
+
+function populateListPropFilters(){
+  var c=document.getElementById('listPropFilters');
+  if(!c)return;
+  c.innerHTML='';
+  (properties||[]).forEach(function(p){
+    var b=document.createElement('button');
+    b.className='fbtn'+(listPropFilter===p.id?' on':'');
+    b.setAttribute('data-pf',p.id);
+    b.textContent=p.name||p.short||p.id;
+    b.onclick=function(){toggleListFilter('prop',p.id,b);};
+    c.appendChild(b);
+  });
 }
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
