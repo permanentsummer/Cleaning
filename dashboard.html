@@ -3224,9 +3224,16 @@ function doMappedImport(){
 function _dsa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
 function _parseAmt(raw){
   if(!raw)return 0;
-  var m=String(raw).match(/(\d[\d\s]*[.,]?\d*)/);
-  if(!m)return 0;
-  return parseFloat(m[1].replace(/\s/g,'').replace(',','.'))||0;
+  var s=String(raw).trim();
+  // Remove currency symbols and whitespace
+  s=s.replace(/[€$£\s]/g,'');
+  // Thousands-separator comma: comma followed by exactly 3 digits (e.g. "1,100" "1,400")
+  // Strip those commas before treating remaining comma/dot as decimal
+  s=s.replace(/,(\d{3})(?=[,.\d]|$)/g,'$1');
+  // Now s may be "1100", "311.76", "1.5" (decimal comma) or "46.764" (3-decimal = fine)
+  // Replace any remaining comma with dot for decimal
+  s=s.replace(',','.');
+  return parseFloat(s)||0;
 }
 function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
 function _dpCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
