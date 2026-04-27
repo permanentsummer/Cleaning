@@ -2515,10 +2515,12 @@ function renderResList(){
   var items=[];
 
   // Build a set of apt+checkin+checkout covered by confirmed direct_requests
-  // so we don't show allBookings duplicates for manually created bookings
+  // so we don't show allBookings duplicates for manually created or confirmed bookings
   var reqCoveredKeys={};
   requests.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
-    reqCoveredKeys[(r.apt_id||r.apt_name||'')+'|'+r.checkin+'|'+r.checkout]=true;
+    // Store both apt_id and apt_name variants so we match regardless of how b.apt was stored
+    if(r.apt_id)reqCoveredKeys[r.apt_id+'|'+r.checkin+'|'+r.checkout]=true;
+    if(r.apt_name)reqCoveredKeys[r.apt_name+'|'+r.checkin+'|'+r.checkout]=true;
   });
 
   allBookings.forEach(function(b){
@@ -2533,7 +2535,7 @@ function renderResList(){
     items.push({
       id:b.id,checkin:b.checkin,checkout:b.checkout,
       guest:cleanNotesDisplay(b.notes)||b.guests||'Guest',email:'',phone:'',
-      aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
+      aptId:b.apt,aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
       source:b.source||'direct',nights:nights,
       ratePerNight:0,cleanFee:fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt),
       total:isComp?0:gross,isComp:isComp,
@@ -2548,7 +2550,7 @@ function renderResList(){
     items.push({
       id:r.id,checkin:r.checkin,checkout:r.checkout,
       guest:r.guest_name||'Guest',email:r.guest_email||'',phone:r.guest_phone||'',
-      aptName:r.apt_name||apt.name,aptColor:apt.color||'#22c55e',
+      aptId:r.apt_id||apt.id||'',aptName:r.apt_name||apt.name,aptColor:apt.color||'#22c55e',
       source:'direct',nights:nights,
       ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
       paid:r.deposit_paid?(r.balance_paid?'paid':'deposit'):'unpaid',
@@ -2569,9 +2571,7 @@ function renderResList(){
   if(listSourceFilter!=='all')items=items.filter(function(i){return i.source===listSourceFilter;});
   // Property filter
   if(listPropFilter!=='all')items=items.filter(function(i){
-    // match on aptId stored in allBookings — need to look it up
-    var bk=allBookings.find(function(b){return b.id===i.id;});
-    return bk?bk.apt===listPropFilter:false;
+    return i.aptId===listPropFilter;
   });
 
   // Sort by checkin
@@ -3476,6 +3476,7 @@ function toggleNbComp(){
   if(pricingDiv)pricingDiv.style.display=isComp?'none':'';
 }
 function toggleCompFields(){
+  var isComp=document.getElementById('ebComp')&&document.getElementById('ebComp').checked;
   var rf=document.getElementById('ebRevenueFields');
   if(rf)rf.style.display=isComp?'none':'';
 }
@@ -3526,11 +3527,13 @@ function openEditBooking(id, origin){
     document.getElementById('ebGuest').value=req.guest_name||'';
     document.getElementById('ebCheckin').value=req.checkin||'';
     document.getElementById('ebCheckout').value=req.checkout||'';
-    document.getElementById('ebGuests').value='';
+    document.getElementById('ebGuests').value=req.guests||'';
     document.getElementById('ebComp').checked=false;
     document.getElementById('ebGross').value=req.total_amount||'';
     document.getElementById('ebComm').value='';
-    document.getElementById('ebClean').value='';
+    var ebCO=document.getElementById('ebCleanOverride');if(ebCO)ebCO.checked=false;
+    var ebCl=document.getElementById('ebClean');if(ebCl){ebCl.value='';ebCl.disabled=true;ebCl.style.opacity='0.5';}
+    var ebCH=document.getElementById('ebCleanHint');if(ebCH){var apt2=aptById(req.apt_id||req.apt_name);ebCH.textContent='Property default: €'+getFinCleanFee(apt2.id||req.apt_id||'')+'  (applies automatically)';}
     toggleCompFields();
   }
   document.getElementById('editBookingOverlay').classList.add('show');
@@ -3580,11 +3583,27 @@ function saveEditBooking(){
     }).catch(function(e){errEl.textContent='Error: '+e.message;});
   } else {
     // Update direct_requests table
-    sbF('PATCH','direct_requests?id=eq.'+id,{checkin:ci,checkout:co,guest_name:guestName,total_amount:gross||null}).then(function(){
+    var reqUpd={checkin:ci,checkout:co,guest_name:guestName,
+      total_amount:isComp?null:(gross||null),
+      guests:parseInt(gCount)||undefined};
+    sbF('PATCH','direct_requests?id=eq.'+id,reqUpd).then(function(){
+      // Also update matching allBookings entry (from confirmToBookings sync)
+      var aptId=requests.find(function(r){return r.id===id;});
+      aptId=aptId?aptId.apt_id||aptId.apt_name:'';
+      var match=allBookings.find(function(bk){
+        return (bk.apt===aptId)&&bk.checkin===ci&&bk.checkout===co;
+      });
+      if(match){
+        return sbF('PATCH','bookings?id=eq.'+match.id,{
+          checkin:ci,checkout:co,clean:co,notes:guestName,guests:gCount||match.guests||''
+        });
+      }
+    }).then(function(){
       closeModal('editBookingOverlay');
       toast('Booking updated','ok');
-      loadRequests().then(function(){renderCalendar();renderResList();renderPayments();});
-    }).catch(function(e){errEl.textContent='Error: '+e.message;});
+      return Promise.all([loadRequests(),loadAllBookings()]);
+    }).then(function(){renderCalendar();renderResList();renderPayments();renderOverview();})
+    .catch(function(e){errEl.textContent='Error: '+e.message;});
   }
 }
 
