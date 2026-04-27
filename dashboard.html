@@ -783,6 +783,27 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
   </div>
 </div>
+<!-- MODAL: Edit Booking -->
+<div class="overlay" id="editBookingOverlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">✏️ Edit Reservation</h3>
+    <input type="hidden" id="ebId">
+    <input type="hidden" id="ebOrigin">
+    <div class="fg"><label>Guest name</label><input type="text" id="ebGuest" placeholder="Guest name"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Check-in</label><input type="date" id="ebCheckin"></div>
+      <div class="fg"><label>Check-out</label><input type="date" id="ebCheckout"></div>
+    </div>
+    <div class="fg"><label>Guests (count)</label><input type="number" id="ebGuests" min="1" max="20" placeholder="e.g. 2"></div>
+    <div class="fg"><label>Gross revenue (€)</label><input type="number" id="ebGross" min="0" step="0.01" placeholder="e.g. 550"></div>
+    <div class="fg"><label>Commission (€)</label><input type="number" id="ebComm" min="0" step="0.01" placeholder="0 for direct"></div>
+    <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="ebClean" min="0" step="0.01" placeholder="e.g. 50"></div>
+    <div class="aerr" id="ebErr" style="margin-bottom:8px"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">💾 Save changes</button>
+    <button class="btn-outline" style="width:100%" onclick="closeModal('editBookingOverlay')">Cancel</button>
+  </div>
+</div>
 <!-- MODAL: New booking / Block dates -->
 <div class="overlay" id="newBookingOverlay">
   <div class="modal">
@@ -1897,6 +1918,7 @@ function cleanNotesDisplay(n){
 var _finExpenses=null; // cached expenses from workspace.settings
 var _finYear=new Date().getFullYear();
 var _finApt='all';
+function setFinYear(v){_finYear=(v==='all'?'all':parseInt(v));renderRevenueAnalytics();}
 
 function getFinExpenses(){
   if(!workspace||!workspace.settings)return[];
@@ -1939,11 +1961,14 @@ function renderRevenueAnalytics(){
   if(years.indexOf(_finYear)===-1&&years.length)_finYear=years[years.length-1];
 
   // Year and property filter controls
-  var yearOpts=years.map(function(y){return '<option value="'+y+'"'+(y===_finYear?' selected':'')+'>'+y+'</option>';}).join('');
+  var yearOpts='<option value="all"'+(_finYear==='all'?' selected':'')+'>All time</option>'+
+    years.map(function(y){return '<option value="'+y+'"'+(y==_finYear?' selected':'')+'>'+y+'</option>';}).join('');
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
 
-  var yearStr=String(_finYear);
-  var yStart=yearStr+'-01-01', yEnd=yearStr+'-12-31';
+  var isAllTime=(_finYear==='all');
+  var yearStr=isAllTime?'all':String(_finYear);
+  var yStart=isAllTime?'2000-01-01':yearStr+'-01-01';
+  var yEnd=isAllTime?'2099-12-31':yearStr+'-12-31';
 
   // Filter bookings for selected year+apt
   function inYear(b){return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&(_finApt==='all'||b.apt===_finApt);}
@@ -1952,8 +1977,8 @@ function renderRevenueAnalytics(){
 
   // ── KPI Calculations ──
   var numProps=_finApt==='all'?(properties&&properties.length||1):1;
-  var numDays=((new Date(_finYear,11,31))-(new Date(_finYear,0,1)))/86400000+1;
-  var totalAvailableNights=numDays*numProps;
+  var numDays=isAllTime?365:((new Date(parseInt(yearStr),11,31))-(new Date(parseInt(yearStr),0,1)))/86400000+1;
+  var totalAvailableNights=isAllTime?(numProps*365*Math.max(1,years.length)):numDays*numProps;
 
   var totalOccNights=0;
   yBks.forEach(function(b){
@@ -2006,12 +2031,13 @@ function renderRevenueAnalytics(){
 
   // Monthly breakdown (12 months)
   var months12=[];
-  for(var m=0;m<12;m++){
-    var md=new Date(_finYear,m,1);
-    var mEnd=new Date(_finYear,m+1,1);
-    var mStart=md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01';
-    var mEndStr=mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01';
-    var mDays=Math.round((mEnd-md)/86400000);
+  var chartPeriods=isAllTime?years.map(function(y){return {label:String(y),start:y+'-01-01',end:(y+1)+'-01-01',days:365,isYear:true};}):
+    Array.from({length:12},function(_,m){var md=new Date(parseInt(yearStr),m,1);var mEnd=new Date(parseInt(yearStr),m+1,1);return{label:md.toLocaleDateString('en-GB',{month:'short'}),start:md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01',end:mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01',days:Math.round((mEnd-md)/86400000),isYear:false};});
+  for(var mi=0;mi<chartPeriods.length;mi++){
+    var period=chartPeriods[mi];
+    var md={getFullYear:function(){return 0;}}; // placeholder
+    var mEnd={};
+    var mStart=period.start,mEndStr=period.end,mDays=period.days;
     var avail=mDays*numProps;
     var occ=0,mGross=0,mComm=0,mClean=0;
     var mDirectKeys={};
@@ -2035,7 +2061,7 @@ function renderRevenueAnalytics(){
       }
     });
     var mOcc=avail>0?Math.min(100,Math.round(occ/avail*100)):0;
-    months12.push({label:md.toLocaleDateString('en-GB',{month:'short'}),occ:mOcc,gross:mGross,net:mGross-mComm,nights:occ,avail:avail});
+    months12.push({label:period.label,occ:mOcc,gross:mGross,net:mGross-mComm,nights:occ,avail:avail});
   }
   var maxGross=Math.max.apply(null,months12.map(function(x){return x.gross;}));
 
@@ -2064,7 +2090,7 @@ function renderRevenueAnalytics(){
   container.innerHTML=
     // ── Controls row ──
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">'+
-      '<select onchange="_finYear=parseInt(this.value);renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
+      '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
       '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+aptOpts+'</select>'+
       '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied</div>'+
     '</div>'+
@@ -2333,7 +2359,7 @@ function renderResList(){
     var total=nights*rate+cleanFee;
     items.push({
       id:b.id,checkin:b.checkin,checkout:b.checkout,
-      guest:b.guests||'Guest',email:'',phone:'',
+      guest:cleanNotesDisplay(b.notes)||b.guests||'Guest',email:'',phone:'',
       aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
       source:b.source||'direct',nights:nights,
       ratePerNight:rate,cleanFee:cleanFee,total:total,
@@ -2436,7 +2462,6 @@ function renderResList(){
         (item.email?'<span class="chip">✉️ '+esc(item.email)+'</span>':'')+
         (item.phone?'<span class="chip">📱 '+esc(item.phone)+'</span>':'')+
         '<span class="chip">🧹 '+(item.cleaned==='yes'?'Cleaned':'Not cleaned')+'</span>'+
-        (item.notes?'<span class="chip">💬 '+esc(item.notes.slice(0,40))+(item.notes.length>40?'…':'')+'</span>':'')+
       '</div>'+
       (item.total?
         '<div class="res-list-price">'+
@@ -2456,7 +2481,7 @@ function renderResList(){
       '<div class="res-list-actions">'+
         (item.email?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="mailGuest(\''+esc(item.email)+'\')">📧 Email</button>':'')+
         (item.phone?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="whatsApp(\''+esc(item.phone)+'\')">💬 WhatsApp</button>':'')+
-        (item.origin==='direct'?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openRespond(\''+item.id+'\',\'confirmed\')">✏️ Edit</button>':'')+
+        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')" >✏️ Edit</button>'+
         '<span style="flex:1"></span>'+
         '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
       '</div>';
@@ -2912,7 +2937,7 @@ function doMappedImport(){
   for(var i=1;i<_diParsedRows.length;i++){
     var r=_diParsedRows[i];
     if(!r||r.join('').trim()==='')continue;
-    function _rv2(idx){return(idx>=0&&r[idx]!=null)?String(r[idx]).trim():'';}
+    var _rv2=function(idx){return(idx>=0&&r[idx]!=null)?String(r[idx]).trim():'';};
     var ci=_dISO(_rv2(iIn)),co=_dISO(_rv2(iOut));
     if(!ci||!co||ci>=co){skipped++;continue;}
     var gName=_rv2(iName);
@@ -2933,23 +2958,56 @@ function doMappedImport(){
   setDIS2('Processing '+parsed.length+' bookings…','warn');
 
   // Conflict + priority
-  var toDelete=[],toInsert=[],conflictSkipped=0;
+  var toDelete=[],toInsert=[],conflictSkipped=0,importLog=[];
   parsed.forEach(function(nb){
+    var aptName=(properties||[]).reduce(function(acc,p){return p.id===nb.apt?p.name||p.short:acc;},'Apt '+nb.apt);
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
     // OTA always wins — skip if any OTA booking overlaps these dates
-    var hasOTAConflict=aptBks.some(function(ex){
-      if(!ex.checkin||!ex.checkout)return false;
-      return(ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
+    var otaConflict=null;
+    aptBks.forEach(function(ex){
+      if(!ex.checkin||!ex.checkout)return;
+      if((ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout)){
+        otaConflict=ex;
+      }
     });
-    if(hasOTAConflict){conflictSkipped++;return;}
-    // Existing direct booking on same dates → delete and replace (updating financial data)
+    if(otaConflict){
+      conflictSkipped++;
+      var guestIn=cleanNotesDisplay(nb.notes)||'?';
+      var guestEx=cleanNotesDisplay(otaConflict.notes)||otaConflict.guests||'?';
+      importLog.push('⚠️ SKIPPED: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') conflicts with '+otaConflict.source+' booking: '+guestEx+' ('+otaConflict.checkin+'→'+otaConflict.checkout+') on '+aptName);
+      return;
+    }
+    // Check direct-vs-direct overlaps (different dates = real overlap, not just same dates)
+    var overlapConflict=null;
+    aptBks.forEach(function(ex){
+      if(ex.source!=='direct'||!ex.checkin||!ex.checkout)return;
+      // Same dates = replacement (handled below). Different dates but overlapping = real error
+      if(ex.checkin===nb.checkin&&ex.checkout===nb.checkout)return;
+      if(ex.checkin<nb.checkout&&nb.checkin<ex.checkout){overlapConflict=ex;}
+    });
+    if(overlapConflict){
+      conflictSkipped++;
+      var guestIn=cleanNotesDisplay(nb.notes)||'?';
+      var guestEx=cleanNotesDisplay(overlapConflict.notes)||overlapConflict.guests||'?';
+      importLog.push('🔴 ERROR: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') OVERLAPS with '+guestEx+' ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+' — check your file!');
+      return;
+    }
+    // Existing direct booking on same exact dates → replace (update financial data)
     aptBks.forEach(function(ex){
       if(ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout){
         toDelete.push(ex.id);
+        importLog.push('🔄 REPLACING: '+(cleanNotesDisplay(ex.notes)||ex.guests||'?')+' ('+ex.checkin+'→'+ex.checkout+') on '+aptName);
       }
     });
+    importLog.push('✅ IMPORTING: '+(cleanNotesDisplay(nb.notes)||'?')+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName);
     toInsert.push(nb);
   });
+  // Show log
+  if(importLog.length){
+    console.group('Import log');
+    importLog.forEach(function(l){console.log(l);});
+    console.groupEnd();
+  }
 
   if(!toInsert.length&&!toDelete.length){
     setDIS2('Nothing to import ('+conflictSkipped+' skipped — OTA conflict).','warn');return;
@@ -3125,6 +3183,86 @@ function dashProcessImport(text,source,apt){
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
   }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
+// ── EDIT BOOKING ─────────────────────────────────────────────────────────────
+function openEditBooking(id, origin){
+  var b=allBookings.find(function(x){return x.id===id;});
+  var req=null;
+  if(!b&&origin==='direct'){req=requests.find(function(x){return x.id===id;});}
+  if(!b&&!req){toast('Booking not found','err');return;}
+
+  document.getElementById('ebId').value=id;
+  document.getElementById('ebOrigin').value=origin||'summerclean';
+  document.getElementById('ebErr').textContent='';
+
+  if(b){
+    var fin=parseFin(b);
+    document.getElementById('ebGuest').value=cleanNotesDisplay(b.notes)||b.guests||'';
+    document.getElementById('ebCheckin').value=b.checkin||'';
+    document.getElementById('ebCheckout').value=b.checkout||'';
+    document.getElementById('ebGuests').value=b.guests&&/^\d+/.test(b.guests)?parseInt(b.guests):'';
+    document.getElementById('ebGross').value=fin.gross||'';
+    document.getElementById('ebComm').value=fin.commission||'';
+    document.getElementById('ebClean').value=fin.cleanfee||'';
+  } else if(req){
+    document.getElementById('ebGuest').value=req.guest_name||'';
+    document.getElementById('ebCheckin').value=req.checkin||'';
+    document.getElementById('ebCheckout').value=req.checkout||'';
+    document.getElementById('ebGuests').value='';
+    document.getElementById('ebGross').value=req.total_amount||'';
+    document.getElementById('ebComm').value='';
+    document.getElementById('ebClean').value='';
+  }
+  document.getElementById('editBookingOverlay').classList.add('show');
+}
+
+function saveEditBooking(){
+  var id=document.getElementById('ebId').value;
+  var origin=document.getElementById('ebOrigin').value;
+  var guestName=document.getElementById('ebGuest').value.trim();
+  var ci=document.getElementById('ebCheckin').value;
+  var co=document.getElementById('ebCheckout').value;
+  var gCount=document.getElementById('ebGuests').value;
+  var gross=parseFloat(document.getElementById('ebGross').value)||0;
+  var comm=parseFloat(document.getElementById('ebComm').value)||0;
+  var clean=parseFloat(document.getElementById('ebClean').value)||0;
+
+  if(!ci||!co||ci>=co){document.getElementById('ebErr').textContent='Valid check-in and check-out dates required.';return;}
+
+  var finSuffix=(gross>0||clean>0)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+clean.toFixed(2):'';
+  var newNotes=guestName+finSuffix;
+
+  // Check for overlaps on same property (exclude self)
+  var b=allBookings.find(function(x){return x.id===id;});
+  if(b){
+    var apt=b.apt;
+    var overlap=allBookings.some(function(ex){
+      if(ex.id===id||ex.apt!==apt||!ex.checkin||!ex.checkout)return false;
+      return ex.checkin<co&&ci<ex.checkout;
+    });
+    if(overlap){document.getElementById('ebErr').textContent='These dates overlap with another booking on this property.';return;}
+  }
+
+  var errEl=document.getElementById('ebErr');
+  errEl.textContent='';
+
+  if(b){
+    // Update bookings table
+    var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||b.guests||''};
+    sbF('PATCH','bookings?id=eq.'+id,upd).then(function(){
+      closeModal('editBookingOverlay');
+      toast('Booking updated','ok');
+      loadAllBookings().then(function(){renderCalendar();renderResList();renderPayments();renderCleaning();renderOverview();});
+    }).catch(function(e){errEl.textContent='Error: '+e.message;});
+  } else {
+    // Update direct_requests table
+    sbF('PATCH','direct_requests?id=eq.'+id,{checkin:ci,checkout:co,guest_name:guestName,total_amount:gross||null}).then(function(){
+      closeModal('editBookingOverlay');
+      toast('Booking updated','ok');
+      loadRequests().then(function(){renderCalendar();renderResList();renderPayments();});
+    }).catch(function(e){errEl.textContent='Error: '+e.message;});
+  }
+}
+
 // ── DELETE RESERVATION ───────────────────────────────────────────────────────
 function deleteReservation(id, origin, guestName){
   if(!confirm('Delete reservation for ' + (guestName||'this guest') + '?\n\nThis will remove it from both the dashboard and SummerClean.'))return;
@@ -3527,14 +3665,14 @@ function showCalPopup(b,e){
   popup.innerHTML=
     '<button class="cal-popup-close" onclick="hideCalPopup()">✕</button>'+
     '<h4 style="color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</h4>'+
-    '<div class="cal-popup-row"><span class="lbl">Guest</span><span>'+esc(b.guests||'—')+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Guest</span><span>'+esc(cleanNotesDisplay(b.notes)||b.guests||'—')+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Check-in</span><span>'+fmtFull(b.checkin)+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Check-out</span><span>'+fmtFull(b.checkout)+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Nights</span><span>'+nights+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Source</span><span>'+(b.source||'direct')+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Payment</span><span>'+(b.paid||'unpaid')+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Cleaned</span><span>'+(b.cleaned==='yes'?'✅ Yes':'❌ No')+'</span></div>'+
-    (b.notes?'<div class="cal-popup-row" style="flex-direction:column;gap:4px"><span class="lbl">Notes</span><span style="font-size:11px">'+esc(b.notes)+'</span></div>':'')+
+    (cleanNotesDisplay(b.notes)?'<div class="cal-popup-row" style="flex-direction:column;gap:4px"><span class="lbl">Notes</span><span style="font-size:11px">'+esc(cleanNotesDisplay(b.notes))+'</span></div>':'')+
     '<p style="font-size:10px;color:var(--muted);margin-top:10px;font-weight:700">Manage cleaning in 🧹 SummerClean</p>';
   // Position near click
   var x=e.clientX,y=e.clientY;
