@@ -3131,52 +3131,55 @@ function doMappedImport(){
     var aptName=(properties||[]).reduce(function(acc,p){return p.id===nb.apt?p.name||p.short:acc;},'Apt '+nb.apt);
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
     var guestIn=cleanNotesDisplay(nb.notes)||'?';
+    var isOTA=(nb.source==='airbnb'||nb.source==='booking');
 
-    // OTA always wins — skip if any OTA booking overlaps these dates
-    var otaConflict=aptBks.find(function(ex){
-      if(!ex.checkin||!ex.checkout)return false;
-      return(ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
+    // Step 1: exact date match on same apt → always replace (update financial data)
+    var exactMatch=aptBks.find(function(ex){
+      return ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
     });
-    if(otaConflict){
-      conflictSkipped++;
-      var guestEx=cleanNotesDisplay(otaConflict.notes)||otaConflict.guests||'?';
-      importLog.push('⚠️ SKIPPED (OTA conflict): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') blocked by '+otaConflict.source+' booking of '+guestEx+' ('+otaConflict.checkin+'→'+otaConflict.checkout+') on '+aptName);
+    var idMatch=!exactMatch&&aptBks.find(function(ex){return ex.id===nb.id;});
+    var toReplace=exactMatch||idMatch;
+
+    if(toReplace){
+      toDelete.push(toReplace.id);
+      var fin=parseFin(nb);
+      importLog.push('🔄 UPDATING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':''):''));
+      toInsert.push(nb);
       return;
     }
 
-    // Within-file overlap: check if a booking already queued to insert overlaps this one
+    // Step 2: within-file overlap (different booking in same batch covers same dates)
     var inFileConflict=toInsert.find(function(ex){
       return ex.apt===nb.apt&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
     });
     if(inFileConflict){
       conflictSkipped++;
       var guestEx2=cleanNotesDisplay(inFileConflict.notes)||'?';
-      importLog.push('🔴 SKIPPED (file overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps with '+guestEx2+' ('+inFileConflict.checkin+'→'+inFileConflict.checkout+') on '+aptName+' — two bookings in your file cover the same dates. Fix in your file and re-import, or add the correct one manually.');
+      importLog.push('🔴 SKIPPED (file overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps "'+guestEx2+'" ('+inFileConflict.checkin+'→'+inFileConflict.checkout+') already in this import batch — two bookings in your file cover the same dates.');
       return;
     }
 
-    // Existing direct booking: different dates but overlapping = block
+    // Step 3: different dates but partially overlapping with existing booking
     var overlapConflict=aptBks.find(function(ex){
-      if(ex.source!=='direct'||!ex.checkin||!ex.checkout)return false;
-      if(ex.checkin===nb.checkin&&ex.checkout===nb.checkout)return false; // same = replace
+      if(!ex.checkin||!ex.checkout)return false;
       return ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
     });
     if(overlapConflict){
       conflictSkipped++;
       var guestEx3=cleanNotesDisplay(overlapConflict.notes)||overlapConflict.guests||'?';
-      importLog.push('🔴 SKIPPED (existing overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps existing booking of '+guestEx3+' ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+'. Edit or delete the existing booking first.');
+      importLog.push('🔴 SKIPPED (overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps existing booking of "'+guestEx3+'" ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+'. Edit or delete the existing booking first.');
       return;
     }
 
-    // Same exact dates → replace (update financial data)
+    // Step 4: new booking, no conflict
+    // OTA wins over any direct booking on same dates
     aptBks.forEach(function(ex){
-      if(ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout){
+      if(isOTA&&ex.source==='direct'&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout){
         toDelete.push(ex.id);
-        importLog.push('🔄 REPLACING: '+(cleanNotesDisplay(ex.notes)||ex.guests||'?')+' ('+ex.checkin+'→'+ex.checkout+') on '+aptName+' — updating financial data');
       }
     });
     var fin=parseFin(nb);
-    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.isComp?' | 🎁 Complimentary (€0)':(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean fee':''):'| no revenue data')));
+    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.isComp?' | 🎁 Complimentary':(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean':''):'| no revenue data')));
     toInsert.push(nb);
   });
 
