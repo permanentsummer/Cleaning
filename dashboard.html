@@ -1544,8 +1544,8 @@ function confirmToBookings(req){
     source:'direct',
     checkin:req.checkin,checkout:req.checkout,
     clean:req.checkout,
-    guests:req.guests+' guests – '+req.guest_name,
-    notes:'Direct booking\nEmail: '+req.guest_email+(req.guest_phone?'\nPhone: '+req.guest_phone:'')+(req.notes?'\nGuest note: '+req.notes:''),
+    guests:String(req.guests||''),
+    notes:req.guest_name+(req.guest_email||req.guest_phone||req.notes?'\n__CONTACT__'+(req.guest_email||'')+'|'+(req.guest_phone||'')+'|'+(req.notes||''):''),
     paid:'unpaid',cleaned:'no'
   };
   var tok=session?session.access_token:SB_KEY;
@@ -1937,6 +1937,14 @@ function genQR(url){
 }
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
+function parseContact(n){
+  // Extract email/phone stored after __CONTACT__ marker
+  if(!n)return{email:'',phone:'',note:''};
+  var idx=n.indexOf('\n__CONTACT__');
+  if(idx===-1)return{email:'',phone:'',note:''};
+  var parts=n.slice(idx+12).split('|');
+  return{email:parts[0]||'',phone:parts[1]||'',note:parts[2]||''};
+}
 function parseFin(b){
   var n=b.notes||'';
   // Complimentary booking — intentionally €0, suppress warnings
@@ -1958,7 +1966,10 @@ function cleanNotesDisplay(n){
   // Strip complimentary marker
   var idx2=n.indexOf('\n__COMP__');
   if(idx2!==-1)n=n.slice(0,idx2);
-  return n;
+  // Strip contact block (email/phone stored for direct bookings)
+  var idx3=n.indexOf('\n__CONTACT__');
+  if(idx3!==-1)n=n.slice(0,idx3);
+  return n.trim();
 }
 
 var _finExpenses=null; // cached expenses from workspace.settings
@@ -3962,6 +3973,8 @@ function showCalPopup(b,e){
     '<button class="cal-popup-close" onclick="hideCalPopup()">✕</button>'+
     '<h4 style="color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</h4>'+
     '<div class="cal-popup-row"><span class="lbl">Guest</span><span>'+esc(cleanNotesDisplay(b.notes)||b.guests||'—')+'</span></div>'+
+    (function(){var c=parseContact(b.notes);return c.email?'<div class="cal-popup-row"><span class="lbl">Email</span><span style="font-size:11px">'+esc(c.email)+'</span></div>':'';})()+
+    (function(){var c=parseContact(b.notes);return c.phone?'<div class="cal-popup-row"><span class="lbl">Phone</span><span style="font-size:11px">'+esc(c.phone)+'</span></div>':'';})()+
     '<div class="cal-popup-row"><span class="lbl">Check-in</span><span>'+fmtFull(b.checkin)+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Check-out</span><span>'+fmtFull(b.checkout)+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Nights</span><span>'+nights+'</span></div>'+
