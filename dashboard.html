@@ -3248,6 +3248,33 @@ function _doMappedConflict(parsed,skipped,apt,source){
     showImportLog('Nothing imported. See details below.');
     return;
   }
+  // ── OTA cancellation removal ──────────────────────────────────────────────
+  // When re-importing a Booking.com or Airbnb file, any existing booking of the
+  // same source on the same property that is NOT present in the new file = cancelled.
+  // We identify these and add them to toDelete.
+  var cancelledCount=0;
+  if(source==='airbnb'||source==='booking'){
+    // Build a set of checkin dates present in this import file for this apt
+    var fileCheckIns={};
+    parsed.forEach(function(nb){fileCheckIns[nb.apt+'|'+nb.checkin]=true;});
+    // Also include bookings we are updating (they ARE in the file)
+    toInsert.forEach(function(nb){fileCheckIns[nb.apt+'|'+nb.checkin]=true;});
+
+    // Find existing bookings of same source on selected apt that are NOT in the file
+    allBookings.forEach(function(ex){
+      if(ex.source!==source)return;
+      if(apt&&apt!=='all'&&ex.apt!==apt)return; // only check selected property
+      if(fileCheckIns[ex.apt+'|'+ex.checkin])return; // present in file → keep
+      if(toDelete.indexOf(ex.id)!==-1)return; // already scheduled for delete
+      // Not in file → cancelled
+      var exName=cleanNotesDisplay(ex.notes)||ex.guests||'?';
+      var aptN=(properties||[]).reduce(function(a,p){return p.id===ex.apt?p.name||p.short:a;},'Apt '+ex.apt);
+      toDelete.push(ex.id);
+      importLog.push('🗑️ CANCELLED: '+exName+' ('+ex.checkin+'→'+ex.checkout+') on '+aptN+' — not in new file, removed as cancelled');
+      cancelledCount++;
+    });
+  }
+
   setDIS2('Saving '+toInsert.length+' bookings…','warn');
   var dels=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
   Promise.all(dels).then(function(){
@@ -3256,7 +3283,8 @@ function _doMappedConflict(parsed,skipped,apt,source){
   }).then(function(){
     closeModal('dashImportOverlay');
     var msg=toInsert.length+' imported';
-    if(toDelete.length)msg+=', '+toDelete.length+' updated';
+    if(toDelete.length-cancelledCount>0)msg+=', '+(toDelete.length-cancelledCount)+' updated';
+    if(cancelledCount)msg+=', '+cancelledCount+' cancelled removed';
     if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (see log)';
     importLog.unshift('=== IMPORT COMPLETE: '+msg+' ===');
     showImportLog(msg);
