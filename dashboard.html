@@ -826,7 +826,14 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div id="ebRevenueFields">
       <div class="fg"><label>Gross revenue (€)</label><input type="number" id="ebGross" min="0" step="0.01" placeholder="e.g. 550"></div>
       <div class="fg"><label>Commission (€)</label><input type="number" id="ebComm" min="0" step="0.01" placeholder="0 for direct"></div>
-      <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="ebClean" min="0" step="0.01" placeholder="e.g. 50"></div>
+      <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="ebCleanOverride" onchange="toggleCleanOverride()" style="accent-color:var(--primary)">
+        <span>Override cleaning fee for this booking</span>
+      </label>
+      <input type="number" id="ebClean" min="0" step="0.01" placeholder="Uses property default" disabled style="margin-top:6px;opacity:.5">
+      <div id="ebCleanHint" style="font-size:10px;color:var(--muted);margin-top:3px"></div>
+    </div>
     </div>
     <div class="aerr" id="ebErr" style="margin-bottom:8px"></div>
     <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">💾 Save changes</button>
@@ -1935,9 +1942,13 @@ function parseFin(b){
   // Complimentary booking — intentionally €0, suppress warnings
   if(n.indexOf('\n__COMP__')!==-1)return{gross:0,commission:0,cleanfee:0,isComp:true};
   var idx=n.indexOf('\n__€__');
-  if(idx===-1)return{gross:0,commission:0,cleanfee:0,isComp:false};
+  // cleanfee=-1 means "use property default" (not manually overridden)
+  if(idx===-1)return{gross:0,commission:0,cleanfee:-1,isComp:false};
   var fin=n.slice(idx+6).split('|');
-  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,cleanfee:parseFloat(fin[2])||0,isComp:false};
+  var cf=fin.length>2?parseFloat(fin[2]):NaN;
+  // Only treat as overridden if explicitly a positive number in the stored data
+  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,
+         cleanfee:(cf>0?cf:-1),isComp:false};
 }
 function cleanNotesDisplay(n){
   if(!n)return'';
@@ -1971,10 +1982,10 @@ function saveFinExpenses(expenses){
   });
 }
 function getFinCleanFee(aptId){
-  if(!workspace||!workspace.settings)return 50;
+  if(!workspace||!workspace.settings)return 0;
   var apts=workspace.settings.apts||[];
   var a=apts.find(function(x){return x.id===aptId;});
-  return(a&&a.cleanFee)?parseFloat(a.cleanFee)||50:50;
+  return(a&&a.cleanFee)?parseFloat(a.cleanFee)||0:0;
 }
 
 function renderRevenueAnalytics(){
@@ -2090,12 +2101,12 @@ function renderRevenueAnalytics(){
       grossRev+=fin.gross;
       commTotal+=fin.commission;
       netRev+=(fin.gross-fin.commission);
-      cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
+      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
     } else {
       // imported direct (not a dashboard request)
       grossRev+=fin.gross;
       netRev+=fin.gross; // 0 commission
-      cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
+      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
     }
   });
 
@@ -2155,7 +2166,7 @@ function renderRevenueAnalytics(){
       var fin=parseFin(b);
       pg+=fin.gross;
       pc+=fin.commission;
-      pn+=fin.cleanfee||0;
+      pn+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
       var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
       pocc+=nights;
     });
@@ -2497,7 +2508,7 @@ function renderResList(){
       guest:cleanNotesDisplay(b.notes)||b.guests||'Guest',email:'',phone:'',
       aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
       source:b.source||'direct',nights:nights,
-      ratePerNight:0,cleanFee:fin.cleanfee||0,
+      ratePerNight:0,cleanFee:fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt),
       total:isComp?0:gross,isComp:isComp,
       paid:b.paid,cleaned:b.cleaned,notes:b.notes||'',
       origin:'summerclean',blocked:false
@@ -3415,6 +3426,19 @@ function toggleCompFields(){
   var rf=document.getElementById('ebRevenueFields');
   if(rf)rf.style.display=isComp?'none':'';
 }
+function toggleCleanOverride(){
+  var override=document.getElementById('ebCleanOverride').checked;
+  var inp=document.getElementById('ebClean');
+  var hint=document.getElementById('ebCleanHint');
+  if(inp){inp.disabled=!override;inp.style.opacity=override?'1':'0.5';}
+  if(hint&&!override){
+    // Show current property default
+    var bid=document.getElementById('ebId').value;
+    var b=allBookings.find(function(x){return x.id===bid;});
+    var def=b?getFinCleanFee(b.apt):50;
+    hint.textContent='Property default: €'+def+' (applies automatically)';
+  } else if(hint){hint.textContent='';}
+}
 function openEditBooking(id, origin){
   var b=allBookings.find(function(x){return x.id===id;});
   var req=null;
@@ -3435,7 +3459,15 @@ function openEditBooking(id, origin){
     document.getElementById('ebComp').checked=isComp;
     document.getElementById('ebGross').value=isComp?'':fin.gross||'';
     document.getElementById('ebComm').value=isComp?'':fin.commission||'';
-    document.getElementById('ebClean').value=isComp?'':fin.cleanfee||'';
+    // cleanfee: -1 = use property default (not overridden), positive = manually set
+    var isCleanOverride=(!isComp&&fin.cleanfee>0);
+    document.getElementById('ebCleanOverride').checked=isCleanOverride;
+    document.getElementById('ebClean').value=isCleanOverride?fin.cleanfee:'';
+    document.getElementById('ebClean').disabled=!isCleanOverride;
+    document.getElementById('ebClean').style.opacity=isCleanOverride?'1':'0.5';
+    var defClean=getFinCleanFee(b.apt);
+    var hint=document.getElementById('ebCleanHint');
+    if(hint)hint.textContent=isCleanOverride?'':'Property default: €'+defClean+' (applies automatically)';
     toggleCompFields();
   } else if(req){
     document.getElementById('ebGuest').value=req.guest_name||'';
@@ -3460,12 +3492,15 @@ function saveEditBooking(){
   var gCount=document.getElementById('ebGuests').value;
   var gross=parseFloat(document.getElementById('ebGross').value)||0;
   var comm=parseFloat(document.getElementById('ebComm').value)||0;
-  var clean=parseFloat(document.getElementById('ebClean').value)||0;
+  // Only store cleanfee if user explicitly overrode it for this booking
+  var cleanOverride=document.getElementById('ebCleanOverride')&&document.getElementById('ebCleanOverride').checked;
+  var clean=cleanOverride?(parseFloat(document.getElementById('ebClean').value)||0):0;
 
   if(!ci||!co||ci>=co){document.getElementById('ebErr').textContent='Valid check-in and check-out dates required.';return;}
 
   var isComp=document.getElementById('ebComp').checked;
-  var finSuffix=isComp?'\n__COMP__':(gross>0||clean>0)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+clean.toFixed(2):'';
+  // Store clean=0 means "use property default"; positive value = manually overridden
+  var finSuffix=isComp?'\n__COMP__':(gross>0||cleanOverride)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+(cleanOverride&&clean>0?clean.toFixed(2):'0'):'';
   var newNotes=guestName+finSuffix;
 
   // Check for overlaps on same property (exclude self)
