@@ -886,6 +886,13 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         </div>
       </div>
       <div class="fg"><label>Notes (internal)</label><textarea id="nbNotes" rows="2" placeholder="Any notes..."></textarea></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;cursor:pointer" onclick="document.getElementById('nbComp').click()">
+        <input type="checkbox" id="nbComp" onclick="event.stopPropagation();toggleNbComp()" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#15803d">🎁 Complimentary (Friends &amp; Family)</div>
+          <div style="font-size:11px;color:var(--muted)">Revenue = €0. Excluded from financial reports.</div>
+        </div>
+      </div>
     </div>
 
     <!-- Block form -->
@@ -2507,7 +2514,16 @@ function renderResList(){
   var today=new Date().toISOString().slice(0,10);
   var items=[];
 
+  // Build a set of apt+checkin+checkout covered by confirmed direct_requests
+  // so we don't show allBookings duplicates for manually created bookings
+  var reqCoveredKeys={};
+  requests.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    reqCoveredKeys[(r.apt_id||r.apt_name||'')+'|'+r.checkin+'|'+r.checkout]=true;
+  });
+
   allBookings.forEach(function(b){
+    // Skip if a confirmed direct_request covers the same slot (avoid duplicate)
+    if(reqCoveredKeys[(b.apt||'')+'|'+b.checkin+'|'+b.checkout])return;
     var apt=aptById(b.apt);
     var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
     var fin=parseFin(b);
@@ -3454,8 +3470,12 @@ function dashProcessImport(text,source,apt){
   }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
 // ── EDIT BOOKING ─────────────────────────────────────────────────────────────
+function toggleNbComp(){
+  var isComp=document.getElementById('nbComp').checked;
+  var pricingDiv=document.getElementById('nbPricingFields');
+  if(pricingDiv)pricingDiv.style.display=isComp?'none':'';
+}
 function toggleCompFields(){
-  var isComp=document.getElementById('ebComp').checked;
   var rf=document.getElementById('ebRevenueFields');
   if(rf)rf.style.display=isComp?'none':'';
 }
@@ -3634,6 +3654,8 @@ function openNewBooking(){
   document.getElementById('nbCleanFee').value='';
   document.getElementById('nbPaid').value='unpaid';
   document.getElementById('nbNotes').value='';
+  var nbCompEl=document.getElementById('nbComp');if(nbCompEl)nbCompEl.checked=false;
+  toggleNbComp();
   document.getElementById('nbTotalPreview').style.display='none';
   setNbTab('booking');
   document.getElementById('newBookingOverlay').classList.add('show');
@@ -3751,34 +3773,20 @@ function saveNewBooking(){
   if(nights<1){err.textContent='Check-out must be after check-in.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
   var total=nights*rate+clean;
 
-  // Write to bookings table (SummerClean) + direct_requests (dashboard)
+  // Write ONLY to direct_requests (confirmed). renderResList shows it directly.
+  // Do NOT also write to bookings table — that causes duplicates in the list view.
   var apt=aptById(aptId);
-  var scBooking={
-    id:uid(),workspace_id:workspace.id,
-    apt:aptId,source:source,
-    checkin:ci,checkout:co,clean:co,
-    guests:guests+' guests – '+guest,
-    notes:'Manual booking\nEmail: '+email+(phone?'\nPhone: '+phone:'')+(notes?'\nNotes: '+notes:''),
-    paid:paid,cleaned:'no'
-  };
-  var tok=session?session.access_token:SB_KEY;
-  // Write to bookings (shows in SummerClean)
-  fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
-    method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
-    body:JSON.stringify({bookings_data:[scBooking]})
-  }).then(function(r){
-    if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
-    // Also write to direct_requests with confirmed status for dashboard tracking
-    return sbF('POST','direct_requests',{
-      workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
-      guest_name:guest,guest_email:email||null,guest_phone:phone||null,
-      checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
-      rate_per_night:rate||null,total_amount:total||null,
-      status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
-    });
+  var isComp=document.getElementById('nbComp')&&document.getElementById('nbComp').checked;
+  var actualTotal=isComp?0:total;
+
+  sbF('POST','direct_requests',{
+    workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
+    guest_name:guest,guest_email:email||null,guest_phone:phone||null,
+    checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
+    rate_per_night:isComp?null:(rate||null),total_amount:isComp?null:(actualTotal||null),
+    status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
-    toast('✅ Booking saved — visible in SummerClean & dashboard','ok');
+    toast('✅ Booking saved','ok');
     closeModal('newBookingOverlay');
     return Promise.all([loadRequests(),loadAllBookings()]);
   }).then(function(){
