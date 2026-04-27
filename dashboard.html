@@ -783,6 +783,26 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
   </div>
 </div>
+<!-- MODAL: Import Log -->
+<div class="overlay" id="importLogOverlay">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Import Report</h3>
+    <p id="importLogSummary" style="font-size:12px;color:var(--muted);margin-bottom:14px"></p>
+    <div id="importLogBody" style="font-size:12px;line-height:1.9;font-family:monospace;background:#f8fafc;border-radius:8px;padding:12px;max-height:400px;overflow-y:auto"></div>
+    <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
+  </div>
+</div>
+<!-- MODAL: Import Log -->
+<div class="overlay" id="importLogOverlay">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Import Report</h3>
+    <p id="importLogSummary" style="font-size:12px;color:var(--muted);margin-bottom:14px"></p>
+    <div id="importLogBody" style="font-size:12px;line-height:1.9;font-family:monospace;background:#f8fafc;border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;white-space:pre-wrap"></div>
+    <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
+  </div>
+</div>
 <!-- MODAL: Edit Booking -->
 <div class="overlay" id="editBookingOverlay">
   <div class="modal">
@@ -2153,16 +2173,44 @@ function renderRevenueAnalytics(){
   }
 
   // ── Data quality warning ──────────────────────────────────────────────────
-  var missingFin=yBks.filter(function(b){
+  // Bookings missing financial data (OTA imported before revenue tracking)
+  var missingFinBks=yBks.filter(function(b){
     if(bkCoveredIds[b.id])return false;
     var fin=parseFin(b);
     return fin.gross===0&&(b.source==='airbnb'||b.source==='booking');
-  }).length;
-  var qualityWarning=missingFin>0?
-    '<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e">'+
-      '⚠️ <strong>'+missingFin+' Airbnb/Booking.com booking'+(missingFin>1?'s':'')+' have no financial data</strong> — they were imported before revenue tracking was enabled. '+
-      'Re-import your Booking.com/Airbnb file to populate revenue figures. Gross total below may be understated.'+
-    '</div>':'';
+  });
+  // Direct bookings with gross=0 (e.g. Vanessa Jouana Helman in file)
+  var missingDirectBks=yBks.filter(function(b){
+    if(bkCoveredIds[b.id])return false;
+    var fin=parseFin(b);
+    return fin.gross===0&&b.source==='direct';
+  });
+  var qualityWarning='';
+  if(missingFinBks.length){
+    var details=missingFinBks.map(function(b){
+      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
+      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
+      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
+    }).join('<br>');
+    qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
+      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+missingFinBks.length+' Booking.com/Airbnb booking'+(missingFinBks.length>1?'s':'')+' have no revenue data (imported before revenue tracking)</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+details+'</div>'+
+      '<div>→ Re-import your Booking.com/Airbnb file to fix this. Revenue totals below are understated.</div>'+
+    '</div>';
+  }
+  if(missingDirectBks.length){
+    var dDetails=missingDirectBks.map(function(b){
+      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
+      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
+      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
+    }).join('<br>');
+    qualityWarning+='<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#991b1b">'+
+      '<div style="font-weight:700;margin-bottom:6px">🔴 '+missingDirectBks.length+' direct booking'+(missingDirectBks.length>1?'s':'')+' have €0 gross revenue in your file</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+dDetails+'</div>'+
+      '<div>→ Update the price in your source file and re-import, or edit the booking manually in the Reservations tab.</div>'+
+    '</div>';
+  }
+
 
   container.innerHTML=
     // ── Controls ──
@@ -3028,73 +3076,100 @@ function doMappedImport(){
   if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
   setDIS2('Processing '+parsed.length+' bookings…','warn');
 
-  // Conflict + priority
+  // Conflict + priority — also check within-file overlaps (toInsert)
   var toDelete=[],toInsert=[],conflictSkipped=0,importLog=[];
+
+  // Pre-validate: find bad dates within the file itself
+  var fileSkipped=[];
+  parsed.forEach(function(nb){
+    if(!nb.checkin||!nb.checkout||nb.checkin>=nb.checkout){
+      fileSkipped.push({nb:nb,reason:'Invalid dates: checkin='+nb.checkin+' checkout='+nb.checkout});
+    }
+  });
+  parsed=parsed.filter(function(nb){return nb.checkin&&nb.checkout&&nb.checkin<nb.checkout;});
+  fileSkipped.forEach(function(s){
+    var guestIn=cleanNotesDisplay(s.nb.notes)||'?';
+    importLog.push('🔴 INVALID ROW: '+guestIn+' — '+s.reason+' — SKIPPED. Fix in your file and re-import.');
+    conflictSkipped++;
+  });
+
   parsed.forEach(function(nb){
     var aptName=(properties||[]).reduce(function(acc,p){return p.id===nb.apt?p.name||p.short:acc;},'Apt '+nb.apt);
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
+    var guestIn=cleanNotesDisplay(nb.notes)||'?';
+
     // OTA always wins — skip if any OTA booking overlaps these dates
-    var otaConflict=null;
-    aptBks.forEach(function(ex){
-      if(!ex.checkin||!ex.checkout)return;
-      if((ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout)){
-        otaConflict=ex;
-      }
+    var otaConflict=aptBks.find(function(ex){
+      if(!ex.checkin||!ex.checkout)return false;
+      return(ex.source==='airbnb'||ex.source==='booking')&&(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
     });
     if(otaConflict){
       conflictSkipped++;
-      var guestIn=cleanNotesDisplay(nb.notes)||'?';
       var guestEx=cleanNotesDisplay(otaConflict.notes)||otaConflict.guests||'?';
-      importLog.push('⚠️ SKIPPED: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') conflicts with '+otaConflict.source+' booking: '+guestEx+' ('+otaConflict.checkin+'→'+otaConflict.checkout+') on '+aptName);
+      importLog.push('⚠️ SKIPPED (OTA conflict): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') blocked by '+otaConflict.source+' booking of '+guestEx+' ('+otaConflict.checkin+'→'+otaConflict.checkout+') on '+aptName);
       return;
     }
-    // Check direct-vs-direct overlaps (different dates = real overlap, not just same dates)
-    var overlapConflict=null;
-    aptBks.forEach(function(ex){
-      if(ex.source!=='direct'||!ex.checkin||!ex.checkout)return;
-      // Same dates = replacement (handled below). Different dates but overlapping = real error
-      if(ex.checkin===nb.checkin&&ex.checkout===nb.checkout)return;
-      if(ex.checkin<nb.checkout&&nb.checkin<ex.checkout){overlapConflict=ex;}
+
+    // Within-file overlap: check if a booking already queued to insert overlaps this one
+    var inFileConflict=toInsert.find(function(ex){
+      return ex.apt===nb.apt&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
+    });
+    if(inFileConflict){
+      conflictSkipped++;
+      var guestEx2=cleanNotesDisplay(inFileConflict.notes)||'?';
+      importLog.push('🔴 SKIPPED (file overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps with '+guestEx2+' ('+inFileConflict.checkin+'→'+inFileConflict.checkout+') on '+aptName+' — two bookings in your file cover the same dates. Fix in your file and re-import, or add the correct one manually.');
+      return;
+    }
+
+    // Existing direct booking: different dates but overlapping = block
+    var overlapConflict=aptBks.find(function(ex){
+      if(ex.source!=='direct'||!ex.checkin||!ex.checkout)return false;
+      if(ex.checkin===nb.checkin&&ex.checkout===nb.checkout)return false; // same = replace
+      return ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
     });
     if(overlapConflict){
       conflictSkipped++;
-      var guestIn=cleanNotesDisplay(nb.notes)||'?';
-      var guestEx=cleanNotesDisplay(overlapConflict.notes)||overlapConflict.guests||'?';
-      importLog.push('🔴 ERROR: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') OVERLAPS with '+guestEx+' ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+' — check your file!');
+      var guestEx3=cleanNotesDisplay(overlapConflict.notes)||overlapConflict.guests||'?';
+      importLog.push('🔴 SKIPPED (existing overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps existing booking of '+guestEx3+' ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+'. Edit or delete the existing booking first.');
       return;
     }
-    // Existing direct booking on same exact dates → replace (update financial data)
+
+    // Same exact dates → replace (update financial data)
     aptBks.forEach(function(ex){
       if(ex.source==='direct'&&ex.checkin===nb.checkin&&ex.checkout===nb.checkout){
         toDelete.push(ex.id);
-        importLog.push('🔄 REPLACING: '+(cleanNotesDisplay(ex.notes)||ex.guests||'?')+' ('+ex.checkin+'→'+ex.checkout+') on '+aptName);
+        importLog.push('🔄 REPLACING: '+(cleanNotesDisplay(ex.notes)||ex.guests||'?')+' ('+ex.checkin+'→'+ex.checkout+') on '+aptName+' — updating financial data');
       }
     });
-    importLog.push('✅ IMPORTING: '+(cleanNotesDisplay(nb.notes)||'?')+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName);
+    var fin=parseFin(nb);
+    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean fee':''):'| no revenue data'));
     toInsert.push(nb);
   });
-  // Show log
-  if(importLog.length){
-    console.group('Import log');
-    importLog.forEach(function(l){console.log(l);});
-    console.groupEnd();
+
+  function showImportLog(summary){
+    var el=document.getElementById('importLogBody');
+    var se=document.getElementById('importLogSummary');
+    if(el)el.textContent=importLog.join('\n');
+    if(se)se.textContent=summary;
+    document.getElementById('importLogOverlay').classList.add('show');
   }
 
   if(!toInsert.length&&!toDelete.length){
-    setDIS2('Nothing to import ('+conflictSkipped+' skipped — OTA conflict).','warn');return;
+    showImportLog('Nothing imported. See details below.');
+    return;
   }
-  setDIS2('Saving '+(toInsert.length)+' bookings'+(toDelete.length?' (replacing '+toDelete.length+' existing)…':'…'),'warn');
+  setDIS2('Saving '+toInsert.length+' bookings…','warn');
   var dels=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
   Promise.all(dels).then(function(){
     if(!toInsert.length)return Promise.resolve();
     return sbF('POST','rpc/insert_bookings',{bookings_data:toInsert});
   }).then(function(){
     closeModal('dashImportOverlay');
-    var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
+    var msg=toInsert.length+' imported';
     if(toDelete.length)msg+=', '+toDelete.length+' updated';
-    if(skipped)msg+=', '+skipped+' skipped (bad dates)';
-    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (OTA conflict)';
-    toast(msg,'ok');
+    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (see log)';
+    importLog.unshift('=== IMPORT COMPLETE: '+msg+' ===');
+    showImportLog(msg);
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
   }).catch(function(e){setDIS2('Error: '+e.message,'err');});
 }
@@ -3237,20 +3312,33 @@ function dashProcessImport(text,source,apt){
     return;
   }
 
-  setDIS('Processing '+toInsert.length+' bookings'+(toDelete.length?' (removing '+toDelete.length+' superseded)…':'…'),'warn');
+  setDIS('Processing '+toInsert.length+' bookings…','warn');
+  // Build OTA import log
+  var otaLog=['=== OTA IMPORT REPORT ==='];
+  toInsert.forEach(function(nb){
+    var fin=parseFin(nb);
+    var aptName=(properties||[]).reduce(function(acc,p){return p.id===nb.apt?p.name||p.short:acc;},'Apt '+nb.apt);
+    var name=cleanNotesDisplay(nb.notes)||nb.guests||'?';
+    otaLog.push('✅ '+name+' | '+nb.checkin+'→'+nb.checkout+' @ '+aptName+(fin.gross?' | €'+fin.gross+' gross − €'+fin.commission+' comm':'| ⚠️ no revenue data'));
+  });
+  toDelete.forEach(function(id){otaLog.push('🔄 REMOVED superseded booking id:'+id);});
+  if(skipped)otaLog.push('⚠️ '+skipped+' rows skipped (cancelled or invalid dates)');
+  if(conflictSkipped)otaLog.push('ℹ️ '+conflictSkipped+' rows skipped (already covered by other OTA booking)');
 
-  // Delete superseded bookings first, then upsert new ones
   var delPromises=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
   Promise.all(delPromises).then(function(){
     if(!toInsert.length)return Promise.resolve();
     return sbF('POST','rpc/insert_bookings',{bookings_data:toInsert});
   }).then(function(){
     closeModal('dashImportOverlay');
-    var msg=toInsert.length+' booking'+(toInsert.length!==1?'s':'')+' imported';
-    if(toDelete.length)msg+=', '+toDelete.length+' superseded removed';
-    if(skipped)msg+=', '+skipped+' skipped (cancelled/invalid)';
-    if(conflictSkipped)msg+=', '+conflictSkipped+' skipped (OTA conflict)';
-    toast(msg,'ok');
+    var msg=toInsert.length+' imported';
+    if(toDelete.length)msg+=', '+toDelete.length+' updated';
+    if(skipped||conflictSkipped)msg+=', '+(skipped+conflictSkipped)+' skipped (see log)';
+    var logEl=document.getElementById('importLogBody');
+    var sumEl=document.getElementById('importLogSummary');
+    if(logEl)logEl.textContent=otaLog.join('\n');
+    if(sumEl)sumEl.textContent=msg;
+    document.getElementById('importLogOverlay').classList.add('show');
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
   }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
