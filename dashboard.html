@@ -768,7 +768,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <strong>Direct:</strong> Any CSV/XLS — you will map columns to fields
       </div>
       <div id="diStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doDashImport()">Next →</button>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doDashImport()">Next — Map Columns →</button>
       <button class="btn-outline" style="width:100%" onclick="closeModal('dashImportOverlay')">Cancel</button>
     </div>
 
@@ -2488,15 +2488,17 @@ function renderResList(){
   allBookings.forEach(function(b){
     var apt=aptById(b.apt);
     var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
-    var rate=apt.ratePerNight||0;
-    var cleanFee=apt.cleanFee||0;
-    var total=nights*rate+cleanFee;
+    var fin=parseFin(b);
+    // Use gross from imported financial data if available; otherwise no total shown
+    var gross=fin.gross||0;
+    var isComp=fin.isComp;
     items.push({
       id:b.id,checkin:b.checkin,checkout:b.checkout,
       guest:cleanNotesDisplay(b.notes)||b.guests||'Guest',email:'',phone:'',
       aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
       source:b.source||'direct',nights:nights,
-      ratePerNight:rate,cleanFee:cleanFee,total:total,
+      ratePerNight:0,cleanFee:fin.cleanfee||0,
+      total:isComp?0:gross,isComp:isComp,
       paid:b.paid,cleaned:b.cleaned,notes:b.notes||'',
       origin:'summerclean',blocked:false
     });
@@ -2600,18 +2602,15 @@ function renderResList(){
       (item.total?
         '<div class="res-list-price">'+
           '<div>'+
-            '<div class="plbl">Price breakdown</div>'+
-            '<div style="font-size:11px;color:#166534;margin-top:3px">'+
-              (item.ratePerNight?'€'+item.ratePerNight+'/nt × '+item.nights+' nights = €'+(item.ratePerNight*item.nights):'—')+
-              (item.cleanFee?' + €'+item.cleanFee+' cleaning':'')+
-            '</div>'+
+            '<div class="plbl">'+(item.isComp?'🎁 Complimentary':'Revenue')+'</div>'+
+            (item.cleanFee?'<div style="font-size:11px;color:#166534;margin-top:3px">Incl. €'+item.cleanFee+' cleaning fee</div>':'')+
           '</div>'+
           '<div style="text-align:right">'+
             '<div class="pval">€'+item.total+'</div>'+
             '<div style="font-size:10px;font-weight:800;color:'+paidColor+'">'+paidLabel+'</div>'+
           '</div>'+
-        '</div>':'')+(item.total===0&&item.ratePerNight===0?
-        '<div style="padding:8px 16px 12px;font-size:11px;color:var(--muted);font-weight:700">No rate set — configure in Properties tab</div>':'')+
+        '</div>':
+        (item.isComp?'<div class="res-list-price"><div><div class="plbl">🎁 Complimentary</div></div><div style="text-align:right"><div class="pval">€0</div></div></div>':''))+
       '<div class="res-list-actions">'+
         (item.email?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="mailGuest(\''+esc(item.email)+'\')">📧 Email</button>':'')+
         (item.phone?'<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="whatsApp(\''+esc(item.phone)+'\')">💬 WhatsApp</button>':'')+
@@ -2953,10 +2952,9 @@ function openDashImport(){
   document.getElementById('dashImportOverlay').classList.add('show');
   if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
 }
+var _diImportSource='direct';
 function onDiSrcChange(){
-  var src=document.getElementById('diSrc').value;
-  var btn=document.querySelector('#diStep1 .btn-primary');
-  if(btn)btn.textContent=src==='direct'?'Next →':'📥 Import Now';
+  // Always show Next → since we always do mapping step
 }
 function diBackToStep1(){
   document.getElementById('diStep1').style.display='';
@@ -2979,17 +2977,14 @@ function doDashImport(){
   var isXLS=fname.endsWith('.xls')||fname.endsWith('.xlsx');
   function onText(text){
     try{
-      if(source==='direct'){
-        // Parse headers and go to mapping step
-        var rows=_dpCSV(text);
-        if(rows.length<2){setDIS('File appears empty.','err');return;}
-        _diParsedRows=rows;
-        _diHeaders=rows[0];
-        setDIS('','');
-        showFieldMappingStep(apt);
-      } else {
-        dashProcessImport(text,source,apt);
-      }
+      // Always show field mapping step so user can verify columns
+      var rows=_dpCSV(text);
+      if(rows.length<2){setDIS('File appears empty.','err');return;}
+      _diParsedRows=rows;
+      _diHeaders=rows[0];
+      _diImportSource=source; // store source for mapping step
+      setDIS('','');
+      showFieldMappingStep(apt);
     }catch(err){setDIS('Error: '+err.message,'err');}
   }
   if(isXLS){
@@ -3008,14 +3003,16 @@ function doDashImport(){
 
 // Field mapping definitions: id, label, required, hint
 var DI_FIELDS=[
-  {id:'checkin',   label:'Check-in date *',   req:true,  hint:'e.g. Check In, Arrival, Start date'},
-  {id:'checkout',  label:'Check-out date *',  req:true,  hint:'e.g. Check Out, Departure, End date'},
-  {id:'name',      label:'Guest name',        req:false, hint:'e.g. Guest name, Client, Name'},
-  {id:'gross',     label:'Gross revenue',     req:false, hint:'e.g. Gross Revenue, Price, Amount'},
-  {id:'commission',label:'Commission amount', req:false, hint:'e.g. Commission amount, Fee'},
-  {id:'cleanfee',  label:'Cleaning fee',      req:false, hint:'e.g. Cleaning Fee'},
-  {id:'guests',    label:'Number of guests',  req:false, hint:'e.g. Persons, Adults'},
-  {id:'booknum',   label:'Booking reference', req:false, hint:'e.g. Book number, Ref, ID'},
+  {id:'checkin',      label:'Check-in date *',         req:true,  hint:'e.g. Check In, Arrival, Start date'},
+  {id:'checkout',     label:'Check-out date *',        req:true,  hint:'e.g. Check Out, Departure, End date'},
+  {id:'name',         label:'Guest name',              req:false, hint:'e.g. Guest name, Client, Name'},
+  {id:'gross',        label:'Gross revenue (€)',       req:false, hint:'e.g. Gross Revenue, Price, Amount, Tarif'},
+  {id:'commission',   label:'Commission amount (€)',   req:false, hint:'e.g. Commission amount — the € value, NOT the % column'},
+  {id:'commissionpct',label:'Commission % (skip if using amount)', req:false, hint:'e.g. Commission % — only used if no amount column'},
+  {id:'cleanfee',     label:'Cleaning fee (€)',        req:false, hint:'e.g. Cleaning Fee'},
+  {id:'guests',       label:'Number of guests',        req:false, hint:'e.g. Persons, Adults'},
+  {id:'booknum',      label:'Booking reference',       req:false, hint:'e.g. Book number, Ref, ID'},
+  {id:'status',       label:'Status / Cancellation',   req:false, hint:'e.g. Status, Cancellation date — rows with cancel value are skipped'},
 ];
 
 function showFieldMappingStep(apt){
@@ -3034,15 +3031,30 @@ function showFieldMappingStep(apt){
   }
   // Auto-detect columns using _dfc logic
   function autoDetect(keys){return _dfc.apply(null,[h].concat(keys));}
+  // Find 'commission amount' col first (the € value). Exclude % column from amount detection.
+  var iCommAmount=autoDetect(['commission amount','commissionamount','comm amount']);
+  var iCommPct=autoDetect(['commission %','commission%','comm %','commissionpct','comm pct']);
+  // If no explicit 'amount' col found, fallback to any 'commission' col that isn't the % col
+  if(iCommAmount<0){
+    var iCommAny=autoDetect(['commission','comm']);
+    // If that col looks like a % column (header contains %), don't use it as amount
+    if(iCommAny>=0&&h[iCommAny]&&h[iCommAny].indexOf('%')!==-1){
+      iCommPct=iCommAny; iCommAmount=-1;
+    } else {
+      iCommAmount=iCommAny;
+    }
+  }
   var autoMap={
     checkin:  autoDetect(['checkin','check in','check-in','arrivee','arrival','startdate','start']),
     checkout: autoDetect(['checkout','check out','check-out','depart','departure','enddate','end']),
     name:     autoDetect(['guestname','guest name','guest','nom','name','client','bookedby']),
     gross:    autoDetect(['gross revenue','gross','grossrevenue','price','tarif','amount','total']),
-    commission:autoDetect(['commission amount','commissionamount','commission','comm','fee']),
+    commission:iCommAmount,
+    commissionpct:iCommPct,
     cleanfee: autoDetect(['cleaning fee','cleaningfee','cleaning']),
     guests:   autoDetect(['persons','personnes','adults','guests','number of guests']),
     booknum:  autoDetect(['book number','booknumber','reservation','numero','ref','id']),
+    status:   autoDetect(['status','statut','cancellation date','cancellation','annulation']),
   };
   grid.innerHTML=DI_FIELDS.map(function(f){
     return '<div style="display:flex;flex-direction:column;gap:4px">'+
@@ -3061,27 +3073,34 @@ function showFieldMappingStep(apt){
 function doMappedImport(){
   if(!_diParsedRows||!_diParsedRows.length){setDIS2('No file data.','err');return;}
   var apt=document.getElementById('diApt').value;
+  var source=_diImportSource||'direct';
+  var idPrefix=source==='airbnb'?'ab_':source==='booking'?'bk_':'dir_';
   function gm(id){var s=document.getElementById('diMap_'+id);return s?parseInt(s.value):-1;}
   var iIn=gm('checkin'),iOut=gm('checkout');
   if(iIn<0||iOut<0){setDIS2('Check-in and Check-out columns are required.','err');return;}
-  var iName=gm('name'),iGross=gm('gross'),iComm=gm('commission'),
-      iClean=gm('cleanfee'),iGuests=gm('guests'),iBook=gm('booknum');
+  var iName=gm('name'),iGross=gm('gross'),iComm=gm('commission'),iCommPct=gm('commissionpct'),
+      iClean=gm('cleanfee'),iGuests=gm('guests'),iBook=gm('booknum'),iStatus=gm('status');
 
   var parsed=[],skipped=0;
   for(var i=1;i<_diParsedRows.length;i++){
     var r=_diParsedRows[i];
     if(!r||r.join('').trim()==='')continue;
     var _rv2=function(idx){return(idx>=0&&r[idx]!=null)?String(r[idx]).trim():'';};
+    // Skip cancelled/annulled rows via status column
+    if(iStatus>=0){var sv=_rv2(iStatus).toLowerCase();if(sv&&(sv.indexOf('cancel')!==-1||sv.indexOf('annul')!==-1)){skipped++;continue;}}
     var ci=_dISO(_rv2(iIn)),co=_dISO(_rv2(iOut));
     if(!ci||!co||ci>=co){skipped++;continue;}
     var gName=_rv2(iName);
     var grossNum=iGross>=0?(_parseAmt(_rv2(iGross))||0):0;
-    var commNum=iComm>=0?(_parseAmt(_rv2(iComm))||0):0;
+    // Prefer commission amount column; fallback: compute from gross × commission %
+    var commNum=0;
+    if(iComm>=0&&_rv2(iComm)){commNum=_parseAmt(_rv2(iComm))||0;}
+    else if(iCommPct>=0&&_rv2(iCommPct)&&grossNum>0){commNum=Math.round(grossNum*(_parseAmt(_rv2(iCommPct))||0)/100*100)/100;}
     var cleanNum=iClean>=0?(_parseAmt(_rv2(iClean))||0):0;
     var finSuffix=(grossNum>0||cleanNum>0)?'\n__€__'+grossNum.toFixed(2)+'|'+commNum.toFixed(2)+'|'+cleanNum.toFixed(2):'';
     var nm=iBook>=0&&_rv2(iBook)?_rv2(iBook):_duid();
     parsed.push({
-      id:'dir_'+nm,apt:apt,workspace_id:workspace.id,source:'direct',
+      id:idPrefix+nm,apt:apt,workspace_id:workspace.id,source:source,
       checkin:ci,checkout:co,clean:co,
       guests:iGuests>=0?_rv2(iGuests):'',
       notes:gName+finSuffix,
@@ -3286,23 +3305,37 @@ function dashProcessImport(text,source,apt){
 
   var toDelete=[];   // IDs to delete from DB (replaced/cancelled OTA entries)
   var toInsert=[];   // Bookings to upsert
-  var conflictSkipped=0;
+  var conflictSkipped=0,conflictLog=[];
 
   parsed.forEach(function(nb){
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
 
     if(isPlatform){
-      // OTA import: this booking is authoritative.
-      // Find any existing booking on same apt that overlaps these exact dates
+      // OTA import: same ID = update; different overlapping booking = report conflict
+      var otaBlocker=null;
       aptBks.forEach(function(ex){
-        if(!ex.checkin||!ex.checkout)return;
-        var overlaps=(ex.checkin<nb.checkout&&nb.checkin<ex.checkout);
-        if(overlaps&&ex.id!==nb.id){
-          // OTA vs OTA same dates: deduplicate (same stay, different ref?) — keep new
-          // OTA vs Direct: OTA wins, remove direct
-          toDelete.push(ex.id);
+        if(!ex.checkin||!ex.checkout||ex.id===nb.id)return;
+        if(ex.checkin<nb.checkout&&nb.checkin<ex.checkout){
+          if(ex.source==='direct'){
+            toDelete.push(ex.id); // OTA wins over direct
+          } else {
+            otaBlocker=ex; // OTA vs OTA: report
+          }
         }
       });
+      // Check within this batch
+      var batchBlocker=toInsert.find(function(ex){return ex.apt===nb.apt&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;});
+      if(otaBlocker||batchBlocker){
+        var blocker=otaBlocker||batchBlocker;
+        var gIn=cleanNotesDisplay(nb.notes)||nb.guests||'?';
+        var gEx=cleanNotesDisplay(blocker.notes)||blocker.guests||'?';
+        var aptN=(properties||[]).reduce(function(a,p){return p.id===nb.apt?p.name||p.short:a;},'Apt '+nb.apt);
+        conflictLog.push('🔴 OVERLAP on '+aptN+': "'+gIn+'" ('+nb.checkin+'→'+nb.checkout+') vs "'+gEx+'" ('+blocker.checkin+'→'+blocker.checkout+'). NEITHER imported — fix dates in your file or delete one booking manually.');
+        conflictSkipped++;
+        return;
+      }
+      // Replace same booking (update)
+      aptBks.forEach(function(ex){if(ex.id===nb.id)toDelete.push(ex.id);});
       toInsert.push(nb);
     } else {
       // Direct import: only add if NO OTA booking overlaps
@@ -3351,7 +3384,7 @@ function dashProcessImport(text,source,apt){
     if(skipped||conflictSkipped)msg+=', '+(skipped+conflictSkipped)+' skipped (see log)';
     var logEl=document.getElementById('importLogBody');
     var sumEl=document.getElementById('importLogSummary');
-    if(logEl)logEl.textContent=otaLog.join('\n');
+    if(logEl)logEl.textContent=(conflictLog.length?conflictLog.join('\n')+'\n\n':'')+ otaLog.join('\n');
     if(sumEl)sumEl.textContent=msg;
     document.getElementById('importLogOverlay').classList.add('show');
     loadAllBookings().then(function(){renderCalendar();renderPayments();renderCleaning();renderOverview();});
