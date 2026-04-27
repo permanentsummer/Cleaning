@@ -816,9 +816,18 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Check-out</label><input type="date" id="ebCheckout"></div>
     </div>
     <div class="fg"><label>Guests (count)</label><input type="number" id="ebGuests" min="1" max="20" placeholder="e.g. 2"></div>
-    <div class="fg"><label>Gross revenue (€)</label><input type="number" id="ebGross" min="0" step="0.01" placeholder="e.g. 550"></div>
-    <div class="fg"><label>Commission (€)</label><input type="number" id="ebComm" min="0" step="0.01" placeholder="0 for direct"></div>
-    <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="ebClean" min="0" step="0.01" placeholder="e.g. 50"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:10px;border:1px solid #bbf7d0;cursor:pointer" onclick="document.getElementById('ebComp').click()">
+      <input type="checkbox" id="ebComp" onchange="toggleCompFields()" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer" onclick="event.stopPropagation()">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#15803d">🎁 Complimentary (Friends &amp; Family)</div>
+        <div style="font-size:11px;color:var(--muted)">Revenue = €0 — excluded from warnings and financial reports.</div>
+      </div>
+    </div>
+    <div id="ebRevenueFields">
+      <div class="fg"><label>Gross revenue (€)</label><input type="number" id="ebGross" min="0" step="0.01" placeholder="e.g. 550"></div>
+      <div class="fg"><label>Commission (€)</label><input type="number" id="ebComm" min="0" step="0.01" placeholder="0 for direct"></div>
+      <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="ebClean" min="0" step="0.01" placeholder="e.g. 50"></div>
+    </div>
     <div class="aerr" id="ebErr" style="margin-bottom:8px"></div>
     <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">💾 Save changes</button>
     <button class="btn-outline" style="width:100%" onclick="closeModal('editBookingOverlay')">Cancel</button>
@@ -1922,17 +1931,23 @@ function genQR(url){
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
 function parseFin(b){
-  // Extract __€__gross|commission|cleanfee from end of notes field
   var n=b.notes||'';
+  // Complimentary booking — intentionally €0, suppress warnings
+  if(n.indexOf('\n__COMP__')!==-1)return{gross:0,commission:0,cleanfee:0,isComp:true};
   var idx=n.indexOf('\n__€__');
-  if(idx===-1)return{gross:0,commission:0,cleanfee:0};
+  if(idx===-1)return{gross:0,commission:0,cleanfee:0,isComp:false};
   var fin=n.slice(idx+6).split('|');
-  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,cleanfee:parseFloat(fin[2])||0};
+  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,cleanfee:parseFloat(fin[2])||0,isComp:false};
 }
 function cleanNotesDisplay(n){
   if(!n)return'';
+  // Strip financial marker
   var idx=n.indexOf('\n__€__');
-  return idx===-1?n:n.slice(0,idx);
+  if(idx!==-1)n=n.slice(0,idx);
+  // Strip complimentary marker
+  var idx2=n.indexOf('\n__COMP__');
+  if(idx2!==-1)n=n.slice(0,idx2);
+  return n;
 }
 
 var _finExpenses=null; // cached expenses from workspace.settings
@@ -2177,13 +2192,13 @@ function renderRevenueAnalytics(){
   var missingFinBks=yBks.filter(function(b){
     if(bkCoveredIds[b.id])return false;
     var fin=parseFin(b);
-    return fin.gross===0&&(b.source==='airbnb'||b.source==='booking');
+    return fin.gross===0&&!fin.isComp&&(b.source==='airbnb'||b.source==='booking');
   });
-  // Direct bookings with gross=0 (e.g. Vanessa Jouana Helman in file)
+  // Direct bookings with gross=0 — but NOT complimentary ones
   var missingDirectBks=yBks.filter(function(b){
     if(bkCoveredIds[b.id])return false;
     var fin=parseFin(b);
-    return fin.gross===0&&b.source==='direct';
+    return fin.gross===0&&!fin.isComp&&b.source==='direct';
   });
   var qualityWarning='';
   if(missingFinBks.length){
@@ -3142,7 +3157,7 @@ function doMappedImport(){
       }
     });
     var fin=parseFin(nb);
-    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean fee':''):'| no revenue data'));
+    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.isComp?' | 🎁 Complimentary (€0)':(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean fee':''):'| no revenue data')));
     toInsert.push(nb);
   });
 
@@ -3343,6 +3358,11 @@ function dashProcessImport(text,source,apt){
   }).catch(function(e){setDIS('Error: '+e.message,'err');});
 }
 // ── EDIT BOOKING ─────────────────────────────────────────────────────────────
+function toggleCompFields(){
+  var isComp=document.getElementById('ebComp').checked;
+  var rf=document.getElementById('ebRevenueFields');
+  if(rf)rf.style.display=isComp?'none':'';
+}
 function openEditBooking(id, origin){
   var b=allBookings.find(function(x){return x.id===id;});
   var req=null;
@@ -3355,21 +3375,26 @@ function openEditBooking(id, origin){
 
   if(b){
     var fin=parseFin(b);
+    var isComp=(b.notes||'').indexOf('\n__COMP__')!==-1;
     document.getElementById('ebGuest').value=cleanNotesDisplay(b.notes)||b.guests||'';
     document.getElementById('ebCheckin').value=b.checkin||'';
     document.getElementById('ebCheckout').value=b.checkout||'';
     document.getElementById('ebGuests').value=b.guests&&/^\d+/.test(b.guests)?parseInt(b.guests):'';
-    document.getElementById('ebGross').value=fin.gross||'';
-    document.getElementById('ebComm').value=fin.commission||'';
-    document.getElementById('ebClean').value=fin.cleanfee||'';
+    document.getElementById('ebComp').checked=isComp;
+    document.getElementById('ebGross').value=isComp?'':fin.gross||'';
+    document.getElementById('ebComm').value=isComp?'':fin.commission||'';
+    document.getElementById('ebClean').value=isComp?'':fin.cleanfee||'';
+    toggleCompFields();
   } else if(req){
     document.getElementById('ebGuest').value=req.guest_name||'';
     document.getElementById('ebCheckin').value=req.checkin||'';
     document.getElementById('ebCheckout').value=req.checkout||'';
     document.getElementById('ebGuests').value='';
+    document.getElementById('ebComp').checked=false;
     document.getElementById('ebGross').value=req.total_amount||'';
     document.getElementById('ebComm').value='';
     document.getElementById('ebClean').value='';
+    toggleCompFields();
   }
   document.getElementById('editBookingOverlay').classList.add('show');
 }
@@ -3387,7 +3412,8 @@ function saveEditBooking(){
 
   if(!ci||!co||ci>=co){document.getElementById('ebErr').textContent='Valid check-in and check-out dates required.';return;}
 
-  var finSuffix=(gross>0||clean>0)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+clean.toFixed(2):'';
+  var isComp=document.getElementById('ebComp').checked;
+  var finSuffix=isComp?'\n__COMP__':(gross>0||clean>0)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+clean.toFixed(2):'';
   var newNotes=guestName+finSuffix;
 
   // Check for overlaps on same property (exclude self)
@@ -3792,10 +3818,11 @@ function renderBarForDay(bookings,ds,aptColor){
     // Guest name: SummerClean stores name in notes, count in guests.
     // Dashboard import stores name in notes too (fixed below).
     var label='';
-    var _n=(b.notes||'').trim();
+    var _n=cleanNotesDisplay(b.notes||'').trim();
     var _g=(b.guests||'').trim();
+    var _isComp=(b.notes||'').indexOf('\n__COMP__')!==-1;
     if(_n&&!/^\d+$/.test(_n)){
-      label=_n; // notes has real name
+      label=_n;
     } else if(_g.indexOf('\u2013')!==-1){
       label=_g.split('\u2013')[1].trim();
     } else if(_g.indexOf('-')!==-1&&_g.indexOf('guest')===-1){
@@ -3804,12 +3831,13 @@ function renderBarForDay(bookings,ds,aptColor){
       label=_g;
     }
     if(!label)label='Guest';
-    if(label.length>16)label=label.slice(0,15)+'\u2026';
+    if(_isComp)label='\uD83C\uDF81 '+label; // 🎁 prefix for complimentary
+    if(label.length>18)label=label.slice(0,17)+'\u2026';
 
-    // Always show name — full on start/solo, smaller on middle/end
     var showFull=isStart||posClass==='bar-solo';
     var titleTip=(_n||_g)||'';
-    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(titleTip)+'">'+
+    if(_isComp)titleTip='🎁 Complimentary · '+titleTip;
+    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(titleTip)+'"'+(_isComp?' style="opacity:.75"':'')+'>'+
       (showFull?esc(label):'<span style="opacity:.65;font-size:9px">'+esc(label)+'</span>')+
       '</div>';
   }).join('');
