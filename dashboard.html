@@ -3119,6 +3119,14 @@ function doMappedImport(){
     });
   }
   if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
+  setDIS2('Reading existing bookings…','warn');
+
+  // Always reload allBookings before conflict detection to avoid stale data causing duplicates
+  loadAllBookings().then(function(){
+  _doMappedConflict(parsed,skipped,apt,source);
+  });
+}
+function _doMappedConflict(parsed,skipped,apt,source){
   setDIS2('Processing '+parsed.length+' bookings…','warn');
 
   // Conflict + priority — also check within-file overlaps (toInsert)
@@ -3144,17 +3152,24 @@ function doMappedImport(){
     var guestIn=cleanNotesDisplay(nb.notes)||'?';
     var isOTA=(nb.source==='airbnb'||nb.source==='booking');
 
-    // Step 1: exact date match on same apt → always replace (update financial data)
+    // Step 1: match on apt+checkin+checkout → always replace (update financial data)
+    // This covers: same file re-imported, corrected commission, updated prices etc.
+    // We do NOT rely on ID — IDs may differ between imports if booknum col wasn't mapped.
     var exactMatch=aptBks.find(function(ex){
       return ex.checkin===nb.checkin&&ex.checkout===nb.checkout;
     });
-    var idMatch=!exactMatch&&aptBks.find(function(ex){return ex.id===nb.id;});
-    var toReplace=exactMatch||idMatch;
+    // Also catch near-matches: same checkin, same guest name (checkout may have been wrong before)
+    var nameMatch=!exactMatch&&guestIn!=='?'&&aptBks.find(function(ex){
+      var exName=cleanNotesDisplay(ex.notes)||ex.guests||'';
+      return ex.checkin===nb.checkin&&exName&&_dsa(exName).toLowerCase()===_dsa(guestIn).toLowerCase();
+    });
+    var toReplace=exactMatch||nameMatch;
 
     if(toReplace){
-      toDelete.push(toReplace.id);
+      if(toDelete.indexOf(toReplace.id)===-1)toDelete.push(toReplace.id);
       var fin=parseFin(nb);
-      importLog.push('🔄 UPDATING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':''):''));
+      var matchType=exactMatch?'dates':'name+checkin';
+      importLog.push('🔄 UPDATING ('+matchType+'): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':''):''));
       toInsert.push(nb);
       return;
     }
