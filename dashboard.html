@@ -1946,185 +1946,259 @@ function renderRevenueAnalytics(){
   var container=document.getElementById('revenueAnalytics');
   if(!container)return;
 
-  // Build available years from all bookings
   var allBks=allBookings||[];
+
+  // ── Build year list from ALL data ──────────────────────────────────────────
   var years=[];
   allBks.forEach(function(b){
     var y=b.checkin?parseInt(b.checkin.slice(0,4)):0;
-    if(y>2020&&y<2035&&years.indexOf(y)===-1)years.push(y);
+    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
   });
   (requests||[]).forEach(function(r){
     var y=r.checkin?parseInt(r.checkin.slice(0,4)):0;
-    if(y>2020&&y<2035&&years.indexOf(y)===-1)years.push(y);
+    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
   });
   years.sort(function(a,b){return a-b;});
-  if(years.indexOf(_finYear)===-1&&years.length)_finYear=years[years.length-1];
 
-  // Year and property filter controls
+  // Only auto-correct _finYear if it's completely unknown (not 'all', not a year in our data)
+  // Do NOT override 'all' — that's a valid user choice
+  if(_finYear!=='all'&&years.length&&years.indexOf(parseInt(_finYear))===-1){
+    _finYear=years[years.length-1];
+  }
+
+  // ── Year selector ──────────────────────────────────────────────────────────
   var yearOpts='<option value="all"'+(_finYear==='all'?' selected':'')+'>All time</option>'+
-    years.map(function(y){return '<option value="'+y+'"'+(y==_finYear?' selected':'')+'>'+y+'</option>';}).join('');
-  var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
+    years.map(function(y){return'<option value="'+y+'"'+(String(y)===String(_finYear)?' selected':'')+'>'+y+'</option>';}).join('');
+  var aptOpts='<option value="all"'+(_finApt==='all'?' selected':'')+'>All properties</option>'+
+    (properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
 
   var isAllTime=(_finYear==='all');
-  var yearStr=isAllTime?'all':String(_finYear);
-  var yStart=isAllTime?'2000-01-01':yearStr+'-01-01';
-  var yEnd=isAllTime?'2099-12-31':yearStr+'-12-31';
+  var yStart=isAllTime?'2000-01-01':String(_finYear)+'-01-01';
+  var yEnd  =isAllTime?'2099-12-31':String(_finYear)+'-12-31';
 
-  // Filter bookings for selected year+apt
-  function inYear(b){return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&(_finApt==='all'||b.apt===_finApt);}
-  var yBks=allBks.filter(inYear);
-  var yDirect=(requests||[]).filter(function(r){return r.status==='confirmed'&&r.checkin&&r.checkin>=yStart&&r.checkin<=yEnd&&(_finApt==='all'||r.apt===_finApt);});
+  // ── Filter bookings ────────────────────────────────────────────────────────
+  // OTA + imported direct bookings (from bookings table)
+  var yBks=allBks.filter(function(b){
+    return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&
+           (_finApt==='all'||b.apt===_finApt);
+  });
 
-  // ── KPI Calculations ──
+  // Dashboard-created direct bookings (from direct_requests, confirmed)
+  var yDirect=(requests||[]).filter(function(r){
+    if(r.status!=='confirmed')return false;
+    if(!r.checkin||r.checkin<yStart||r.checkin>yEnd)return false;
+    if(_finApt==='all')return true;
+    return r.apt_id===_finApt||r.apt_name===_finApt||(r.apt&&r.apt===_finApt);
+  });
+
+  // Deduplicate: direct_requests bookings are ALSO in allBookings (inserted via insert_bookings RPC).
+  // Mark them so we don't double-count revenue.
+  var directReqKeys={};
+  yDirect.forEach(function(r){directReqKeys[r.apt+'|'+r.checkin]=(r.apt_id||r.apt_name||'')+'|'+r.checkin;});
+
+  // ── Occupancy ──────────────────────────────────────────────────────────────
+  // Use actual property count for selected filter
   var numProps=_finApt==='all'?(properties&&properties.length||1):1;
-  var numDays=isAllTime?365:((new Date(parseInt(yearStr),11,31))-(new Date(parseInt(yearStr),0,1)))/86400000+1;
-  var totalAvailableNights=isAllTime?(numProps*365*Math.max(1,years.length)):numDays*numProps;
+  // Available nights = calendar days in selected period × numProps (clamped to today for current year)
+  var todayStr=new Date().toISOString().slice(0,10);
+  var periodEnd=isAllTime?todayStr:Math.min(String(_finYear)+'-12-31',todayStr);
+  // But for future years (year > current), count full year
+  if(!isAllTime&&String(_finYear)>todayStr.slice(0,4))periodEnd=String(_finYear)+'-12-31';
+  var periodStart=yStart;
+  var dStart=new Date(periodStart+'T12:00:00'),dEnd=new Date(periodEnd+'T12:00:00');
+  var numDays=Math.max(1,Math.round((dEnd-dStart)/86400000));
+  var totalAvailableNights=numDays*numProps;
 
   var totalOccNights=0;
   yBks.forEach(function(b){
-    var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
-    var nights=Math.max(0,Math.round((co-ci)/86400000));
-    totalOccNights+=nights;
+    // Clip to selected period
+    var ci=b.checkin>periodStart?b.checkin:periodStart;
+    var co=b.checkout<periodEnd?b.checkout:periodEnd;
+    if(ci>=co)return;
+    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
+  });
+  yDirect.forEach(function(r){
+    // Only count if not already in allBookings
+    var key=(r.apt_id||r.apt_name||r.apt||'')+'|'+r.checkin;
+    if(allBks.some(function(b){return b.apt===r.apt_id&&b.checkin===r.checkin;}))return;
+    var ci=r.checkin>periodStart?r.checkin:periodStart;
+    var co=(r.checkout||r.checkin)<periodEnd?(r.checkout||r.checkin):periodEnd;
+    if(ci>=co)return;
+    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
   });
   var occRate=totalAvailableNights>0?Math.min(100,Math.round(totalOccNights/totalAvailableNights*100)):0;
 
+  // ── Revenue ────────────────────────────────────────────────────────────────
   var grossRev=0,commTotal=0,netRev=0,cleanFeeTotal=0;
-  // OTA bookings (Airbnb + Booking.com): financial data from __€__ marker in notes
-  yBks.filter(function(b){return b.source==='airbnb'||b.source==='booking';}).forEach(function(b){
-    var fin=parseFin(b);
-    grossRev+=fin.gross;
-    commTotal+=fin.commission;
-    netRev+=(fin.gross-fin.commission);
-    cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
-  });
-  // Direct bookings: revenue from direct_requests records (have total_amount)
-  // Also count direct bookings in allBookings that have no matching request (manual/imported)
-  var directReqAptDates={};
+
+  // Direct requests (have real total_amount, commission=0)
+  var directBkKeys={}; // track which imported bookings are covered by a request
   yDirect.forEach(function(r){
-    grossRev+=r.total_amount||0;
-    netRev+=r.total_amount||0; // no commission on direct
-    cleanFeeTotal+=getFinCleanFee(r.apt);
-    directReqAptDates[r.apt+'|'+r.checkin]=true;
+    var amt=parseFloat(r.total_amount)||0;
+    grossRev+=amt;
+    netRev+=amt;
+    cleanFeeTotal+=getFinCleanFee(r.apt_id||r.apt_name||r.apt||'');
+    // Mark any matching imported booking so we don't double-count
+    (allBks).forEach(function(b){
+      if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout){
+        directBkKeys[b.id]=true;
+      }
+    });
   });
-  // Direct bookings imported via CSV (source=direct, not in requests)
-  yBks.filter(function(b){return b.source==='direct';}).forEach(function(b){
-    if(directReqAptDates[b.apt+'|'+b.checkin])return; // already counted via requests
+
+  // Imported bookings (allBookings): OTA (have __€__ marker) + imported direct
+  yBks.forEach(function(b){
+    if(directBkKeys[b.id])return; // already counted via requests
     var fin=parseFin(b);
-    grossRev+=fin.gross;
-    netRev+=fin.gross; // direct = 0 commission
-    cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
+    var isOTA=(b.source==='airbnb'||b.source==='booking');
+    if(isOTA){
+      grossRev+=fin.gross;
+      commTotal+=fin.commission;
+      netRev+=(fin.gross-fin.commission);
+      cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
+    } else {
+      // imported direct (not a dashboard request)
+      grossRev+=fin.gross;
+      netRev+=fin.gross; // 0 commission
+      cleanFeeTotal+=fin.cleanfee||getFinCleanFee(b.apt);
+    }
   });
 
-  var adr=totalOccNights>0?(grossRev/totalOccNights):0;
-  var revPAR=totalAvailableNights>0?(grossRev/totalAvailableNights):0;
+  var adr=totalOccNights>0?grossRev/totalOccNights:0;
+  var revPAR=totalAvailableNights>0?grossRev/totalAvailableNights:0;
 
-  // Expenses for selected apt+year
+  // ── Expenses ──────────────────────────────────────────────────────────────
   var expenses=getFinExpenses().filter(function(e){
     return _finApt==='all'||(e.apt===_finApt||e.apt==='all');
   });
   var totalExpenses=0;
   expenses.forEach(function(e){
-    var monthly=e.freq==='monthly'?e.amount*12:e.freq==='weekly'?e.amount*52:e.amount;
-    totalExpenses+=parseFloat(monthly)||0;
+    var annual=e.freq==='monthly'?e.amount*12:e.freq==='weekly'?e.amount*52:parseFloat(e.amount)||0;
+    if(isAllTime)annual*=Math.max(1,years.length);
+    totalExpenses+=annual;
   });
   var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
 
-  // Monthly breakdown (12 months)
-  var months12=[];
-  var chartPeriods=isAllTime?years.map(function(y){return {label:String(y),start:y+'-01-01',end:(y+1)+'-01-01',days:365,isYear:true};}):
-    Array.from({length:12},function(_,m){var md=new Date(parseInt(yearStr),m,1);var mEnd=new Date(parseInt(yearStr),m+1,1);return{label:md.toLocaleDateString('en-GB',{month:'short'}),start:md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01',end:mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01',days:Math.round((mEnd-md)/86400000),isYear:false};});
-  for(var mi=0;mi<chartPeriods.length;mi++){
-    var period=chartPeriods[mi];
-    var md={getFullYear:function(){return 0;}}; // placeholder
-    var mEnd={};
-    var mStart=period.start,mEndStr=period.end,mDays=period.days;
-    var avail=mDays*numProps;
-    var occ=0,mGross=0,mComm=0,mClean=0;
-    var mDirectKeys={};
+  // ── Monthly / Yearly chart ────────────────────────────────────────────────
+  var chartPeriods=[];
+  if(isAllTime){
+    years.forEach(function(y){
+      chartPeriods.push({label:String(y),start:y+'-01-01',end:(y+1)+'-01-01'});
+    });
+  } else {
+    for(var m=0;m<12;m++){
+      var md=new Date(parseInt(_finYear),m,1);
+      var mEnd=new Date(parseInt(_finYear),m+1,1);
+      chartPeriods.push({
+        label:md.toLocaleDateString('en-GB',{month:'short'}),
+        start:md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01',
+        end:mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01'
+      });
+    }
+  }
+
+  var months12=chartPeriods.map(function(period){
+    var pg=0,pc=0,pn=0,pocc=0;
+    var mDays=Math.round((new Date(period.end+'T00:00:00')-new Date(period.start+'T00:00:00'))/86400000);
+    var mAvail=mDays*numProps;
+
     yDirect.forEach(function(r){
-      if(!r.checkin||r.checkin<mStart||r.checkin>=mEndStr)return;
-      mGross+=r.total_amount||0;mClean+=getFinCleanFee(r.apt);
-      mDirectKeys[r.apt+'|'+r.checkin]=true;
-      occ+=Math.max(0,Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000));
+      if(!r.checkin||r.checkin<period.start||r.checkin>=period.end)return;
+      var amt=parseFloat(r.total_amount)||0;
+      pg+=amt;
+      if(allBks.some(function(b){return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;}))return;
+      var nights=r.checkin&&r.checkout?Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000):0;
+      pocc+=nights;
+    });
+    var coveredIds={};
+    yDirect.forEach(function(r){
+      allBks.forEach(function(b){if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout)coveredIds[b.id]=true;});
     });
     yBks.forEach(function(b){
-      if(!b.checkin||b.checkin<mStart||b.checkin>=mEndStr)return;
-      var ci=new Date(b.checkin+'T12:00:00'),co=new Date(b.checkout+'T12:00:00');
-      var nights=Math.max(0,Math.round((co-ci)/86400000));
-      if(b.source==='airbnb'||b.source==='booking'){
-        var fin=parseFin(b);
-        occ+=nights;mGross+=fin.gross;mComm+=fin.commission;mClean+=getFinCleanFee(b.apt);
-      } else if(!mDirectKeys[b.apt+'|'+b.checkin]){
-        // direct import not in requests
-        var fin=parseFin(b);
-        occ+=nights;mGross+=fin.gross;mClean+=getFinCleanFee(b.apt);
-      }
+      if(!b.checkin||b.checkin<period.start||b.checkin>=period.end)return;
+      if(coveredIds[b.id])return;
+      var fin=parseFin(b);
+      pg+=fin.gross;
+      pc+=fin.commission;
+      pn+=fin.cleanfee||0;
+      var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
+      pocc+=nights;
     });
-    var mOcc=avail>0?Math.min(100,Math.round(occ/avail*100)):0;
-    months12.push({label:period.label,occ:mOcc,gross:mGross,net:mGross-mComm,nights:occ,avail:avail});
-  }
+    var mOcc=mAvail>0?Math.min(100,Math.round(pocc/mAvail*100)):0;
+    return{label:period.label,occ:mOcc,gross:pg,net:pg-pc,nights:pocc,avail:mAvail};
+  });
   var maxGross=Math.max.apply(null,months12.map(function(x){return x.gross;}));
 
-  // Platform breakdown
+  // ── Platform breakdown ────────────────────────────────────────────────────
   var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
+  yDirect.forEach(function(r){byPlat.direct.count++;byPlat.direct.gross+=parseFloat(r.total_amount)||0;});
+  var bkCoveredIds={};
+  yDirect.forEach(function(r){allBks.forEach(function(b){if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout)bkCoveredIds[b.id]=true;});});
   yBks.forEach(function(b){
+    if(bkCoveredIds[b.id])return;
     var s=b.source||'direct';if(!byPlat[s])byPlat[s]={count:0,gross:0,commission:0};
     var fin=parseFin(b);
     byPlat[s].count++;byPlat[s].gross+=fin.gross;byPlat[s].commission+=fin.commission;
   });
-  yDirect.forEach(function(r){
-    byPlat.direct.count++;byPlat.direct.gross+=r.total_amount||0;
-  });
-  var totalBks=yBks.length+yDirect.length;
+  var totalBks=Object.values(byPlat).reduce(function(a,p){return a+p.count;},0);
 
   function fmt(n){return'€'+Math.round(n).toLocaleString('en-GB');}
   function fmtPct(n){return n.toFixed(1)+'%';}
   function kpiCard(label,val,sub,color){
-    return '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
+    return'<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
       '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">'+label+'</div>'+
       '<div style="font-size:22px;font-weight:800;color:'+(color||'var(--primary)')+';letter-spacing:-.5px">'+val+'</div>'+
       (sub?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+sub+'</div>':'')+
     '</div>';
   }
 
+  // ── Data quality warning ──────────────────────────────────────────────────
+  var missingFin=yBks.filter(function(b){
+    if(bkCoveredIds[b.id])return false;
+    var fin=parseFin(b);
+    return fin.gross===0&&(b.source==='airbnb'||b.source==='booking');
+  }).length;
+  var qualityWarning=missingFin>0?
+    '<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#92400e">'+
+      '⚠️ <strong>'+missingFin+' Airbnb/Booking.com booking'+(missingFin>1?'s':'')+' have no financial data</strong> — they were imported before revenue tracking was enabled. '+
+      'Re-import your Booking.com/Airbnb file to populate revenue figures. Gross total below may be understated.'+
+    '</div>':'';
+
   container.innerHTML=
-    // ── Controls row ──
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">'+
+    // ── Controls ──
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'+
       '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
       '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+aptOpts+'</select>'+
-      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied</div>'+
+      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied · '+numDays+' available days × '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
     '</div>'+
-
-    // ── Row 1: Core KPIs ──
+    qualityWarning+
+    // ── Revenue KPIs ──
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
-      kpiCard(CT('occRate'),fmtPct(occRate),totalOccNights+' / '+totalAvailableNights+' nights','var(--blue)')+
+      kpiCard(CT('occRate'),fmtPct(occRate),totalOccNights+' occ. nights / '+totalAvailableNights+' avail.','var(--blue)')+
       kpiCard(CT('adr'),fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
       kpiCard(CT('grossRev'),fmt(grossRev),CT('beforeComm'),'')+
       kpiCard(CT('netRev'),fmt(netRev),CT('afterComm'),'var(--green)')+
     '</div>'+
-
-    // ── Row 2: Cost KPIs ──
+    // ── Cost KPIs ──
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
       kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
-      kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),yBks.length+yDirect.length+' stays × default €50','#7c3aed')+
+      kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),(yBks.length+yDirect.length)+' stays (from import or default €50)','#7c3aed')+
       kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
       kpiCard(CT('pandl'),fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
-
-    // ── Row 3: Monthly chart + Platform breakdown ──
+    // ── Charts ──
     '<div style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
-      // Monthly revenue + occupancy chart
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'+
-          '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">Monthly Revenue — '+_finYear+'</div>'+
-          '<div style="font-size:11px;color:var(--muted)">Gross (dark) vs Net after commissions (light)</div></div>'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+          '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">'+(isAllTime?'Revenue — All time':'Monthly Revenue — '+_finYear)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">Gross (grey) vs Net after commissions (coloured)</div></div>'+
         '</div>'+
         '<div style="display:flex;align-items:flex-end;gap:4px;height:110px">'+
           months12.map(function(mo){
             var hg=maxGross>0?Math.max(4,Math.round(mo.gross/maxGross*95)):4;
             var hn=maxGross>0?Math.max(2,Math.round(mo.net/maxGross*95)):2;
             var occCol=mo.occ>=80?'#059669':mo.occ>=50?'var(--blue)':'#f59e0b';
-            return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+            return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
               '<div style="font-size:9px;font-weight:700;color:var(--muted)">'+(mo.gross>0?'€'+Math.round(mo.gross/1000*10)/10+'k':'')+'</div>'+
               '<div style="width:100%;position:relative;height:90px;display:flex;align-items:flex-end">'+
                 '<div style="position:absolute;bottom:0;left:0;right:0;background:#e2e8f0;border-radius:3px 3px 0 0;height:'+hg+'px"></div>'+
@@ -2136,9 +2210,8 @@ function renderRevenueAnalytics(){
           }).join('')+
         '</div>'+
       '</div>'+
-      // Platform breakdown
       '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
-        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:16px">Platform Breakdown</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Platform Breakdown</div>'+
         finPlatCard('Airbnb',byPlat.airbnb,totalBks,'#e8485a')+
         finPlatCard('Booking.com',byPlat.booking,totalBks,'#003580')+
         finPlatCard('Direct',byPlat.direct,totalBks,'var(--green)')+
@@ -2148,8 +2221,6 @@ function renderRevenueAnalytics(){
         '</div>'+
       '</div>'+
     '</div>'+
-
-    // ── Row 4: Expenses manager ──
     '<div id="expensesManagerPanel" style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);display:none">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'+
         '<div style="font-size:13px;font-weight:700;color:var(--primary)">Recurring Expenses</div>'+
@@ -2162,11 +2233,11 @@ function renderRevenueAnalytics(){
       '</div>'+
     '</div>';
 
-  // Render expenses list if panel is visible
   if(document.getElementById('expensesManagerPanel').style.display!=='none'){
     renderExpensesList();
   }
 }
+
 
 function finPlatCard(name,data,total,color){
   var pct=total>0?Math.round(data.count/total*100):0;
