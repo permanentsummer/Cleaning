@@ -3311,31 +3311,47 @@ function dashProcessImport(text,source,apt){
     var aptBks=allBookings.filter(function(x){return x.apt===nb.apt;});
 
     if(isPlatform){
-      // OTA import: same ID = update; different overlapping booking = report conflict
-      var otaBlocker=null;
-      aptBks.forEach(function(ex){
-        if(!ex.checkin||!ex.checkout||ex.id===nb.id)return;
-        if(ex.checkin<nb.checkout&&nb.checkin<ex.checkout){
-          if(ex.source==='direct'){
-            toDelete.push(ex.id); // OTA wins over direct
-          } else {
-            otaBlocker=ex; // OTA vs OTA: report
-          }
-        }
+      // OTA import: match by (apt + checkin + checkout) OR same ID → replace (update).
+      // True overlap = different dates that still overlap → report conflict.
+      var exactMatch=aptBks.find(function(ex){
+        return ex.checkin===nb.checkin&&ex.checkout===nb.checkout&&ex.apt===nb.apt;
       });
-      // Check within this batch
-      var batchBlocker=toInsert.find(function(ex){return ex.apt===nb.apt&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;});
+      var idMatch=!exactMatch&&aptBks.find(function(ex){return ex.id===nb.id;});
+      var toReplace=exactMatch||idMatch;
+
+      if(toReplace){
+        // Same stay (same dates or same ID) → replace to update financial data
+        toDelete.push(toReplace.id);
+        toInsert.push(nb);
+        return;
+      }
+
+      // No exact match — check for real overlaps (different dates that still overlap)
+      var otaBlocker=aptBks.find(function(ex){
+        if(!ex.checkin||!ex.checkout)return false;
+        return ex.source!=='direct'&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
+      });
+      // Also check within this import batch
+      var batchBlocker=toInsert.find(function(ex){
+        return ex.apt===nb.apt&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout;
+      });
+
       if(otaBlocker||batchBlocker){
         var blocker=otaBlocker||batchBlocker;
         var gIn=cleanNotesDisplay(nb.notes)||nb.guests||'?';
         var gEx=cleanNotesDisplay(blocker.notes)||blocker.guests||'?';
         var aptN=(properties||[]).reduce(function(a,p){return p.id===nb.apt?p.name||p.short:a;},'Apt '+nb.apt);
-        conflictLog.push('🔴 OVERLAP on '+aptN+': "'+gIn+'" ('+nb.checkin+'→'+nb.checkout+') vs "'+gEx+'" ('+blocker.checkin+'→'+blocker.checkout+'). NEITHER imported — fix dates in your file or delete one booking manually.');
+        conflictLog.push('🔴 OVERLAP on '+aptN+': "'+gIn+'" ('+nb.checkin+'→'+nb.checkout+') vs "'+gEx+'" ('+blocker.checkin+'→'+blocker.checkout+'). NEITHER imported — fix in your file or delete one booking first.');
         conflictSkipped++;
         return;
       }
-      // Replace same booking (update)
-      aptBks.forEach(function(ex){if(ex.id===nb.id)toDelete.push(ex.id);});
+
+      // Delete any direct booking on same dates (OTA wins)
+      aptBks.forEach(function(ex){
+        if(ex.source==='direct'&&ex.checkin<nb.checkout&&nb.checkin<ex.checkout){
+          toDelete.push(ex.id);
+        }
+      });
       toInsert.push(nb);
     } else {
       // Direct import: only add if NO OTA booking overlaps
