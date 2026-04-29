@@ -3266,6 +3266,9 @@ function _doMappedConflict(parsed,skipped,apt,source){
       if(apt&&apt!=='all'&&ex.apt!==apt)return; // only check selected property
       if(fileCheckIns[ex.apt+'|'+ex.checkin])return; // present in file → keep
       if(toDelete.indexOf(ex.id)!==-1)return; // already scheduled for delete
+      // Only cancel FUTURE bookings — past bookings not in file is normal (old exports)
+      var today=new Date().toISOString().slice(0,10);
+      if(ex.checkin&&ex.checkin<=today)return;
       // Not in file → cancelled
       var exName=cleanNotesDisplay(ex.notes)||ex.guests||'?';
       var aptN=(properties||[]).reduce(function(a,p){return p.id===ex.apt?p.name||p.short:a;},'Apt '+ex.apt);
