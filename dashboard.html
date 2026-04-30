@@ -3977,7 +3977,7 @@ function drawCal(){
         id:r.id,apt:aptId,source:(function(){
           var n=r.notes||'';
           var si=n.indexOf('\n__SRC__');
-          if(si!==-1)return n.slice(si+7).split('\n')[0];
+          if(si!==-1)return n.slice(si+8).split('\n')[0];
           return r.source||'direct';
         })(),
         checkin:r.checkin,checkout:r.checkout,clean:r.checkout,
@@ -4017,11 +4017,12 @@ function drawCal(){
   grid.innerHTML=headHTML+rowsHTML;
 
   // Attach click listeners to bars
+  // Use calBookings (merged allBookings + confirmed requests) for lookup
   grid.querySelectorAll('.cal-bar').forEach(function(bar){
     bar.addEventListener('click',function(e){
       e.stopPropagation();
       var id=bar.getAttribute('data-id');
-      var b=allBookings.find(function(x){return x.id===id;});
+      var b=calBookings.find(function(x){return x.id===id;});
       if(b)showCalPopup(b,e);
     });
   });
