@@ -4256,119 +4256,128 @@ function parsePdfPasteRaw(raw){
   var status=document.getElementById('nbPdfStatus');
   var found=[];
 
-  // ── Helper: parse French/Portuguese/English date strings ─────────────────
-  var MONTHS_FR={janv:1,fév:2,'févr':2,mars:3,avr:4,mai:5,juin:6,
-    juil:7,'août':8,sept:9,oct:10,nov:11,déc:12,
-    jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,dec:12};
+  // Normalise non-breaking spaces (\xa0) to regular spaces throughout
+  raw=raw.replace(/\u00a0/g,' ');
+
+  // ── Date parser (French/English month names) ──────────────────────────────
+  var MONTHS={janv:1,'fév':2,fevr:2,mars:3,avr:4,mai:5,juin:6,
+    juil:7,aout:8,sept:9,oct:10,nov:11,dec:12,
+    jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9};
   function parseTextDate(s){
-    // "mar. 8 sept. 2026" or "08 sep 2026" or "2026-09-08"
     if(!s)return'';
-    s=s.trim().replace(/\./g,'').toLowerCase();
-    // ISO format
-    var iso=s.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if(iso)return iso[0];
-    // "8 sept 2026" / "08 sep 2026"
-    var m=s.match(/(\d{1,2})\s+([a-zéûôèà]{2,6})\s+(\d{4})/);
+    // Remove day-of-week abbreviations (mar., sam., lun. etc.)
+    s=s.replace(/^[a-z]{2,4}\.\s*/i,'').trim();
+    s=s.replace(/\./g,'').toLowerCase().trim();
+    var iso=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[0];
+    var m=s.match(/(\d{1,2})\s+([a-z\u00e0-\u00ff]{2,6})\s+(\d{4})/);
     if(m){
-      var mo=MONTHS_FR[m[2].slice(0,4)]||MONTHS_FR[m[2].slice(0,3)]||MONTHS_FR[m[2].slice(0,6)];
+      var mkey=m[2].slice(0,4);
+      var mo=MONTHS[mkey]||MONTHS[m[2].slice(0,3)]||MONTHS[m[2].slice(0,5)];
       if(mo)return m[3]+'-'+String(mo).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
     }
     return'';
   }
 
-  // ── Parse reservation number ──────────────────────────────────────────────
-  var resNum=(raw.match(/(?:réservation|reservation|booking)[^\d]*(\d{7,12})/i)||[])[1]||'';
+  // ── Reservation number ────────────────────────────────────────────────────
+  var resNum=(raw.match(/(?:r[eé]servation|booking)\s*:?\s*\n?\s*(\d{7,12})/i)||[])[1]||'';
 
-  // ── Parse guest name ──────────────────────────────────────────────────────
-  // Booking.com PDF: name is on the line after "Informations client :"
-  // Also after "Numéro de réservation : XXXXXXX"
+  // ── Guest name ────────────────────────────────────────────────────────────
+  // PDF renders as "Informations client :\nConstanze Cholmakow - Bodechtel"
   var guestName='';
-  var clientMatch=raw.match(/informations?\s*client\s*:?\s*\n([^\n]+)/i);
-  if(clientMatch)guestName=clientMatch[1].trim();
+  var clientM=raw.match(/informations?\s*client\s*:?\s*\n([^\n]+)/i);
+  if(clientM)guestName=clientM[1].trim();
+  // Fallback: line after the reservation number
   if(!guestName){
-    // Try: line after reservation number line
     var lines=raw.split('\n');
     for(var li=0;li<lines.length;li++){
-      if(/^\d{7,12}$/.test(lines[li].trim())&&li+1<lines.length){
-        var next=lines[li+1].trim();
-        if(next&&!/^\d/.test(next)&&next.length>3)guestName=next;
-        break;
+      if(/^\d{7,12}$/.test(lines[li].trim())&&lines[li+1]){
+        var nx=lines[li+1].trim();
+        if(nx&&nx.length>3&&!/^\d/.test(nx))guestName=nx;
       }
     }
   }
 
-  // ── Parse dates ───────────────────────────────────────────────────────────
+  // ── Dates ─────────────────────────────────────────────────────────────────
+  // "Arrivée :\nmar. 8 sept. 2026" — label and value on separate lines
   var checkin='',checkout='';
-  // "Arrivée : mar. 8 sept. 2026"
-  var arrMatch=raw.match(/arriv[eéè][a-z]*\s*:?\s*([^\n]+)/i);
-  if(arrMatch)checkin=parseTextDate(arrMatch[1]);
-  var depMatch=raw.match(/d[eé]part\s*:?\s*([^\n]+)/i);
-  if(depMatch)checkout=parseTextDate(depMatch[1]);
-  // Fallback: ISO dates in sequence
+  var arrM=raw.match(/arriv[eé][a-z]*\s*:\s*\n([^\n]+)/i);
+  if(arrM)checkin=parseTextDate(arrM[1]);
+  if(!checkin){var arrM2=raw.match(/arriv[eé][a-z]*\s*:?\s*([^\n]+)/i);if(arrM2)checkin=parseTextDate(arrM2[1]);}
+  var depM=raw.match(/d[eé]part\s*:\s*\n([^\n]+)/i);
+  if(depM)checkout=parseTextDate(depM[1]);
+  if(!checkout){var depM2=raw.match(/d[eé]part\s*:?\s*([^\n]+)/i);if(depM2)checkout=parseTextDate(depM2[1]);}
+  // Last fallback: ISO dates
   if(!checkin||!checkout){
-    var isoDates=raw.match(/\d{4}-\d{2}-\d{2}/g)||[];
-    var uniq=[];isoDates.forEach(function(d){if(uniq.indexOf(d)===-1)uniq.push(d);});uniq.sort();
-    if(uniq.length>=2&&!checkin)checkin=uniq[0];
-    if(uniq.length>=2&&!checkout)checkout=uniq[1];
+    var iso=(raw.match(/\d{4}-\d{2}-\d{2}/g)||[]).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+    if(!checkin&&iso[0])checkin=iso[0];
+    if(!checkout&&iso[1])checkout=iso[1];
   }
 
-  // ── Parse guests ──────────────────────────────────────────────────────────
+  // ── Guests ────────────────────────────────────────────────────────────────
   var guestsNum=2;
-  var adultsM=raw.match(/(\d+)\s*adulte/i)||raw.match(/(\d+)\s*adult/i)||raw.match(/nombre de personnes\s*:?\s*(\d+)/i);
+  var adultsM=raw.match(/(\d+)\s*adultes?/i)||raw.match(/nombre de personnes\s*:?\s*(\d+)/i)||raw.match(/(\d+)\s*adults?/i);
   if(adultsM)guestsNum=parseInt(adultsM[1])||2;
 
-  // ── Parse amounts ─────────────────────────────────────────────────────────
-  // "Montant total : € 539,60"
-  var totalM=raw.match(/montant total[^:]*:?\s*[€£$]?\s*([\d\s.,]+)/i)||
-             raw.match(/total amount[^:]*:?\s*[€£$]?\s*([\d\s.,]+)/i);
-  var gross=totalM?_parseAmt(totalM[1].trim()):0;
+  // ── Amounts ───────────────────────────────────────────────────────────────
+  // "Montant total :\n€ 539,60"  — may be on same line or next line
+  function grabAmt(pattern){
+    var m=raw.match(pattern);if(!m)return 0;
+    // If capture looks like just label text (no digits), try next line
+    var v=m[1].trim();
+    if(!/\d/.test(v)){var m2=raw.match(new RegExp(pattern.source+'\\s*\\n([^\\n]+)'));if(m2)v=m2[1].trim();}
+    return _parseAmt(v);
+  }
+  // Montant total — grab the first € amount after the label
+  var totalM=raw.match(/montant total[^€\n]*\n?[^€\n]*€\s*([\d\s,.']+)/i)||
+             raw.match(/montant total\s*:\s*€\s*([\d\s,.']+)/i);
+  var gross=totalM?_parseAmt(totalM[1]):0;
+  if(!gross){
+    // Try: "Montant total :\n€ 539,60"
+    var tlm=raw.match(/montant total\s*:?\s*\n\s*€\s*([\d ,.]+)/i);
+    if(tlm)gross=_parseAmt(tlm[1]);
+  }
 
-  // "Commission : € 80,94"
-  var commM=raw.match(/commission\s*:?\s*[€£$]?\s*([\d\s.,]+)/i);
-  var comm=commM?_parseAmt(commM[1].trim()):0;
+  var commM=raw.match(/commission\s*:?\s*\n?\s*€\s*([\d ,.]+)/i)||
+            raw.match(/commission\s*:?\s*€?\s*([\d ,.]+)/i);
+  var comm=commM?_parseAmt(commM[1]):0;
 
-  // "Frais de ménage … € 50"
-  var cleanM=raw.match(/frais de m[eé]nage[^\n]*\n[^\n]*\n[€£$]?\s*([\d.,]+)/i)||
-             raw.match(/frais de m[eé]nage[^\n€]*[€£$]?\s*([\d.,]+)/i)||
-             raw.match(/cleaning fee[^\n€]*[€£$]?\s*([\d.,]+)/i);
-  var cleanFee=cleanM?_parseAmt(cleanM[1].trim()):0;
+  var cleanM=raw.match(/frais de m[eé]nage[^\n]*\n[^\n]*\n\s*€?\s*([\d.,]+)/i)||
+             raw.match(/cleaning fee[^\n€]*€\s*([\d.,]+)/i);
+  var cleanFee=cleanM?_parseAmt(cleanM[1]):0;
+  // Also try "€ 50 par séjour"
+  if(!cleanFee){var cm2=raw.match(/€\s*([\d.,]+)\s*par\s*s[eé]jour/i);if(cm2)cleanFee=_parseAmt(cm2[1]);}
 
-  // ── Fill the form ─────────────────────────────────────────────────────────
+  // ── Fill form ─────────────────────────────────────────────────────────────
   if(guestName){document.getElementById('nbGuest').value=guestName;found.push('name');}
   if(checkin){document.getElementById('nbIn').value=checkin;found.push('check-in');}
   if(checkout){document.getElementById('nbOut').value=checkout;found.push('check-out');}
   if(guestsNum){document.getElementById('nbGuests').value=guestsNum;found.push(guestsNum+' guests');}
-  if(gross){document.getElementById('nbGross').value=gross;found.push('€'+gross+' gross');}
-  if(comm){document.getElementById('nbComm').value=comm;found.push('€'+comm+' commission');}
+  if(gross){document.getElementById('nbGross').value=gross.toFixed(2);found.push('€'+gross+' gross');}
+  if(comm){document.getElementById('nbComm').value=comm.toFixed(2);found.push('€'+comm+' commission');}
   if(cleanFee){document.getElementById('nbCleanFee').value=cleanFee;found.push('€'+cleanFee+' cleaning');}
   if(resNum){document.getElementById('nbNotes').value='Booking.com ref: '+resNum;}
 
-  // Set source to Booking.com
+  // Source → Booking.com
   var srcSel=document.getElementById('nbSource');
-  if(srcSel&&raw.match(/booking\.com|r[eé]servation/i)){
-    srcSel.value='booking';
-    togglePricingFields();
-    found.push('source: Booking.com');
-  }
-  // Set paid (Booking.com pays after stay)
-  document.getElementById('nbPaid').value='unpaid';
-
-  // Trigger checkout min-date update
+  if(srcSel){srcSel.value='booking';togglePricingFields();found.push('source: Booking.com');}
+  // Payment status: Booking.com pays after stay
+  var paidSel=document.getElementById('nbPaid');if(paidSel)paidSel.value='unpaid';
+  // Trigger checkout min-date
   if(typeof updateNbCheckout==='function')updateNbCheckout();
 
-  // ── Status message ────────────────────────────────────────────────────────
-  if(found.length){
-    status.style.display='block';
-    status.style.color='#15803d';
-    status.style.background='transparent';
-    status.textContent='✅ Auto-filled: '+found.join(', ')+(gross&&comm?' | Net: €'+(gross-comm).toFixed(2):'');
-  } else {
-    status.style.display='block';
-    status.style.color='#dc2626';
-    status.textContent='⚠️ Could not detect booking details — check the text and fill manually.';
+  // Status message
+  if(status){
+    if(found.length){
+      status.style.display='block';status.style.color='#15803d';status.style.background='transparent';
+      status.textContent='✅ Auto-filled: '+found.join(', ')+(gross&&comm?' | Net: €'+(gross-comm).toFixed(2):'');
+    } else {
+      status.style.display='block';status.style.color='#dc2626';
+      status.textContent='⚠️ Could not detect booking details — try paste mode or fill manually.';
+    }
   }
   return found.length;
 }
+
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
 function renderOverview(){
