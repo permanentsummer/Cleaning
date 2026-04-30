@@ -855,9 +855,26 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Property *</label><select id="nbApt"></select></div>
       <!-- PDF auto-fill -->
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:8px">⚡ Auto-fill from Booking.com PDF</div>
-        <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">Open the reservation PDF → copy all text → paste below. All fields will be filled automatically.</div>
-        <textarea id="nbPdfPaste" rows="3" placeholder="Paste Booking.com PDF text here…" style="width:100%;box-sizing:border-box;border:1px solid #bfdbfe;border-radius:7px;padding:8px 10px;font-size:11px;font-family:monospace;resize:vertical;background:#fff" oninput="parsePdfPaste()"></textarea>
+        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px">⚡ Auto-fill from Booking.com PDF</div>
+        <!-- Tab switcher -->
+        <div style="display:flex;gap:0;border:1px solid #bfdbfe;border-radius:7px;overflow:hidden;margin-bottom:10px">
+          <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">📎 Share / Upload PDF</button>
+          <button id="pdfTabPaste" onclick="setPdfTab('paste')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#fff;color:#1d4ed8;border:none;cursor:pointer">📋 Paste text</button>
+        </div>
+        <!-- Upload panel -->
+        <div id="pdfPanelUpload">
+          <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">On your phone: open the PDF → tap Share → select this app. Or tap below to pick the file.</div>
+          <label style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1d4ed8;color:#fff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+            📄 Choose PDF file
+            <input type="file" id="nbPdfFile" accept=".pdf,application/pdf" style="display:none" onchange="handlePdfFile(this)">
+          </label>
+          <div id="nbPdfFileStatus" style="display:none;font-size:11px;font-weight:700;margin-top:8px;text-align:center"></div>
+        </div>
+        <!-- Paste panel -->
+        <div id="pdfPanelPaste" style="display:none">
+          <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">Open the PDF → Select All → Copy → paste here.</div>
+          <textarea id="nbPdfPaste" rows="3" placeholder="Paste Booking.com PDF text here…" style="width:100%;box-sizing:border-box;border:1px solid #bfdbfe;border-radius:7px;padding:8px 10px;font-size:11px;font-family:monospace;resize:vertical;background:#fff" oninput="parsePdfPaste()"></textarea>
+        </div>
         <div id="nbPdfStatus" style="display:none;font-size:11px;font-weight:700;margin-top:6px"></div>
       </div>
       <div class="fg"><label>Guest name *</label><input type="text" id="nbGuest" placeholder="Jane Smith"></div>
@@ -3716,7 +3733,10 @@ function openNewBooking(){
   document.getElementById('nbPaid').value='unpaid';
   document.getElementById('nbNotes').value='';
   var nbPdf=document.getElementById('nbPdfPaste');if(nbPdf)nbPdf.value='';
+  var nbPdfFile=document.getElementById('nbPdfFile');if(nbPdfFile)nbPdfFile.value='';
   var nbPdfSt=document.getElementById('nbPdfStatus');if(nbPdfSt)nbPdfSt.style.display='none';
+  var nbPdfFileSt=document.getElementById('nbPdfFileStatus');if(nbPdfFileSt)nbPdfFileSt.style.display='none';
+  setPdfTab('upload'); // default to upload tab (more convenient on mobile)
   var nbCompEl=document.getElementById('nbComp');if(nbCompEl)nbCompEl.checked=false;
   toggleNbComp();
   document.getElementById('nbTotalPreview').style.display='none';
@@ -4149,10 +4169,90 @@ function populateListPropFilters(){
   });
 }
 
+// ── PDF TAB SWITCHER ──────────────────────────────────────────────────────────
+function setPdfTab(tab){
+  var isUpload=tab==='upload';
+  document.getElementById('pdfPanelUpload').style.display=isUpload?'':'none';
+  document.getElementById('pdfPanelPaste').style.display=isUpload?'none':'';
+  document.getElementById('pdfTabUpload').style.background=isUpload?'#1d4ed8':'#fff';
+  document.getElementById('pdfTabUpload').style.color=isUpload?'#fff':'#1d4ed8';
+  document.getElementById('pdfTabPaste').style.background=isUpload?'#fff':'#1d4ed8';
+  document.getElementById('pdfTabPaste').style.color=isUpload?'#1d4ed8':'#fff';
+}
+
+function handlePdfFile(input){
+  var file=input.files&&input.files[0];
+  if(!file){return;}
+  var st=document.getElementById('nbPdfFileStatus');
+  st.style.display='block';st.style.color='#1d4ed8';st.textContent='Reading PDF…';
+
+  // Load PDF.js from CDN if not already loaded
+  function extractWithPdfJs(){
+    if(!window.pdfjsLib){
+      var script=document.createElement('script');
+      script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload=function(){
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        doExtract();
+      };
+      script.onerror=function(){st.style.color='#dc2626';st.textContent='Could not load PDF reader. Use paste mode instead.';};
+      document.head.appendChild(script);
+    } else {
+      doExtract();
+    }
+  }
+
+  function doExtract(){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var data=new Uint8Array(e.target.result);
+      window.pdfjsLib.getDocument({data:data}).promise.then(function(pdf){
+        var pages=[];
+        var total=pdf.numPages;
+        for(var i=1;i<=total;i++){pages.push(i);}
+        return Promise.all(pages.map(function(n){
+          return pdf.getPage(n).then(function(page){
+            return page.getTextContent().then(function(tc){
+              return tc.items.map(function(it){return it.str;}).join('\n');
+            });
+          });
+        }));
+      }).then(function(pageTexts){
+        var fullText=pageTexts.join('\n');
+        // Put the extracted text into the paste area so parsePdfPaste can use it
+        var ta=document.getElementById('nbPdfPaste');
+        if(ta)ta.value=fullText;
+        // Run the parser
+        var result=parsePdfPasteRaw(fullText);
+        if(result>0){
+          st.style.color='#15803d';
+          st.textContent='✅ PDF read — '+result+' fields auto-filled';
+        } else {
+          st.style.color='#f59e0b';
+          st.textContent='⚠️ PDF read but could not detect booking fields. Try paste mode.';
+        }
+      }).catch(function(err){
+        st.style.color='#dc2626';
+        st.textContent='Could not read PDF: '+err.message+'. Try paste mode.';
+      });
+    };
+    reader.onerror=function(){st.style.color='#dc2626';st.textContent='Cannot read file.';};
+    reader.readAsArrayBuffer(file);
+  }
+
+  extractWithPdfJs();
+}
+
 // ── PDF PASTE PARSER ─────────────────────────────────────────────────────────
 function parsePdfPaste(){
   var raw=document.getElementById('nbPdfPaste').value;
   if(!raw||raw.trim().length<20)return;
+  parsePdfPasteRaw(raw);
+}
+
+function parsePdfPasteRaw(raw){
+  if(!raw||raw.trim().length<20)return 0;
   var status=document.getElementById('nbPdfStatus');
   var found=[];
 
@@ -4267,6 +4367,7 @@ function parsePdfPaste(){
     status.style.color='#dc2626';
     status.textContent='⚠️ Could not detect booking details — check the text and fill manually.';
   }
+  return found.length;
 }
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
