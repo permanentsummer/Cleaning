@@ -3869,6 +3869,7 @@ function saveNewBooking(){
     workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
     guest_name:guest,guest_email:email||null,guest_phone:phone||null,
     checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
+    source:source,
     rate_per_night:isComp?null:(rate?Math.round(rate):null),total_amount:isComp?null:(actualTotal?Math.round(actualTotal):null),
     status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
@@ -3971,7 +3972,7 @@ function drawCal(){
     var aptId=r.apt_id||r.apt_name||'';
     if(!reqCoveredForCal[aptId+'|'+r.checkin+'|'+r.checkout]){
       calBookings.push({
-        id:r.id,apt:aptId,source:'direct',
+        id:r.id,apt:aptId,source:r.source||'direct',
         checkin:r.checkin,checkout:r.checkout,clean:r.checkout,
         guests:String(r.guests||''),notes:r.guest_name||'',
         paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),cleaned:'no'
