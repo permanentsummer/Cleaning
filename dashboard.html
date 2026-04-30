@@ -899,9 +899,9 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <div class="sep">Pricing</div>
         <div class="fr">
           <div class="fg"><label>Gross revenue (€)</label><input type="number" id="nbGross" placeholder="0" min="0" step="0.01" oninput="calcNbTotal()"></div>
-          <div class="fg"><label>Commission (€)</label><input type="number" id="nbComm" placeholder="0" min="0" step="0.01"></div>
+          <div class="fg"><label>Commission (€)</label><input type="number" id="nbComm" placeholder="0 for direct" min="0" step="0.01"></div>
         </div>
-        <div class="fr">
+        <div class="fr" id="nbRateRow">
           <div class="fg"><label>Rate / night (€)</label><input type="number" id="nbRate" placeholder="0" min="0" oninput="calcNbTotal()"></div>
           <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="nbCleanFee" placeholder="0" min="0" oninput="calcNbTotal()"></div>
         </div>
@@ -4214,7 +4214,13 @@ function handlePdfFile(input){
         return Promise.all(pages.map(function(n){
           return pdf.getPage(n).then(function(page){
             return page.getTextContent().then(function(tc){
-              return tc.items.map(function(it){return it.str;}).join('\n');
+              // Use hasEOL to join spans: no separator within a line, newline at line breaks
+              var text='';
+              tc.items.forEach(function(it){
+                text+=it.str;
+                if(it.hasEOL)text+='\n';
+              });
+              return text;
             });
           });
         }));
@@ -4648,10 +4654,14 @@ function testEmail(){
 
 function togglePricingFields(){
   var src=document.getElementById('nbSource').value;
+  var isDirect=(src==='direct');
+  // Gross + commission always visible (needed for all sources)
+  // Rate/night only relevant for direct bookings
+  var rateRow=document.getElementById('nbRateRow');
+  if(rateRow)rateRow.style.display=isDirect?'':'none';
+  // Always show the pricing section
   var section=document.getElementById('nbPricingSection');
-  if(section){
-    section.style.display=(src==='direct')?'':'none';
-  }
+  if(section)section.style.display='';
 }
 
 function toggleDeposit(){
