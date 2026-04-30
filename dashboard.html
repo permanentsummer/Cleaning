@@ -2004,6 +2004,8 @@ function cleanNotesDisplay(n){
   // Strip contact block (email/phone stored for direct bookings)
   var idx3=n.indexOf('\n__CONTACT__');
   if(idx3!==-1)n=n.slice(0,idx3);
+  var idx4=n.indexOf('\n__SRC__');
+  if(idx4!==-1)n=n.slice(0,idx4);
   return n.trim();
 }
 
@@ -3868,8 +3870,8 @@ function saveNewBooking(){
   sbF('POST','direct_requests',{
     workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
     guest_name:guest,guest_email:email||null,guest_phone:phone||null,
-    checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
-    source:source,
+    checkin:ci,checkout:co,guests:parseInt(guests)||2,
+    notes:(notes||'')+(source&&source!=='direct'?'\n__SRC__'+source:''),
     rate_per_night:isComp?null:(rate?Math.round(rate):null),total_amount:isComp?null:(actualTotal?Math.round(actualTotal):null),
     status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
@@ -3972,7 +3974,12 @@ function drawCal(){
     var aptId=r.apt_id||r.apt_name||'';
     if(!reqCoveredForCal[aptId+'|'+r.checkin+'|'+r.checkout]){
       calBookings.push({
-        id:r.id,apt:aptId,source:r.source||'direct',
+        id:r.id,apt:aptId,source:(function(){
+          var n=r.notes||'';
+          var si=n.indexOf('\n__SRC__');
+          if(si!==-1)return n.slice(si+7).split('\n')[0];
+          return r.source||'direct';
+        })(),
         checkin:r.checkin,checkout:r.checkout,clean:r.checkout,
         guests:String(r.guests||''),notes:r.guest_name||'',
         paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),cleaned:'no'
