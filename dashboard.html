@@ -853,6 +853,13 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div id="nbBookingForm">
       <div class="sep">Property & Guest</div>
       <div class="fg"><label>Property *</label><select id="nbApt"></select></div>
+      <!-- PDF auto-fill -->
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:8px">⚡ Auto-fill from Booking.com PDF</div>
+        <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">Open the reservation PDF → copy all text → paste below. All fields will be filled automatically.</div>
+        <textarea id="nbPdfPaste" rows="3" placeholder="Paste Booking.com PDF text here…" style="width:100%;box-sizing:border-box;border:1px solid #bfdbfe;border-radius:7px;padding:8px 10px;font-size:11px;font-family:monospace;resize:vertical;background:#fff" oninput="parsePdfPaste()"></textarea>
+        <div id="nbPdfStatus" style="display:none;font-size:11px;font-weight:700;margin-top:6px"></div>
+      </div>
       <div class="fg"><label>Guest name *</label><input type="text" id="nbGuest" placeholder="Jane Smith"></div>
       <div class="fg"><label>Email</label><input type="email" id="nbEmail" placeholder="jane@example.com"></div>
       <div class="fg"><label>Phone</label><input type="tel" id="nbPhone" placeholder="+351 xxx xxx xxx"></div>
@@ -871,8 +878,12 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
           </select>
         </div>
       </div>
-      <div id="nbPricingSection">
+        <div id="nbPricingSection">
         <div class="sep">Pricing</div>
+        <div class="fr">
+          <div class="fg"><label>Gross revenue (€)</label><input type="number" id="nbGross" placeholder="0" min="0" step="0.01" oninput="calcNbTotal()"></div>
+          <div class="fg"><label>Commission (€)</label><input type="number" id="nbComm" placeholder="0" min="0" step="0.01"></div>
+        </div>
         <div class="fr">
           <div class="fg"><label>Rate / night (€)</label><input type="number" id="nbRate" placeholder="0" min="0" oninput="calcNbTotal()"></div>
           <div class="fg"><label>Cleaning fee (€)</label><input type="number" id="nbCleanFee" placeholder="0" min="0" oninput="calcNbTotal()"></div>
@@ -3704,6 +3715,8 @@ function openNewBooking(){
   document.getElementById('nbCleanFee').value='';
   document.getElementById('nbPaid').value='unpaid';
   document.getElementById('nbNotes').value='';
+  var nbPdf=document.getElementById('nbPdfPaste');if(nbPdf)nbPdf.value='';
+  var nbPdfSt=document.getElementById('nbPdfStatus');if(nbPdfSt)nbPdfSt.style.display='none';
   var nbCompEl=document.getElementById('nbComp');if(nbCompEl)nbCompEl.checked=false;
   toggleNbComp();
   document.getElementById('nbTotalPreview').style.display='none';
@@ -3815,13 +3828,16 @@ function saveNewBooking(){
   var source=document.getElementById('nbSource').value;
   var rate=parseFloat(document.getElementById('nbRate').value)||0;
   var clean=parseFloat(document.getElementById('nbCleanFee').value)||0;
+  var gross=parseFloat(document.getElementById('nbGross').value)||0;
+  var comm=parseFloat(document.getElementById('nbComm').value)||0;
   var paid=document.getElementById('nbPaid').value;
   var notes=document.getElementById('nbNotes').value.trim();
 
   if(!aptId||!guest||!ci||!co){err.textContent='Property, guest name and dates are required.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
   var nights=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
   if(nights<1){err.textContent='Check-out must be after check-in.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
-  var total=nights*rate+clean;
+  // Use gross if provided (e.g. from PDF import), otherwise compute from rate×nights+clean
+  var total=gross>0?gross:(nights*rate+clean);
 
   // Write ONLY to direct_requests (confirmed). renderResList shows it directly.
   // Do NOT also write to bookings table — that causes duplicates in the list view.
@@ -4131,6 +4147,126 @@ function populateListPropFilters(){
     b.onclick=function(){toggleListFilter('prop',p.id,b);};
     c.appendChild(b);
   });
+}
+
+// ── PDF PASTE PARSER ─────────────────────────────────────────────────────────
+function parsePdfPaste(){
+  var raw=document.getElementById('nbPdfPaste').value;
+  if(!raw||raw.trim().length<20)return;
+  var status=document.getElementById('nbPdfStatus');
+  var found=[];
+
+  // ── Helper: parse French/Portuguese/English date strings ─────────────────
+  var MONTHS_FR={janv:1,fév:2,'févr':2,mars:3,avr:4,mai:5,juin:6,
+    juil:7,'août':8,sept:9,oct:10,nov:11,déc:12,
+    jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,dec:12};
+  function parseTextDate(s){
+    // "mar. 8 sept. 2026" or "08 sep 2026" or "2026-09-08"
+    if(!s)return'';
+    s=s.trim().replace(/\./g,'').toLowerCase();
+    // ISO format
+    var iso=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(iso)return iso[0];
+    // "8 sept 2026" / "08 sep 2026"
+    var m=s.match(/(\d{1,2})\s+([a-zéûôèà]{2,6})\s+(\d{4})/);
+    if(m){
+      var mo=MONTHS_FR[m[2].slice(0,4)]||MONTHS_FR[m[2].slice(0,3)]||MONTHS_FR[m[2].slice(0,6)];
+      if(mo)return m[3]+'-'+String(mo).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+    }
+    return'';
+  }
+
+  // ── Parse reservation number ──────────────────────────────────────────────
+  var resNum=(raw.match(/(?:réservation|reservation|booking)[^\d]*(\d{7,12})/i)||[])[1]||'';
+
+  // ── Parse guest name ──────────────────────────────────────────────────────
+  // Booking.com PDF: name is on the line after "Informations client :"
+  // Also after "Numéro de réservation : XXXXXXX"
+  var guestName='';
+  var clientMatch=raw.match(/informations?\s*client\s*:?\s*\n([^\n]+)/i);
+  if(clientMatch)guestName=clientMatch[1].trim();
+  if(!guestName){
+    // Try: line after reservation number line
+    var lines=raw.split('\n');
+    for(var li=0;li<lines.length;li++){
+      if(/^\d{7,12}$/.test(lines[li].trim())&&li+1<lines.length){
+        var next=lines[li+1].trim();
+        if(next&&!/^\d/.test(next)&&next.length>3)guestName=next;
+        break;
+      }
+    }
+  }
+
+  // ── Parse dates ───────────────────────────────────────────────────────────
+  var checkin='',checkout='';
+  // "Arrivée : mar. 8 sept. 2026"
+  var arrMatch=raw.match(/arriv[eéè][a-z]*\s*:?\s*([^\n]+)/i);
+  if(arrMatch)checkin=parseTextDate(arrMatch[1]);
+  var depMatch=raw.match(/d[eé]part\s*:?\s*([^\n]+)/i);
+  if(depMatch)checkout=parseTextDate(depMatch[1]);
+  // Fallback: ISO dates in sequence
+  if(!checkin||!checkout){
+    var isoDates=raw.match(/\d{4}-\d{2}-\d{2}/g)||[];
+    var uniq=[];isoDates.forEach(function(d){if(uniq.indexOf(d)===-1)uniq.push(d);});uniq.sort();
+    if(uniq.length>=2&&!checkin)checkin=uniq[0];
+    if(uniq.length>=2&&!checkout)checkout=uniq[1];
+  }
+
+  // ── Parse guests ──────────────────────────────────────────────────────────
+  var guestsNum=2;
+  var adultsM=raw.match(/(\d+)\s*adulte/i)||raw.match(/(\d+)\s*adult/i)||raw.match(/nombre de personnes\s*:?\s*(\d+)/i);
+  if(adultsM)guestsNum=parseInt(adultsM[1])||2;
+
+  // ── Parse amounts ─────────────────────────────────────────────────────────
+  // "Montant total : € 539,60"
+  var totalM=raw.match(/montant total[^:]*:?\s*[€£$]?\s*([\d\s.,]+)/i)||
+             raw.match(/total amount[^:]*:?\s*[€£$]?\s*([\d\s.,]+)/i);
+  var gross=totalM?_parseAmt(totalM[1].trim()):0;
+
+  // "Commission : € 80,94"
+  var commM=raw.match(/commission\s*:?\s*[€£$]?\s*([\d\s.,]+)/i);
+  var comm=commM?_parseAmt(commM[1].trim()):0;
+
+  // "Frais de ménage … € 50"
+  var cleanM=raw.match(/frais de m[eé]nage[^\n]*\n[^\n]*\n[€£$]?\s*([\d.,]+)/i)||
+             raw.match(/frais de m[eé]nage[^\n€]*[€£$]?\s*([\d.,]+)/i)||
+             raw.match(/cleaning fee[^\n€]*[€£$]?\s*([\d.,]+)/i);
+  var cleanFee=cleanM?_parseAmt(cleanM[1].trim()):0;
+
+  // ── Fill the form ─────────────────────────────────────────────────────────
+  if(guestName){document.getElementById('nbGuest').value=guestName;found.push('name');}
+  if(checkin){document.getElementById('nbIn').value=checkin;found.push('check-in');}
+  if(checkout){document.getElementById('nbOut').value=checkout;found.push('check-out');}
+  if(guestsNum){document.getElementById('nbGuests').value=guestsNum;found.push(guestsNum+' guests');}
+  if(gross){document.getElementById('nbGross').value=gross;found.push('€'+gross+' gross');}
+  if(comm){document.getElementById('nbComm').value=comm;found.push('€'+comm+' commission');}
+  if(cleanFee){document.getElementById('nbCleanFee').value=cleanFee;found.push('€'+cleanFee+' cleaning');}
+  if(resNum){document.getElementById('nbNotes').value='Booking.com ref: '+resNum;}
+
+  // Set source to Booking.com
+  var srcSel=document.getElementById('nbSource');
+  if(srcSel&&raw.match(/booking\.com|r[eé]servation/i)){
+    srcSel.value='booking';
+    togglePricingFields();
+    found.push('source: Booking.com');
+  }
+  // Set paid (Booking.com pays after stay)
+  document.getElementById('nbPaid').value='unpaid';
+
+  // Trigger checkout min-date update
+  if(typeof updateNbCheckout==='function')updateNbCheckout();
+
+  // ── Status message ────────────────────────────────────────────────────────
+  if(found.length){
+    status.style.display='block';
+    status.style.color='#15803d';
+    status.style.background='transparent';
+    status.textContent='✅ Auto-filled: '+found.join(', ')+(gross&&comm?' | Net: €'+(gross-comm).toFixed(2):'');
+  } else {
+    status.style.display='block';
+    status.style.color='#dc2626';
+    status.textContent='⚠️ Could not detect booking details — check the text and fill manually.';
+  }
 }
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
