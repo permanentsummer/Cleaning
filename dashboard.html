@@ -3876,7 +3876,7 @@ function saveNewBooking(){
     closeModal('newBookingOverlay');
     return Promise.all([loadRequests(),loadAllBookings()]);
   }).then(function(){
-    renderCalendar();renderPayments();renderProps();
+    renderCalendar();renderResList();renderPayments();renderOverview();
   }).catch(function(e){err.textContent='Error: '+e.message;
   }).finally(function(){btn.disabled=false;btn.textContent='💾 Save booking';});
 }
@@ -3963,10 +3963,26 @@ function drawCal(){
   headHTML+='</div>';
 
   // ── Property rows ──────────────────────────────────────────────────────
+  // Merge allBookings + confirmed direct_requests not already in allBookings
+  var reqCoveredForCal={};
+  allBookings.forEach(function(b){reqCoveredForCal[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
+  var calBookings=allBookings.slice();
+  (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    var aptId=r.apt_id||r.apt_name||'';
+    if(!reqCoveredForCal[aptId+'|'+r.checkin+'|'+r.checkout]){
+      calBookings.push({
+        id:r.id,apt:aptId,source:'direct',
+        checkin:r.checkin,checkout:r.checkout,clean:r.checkout,
+        guests:String(r.guests||''),notes:r.guest_name||'',
+        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),cleaned:'no'
+      });
+    }
+  });
+
   var rowsHTML='';
   visibleProps.forEach(function(prop){
-    // Get bookings for this property
-    var propBookings=allBookings.filter(function(b){
+    // Get bookings for this property from merged list
+    var propBookings=calBookings.filter(function(b){
       if(calAptFilter!=='all'&&b.apt!==calAptFilter&&b.apt!==prop.id)return false;
       return b.apt===prop.id||b.apt===prop.short||b.apt===prop.name;
     });
