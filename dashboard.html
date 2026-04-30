@@ -909,7 +909,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <div class="fg"><label>Payment status</label>
           <select id="nbPaid">
             <option value="unpaid">Unpaid</option>
-            <option value="paid">Paid via platform</option>
+            <option value="paid" selected>Paid via platform</option>
           </select>
         </div>
       </div>
@@ -3730,7 +3730,7 @@ function openNewBooking(){
   document.getElementById('nbSource').value='direct';
   document.getElementById('nbRate').value='';
   document.getElementById('nbCleanFee').value='';
-  document.getElementById('nbPaid').value='unpaid';
+  document.getElementById('nbPaid').value='paid';
   document.getElementById('nbNotes').value='';
   var nbPdf=document.getElementById('nbPdfPaste');if(nbPdf)nbPdf.value='';
   var nbPdfFile=document.getElementById('nbPdfFile');if(nbPdfFile)nbPdfFile.value='';
@@ -3869,7 +3869,7 @@ function saveNewBooking(){
     workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
     guest_name:guest,guest_email:email||null,guest_phone:phone||null,
     checkin:ci,checkout:co,guests:parseInt(guests)||2,notes:notes||null,
-    rate_per_night:isComp?null:(rate||null),total_amount:isComp?null:(actualTotal||null),
+    rate_per_night:isComp?null:(rate?Math.round(rate):null),total_amount:isComp?null:(actualTotal?Math.round(actualTotal):null),
     status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
     toast('✅ Booking saved','ok');
@@ -4367,7 +4367,7 @@ function parsePdfPasteRaw(raw){
   var srcSel=document.getElementById('nbSource');
   if(srcSel){srcSel.value='booking';togglePricingFields();found.push('source: Booking.com');}
   // Payment status: Booking.com pays after stay
-  var paidSel=document.getElementById('nbPaid');if(paidSel)paidSel.value='unpaid';
+  var paidSel=document.getElementById('nbPaid');if(paidSel)paidSel.value='paid';
   // Trigger checkout min-date
   if(typeof updateNbCheckout==='function')updateNbCheckout();
 
