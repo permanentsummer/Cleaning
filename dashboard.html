@@ -737,9 +737,6 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
     <!-- Revenue analytics -->
     <div id="revenueAnalytics" style="margin-bottom:24px"></div>
-    <!-- Payment tracking -->
-    <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Direct booking payments</div>
-    <div id="payList"><div class="spinner"></div></div>
   </div>
 <!-- MODAL: Import Bookings -->
 <div class="overlay" id="dashImportOverlay">
@@ -2095,8 +2092,10 @@ function renderRevenueAnalytics(){
   var numProps=_finApt==='all'?(properties&&properties.length||1):1;
   // Available nights = calendar days in selected period × numProps (clamped to today for current year)
   var todayStr=new Date().toISOString().slice(0,10);
-  var periodEnd=isAllTime?todayStr:Math.min(String(_finYear)+'-12-31',todayStr);
-  // But for future years (year > current), count full year
+  var yearEndStr=isAllTime?todayStr:String(_finYear)+'-12-31';
+  // Use string comparison (ISO dates compare lexicographically)
+  var periodEnd=yearEndStr<todayStr?yearEndStr:todayStr;
+  // For future years show full year
   if(!isAllTime&&String(_finYear)>todayStr.slice(0,4))periodEnd=String(_finYear)+'-12-31';
   var periodStart=yStart;
   var dStart=new Date(periodStart+'T12:00:00'),dEnd=new Date(periodEnd+'T12:00:00');
@@ -2167,9 +2166,28 @@ function renderRevenueAnalytics(){
   });
   var totalExpenses=0;
   expenses.forEach(function(e){
-    var annual=e.freq==='monthly'?e.amount*12:e.freq==='weekly'?e.amount*52:parseFloat(e.amount)||0;
-    if(isAllTime)annual*=Math.max(1,years.length);
-    totalExpenses+=annual;
+    // Determine how many months this expense applies in the selected period
+    var expStart=e.startDate?e.startDate+'-01':'2000-01-01'; // e.startDate = 'YYYY-MM'
+    var periodStartStr=isAllTime?'2000-01-01':String(_finYear)+'-01-01';
+    var periodEndStr=isAllTime?todayStr:String(_finYear)+'-12-31';
+    // Clamp effective start to whichever is later: expense start or period start
+    var effectiveStart=expStart>periodStartStr?expStart:periodStartStr;
+    var effectiveEnd=periodEndStr<todayStr?periodEndStr:todayStr;
+    if(effectiveStart>effectiveEnd){return;} // not yet started in this period
+    if(e.freq==='monthly'){
+      // Count months between effectiveStart and effectiveEnd
+      var s=new Date(effectiveStart+'T12:00:00');
+      var en=new Date(effectiveEnd+'T12:00:00');
+      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth())+1;
+      months=Math.max(1,Math.min(months,12));
+      totalExpenses+=e.amount*months;
+    } else if(e.freq==='weekly'){
+      var days=Math.round((new Date(effectiveEnd+'T12:00:00')-new Date(effectiveStart+'T12:00:00'))/86400000);
+      totalExpenses+=e.amount*(days/7);
+    } else {
+      // yearly
+      totalExpenses+=parseFloat(e.amount)||0;
+    }
   });
   var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
 
@@ -2395,9 +2413,10 @@ function renderExpensesList(){
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
   var html=expenses.map(function(ex,i){
-    return '<div class="exp-row" data-idx="'+i+'" style="display:grid;grid-template-columns:1fr 100px 110px 90px 36px;gap:8px;align-items:center;margin-bottom:8px">'+
+    return '<div class="exp-row" data-idx="'+i+'" style="display:grid;grid-template-columns:1fr 90px 120px 110px 90px 36px;gap:8px;align-items:center;margin-bottom:8px">'+
       '<input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="Expense name (e.g. Internet)" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
       '<input class="exp-amount" type="number" value="'+(ex.amount||'')+'" placeholder="€" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
+      '<input class="exp-start" type="month" value="'+(ex.startDate||'')+'" title="Start month (leave blank = always)" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box" placeholder="From month">'+
       '<select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select>'+
       '<select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select>'+
       '<button onclick="removeExpense('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:7px;width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">×</button>'+
@@ -2427,9 +2446,10 @@ function saveExpenses(){
   rows.forEach(function(row){
     var name=row.querySelector('.exp-name').value.trim();
     var amount=parseFloat(row.querySelector('.exp-amount').value)||0;
+    var startDate=row.querySelector('.exp-start')?row.querySelector('.exp-start').value.trim():'';
     var apt=row.querySelector('.exp-apt').value;
     var freq=row.querySelector('.exp-freq').value;
-    if(name)expenses.push({name:name,amount:amount,apt:apt,freq:freq});
+    if(name)expenses.push({name:name,amount:amount,apt:apt,freq:freq,startDate:startDate});
   });
   saveFinExpenses(expenses).then(function(){
     closeExpensesManager();
@@ -2940,8 +2960,9 @@ function mkCleanCard(b,tod){
   var isActive=b.checkout<=tod;
   var srcColors={airbnb:'#e8485a',booking:'#003580',direct:'var(--green)'};
   var srcColor=srcColors[b.source||'direct']||'var(--green)';
-  var guestName=b.guests||'Guest';
-  if(guestName.indexOf('–')!==-1)guestName=guestName.split('–')[1].trim();
+  var guestName=cleanNotesDisplay(b.notes)||b.guests||'Guest';
+  if(guestName&&guestName.indexOf('–')!==-1)guestName=guestName.split('–')[1].trim();
+  else if(!cleanNotesDisplay(b.notes)&&b.guests&&/^\d+$/.test((b.guests||'').trim()))guestName='Guest';
   var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
 
   var card=document.createElement('div');
@@ -2952,8 +2973,8 @@ function mkCleanCard(b,tod){
       '<div style="display:flex;align-items:center;gap:10px">'+
         '<div style="width:10px;height:10px;border-radius:3px;background:'+apt.color+';flex-shrink:0"></div>'+
         '<div>'+
-          '<div style="font-size:14px;font-weight:700;color:var(--primary)">'+esc(apt.name||b.apt)+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:1px">'+esc(guestName)+' · '+nights+' nights</div>'+
+          '<div style="font-size:14px;font-weight:700;color:var(--primary)">'+esc(guestName)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:1px">'+esc(apt.name||b.apt)+' · '+nights+' nights</div>'+
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;align-items:center">'+
