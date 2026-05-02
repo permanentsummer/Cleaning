@@ -1287,7 +1287,8 @@ function loadRequests(){
       var msg=e.message||'';
       var tableNotFound=msg.indexOf('42P01')!==-1||msg.indexOf('does not exist')!==-1||msg.indexOf('relation')!==-1;
       if(!tableNotFound){
-        document.getElementById('reqList').innerHTML=
+        var rl=document.getElementById('reqList');
+        if(rl)rl.innerHTML=
           '<div class="empty-state"><div class="ico">⚠️</div>'+
           '<h3>Could not load requests</h3>'+
           '<p style="font-size:12px;color:#dc2626;font-family:monospace;text-align:left;background:#fee2e2;padding:10px;border-radius:8px;margin:12px 0">'+esc(msg)+'</p>'+
@@ -1377,7 +1378,7 @@ function filterReqs(f,btn){
 
 function renderRequests(){
   var list=document.getElementById('reqList');
-  var filtered=reqFilter==='all'?requests:requests.filter(function(r){return r.status===reqFilter;});
+  if(!list)return;
   if(!filtered.length){
     list.innerHTML='<div class="empty-state"><div class="ico">'+(reqFilter==='pending'?'⏳':'📭')+'</div>'+
       '<h3>'+(reqFilter==='pending'?'No pending requests':'No requests yet')+'</h3>'+
@@ -2175,9 +2176,45 @@ function renderRevenueAnalytics(){
   });
   var totalExpenses=0;
   expenses.forEach(function(e){
-    var annual=e.freq==='monthly'?e.amount*12:e.freq==='weekly'?e.amount*52:parseFloat(e.amount)||0;
-    if(isAllTime)annual*=Math.max(1,years.length);
-    totalExpenses+=annual;
+    // Get the amount for the selected year (or default)
+    var yearAmt=e.amount||0;
+    if(!isAllTime&&e.amounts&&e.amounts[String(_finYear)]!=null){
+      yearAmt=parseFloat(e.amounts[String(_finYear)])||0;
+    }
+    // Determine effective period for this expense
+    var expStart=e.startDate?(e.startDate+'-01'):'2000-01-01';
+    var pStart=isAllTime?'2000-01-01':(String(_finYear)+'-01-01');
+    var effStart=expStart>pStart?expStart:pStart;
+    if(effStart>periodEnd)return; // not started yet
+    if(isAllTime){
+      // Sum across all years
+      years.forEach(function(y){
+        var amt=e.amounts&&e.amounts[String(y)]!=null?parseFloat(e.amounts[String(y)])||0:e.amount||0;
+        var yStart=String(y)+'-01-01';
+        var yEnd=String(y+1)+'-01-01';
+        var yEffStart=expStart>yStart?expStart:yStart;
+        if(yEffStart>=yEnd)return;
+        if(e.freq==='monthly'){
+          var s=new Date(yEffStart+'T12:00:00'),en=new Date(yEnd+'T12:00:00');
+          var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
+          totalExpenses+=amt*Math.max(0,months);
+        } else if(e.freq==='weekly'){
+          var days=Math.round((new Date(yEnd+'T12:00:00')-new Date(yEffStart+'T12:00:00'))/86400000);
+          totalExpenses+=amt*(days/7);
+        } else {
+          totalExpenses+=amt;
+        }
+      });
+    } else if(e.freq==='monthly'){
+      var s=new Date(effStart+'T12:00:00'),en=new Date(periodEnd+'T12:00:00');
+      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth())+1;
+      totalExpenses+=yearAmt*Math.max(0,months);
+    } else if(e.freq==='weekly'){
+      var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
+      totalExpenses+=yearAmt*(days/7);
+    } else {
+      totalExpenses+=yearAmt;
+    }
   });
   var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
 
@@ -2415,30 +2452,61 @@ function renderExpensesList(){
 
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
+  // Build year columns from all booking years + 2 future years
+  var currentYear=new Date().getFullYear();
+  var allYears=(allBookings||[]).map(function(b){return b.checkin?parseInt(b.checkin.slice(0,4)):0;}).filter(function(y){return y>2020&&y<2050;});
+  [currentYear,currentYear+1].forEach(function(y){if(allYears.indexOf(y)===-1)allYears.push(y);});
+  allYears.sort(function(a,b){return a-b;});
+  var uniqueYears=allYears.filter(function(v,i,a){return a.indexOf(v)===i;});
 
   var html='';
   if(!expenses.length){
-    html='<div style="text-align:center;padding:24px 16px;color:var(--muted);font-size:13px">No recurring expenses yet.<br>Click <strong>+ Add</strong> to start.</div>';
+    html='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No expenses yet. Click <strong>+ Add</strong> to start.</div>';
   } else if(!filtered.length){
-    html='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No expenses for this property.</div>';
+    html='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No expenses for this property filter.</div>';
   } else {
-    html+='<div style="display:grid;grid-template-columns:1fr 80px 120px 105px 90px 60px;gap:8px;padding:6px 4px 4px;border-bottom:2px solid var(--border);margin-bottom:4px">'+
-      ['Name','€','Starts from','Property','Frequency',''].map(function(h){return'<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+h+'</span>';}).join('')+
-    '</div>';
+    // Column headers: Name | Apt | Freq | [year columns] | actions
+    var yearCols=uniqueYears.map(function(y){return'<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">'+y+'</th>';}).join('');
+    html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr style="border-bottom:2px solid var(--border)">'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Freq.</th>'+
+        yearCols+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:60px">Starts</th>'+
+        '<th style="padding:7px 4px;min-width:56px"></th>'+
+      '</tr></thead><tbody>';
+
     filtered.forEach(function(item){
-      var ex=item.e, realIdx=item.i;
-      html+='<div class="exp-row" data-idx="'+realIdx+'" style="display:grid;grid-template-columns:1fr 80px 120px 105px 90px 60px;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid #f1f5f9">'+
-        '<input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Internet" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
-        '<input class="exp-amount" type="number" value="'+(ex.amount||'')+'" placeholder="€" min="0" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
-        '<input class="exp-start" type="month" value="'+(ex.startDate||'')+'" title="Leave blank = always" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;width:100%;box-sizing:border-box">'+
-        '<select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12px;width:100%">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select>'+
-        '<select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12px;width:100%">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select>'+
-        '<div style="display:flex;gap:3px">'+
-          '<button onclick="duplicateExpense('+realIdx+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:27px;height:34px;cursor:pointer;font-size:14px;flex:1;display:flex;align-items:center;justify-content:center">⎘</button>'+
-          '<button onclick="removeExpense('+realIdx+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:27px;height:34px;cursor:pointer;font-size:16px;flex:1;display:flex;align-items:center;justify-content:center">×</button>'+
-        '</div>'+
-      '</div>';
+      var ex=item.e, ri=item.i;
+      var yearInputs=uniqueYears.map(function(y){
+        var val=(ex.amounts&&ex.amounts[y]!=null)?ex.amounts[y]:(ex.amount||'');
+        return'<td style="padding:5px 4px;text-align:center">'+
+          '<input class="exp-yr-amt" data-year="'+y+'" type="number" value="'+val+'" placeholder="€" min="0" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:64px;text-align:right;box-sizing:border-box">'+
+        '</td>';
+      }).join('');
+      var startVal=ex.startDate||'';
+      var startDisplay=startVal?startVal.replace('-','/'):'—';
+      html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid #f1f5f9">'+
+        '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
+          'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:140px;box-sizing:border-box"></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
+        yearInputs+
+        '<td style="padding:6px 4px;text-align:center">'+
+          '<input class="exp-start" type="month" value="'+startVal+'" title="First month this expense applies" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:11px;width:100px;box-sizing:border-box">'+
+        '</td>'+
+        '<td style="padding:6px 4px;text-align:center">'+
+          '<div style="display:flex;gap:3px;justify-content:center">'+
+            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:13px">⎘</button>'+
+            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:15px">×</button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
     });
+    html+='</tbody></table></div>';
   }
   document.getElementById('expensesList').innerHTML=html;
 }
@@ -2472,11 +2540,23 @@ function saveExpenses(){
   var expenses=[];
   rows.forEach(function(row){
     var name=row.querySelector('.exp-name').value.trim();
-    var amount=parseFloat(row.querySelector('.exp-amount').value)||0;
+    if(!name)return;
     var apt=row.querySelector('.exp-apt').value;
     var freq=row.querySelector('.exp-freq').value;
     var startDate=row.querySelector('.exp-start')?row.querySelector('.exp-start').value.trim():'';
-    if(name)expenses.push({name:name,amount:amount,apt:apt,freq:freq,startDate:startDate});
+    // Collect per-year amounts from year columns
+    var amounts={};
+    var defaultAmt=0;
+    row.querySelectorAll('.exp-yr-amt').forEach(function(inp){
+      var y=inp.getAttribute('data-year');
+      var v=parseFloat(inp.value)||0;
+      if(y)amounts[y]=v;
+      if(v>defaultAmt)defaultAmt=v;
+    });
+    // Fallback: old amount field
+    var amtEl=row.querySelector('.exp-amount');
+    if(amtEl&&!defaultAmt)defaultAmt=parseFloat(amtEl.value)||0;
+    expenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
   });
   saveFinExpenses(expenses).then(function(){
     closeExpensesManager();
@@ -3014,17 +3094,27 @@ function mkCleanCard(b,tod){
       '<div style="text-align:right"><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+CT('checkout')+'</div><div style="font-size:16px;font-weight:800;color:var(--primary)">'+fmtShort(b.checkout)+'</div></div>'+
     '</div>'+
     (isActive?
-      '<div style="padding:10px 16px;border-top:1px solid var(--border);background:#fafafa">'+
-        '<button class="clean-mark-btn '+(b.cleaned==='yes'?'btn-green':'btn-yellow')+'" data-id="'+b.id+'" style="font-size:12px;width:100%;justify-content:center;display:flex;align-items:center;gap:6px">'+
+      '<div style="padding:10px 16px;border-top:1px solid var(--border);background:#fafafa;display:flex;gap:8px">'+
+        '<button class="clean-mark-btn '+(b.cleaned==='yes'?'btn-green':'btn-yellow')+'" data-id="'+b.id+'" style="font-size:12px;flex:1;justify-content:center;display:flex;align-items:center;gap:6px">'+
           (b.cleaned==='yes'?
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> '+CT('cleaned'):
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9 1 9-1"/><path d="M12 7v10"/></svg> '+CT('notCleaned'))+
         '</button>'+
+        '<button class="clean-wa-btn" data-id="'+b.id+'" title="Send WhatsApp to cleaning lady" style="border:none;background:#25D366;color:#fff;border-radius:8px;padding:0 12px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'+
+        '</button>'+
       '</div>':'');
 
-  // Wire up the clean button
+  // Wire up the clean button and WhatsApp button
   if(isActive){
     var btn=card.querySelector('.clean-mark-btn');
+    var waBtn=card.querySelector('.clean-wa-btn');
+    if(waBtn){
+      waBtn.addEventListener('click',function(){
+        var id=this.getAttribute('data-id');
+        sendCleaningWhatsApp(b);
+      });
+    }
     if(btn){
       btn.addEventListener('click',function(){
         var id=this.getAttribute('data-id');
@@ -4456,6 +4546,39 @@ function parsePdfPasteRaw(raw){
   return found.length;
 }
 
+
+// ── CLEANING WHATSAPP ─────────────────────────────────────────────────────────
+function sendCleaningWhatsApp(b){
+  var apt=aptById(b.apt);
+  var aptName=apt.name||b.apt||'appartamento';
+  var checkoutDate=b.checkout?new Date(b.checkout+'T12:00:00'):null;
+  var checkoutFmt=checkoutDate?checkoutDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'}):'';
+
+  // Find the next booking after this checkout on the same apt
+  var nextBk=(allBookings||[]).filter(function(x){
+    return x.apt===b.apt&&x.checkin>b.checkout&&x.checkin!=null;
+  }).sort(function(a,c){return a.checkin.localeCompare(c.checkin);})[0];
+
+  var msg='Olá! '+
+    'Saída no '+aptName+' a '+checkoutDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'})+'.';
+
+  if(nextBk){
+    var nextCheckin=new Date(nextBk.checkin+'T12:00:00');
+    var nextFmt=nextCheckin.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+    var guests=nextBk.guests&&/^\d+/.test(nextBk.guests)?nextBk.guests:'?';
+    msg+=' Por favor prepara o apartamento para a próxima entrada a '+nextFmt+
+      ' para '+guests+' pessoa'+(guests!=='1'?'s':'')+'. Obrigado! 🙏';
+  } else {
+    msg+=' Por favor prepara o apartamento. Obrigado! 🙏';
+  }
+
+  // Use workspace WhatsApp number if configured
+  var waNum=(workspace&&workspace.settings&&workspace.settings.cleanerPhone)||'';
+  // Strip non-digits, add country code if needed
+  waNum=waNum.replace(/[^0-9]/g,'');
+  var url='https://wa.me/'+(waNum?waNum:'')+'?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
 function renderOverview(){
