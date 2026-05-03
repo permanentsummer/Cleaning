@@ -1069,6 +1069,17 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 
       <button class="btn-primary" onclick="saveWaTemplates()">💾 Save WhatsApp templates</button>
     </div>
+
+    <!-- Cleaning settings -->
+    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+      <div class="sep" style="margin-top:0">🧹 Cleaning Settings</div>
+      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Cleaner contact details are used for the WhatsApp shortcut in the Cleaning tab.</p>
+      <div class="fr">
+        <div class="fg"><label>Cleaner name</label><input type="text" id="cleanerName" placeholder="e.g. Maria"></div>
+        <div class="fg"><label>Cleaner WhatsApp number</label><input type="tel" id="cleanerPhone" placeholder="+351 912 345 678"></div>
+      </div>
+      <button class="btn-primary" onclick="saveCleaningSettings()">💾 Save cleaning settings</button>
+    </div>
   </div>
 
   </div><!-- end main-content -->
@@ -1249,6 +1260,7 @@ function loadWorkspace(){
       renderCalendar();
       loadEmailTemplates();
       loadWaTemplates();
+      loadCleaningSettings();
       applyTranslations();
       // Start on Overview tab
       switchTab('home');
@@ -1590,7 +1602,7 @@ function confirmToBookings(req){
     clean:req.checkout,
     guests:String(req.guests||''),
     notes:req.guest_name+(req.guest_email||req.guest_phone||req.notes?'\n__CONTACT__'+(req.guest_email||'')+'|'+(req.guest_phone||'')+'|'+(req.notes||''):''),
-    paid:'unpaid',cleaned:'no'
+    paid:'unpaid',cleaned:importCleanedStatus(req.checkout)
   };
   var tok=session?session.access_token:SB_KEY;
   return fetch(SB_URL+'/rest/v1/rpc/insert_bookings',{
@@ -1981,6 +1993,11 @@ function genQR(url){
 }
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
+function importCleanedStatus(checkout){
+  // Past bookings default to cleaned; active/future start as dirty
+  var tod=todayStr();
+  return (checkout&&checkout<tod)?'yes':'no';
+}
 function parseContact(n){
   // Extract email/phone stored after __CONTACT__ marker
   if(!n)return{email:'',phone:'',note:''};
@@ -2711,7 +2728,7 @@ function renderResList(){
       source:'direct',nights:nights,
       ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
       paid:r.deposit_paid?(r.balance_paid?'paid':'deposit'):'unpaid',
-      cleaned:'no',notes:r.notes||'',
+      cleaned:importCleanedStatus(r.checkout),notes:r.notes||'',
       origin:'direct',blocked:false
     });
   });
@@ -3064,7 +3081,10 @@ function renderCleaningList(){
 function mkCleanCard(b,tod){
   var apt=aptById(b.apt);
   var isToday=b.checkout===tod;
-  var isActive=b.checkout<=tod;
+  var isPast=b.checkout<tod;
+  var isCurrent=b.checkin<=tod&&b.checkout>tod; // guest currently staying
+  var isFuture=b.checkin>tod;
+  var isActive=b.checkout<=tod||isCurrent; // show button for active+past
   var srcColors={airbnb:'#e8485a',booking:'#003580',direct:'var(--green)'};
   var srcColor=srcColors[b.source||'direct']||'var(--green)';
   var guestName=cleanNotesDisplay(b.notes)||b.guests||'Guest';
@@ -3093,17 +3113,23 @@ function mkCleanCard(b,tod){
       '<div style="color:var(--border);font-size:18px">→</div>'+
       '<div style="text-align:right"><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+CT('checkout')+'</div><div style="font-size:16px;font-weight:800;color:var(--primary)">'+fmtShort(b.checkout)+'</div></div>'+
     '</div>'+
-    (isActive?
-      '<div style="padding:10px 16px;border-top:1px solid var(--border);background:#fafafa;display:flex;gap:8px">'+
-        '<button class="clean-mark-btn '+(b.cleaned==='yes'?'btn-green':'btn-yellow')+'" data-id="'+b.id+'" style="font-size:12px;flex:1;justify-content:center;display:flex;align-items:center;gap:6px">'+
-          (b.cleaned==='yes'?
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> '+CT('cleaned'):
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9 1 9-1"/><path d="M12 7v10"/></svg> '+CT('notCleaned'))+
-        '</button>'+
+    (isFuture?'':
+      (function(){
+        var markBtn='';
+        if(isCurrent){
+          markBtn='<button class="clean-mark-btn btn-yellow" data-id="'+b.id+'" style="font-size:12px;flex:1;justify-content:center;display:flex;align-items:center;gap:6px">🧹 Guests staying — will need cleaning on '+fmtShort(b.checkout)+'</button>';
+        } else if(b.cleaned==='yes'){
+          markBtn='<button class="clean-mark-btn btn-green" data-id="'+b.id+'" style="font-size:12px;flex:1;justify-content:center;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> '+CT('cleaned')+'</button>';
+        } else {
+          markBtn='<button class="clean-mark-btn btn-yellow" data-id="'+b.id+'" style="font-size:12px;flex:1;justify-content:center;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9 1 9-1"/><path d="M12 7v10"/></svg> '+CT('notCleaned')+'</button>';
+        }
+        return '<div style="padding:10px 16px;border-top:1px solid var(--border);background:#fafafa;display:flex;gap:8px">'+markBtn+
         '<button class="clean-wa-btn" data-id="'+b.id+'" title="Send WhatsApp to cleaning lady" style="border:none;background:#25D366;color:#fff;border-radius:8px;padding:0 12px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
           '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'+
         '</button>'+
-      '</div>':'');
+      '</div>';
+      })()
+    );
 
   // Wire up the clean button and WhatsApp button
   if(isActive){
@@ -3309,7 +3335,7 @@ function doMappedImport(){
       checkin:ci,checkout:co,clean:co,
       guests:iGuests>=0?_rv2(iGuests):'',
       notes:gName+finSuffix,
-      paid:'unpaid',cleaned:'no'
+      paid:'unpaid',cleaned:importCleanedStatus(co)
     });
   }
   if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
@@ -3508,7 +3534,7 @@ function dashProcessImport(text,source,apt){
         checkin:ci,checkout:co,clean:co,
         guests:(ad+kd)>0?String(ad+kd):'',
         notes:gName+finSuffix,
-        paid:'unpaid',cleaned:'no'});
+        paid:'unpaid',cleaned:importCleanedStatus(co)});
     }
   } else if(source==='booking'){
     var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure');
@@ -3533,7 +3559,7 @@ function dashProcessImport(text,source,apt){
         checkin:ci2,checkout:co2,clean:co2,
         guests:_rv(iP),
         notes:gName2+finSuffix2,
-        paid:'unpaid',cleaned:'no'});
+        paid:'unpaid',cleaned:importCleanedStatus(co2)});
     }
   } else {
     // Direct: secondary source — only add if no OTA booking overlaps on this property
@@ -3550,7 +3576,7 @@ function dashProcessImport(text,source,apt){
         checkin:ci3,checkout:co3,clean:co3,
         guests:iP3>=0&&r[iP3]?r[iP3].trim():'',
         notes:n3,
-        paid:'unpaid',cleaned:'no'});
+        paid:'unpaid',cleaned:importCleanedStatus(ci3)});
     }
   }
 
@@ -4119,7 +4145,7 @@ function drawCal(){
         })(),
         checkin:r.checkin,checkout:r.checkout,clean:r.checkout,
         guests:String(r.guests||''),notes:r.guest_name||'',
-        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),cleaned:'no'
+        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),cleaned:importCleanedStatus(r.checkout)
       });
     }
   });
@@ -4546,6 +4572,28 @@ function parsePdfPasteRaw(raw){
   return found.length;
 }
 
+
+// ── CLEANING SETTINGS ────────────────────────────────────────────────────────
+function loadCleaningSettings(){
+  var cfg=workspace&&workspace.settings||{};
+  var nameEl=document.getElementById('cleanerName');
+  var phoneEl=document.getElementById('cleanerPhone');
+  if(nameEl)nameEl.value=cfg.cleanerName||'';
+  if(phoneEl)phoneEl.value=cfg.cleanerPhone||'';
+}
+function saveCleaningSettings(){
+  var name=(document.getElementById('cleanerName')||{}).value||'';
+  var phone=(document.getElementById('cleanerPhone')||{}).value||'';
+  sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    fresh.cleanerName=name;
+    fresh.cleanerPhone=phone;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
+  }).then(function(){
+    if(workspace.settings){workspace.settings.cleanerName=name;workspace.settings.cleanerPhone=phone;}
+    toast('Cleaning settings saved','ok');
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
 
 // ── CLEANING WHATSAPP ─────────────────────────────────────────────────────────
 function sendCleaningWhatsApp(b){
