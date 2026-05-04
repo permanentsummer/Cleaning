@@ -505,11 +505,11 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
     </div>
     <nav class="sb-nav">
-      <div class="sb-item" data-tab="home" onclick="switchTab('home')">
+      <div class="sb-item on" data-tab="home" onclick="switchTab('home')">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
         <span>Overview</span>
       </div>
-      <div class="sb-item on" data-tab="requests" onclick="switchTab('requests')">
+      <div class="sb-item" data-tab="requests" onclick="switchTab('requests'">
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l1-1.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16l.19.92z"/></svg></span>
         <span>Requests</span>
         <span class="badge" id="pendingBadge" style="display:none">0</span>
@@ -2723,6 +2723,7 @@ function renderPayments(){
   renderRevenueAnalytics();
   var confirmed=requests.filter(function(r){return r.status==='confirmed';});
   var list=document.getElementById('payList');
+  if(!list)return; // payList removed from Finance tab — skip
   if(!confirmed.length){
     list.innerHTML='<div class="empty-state"><div class="ico">💰</div>'+
       '<h3>No confirmed bookings yet</h3><p>Confirmed bookings will appear here for payment tracking.</p></div>';
@@ -2791,7 +2792,7 @@ loadRequests=function(){origLoadRequests.apply(this,arguments);};
 
 // Override renderRequests to also re-render payments
 var _origRenderRequests=renderRequests;
-renderRequests=function(){_origRenderRequests();renderPayments();};
+renderRequests=function(){_origRenderRequests();};
 
 // ── RESERVATIONS LIST VIEW ───────────────────────────────────────────────────
 function renderResList(){
@@ -2900,29 +2901,28 @@ function renderResList(){
     card.className='res-list-card '+srcClass;
     card.style.opacity=isPast?'0.6':'1';
     card.innerHTML=
-      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
-        '<div style="min-width:0">'+
-          '<div style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(item.guest)+'</div>'+
-          '<div style="font-size:12px;color:var(--muted);margin-top:2px">'+
+      '<div class="res-list-top">'+
+        '<div>'+
+          '<div class="res-list-guest">'+esc(item.guest)+'</div>'+
+          '<div class="res-list-apt">'+
             '<span style="display:inline-block;width:7px;height:7px;border-radius:2px;background:'+item.aptColor+';margin-right:4px;vertical-align:middle"></span>'+
-            esc(item.aptName)+(isActive?' · <strong style="color:var(--honey)">Active now</strong>':'')+
+            esc(item.aptName)+(isActive?' · <strong style="color:var(--honey)">Active</strong>':'')+
           '</div>'+
         '</div>'+
         '<span class="status-badge" style="background:'+srcBg+';flex-shrink:0">'+srcLabel+'</span>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:600;color:var(--text)">'+
+      '<div class="res-list-dates">'+
         '<span>'+fmtShort(item.checkin)+'</span>'+
-        '<span style="color:var(--muted)">→</span>'+
+        '<span class="arrow">→</span>'+
         '<span>'+fmtShort(item.checkout)+'</span>'+
-        '<span class="chip" style="margin-left:2px">'+item.nights+'n</span>'+
-        (item.total?'<span style="margin-left:auto;color:var(--primary);font-weight:800">€'+item.total+'</span>':'')+
+        '<span class="chip">'+item.nights+'n</span>'+
+        (item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':'')+
       '</div>'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'+
-        '<div style="display:flex;gap:6px">'+
-          '<button class="btn-outline" style="font-size:11px;padding:5px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
-          '<button class="btn-red" style="font-size:11px;padding:5px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
-        '</div>'+
+      '<div class="res-list-actions">'+
+        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
+        '<span style="flex:1"></span>'+
         '<span style="font-size:11px;font-weight:800;color:'+paidColor+'">'+paidLabel+'</span>'+
+        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
       '</div>';
     container.appendChild(card);
   });
@@ -3023,7 +3023,7 @@ function setDashLang(l){
   var activeItem=document.querySelector('.sb-item.on');
   var activeTab=activeItem?activeItem.getAttribute('data-tab'):'';
   if(activeTab==='home')renderOverview();
-  else if(activeTab==='requests')renderRequests();
+  else if(activeTab==='requests'){loadRequests().then(function(){renderRequests();});}
   else if(activeTab==='cleaning')renderCleaning();
   else if(activeTab==='payments')renderRevenueAnalytics();
 }
