@@ -452,32 +452,38 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 <div id="authWrap" class="show">
   <div class="auth-box">
     <div class="auth-logo">
-      <div class="ico" style="background:none;width:72px;height:72px;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center">
-        <svg viewBox="0 0 200 200" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:4px">
+        <svg viewBox="0 0 200 200" width="100" height="100" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 4px 18px rgba(249,168,0,.4))">
           <rect width="200" height="200" rx="44" fill="#fff"/>
-          <!-- Sun arc -->
-          <path d="M100 30 C140 30 168 58 168 95 C168 100 166 105 163 109" stroke="#F9C332" stroke-width="28" fill="none" stroke-linecap="round"/>
-          <!-- Sun circle -->
-          <circle cx="100" cy="88" r="18" fill="#F9E573"/>
-          <!-- Roof -->
-          <path d="M52 102 L100 62 L148 102" stroke="#114061" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Window -->
-          <rect x="88" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
-          <rect x="102" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
-          <rect x="88" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
-          <rect x="102" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
-          <!-- Wave -->
-          <path d="M148 120 C130 110 110 135 85 125 C62 116 45 132 32 128 L32 160 C45 160 62 148 85 158 C110 170 130 148 148 158 Z" fill="#64E0D0"/>
+          <path d="M55 45 C55 20 100 18 100 18 C145 18 162 52 158 82 C154 110 132 120 132 120" stroke="#F9A800" stroke-width="28" fill="none" stroke-linecap="round"/>
+          <circle cx="100" cy="95" r="20" fill="#F9E573"/>
+          <path d="M44 108 L100 63 L156 108" stroke="#114061" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="85" y="100" width="12" height="12" rx="3" fill="#F9A800"/>
+          <rect x="103" y="100" width="12" height="12" rx="3" fill="#F9A800"/>
+          <rect x="85" y="116" width="12" height="12" rx="3" fill="#F9A800"/>
+          <rect x="103" y="116" width="12" height="12" rx="3" fill="#F9A800"/>
+          <path d="M156 130 C138 118 118 142 100 134 C80 124 60 140 44 132 L44 170 Q62 162 82 172 Q106 182 130 166 Q148 154 156 162 Z" fill="#64E0D0"/>
         </svg>
       </div>
-      <h1 style="font-size:24px;font-weight:900;letter-spacing:-.5px">SummerFlow</h1>
-      <p style="color:var(--muted);font-weight:500">by Permanent Summer</p>
+      <h1 style="font-size:28px;font-weight:900;letter-spacing:-.5px;color:#114061">SummerFlow</h1>
     </div>
-    <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
-    <div class="afield"><label>Password</label><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"></div>
-    <div class="aerr" id="lErr"></div>
-    <button class="abtn" id="lBtn">Sign in →</button>
-    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:14px;font-weight:700">SummerFlow uses your Permanent Summer account</p>
+
+    <div id="signInPanel">
+      <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="afield"><label>Password</label><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="aerr" id="lErr"></div>
+      <button class="abtn" id="lBtn">Sign in →</button>
+      <p style="text-align:center;margin-top:14px"><a href="#" onclick="showForgotPassword(event)" style="font-size:12px;color:var(--muted);text-decoration:none;font-weight:600">Forgot password?</a></p>
+    </div>
+
+    <div id="forgotPanel" style="display:none">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Enter your email and we'll send a password reset link.</p>
+      <div class="afield"><label>Email</label><input type="email" id="fpEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="aerr" id="fpErr"></div>
+      <div id="fpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">✅ Reset link sent — check your inbox.</div>
+      <button class="abtn" id="fpBtn" onclick="sendPasswordReset()">Send reset link</button>
+      <p style="text-align:center;margin-top:14px"><a href="#" onclick="showSignIn(event)" style="font-size:12px;color:var(--muted);text-decoration:none;font-weight:600">← Back to sign in</a></p>
+    </div>
   </div>
 </div>
 
@@ -1215,6 +1221,40 @@ function closeModal(id){document.getElementById(id).classList.remove('show');}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
 
 // ── LOGIN ───────────────────────────────────────────────────────────────────
+function showForgotPassword(e){
+  if(e)e.preventDefault();
+  document.getElementById('signInPanel').style.display='none';
+  document.getElementById('forgotPanel').style.display='';
+  document.getElementById('fpErr').textContent='';
+  document.getElementById('fpSuccess').style.display='none';
+  var fp=document.getElementById('fpEmail');
+  if(fp){fp.value=document.getElementById('lEmail').value||'';fp.focus();}
+}
+function showSignIn(e){
+  if(e)e.preventDefault();
+  document.getElementById('forgotPanel').style.display='none';
+  document.getElementById('signInPanel').style.display='';
+  document.getElementById('lErr').textContent='';
+}
+function sendPasswordReset(){
+  var email=(document.getElementById('fpEmail').value||'').trim();
+  var err=document.getElementById('fpErr');
+  var btn=document.getElementById('fpBtn');
+  if(!email){err.textContent='Please enter your email.';return;}
+  btn.disabled=true;btn.textContent='Sending…';err.textContent='';
+  fetch(SB_URL+'/auth/v1/recover',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({email:email})
+  }).then(function(r){
+    btn.disabled=false;btn.textContent='Send reset link';
+    document.getElementById('fpSuccess').style.display='';
+  }).catch(function(e){
+    btn.disabled=false;btn.textContent='Send reset link';
+    err.textContent='Error: '+e.message;
+  });
+}
+
 document.getElementById('lBtn').addEventListener('click',function(){
   var email=document.getElementById('lEmail').value.trim();
   var pwd=document.getElementById('lPwd').value;
