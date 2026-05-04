@@ -1122,26 +1122,29 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 <!-- MODAL: Payment management -->
 <div class="overlay" id="paymentOverlay">
   <div class="modal" style="max-width:380px">
-    <div class="modal-header"><h3>💳 Manage Payment</h3><button class="close-btn" onclick="closeModal('paymentOverlay')">✕</button></div>
+    <div class="modal-header"><h3>💳 Payment</h3><button class="close-btn" onclick="closeModal('paymentOverlay')">✕</button></div>
     <div style="padding:16px 20px">
-      <div id="pmDetails" style="margin-bottom:16px"></div>
-      <div class="fg"><label>Payment status</label>
-        <select id="pmStatus" onchange="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%">
-          <option value="unpaid">Unpaid</option>
-          <option value="deposit">Deposit paid</option>
-          <option value="paid">Fully paid</option>
+      <div id="pmDetails" style="margin-bottom:14px;padding:12px;background:var(--bg);border-radius:8px"></div>
+      <div class="fg">
+        <label>Payment status</label>
+        <select id="pmStatus" onchange="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
+          <option value="unpaid">❌ Unpaid</option>
+          <option value="deposit">⏳ Deposit paid</option>
+          <option value="paid">✅ Fully paid</option>
         </select>
       </div>
       <div class="fg" id="pmDepositRow" style="display:none">
         <label>Deposit amount (€)</label>
-        <input type="number" id="pmDeposit" placeholder="0" min="0" step="0.01" oninput="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
+        <input type="number" id="pmDeposit" placeholder="0" min="0" step="1" oninput="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
       </div>
-      <div id="pmCalc" style="background:var(--bg);border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:14px"></div>
+      <div id="pmCalc" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap"></div>
       <div class="aerr" id="pmErr"></div>
       <button class="btn-primary" style="width:100%" onclick="savePaymentStatus()">💾 Save payment</button>
     </div>
   </div>
 </div>
+
+<!-- MODAL: Add / edit property -->
 <div class="overlay" id="propOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1520,14 +1523,11 @@ function renderRequests(){
   // Only show genuine booking requests (pending/awaiting), never imported OTA bookings
   // Only show genuine direct booking requests — never imported OTA bookings
   // Confirmed bookings from widget are shown here; imported ones go to Reservations
-  // Only show genuine widget requests — exclude bookings created from PDF/Booking.com imports
-  // Those have source encoded in notes as __SRC__booking or __SRC__airbnb
   var genuineRequests=requests.filter(function(r){
-    var n=r.notes||'';
-    var si=n.indexOf('\n__SRC__');
-    if(si===-1)return true; // no source marker = widget request ✓
-    var src=n.slice(si+8).split('\n')[0];
-    return src==='direct'||src===''; // only show direct or unmarked
+    // A "genuine request" is one submitted via the booking widget (has guest_email or was pending)
+    // Confirmed requests that came from the widget still show here
+    // We identify imported-then-confirmed by checking if they have a booking widget origin
+    return true; // all direct_requests are genuine — imported OTA goes to allBookings not here
   });
   var filtered=reqFilter==='all'?genuineRequests:genuineRequests.filter(function(r){return r.status===reqFilter;});
   if(!filtered.length){
@@ -1841,30 +1841,1087 @@ function renderProps(){
     var upcoming=scBookings.filter(function(b){return b.checkout>=today;}).length+
       directReqs.filter(function(r){return r.status==='confirmed'&&r.checkout>=today;}).length;
 
-    var isOTA=(item.source==='booking'||item.source==='airbnb');
-    var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
-    var amtDue=item.total-amtPaid;
-    var payHtml='';
-    if(!item.isComp&&item.total>0){
-      if(isOTA){
-        payHtml='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#f0fdf4">'+
-          '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
-          '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
-        '</div>';
-      } else {
-        payHtml='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
-            '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Payment</span>'+
-            '<button class="pm-btn" data-id="'+item.id+'" data-origin="'+item.origin+'" style="border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--primary);padding:0">+ Manage</button>'+
+    var card=document.createElement('div');
+    card.className='prop-card';
+    card.innerHTML=
+      '<div class="prop-head">'+
+        '<div class="prop-dot" style="background:'+p.color+'"></div>'+
+        '<div style="flex:1">'+
+          '<div class="prop-name">'+esc(p.name)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);font-weight:700">'+esc(p.location||p.short||'')+'</div>'+
+        '</div>'+
+        (p.ratePerNight?'<span class="prop-badge">€'+p.ratePerNight+'/nt</span>':'')+
+        (p.hiddenFromGuests?'<span class="prop-badge" style="background:#f1f5f9;color:var(--muted)">🙈 Hidden</span>':'')+
+      '</div>'+
+      '<div class="prop-body">'+
+        '<div class="prop-stat-row">'+
+          '<div class="prop-stat"><span class="val">'+confirmedTotal+'</span><div class="lbl">Total bookings</div></div>'+
+          '<div class="prop-stat"><span class="val">'+upcoming+'</span><div class="lbl">Upcoming</div></div>'+
+          '<div class="prop-stat"><span class="val">'+(pending||'—')+'</span><div class="lbl">Pending</div></div>'+
+          '<div class="prop-stat"><span class="val">'+(totalRevenue?'€'+Math.round(totalRevenue).toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'+
+          (p.features?'<span class="chip">'+esc(p.features)+'</span>':'')+
+          (p.minNights?'<span class="chip">Min '+p.minNights+' nights</span>':'')+
+          (p.maxGuests?'<span class="chip">Max '+p.maxGuests+' guests</span>':'')+
+          (p.cleanFee?'<span class="chip">🧹 €'+p.cleanFee+' cleaning</span>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn-primary" style="font-size:12px" onclick="editProp('+i+')">✏️ Edit</button>'+
+          '<button class="btn-outline" style="font-size:12px;color:var(--red)" onclick="deleteProp('+i+')">🗑️ Remove</button>'+
+        '</div>'+
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function openAddProp(){
+  document.getElementById('propModalTitle').textContent='Add property';
+  document.getElementById('pEditId').value='';
+  document.getElementById('pName').value='';
+  document.getElementById('pShort').value='';
+  document.getElementById('pColor').value='#8b5cf6';
+  document.getElementById('pLocation').value='';
+  document.getElementById('pFeatures').value='';
+  document.getElementById('pRate').value='';
+  document.getElementById('pMinNights').value='3';
+  document.getElementById('pMaxGuests').value='6';
+  document.getElementById('pCleanFee').value='';
+  document.getElementById('seasonRates').innerHTML='';
+  document.getElementById('photoInputs').innerHTML='';
+  seasonCount=0;
+  addPhotoInput();addPhotoInput();
+  document.getElementById('propOverlay').classList.add('show');
+  setTimeout(function(){setDepositToggle(true);},10);
+}
+
+function editProp(i){
+  var p=properties[i];
+  document.getElementById('propModalTitle').textContent='Edit property';
+  document.getElementById('pEditId').value=i;
+  document.getElementById('pName').value=p.name||'';
+  document.getElementById('pShort').value=p.short||'';
+  document.getElementById('pColor').value=p.color||'#8b5cf6';
+  document.getElementById('pLocation').value=p.location||'';
+  document.getElementById('pFeatures').value=p.features||'';
+  document.getElementById('pRate').value=p.ratePerNight||'';
+  document.getElementById('pMinNights').value=p.minNights||'3';
+  document.getElementById('pMaxGuests').value=p.maxGuests||'6';
+  document.getElementById('pCleanFee').value=p.cleanFee||'';
+  var _dep=p.requireDeposit!==false;
+  document.getElementById('seasonRates').innerHTML='';
+  document.getElementById('photoInputs').innerHTML='';
+  seasonCount=0;
+  if(p.seasonRates){p.seasonRates.forEach(function(sr){addSeasonRate(sr);});}
+  var photos=p.photos||[];
+  photos.forEach(function(url){addPhotoInput(url);});
+  while(document.querySelectorAll('#photoInputs .purl').length<2)addPhotoInput();
+  document.getElementById('propOverlay').classList.add('show');
+  setTimeout(function(){setDepositToggle(_dep);},10);
+}
+
+function addPhotoInput(url){
+  if(document.querySelectorAll('#photoInputs .purl').length>=5){toast('Maximum 5 photos','warn');return;}
+  var div=document.createElement('div');div.className='purl';
+  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
+  div.innerHTML='<input type="url" placeholder="https://... image URL" value="'+(url||'')+'" style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:600;outline:none">'+
+    '<button onclick="this.parentNode.remove()" style="background:var(--red-bg);color:var(--red);border:none;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13px;flex-shrink:0">✕</button>';
+  document.getElementById('photoInputs').appendChild(div);
+}
+
+function addSeasonRate(existing){
+  var n=seasonCount++;
+  var div=document.createElement('div');
+  div.id='sr'+n;
+  div.style.cssText='background:var(--bg);border-radius:10px;padding:10px;margin-bottom:8px';
+  div.innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">'+
+      '<div class="fg" style="margin:0"><label>From</label><input type="date" id="srFrom'+n+'" value="'+(existing?existing.from||'':'')+'"></div>'+
+      '<div class="fg" style="margin:0"><label>To</label><input type="date" id="srTo'+n+'" value="'+(existing?existing.to||'':'')+'"></div>'+
+      '<div class="fg" style="margin:0"><label>€/night</label><input type="number" id="srRate'+n+'" value="'+(existing?existing.rate||'':'')+'"></div>'+
+      '<button onclick="document.getElementById(\'sr'+n+'\').remove()" style="background:var(--red-bg);color:var(--red);border:none;border-radius:8px;padding:8px;cursor:pointer;font-size:14px">✕</button>'+
+    '</div>';
+  document.getElementById('seasonRates').appendChild(div);
+}
+
+function saveProp(){
+  var name=document.getElementById('pName').value.trim();
+  if(!name){toast('Property name required','err');return;}
+  var editIdx=document.getElementById('pEditId').value;
+  var seasonRates=[];
+  document.querySelectorAll('#seasonRates > div').forEach(function(div){
+    var id=div.id.replace('sr','');
+    var from=document.getElementById('srFrom'+id).value;
+    var to=document.getElementById('srTo'+id).value;
+    var rate=parseInt(document.getElementById('srRate'+id).value)||0;
+    if(from&&to&&rate)seasonRates.push({from:from,to:to,rate:rate});
+  });
+  var photos=[];
+  document.querySelectorAll('#photoInputs .purl input').forEach(function(inp){
+    var v=inp.value.trim();if(v&&photos.length<5)photos.push(v);
+  });
+  var prop={
+    id:editIdx!==''?properties[parseInt(editIdx)].id:uid(),
+    name:name,short:document.getElementById('pShort').value||name,
+    color:document.getElementById('pColor').value,
+    location:document.getElementById('pLocation').value,
+    features:document.getElementById('pFeatures').value,
+    ratePerNight:parseInt(document.getElementById('pRate').value)||0,
+    minNights:parseInt(document.getElementById('pMinNights').value)||3,
+    maxGuests:parseInt(document.getElementById('pMaxGuests').value)||6,
+    cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
+    requireDeposit:document.getElementById('pDeposit').value==='1',
+    seasonRates:seasonRates,
+    photos:photos
+  };
+  if(editIdx!==''){
+    prop.hiddenFromGuests=properties[parseInt(editIdx)].hiddenFromGuests||false;
+    properties[parseInt(editIdx)]=prop;
+  }else{properties.push(prop);}
+  savePropsToWorkspace().then(function(){
+    toast('Property saved','ok');
+    closeModal('propOverlay');
+    renderProps();
+    renderWidget();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function deleteProp(i){
+  if(!confirm('Remove '+properties[i].name+'?'))return;
+  properties.splice(i,1);
+  savePropsToWorkspace().then(function(){toast('Removed','ok');renderProps();renderWidget();});
+}
+
+function savePropsToWorkspace(){
+  // Always re-fetch fresh settings from DB first so we never overwrite
+  // keys that SummerFlow manages (pin, cleaner_token, etc.)
+  return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var freshSettings=(rows&&rows.length&&rows[0].settings)||{};
+    // Merge: keep everything SummerFlow owns, only overwrite apts
+    freshSettings.apts=properties;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:freshSettings});
+  }).then(function(rows){
+    if(rows&&rows.length)workspace=rows[0];
+  });
+}
+
+// ── WIDGET PAGE ──────────────────────────────────────────────────────────────
+function renderWidget(){
+  if(!workspace)return;
+  var wsId=workspace.id;
+  var bookingUrl=BOOKING_PAGE_URL+'?ws='+wsId;
+  var embedCode='<!-- Permanent Summer Direct Booking Widget -->\n'+
+    '<script src="https://permanentsummer.github.io/direct-booking/widget.js"\n'+
+    '  data-workspace="'+wsId+'"\n'+
+    '  data-color="#6366f1"\n'+
+    '  data-label="Book Direct">\n'+
+    '<\/script>';
+
+  var flow=document.getElementById('widgetFlow');
+  flow.innerHTML=
+    // Step 1: Hosted link
+    '<div class="widget-step">'+
+      '<div class="widget-step-head">'+
+        '<div class="step-num">1</div>'+
+        '<div><h3>Your booking link</h3><p>Share this URL directly with guests</p></div>'+
+      '</div>'+
+      '<div class="widget-step-body">'+
+        '<div class="link-box" onclick="copyText(\''+bookingUrl+'\',this)">'+bookingUrl+'</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+          '<button class="copy-btn" onclick="copyText(\''+bookingUrl+'\',this)">📋 Copy link</button>'+
+          '<button class="copy-btn" onclick="window.open(\''+bookingUrl+'\',\'_blank\')">🔗 Open</button>'+
+          '<button class="copy-btn" onclick="genQR(\''+bookingUrl+'\')">📱 QR Code</button>'+
+        '</div>'+
+        '<div id="qrArea" class="qr-wrap"></div>'+
+      '</div>'+
+    '</div>'+
+    // Step 2: Embed
+    '<div class="widget-step">'+
+      '<div class="widget-step-head">'+
+        '<div class="step-num">2</div>'+
+        '<div><h3>Embed on your website</h3><p>Paste this snippet — it adds a "Book Direct" button</p></div>'+
+      '</div>'+
+      '<div class="widget-step-body">'+
+        '<div class="code-box" id="embedCode">'+esc(embedCode)+'</div>'+
+        '<button class="copy-btn" onclick="copyText(embedCode,this)">📋 Copy embed code</button>'+
+      '</div>'+
+    '</div>'+
+    // Step 3: WhatsApp
+    '<div class="widget-step">'+
+      '<div class="widget-step-head">'+
+        '<div class="step-num">3</div>'+
+        '<div><h3>WhatsApp quick link</h3><p>Guests can message you instantly</p></div>'+
+      '</div>'+
+      '<div class="widget-step-body">'+
+        '<div class="link-box" onclick="copyText(\'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.\',this)">'+
+          'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.'+
+        '</div>'+
+        '<button class="copy-btn" onclick="copyText(\'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.\',this)">📋 Copy WhatsApp link</button>'+
+      '</div>'+
+    '</div>'+
+    // Step 4: Preview your properties
+    '<div class="widget-step">'+
+      '<div class="widget-step-head">'+
+        '<div class="step-num">4</div>'+
+        '<div><h3>Properties shown to guests</h3><p>Toggle visibility on the public booking page</p></div>'+
+      '</div>'+
+      '<div class="widget-step-body" id="widgetPropList">'+
+      '</div>'+
+    '</div>';
+
+  // Store embed code for copy
+  window._embedCode=embedCode;
+
+  // Render the interactive property visibility toggles
+  renderWidgetPropList();
+}
+
+function renderWidgetPropList(){
+  var container=document.getElementById('widgetPropList');
+  if(!container)return;
+  if(!properties.length){
+    container.innerHTML='<div class="empty-state" style="padding:20px"><p>No properties configured. Add them in the <strong>Properties</strong> tab.</p></div>';
+    return;
+  }
+  container.innerHTML='';
+  properties.forEach(function(p,i){
+    var hidden=!!p.hiddenFromGuests;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)';
+    row.innerHTML=
+      '<div style="width:12px;height:12px;border-radius:4px;background:'+p.color+';flex-shrink:0"></div>'+
+      '<div style="flex:1">'+
+        '<strong style="'+(hidden?'opacity:.45':'')+'">'+esc(p.name)+'</strong>'+
+        ' · <span style="color:var(--muted);font-size:11px">'+esc(p.location||'')+'</span>'+
+        (hidden?'<span style="font-size:10px;font-weight:800;color:var(--muted);margin-left:8px;background:var(--bg);padding:2px 7px;border-radius:999px">Hidden from guests</span>':'')+
+      '</div>'+
+      (p.ratePerNight&&!hidden?'<span style="font-weight:900;font-size:13px;color:var(--muted)">€'+p.ratePerNight+'/nt</span>':'')+
+      '<button onclick="togglePropVisibility('+i+')" style="'+
+        'border:2px solid '+(hidden?'var(--border)':'var(--green)')+';'+
+        'background:'+(hidden?'var(--bg)':'var(--green-bg)')+';'+
+        'color:'+(hidden?'var(--muted)':'#15803d')+';'+
+        'border-radius:8px;padding:5px 11px;font-family:\'Inter\',sans-serif;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">'+
+        (hidden?'👁 Show':'✓ Visible')+
+      '</button>';
+    container.appendChild(row);
+  });
+  // Summary
+  var visCount=properties.filter(function(p){return !p.hiddenFromGuests;}).length;
+  var summary=document.createElement('div');
+  summary.style.cssText='font-size:11px;color:var(--muted);font-weight:700;padding-top:10px;text-align:right';
+  summary.textContent=visCount+' of '+properties.length+' propert'+(properties.length===1?'y':'ies')+' visible to guests';
+  container.appendChild(summary);
+}
+
+function copyText(text,btn){
+  var t=text===document.getElementById('embedCode')?window._embedCode:text;
+  navigator.clipboard.writeText(t).then(function(){
+    var orig=btn.textContent;
+    btn.textContent='✅ Copied!';
+    setTimeout(function(){btn.textContent=orig;},1500);
+    toast('Copied to clipboard','ok');
+  }).catch(function(){toast('Copy failed — select manually','err');});
+}
+
+function genQR(url){
+  var area=document.getElementById('qrArea');
+  // Use a free QR API
+  var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
+  area.innerHTML='<img src="'+qrUrl+'" alt="QR Code" style="border-radius:8px;box-shadow:var(--shadow)" width="200" height="200">'+
+    '<div style="text-align:center;margin-top:8px"><a href="'+qrUrl+'" download="booking-qr.png"><button class="copy-btn">⬇️ Download QR</button></a></div>';
+}
+
+// ── PAYMENTS ────────────────────────────────────────────────────────────────
+function importCleanedStatus(checkout){
+  // Past bookings default to cleaned; active/future start as dirty
+  var tod=todayStr();
+  return (checkout&&checkout<tod)?'yes':'no';
+}
+function parseContact(n){
+  // Extract email/phone stored after __CONTACT__ marker
+  if(!n)return{email:'',phone:'',note:''};
+  var idx=n.indexOf('\n__CONTACT__');
+  if(idx===-1)return{email:'',phone:'',note:''};
+  var parts=n.slice(idx+12).split('|');
+  return{email:parts[0]||'',phone:parts[1]||'',note:parts[2]||''};
+}
+function parseFin(b){
+  var n=b.notes||'';
+  // Complimentary booking — intentionally €0, suppress warnings
+  if(n.indexOf('\n__COMP__')!==-1)return{gross:0,commission:0,cleanfee:0,isComp:true};
+  var idx=n.indexOf('\n__€__');
+  // cleanfee=-1 means "use property default" (not manually overridden)
+  if(idx===-1)return{gross:0,commission:0,cleanfee:-1,isComp:false};
+  var fin=n.slice(idx+6).split('|');
+  var cf=fin.length>2?parseFloat(fin[2]):NaN;
+  // Only treat as overridden if explicitly a positive number in the stored data
+  return{gross:parseFloat(fin[0])||0,commission:parseFloat(fin[1])||0,
+         cleanfee:(cf>0?cf:-1),isComp:false};
+}
+function cleanNotesDisplay(n){
+  if(!n)return'';
+  // Strip financial marker
+  var idx=n.indexOf('\n__€__');
+  if(idx!==-1)n=n.slice(0,idx);
+  // Strip complimentary marker
+  var idx2=n.indexOf('\n__COMP__');
+  if(idx2!==-1)n=n.slice(0,idx2);
+  // Strip contact block (email/phone stored for direct bookings)
+  var idx3=n.indexOf('\n__CONTACT__');
+  if(idx3!==-1)n=n.slice(0,idx3);
+  var idx4=n.indexOf('\n__SRC__');
+  if(idx4!==-1)n=n.slice(0,idx4);
+  return n.trim();
+}
+
+var _finExpenses=null; // cached expenses from workspace.settings
+var _finYear=new Date().getFullYear();
+var _finApt='all';
+function setFinYear(v){_finYear=(v==='all'?'all':parseInt(v));renderRevenueAnalytics();}
+
+function getFinExpenses(){
+  if(!workspace||!workspace.settings)return[];
+  return workspace.settings.expenses||[];
+}
+function saveFinExpenses(expenses){
+  if(!workspace)return;
+  return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    fresh.expenses=expenses;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
+  }).then(function(){
+    if(workspace.settings)workspace.settings.expenses=expenses;
+    else workspace.settings={expenses:expenses};
+  });
+}
+function getFinCleanFee(aptId){
+  if(!workspace||!workspace.settings)return 0;
+  var apts=workspace.settings.apts||[];
+  var a=apts.find(function(x){return x.id===aptId;});
+  return(a&&a.cleanFee)?parseFloat(a.cleanFee)||0:0;
+}
+
+function renderRevenueAnalytics(){
+  var container=document.getElementById('revenueAnalytics');
+  if(!container)return;
+
+  var allBks=allBookings||[];
+
+  // ── Build year list from ALL data ──────────────────────────────────────────
+  var years=[];
+  allBks.forEach(function(b){
+    var y=b.checkin?parseInt(b.checkin.slice(0,4)):0;
+    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
+  });
+  (requests||[]).forEach(function(r){
+    var y=r.checkin?parseInt(r.checkin.slice(0,4)):0;
+    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
+  });
+  years.sort(function(a,b){return a-b;});
+
+  // Only auto-correct _finYear if it's completely unknown (not 'all', not a year in our data)
+  // Do NOT override 'all' — that's a valid user choice
+  if(_finYear!=='all'&&years.length&&years.indexOf(parseInt(_finYear))===-1){
+    _finYear=years[years.length-1];
+  }
+
+  // ── Year selector ──────────────────────────────────────────────────────────
+  var yearOpts='<option value="all"'+(_finYear==='all'?' selected':'')+'>All time</option>'+
+    years.map(function(y){return'<option value="'+y+'"'+(String(y)===String(_finYear)?' selected':'')+'>'+y+'</option>';}).join('');
+  var aptOpts='<option value="all"'+(_finApt==='all'?' selected':'')+'>All properties</option>'+
+    (properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
+
+  var isAllTime=(_finYear==='all');
+  var yStart=isAllTime?'2000-01-01':String(_finYear)+'-01-01';
+  var yEnd  =isAllTime?'2099-12-31':String(_finYear)+'-12-31';
+
+  // ── Filter bookings ────────────────────────────────────────────────────────
+  // OTA + imported direct bookings (from bookings table)
+  var yBks=allBks.filter(function(b){
+    return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&
+           (_finApt==='all'||b.apt===_finApt);
+  });
+
+  // Dashboard-created direct bookings (from direct_requests, confirmed)
+  var yDirect=(requests||[]).filter(function(r){
+    if(r.status!=='confirmed')return false;
+    if(!r.checkin||r.checkin<yStart||r.checkin>yEnd)return false;
+    if(_finApt==='all')return true;
+    return r.apt_id===_finApt||r.apt_name===_finApt||(r.apt&&r.apt===_finApt);
+  });
+
+  // Deduplicate: direct_requests bookings are ALSO in allBookings (inserted via insert_bookings RPC).
+  // Mark them so we don't double-count revenue.
+  var directReqKeys={};
+  yDirect.forEach(function(r){directReqKeys[r.apt+'|'+r.checkin]=(r.apt_id||r.apt_name||'')+'|'+r.checkin;});
+
+  // ── Occupancy ──────────────────────────────────────────────────────────────
+  // Use actual property count for selected filter
+  var numProps=_finApt==='all'?(properties&&properties.length||1):1;
+  // Available nights = calendar days in selected period × numProps (clamped to today for current year)
+  var todayStr=new Date().toISOString().slice(0,10);
+  var yearEndStr=isAllTime?todayStr:String(_finYear)+'-12-31';
+  var periodEnd=yearEndStr<todayStr?yearEndStr:todayStr;
+  if(!isAllTime&&String(_finYear)>todayStr.slice(0,4))periodEnd=String(_finYear)+'-12-31';
+  var periodStart=yStart;
+  var dStart=new Date(periodStart+'T12:00:00'),dEnd=new Date(periodEnd+'T12:00:00');
+  var numDays=Math.max(1,Math.round((dEnd-dStart)/86400000));
+  var totalAvailableNights=numDays*numProps;
+
+  var totalOccNights=0;
+  yBks.forEach(function(b){
+    // Clip to selected period
+    var ci=b.checkin>periodStart?b.checkin:periodStart;
+    var co=b.checkout<periodEnd?b.checkout:periodEnd;
+    if(ci>=co)return;
+    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
+  });
+  yDirect.forEach(function(r){
+    // Only count if not already in allBookings
+    var key=(r.apt_id||r.apt_name||r.apt||'')+'|'+r.checkin;
+    if(allBks.some(function(b){return b.apt===r.apt_id&&b.checkin===r.checkin;}))return;
+    var ci=r.checkin>periodStart?r.checkin:periodStart;
+    var co=(r.checkout||r.checkin)<periodEnd?(r.checkout||r.checkin):periodEnd;
+    if(ci>=co)return;
+    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
+  });
+  var occRate=totalAvailableNights>0?Math.min(100,Math.round(totalOccNights/totalAvailableNights*100)):0;
+
+  // ── Revenue ────────────────────────────────────────────────────────────────
+  var grossRev=0,commTotal=0,netRev=0,cleanFeeTotal=0;
+
+  // Direct requests (have real total_amount, commission=0)
+  var directBkKeys={}; // track which imported bookings are covered by a request
+  yDirect.forEach(function(r){
+    var amt=parseFloat(r.total_amount)||0;
+    grossRev+=amt;
+    netRev+=amt;
+    cleanFeeTotal+=getFinCleanFee(r.apt_id||r.apt_name||r.apt||'');
+    // Mark any matching imported booking so we don't double-count
+    (allBks).forEach(function(b){
+      if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout){
+        directBkKeys[b.id]=true;
+      }
+    });
+  });
+
+  // Imported bookings (allBookings): OTA (have __€__ marker) + imported direct
+  yBks.forEach(function(b){
+    if(directBkKeys[b.id])return; // already counted via requests
+    var fin=parseFin(b);
+    var isOTA=(b.source==='airbnb'||b.source==='booking');
+    if(isOTA){
+      grossRev+=fin.gross;
+      commTotal+=fin.commission;
+      netRev+=(fin.gross-fin.commission);
+      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
+    } else {
+      // imported direct (not a dashboard request)
+      grossRev+=fin.gross;
+      netRev+=fin.gross; // 0 commission
+      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
+    }
+  });
+
+  var adr=totalOccNights>0?grossRev/totalOccNights:0;
+  var revPAR=totalAvailableNights>0?grossRev/totalAvailableNights:0;
+
+  // ── Expenses ──────────────────────────────────────────────────────────────
+  var expenses=getFinExpenses().filter(function(e){
+    return _finApt==='all'||(e.apt===_finApt||e.apt==='all');
+  });
+  var totalExpenses=0;
+  expenses.forEach(function(e){
+    // Get the amount for the selected year (or default)
+    var yearAmt=e.amount||0;
+    if(!isAllTime&&e.amounts&&e.amounts[String(_finYear)]!=null){
+      yearAmt=parseFloat(e.amounts[String(_finYear)])||0;
+    }
+    // Determine effective period for this expense
+    var expStart=e.startDate?(e.startDate+'-01'):'2000-01-01';
+    var pStart=isAllTime?'2000-01-01':(String(_finYear)+'-01-01');
+    var effStart=expStart>pStart?expStart:pStart;
+    if(effStart>periodEnd)return; // not started yet
+    if(isAllTime){
+      // Sum across all years
+      years.forEach(function(y){
+        var amt=e.amounts&&e.amounts[String(y)]!=null?parseFloat(e.amounts[String(y)])||0:e.amount||0;
+        var yStart=String(y)+'-01-01';
+        var yEnd=String(y+1)+'-01-01';
+        var yEffStart=expStart>yStart?expStart:yStart;
+        if(yEffStart>=yEnd)return;
+        if(e.freq==='monthly'){
+          var s=new Date(yEffStart+'T12:00:00'),en=new Date(yEnd+'T12:00:00');
+          var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
+          totalExpenses+=amt*Math.max(0,months);
+        } else if(e.freq==='weekly'){
+          var days=Math.round((new Date(yEnd+'T12:00:00')-new Date(yEffStart+'T12:00:00'))/86400000);
+          totalExpenses+=amt*(days/7);
+        } else {
+          totalExpenses+=amt;
+        }
+      });
+    } else if(e.freq==='monthly'){
+      var s=new Date(effStart+'T12:00:00'),en=new Date(periodEnd+'T12:00:00');
+      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth())+1;
+      totalExpenses+=yearAmt*Math.max(0,months);
+    } else if(e.freq==='weekly'){
+      var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
+      totalExpenses+=yearAmt*(days/7);
+    } else {
+      totalExpenses+=yearAmt;
+    }
+  });
+  var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
+
+  // ── Monthly / Yearly chart ────────────────────────────────────────────────
+  var chartPeriods=[];
+  if(isAllTime){
+    years.forEach(function(y){
+      chartPeriods.push({label:String(y),start:y+'-01-01',end:(y+1)+'-01-01'});
+    });
+  } else {
+    for(var m=0;m<12;m++){
+      var md=new Date(parseInt(_finYear),m,1);
+      var mEnd=new Date(parseInt(_finYear),m+1,1);
+      chartPeriods.push({
+        label:md.toLocaleDateString('en-GB',{month:'short'}),
+        start:md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01',
+        end:mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01'
+      });
+    }
+  }
+
+  var months12=chartPeriods.map(function(period){
+    var pg=0,pc=0,pn=0,pocc=0;
+    var mDays=Math.round((new Date(period.end+'T00:00:00')-new Date(period.start+'T00:00:00'))/86400000);
+    var mAvail=mDays*numProps;
+
+    yDirect.forEach(function(r){
+      if(!r.checkin||r.checkin<period.start||r.checkin>=period.end)return;
+      var amt=parseFloat(r.total_amount)||0;
+      pg+=amt;
+      if(allBks.some(function(b){return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;}))return;
+      var nights=r.checkin&&r.checkout?Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000):0;
+      pocc+=nights;
+    });
+    var coveredIds={};
+    yDirect.forEach(function(r){
+      allBks.forEach(function(b){if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout)coveredIds[b.id]=true;});
+    });
+    yBks.forEach(function(b){
+      if(!b.checkin||b.checkin<period.start||b.checkin>=period.end)return;
+      if(coveredIds[b.id])return;
+      var fin=parseFin(b);
+      pg+=fin.gross;
+      pc+=fin.commission;
+      pn+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
+      var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
+      pocc+=nights;
+    });
+    var mOcc=mAvail>0?Math.min(100,Math.round(pocc/mAvail*100)):0;
+    return{label:period.label,occ:mOcc,gross:pg,net:pg-pc,nights:pocc,avail:mAvail};
+  });
+  var maxGross=Math.max.apply(null,months12.map(function(x){return x.gross;}));
+
+  // ── Platform breakdown ────────────────────────────────────────────────────
+  var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
+  yDirect.forEach(function(r){byPlat.direct.count++;byPlat.direct.gross+=parseFloat(r.total_amount)||0;});
+  var bkCoveredIds={};
+  yDirect.forEach(function(r){allBks.forEach(function(b){if((b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout)bkCoveredIds[b.id]=true;});});
+  yBks.forEach(function(b){
+    if(bkCoveredIds[b.id])return;
+    var s=b.source||'direct';if(!byPlat[s])byPlat[s]={count:0,gross:0,commission:0};
+    var fin=parseFin(b);
+    byPlat[s].count++;byPlat[s].gross+=fin.gross;byPlat[s].commission+=fin.commission;
+  });
+  var totalBks=Object.values(byPlat).reduce(function(a,p){return a+p.count;},0);
+
+  var expAptOptsForPanel='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  function fmt(n){return'€'+Math.round(n).toLocaleString('en-GB');}
+  function fmtPct(n){return n.toFixed(1)+'%';}
+  function kpiCard(label,val,sub,color){
+    return'<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
+      '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">'+label+'</div>'+
+      '<div style="font-size:22px;font-weight:800;color:'+(color||'var(--primary)')+';letter-spacing:-.5px">'+val+'</div>'+
+      (sub?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+sub+'</div>':'')+
+    '</div>';
+  }
+
+  // ── Data quality warning ──────────────────────────────────────────────────
+  // Bookings missing financial data (OTA imported before revenue tracking)
+  var missingFinBks=yBks.filter(function(b){
+    if(bkCoveredIds[b.id])return false;
+    var fin=parseFin(b);
+    return fin.gross===0&&!fin.isComp&&(b.source==='airbnb'||b.source==='booking');
+  });
+  // Direct bookings with gross=0 — but NOT complimentary ones
+  var missingDirectBks=yBks.filter(function(b){
+    if(bkCoveredIds[b.id])return false;
+    var fin=parseFin(b);
+    return fin.gross===0&&!fin.isComp&&b.source==='direct';
+  });
+  var qualityWarning='';
+  if(missingFinBks.length){
+    var details=missingFinBks.map(function(b){
+      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
+      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
+      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
+    }).join('<br>');
+    qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
+      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+missingFinBks.length+' Booking.com/Airbnb booking'+(missingFinBks.length>1?'s':'')+' have no revenue data (imported before revenue tracking)</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+details+'</div>'+
+      '<div>→ Re-import your Booking.com/Airbnb file to fix this. Revenue totals below are understated.</div>'+
+    '</div>';
+  }
+  if(missingDirectBks.length){
+    var dDetails=missingDirectBks.map(function(b){
+      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
+      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
+      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
+    }).join('<br>');
+    qualityWarning+='<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#991b1b">'+
+      '<div style="font-weight:700;margin-bottom:6px">🔴 '+missingDirectBks.length+' direct booking'+(missingDirectBks.length>1?'s':'')+' have €0 gross revenue in your file</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+dDetails+'</div>'+
+      '<div>→ Update the price in your source file and re-import, or edit the booking manually in the Reservations tab.</div>'+
+    '</div>';
+  }
+
+
+  container.innerHTML=
+    // ── Controls ──
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'+
+      '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
+      '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+aptOpts+'</select>'+
+      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied · '+numDays+' available days × '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
+    '</div>'+
+    qualityWarning+
+    // ── Revenue KPIs ──
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
+      kpiCard(CT('occRate'),fmtPct(occRate),totalOccNights+' occ. nights / '+totalAvailableNights+' avail.','var(--blue)')+
+      kpiCard(CT('adr'),fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
+      kpiCard(CT('grossRev'),fmt(grossRev),CT('beforeComm'),'')+
+      kpiCard(CT('netRev'),fmt(netRev),CT('afterComm'),'var(--green)')+
+    '</div>'+
+    // ── Cost KPIs ──
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
+      kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
+      kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),(yBks.length+yDirect.length)+' stays (from import or default €50)','#7c3aed')+
+      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
+      kpiCard(CT('pandl'),fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
+    '</div>'+
+    // ── Charts ──
+    '<div style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
+          '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">'+(isAllTime?'Revenue — All time':'Monthly Revenue — '+_finYear)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">Gross (grey) vs Net after commissions (coloured)</div></div>'+
+        '</div>'+
+        '<div style="display:flex;align-items:flex-end;gap:4px;height:110px">'+
+          months12.map(function(mo){
+            var hg=maxGross>0?Math.max(4,Math.round(mo.gross/maxGross*95)):4;
+            var hn=maxGross>0?Math.max(2,Math.round(mo.net/maxGross*95)):2;
+            var occCol=mo.occ>=80?'#059669':mo.occ>=50?'var(--blue)':'#f59e0b';
+            return'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+              '<div style="font-size:9px;font-weight:700;color:var(--muted)">'+(mo.gross>0?'€'+Math.round(mo.gross/1000*10)/10+'k':'')+'</div>'+
+              '<div style="width:100%;position:relative;height:90px;display:flex;align-items:flex-end">'+
+                '<div style="position:absolute;bottom:0;left:0;right:0;background:#e2e8f0;border-radius:3px 3px 0 0;height:'+hg+'px"></div>'+
+                '<div style="position:absolute;bottom:0;left:15%;right:15%;background:'+occCol+';border-radius:3px 3px 0 0;height:'+hn+'px;opacity:.85"></div>'+
+              '</div>'+
+              '<div style="font-size:9px;color:var(--muted);font-weight:500">'+mo.label+'</div>'+
+              '<div style="font-size:9px;font-weight:700;color:'+occCol+'">'+mo.occ+'%</div>'+
+            '</div>';
+          }).join('')+
+        '</div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+        '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Platform Breakdown</div>'+
+        finPlatCard('Airbnb',byPlat.airbnb,totalBks,'#e8485a')+
+        finPlatCard('Booking.com',byPlat.booking,totalBks,'#003580')+
+        finPlatCard('Direct',byPlat.direct,totalBks,'var(--green)')+
+        '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'+
+          '<div style="font-size:11px;font-weight:700;color:var(--muted)">Total commissions</div>'+
+          '<div style="font-size:18px;font-weight:800;color:#dc2626">'+fmt(commTotal)+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div id="expensesManagerPanel" style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);display:none">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:700;color:var(--primary)">Recurring Expenses</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Set a start month if expense began mid-period.</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<select id="expFilterApt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+expAptOptsForPanel+
+          '</select>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow()">+ Add</button>'+
+        '</div>'+
+      '</div>'+
+      '<div id="expensesList"></div>'+
+      '<div style="margin-top:14px;display:flex;gap:10px">'+
+        '<button class="btn-primary" style="font-size:13px" onclick="saveExpenses()">Save expenses</button>'+
+        '<button class="btn-outline" style="font-size:13px" onclick="closeExpensesManager()">Cancel</button>'+
+      '</div>'+
+    '</div>';
+
+  if(document.getElementById('expensesManagerPanel').style.display!=='none'){
+    renderExpensesList();
+  }
+}
+
+
+function finPlatCard(name,data,total,color){
+  var pct=total>0?Math.round(data.count/total*100):0;
+  var net=data.gross-data.commission;
+  return '<div style="margin-bottom:14px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'+
+      '<span style="font-size:12px;font-weight:700;color:var(--primary)">'+name+'</span>'+
+      '<span style="font-size:11px;color:var(--muted)">'+data.count+' ('+pct+'%)</span>'+
+    '</div>'+
+    '<div style="background:var(--bg);border-radius:999px;height:6px;overflow:hidden;margin-bottom:4px">'+
+      '<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:999px"></div>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">'+
+      '<span>Gross: '+(data.gross>0?'€'+Math.round(data.gross).toLocaleString('en-GB'):'—')+'</span>'+
+      (data.commission>0?'<span style="color:#dc2626">Comm: €'+Math.round(data.commission).toLocaleString('en-GB')+'</span>':'')+
+    '</div>'+
+  '</div>';
+}
+
+// ── Expenses manager ─────────────────────────────────────────────────────────
+function openExpensesManager(e){
+  if(e)e.preventDefault();
+  var panel=document.getElementById('expensesManagerPanel');
+  panel.style.display='';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderExpensesList();
+}
+function closeExpensesManager(){
+  document.getElementById('expensesManagerPanel').style.display='none';
+}
+function renderExpensesList(){
+  var expenses=getFinExpenses();
+  var filterAptEl=document.getElementById('expFilterApt');
+  var filterApt=filterAptEl?filterAptEl.value:'all';
+  var filtered=filterApt==='all'?expenses.map(function(e,i){return{e:e,i:i};}):
+    expenses.map(function(e,i){return{e:e,i:i};}).filter(function(x){return x.e.apt===filterApt||x.e.apt==='all';});
+
+  var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
+  // Build year columns from all booking years + 2 future years
+  var currentYear=new Date().getFullYear();
+  var allYears=(allBookings||[]).map(function(b){return b.checkin?parseInt(b.checkin.slice(0,4)):0;}).filter(function(y){return y>2020&&y<2050;});
+  [currentYear,currentYear+1].forEach(function(y){if(allYears.indexOf(y)===-1)allYears.push(y);});
+  allYears.sort(function(a,b){return a-b;});
+  var uniqueYears=allYears.filter(function(v,i,a){return a.indexOf(v)===i;});
+
+  var html='';
+  if(!expenses.length){
+    html='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No expenses yet. Click <strong>+ Add</strong> to start.</div>';
+  } else if(!filtered.length){
+    html='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No expenses for this property filter.</div>';
+  } else {
+    // Column headers: Name | Apt | Freq | [year columns] | actions
+    var yearCols=uniqueYears.map(function(y){return'<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">'+y+'</th>';}).join('');
+    html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr style="border-bottom:2px solid var(--border)">'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Freq.</th>'+
+        yearCols+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:60px">Starts</th>'+
+        '<th style="padding:7px 4px;min-width:56px"></th>'+
+      '</tr></thead><tbody>';
+
+    filtered.forEach(function(item){
+      var ex=item.e, ri=item.i;
+      var yearInputs=uniqueYears.map(function(y){
+        var val=(ex.amounts&&ex.amounts[y]!=null)?ex.amounts[y]:(ex.amount||'');
+        return'<td style="padding:5px 4px;text-align:center">'+
+          '<input class="exp-yr-amt" data-year="'+y+'" type="number" value="'+val+'" placeholder="€" min="0" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:64px;text-align:right;box-sizing:border-box">'+
+        '</td>';
+      }).join('');
+      var startVal=ex.startDate||'';
+      var startDisplay=startVal?startVal.replace('-','/'):'—';
+      html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid #f1f5f9">'+
+        '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
+          'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:140px;box-sizing:border-box"></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
+        yearInputs+
+        '<td style="padding:6px 4px;text-align:center">'+
+          '<input class="exp-start" type="month" value="'+startVal+'" title="First month this expense applies" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:11px;width:100px;box-sizing:border-box">'+
+        '</td>'+
+        '<td style="padding:6px 4px;text-align:center">'+
+          '<div style="display:flex;gap:3px;justify-content:center">'+
+            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:13px">⎘</button>'+
+            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:15px">×</button>'+
           '</div>'+
-          '<div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">'+
-            '<span>Total: <strong>€'+item.total+'</strong></span>'+
-            (amtPaid>0?'<span style="color:#15803d">Paid: <strong>€'+amtPaid+'</strong></span>':'')+
-            (amtDue>0?'<span style="color:#dc2626">Due: <strong>€'+amtDue+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
-          '</div>'+
-        '</div>';
+        '</td>'+
+      '</tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+  document.getElementById('expensesList').innerHTML=html;
+}
+
+function addExpenseRow(){
+  var expenses=getFinExpenses();
+  expenses.push({name:'',amount:0,apt:'all',freq:'monthly',startDate:''});
+  if(workspace.settings)workspace.settings.expenses=expenses;
+  renderExpensesList();
+  var rows=document.querySelectorAll('.exp-row');
+  if(rows.length){var inp=rows[rows.length-1].querySelector('.exp-name');if(inp){inp.focus();inp.scrollIntoView({block:'nearest'});}}
+}
+function duplicateExpense(idx){
+  var expenses=getFinExpenses();
+  if(expenses[idx]){
+    var copy=JSON.parse(JSON.stringify(expenses[idx]));
+    copy.name=(copy.name||'Expense')+' (copy)';
+    expenses.splice(idx+1,0,copy);
+    if(workspace.settings)workspace.settings.expenses=expenses;
+    renderExpensesList();
+  }
+}
+function removeExpense(idx){
+  var expenses=getFinExpenses();
+  expenses.splice(idx,1);
+  if(workspace.settings)workspace.settings.expenses=expenses;
+  renderExpensesList();
+}
+function saveExpenses(){
+  var rows=document.querySelectorAll('.exp-row');
+  var expenses=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.exp-name').value.trim();
+    if(!name)return;
+    var apt=row.querySelector('.exp-apt').value;
+    var freq=row.querySelector('.exp-freq').value;
+    var startDate=row.querySelector('.exp-start')?row.querySelector('.exp-start').value.trim():'';
+    // Collect per-year amounts from year columns
+    var amounts={};
+    var defaultAmt=0;
+    row.querySelectorAll('.exp-yr-amt').forEach(function(inp){
+      var y=inp.getAttribute('data-year');
+      var v=parseFloat(inp.value)||0;
+      if(y)amounts[y]=v;
+      if(v>defaultAmt)defaultAmt=v;
+    });
+    // Fallback: old amount field
+    var amtEl=row.querySelector('.exp-amount');
+    if(amtEl&&!defaultAmt)defaultAmt=parseFloat(amtEl.value)||0;
+    expenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
+  });
+  saveFinExpenses(expenses).then(function(){
+    closeExpensesManager();
+    renderRevenueAnalytics();
+  }).catch(function(e){alert('Save failed: '+e.message);});
+}
+
+
+function revKpi(label,val,color,icon){
+  return '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+      '<div style="width:36px;height:36px;border-radius:10px;background:'+color+'18;display:flex;align-items:center;justify-content:center;color:'+color+'">'+icon+'</div>'+
+      '<div style="font-size:11px;font-weight:600;color:var(--muted)">'+label+'</div>'+
+    '</div>'+
+    '<div style="font-size:24px;font-weight:800;color:var(--primary);letter-spacing:-.5px">'+val+'</div>'+
+  '</div>';
+}
+
+function revPlatform(name,count,total,color){
+  var pct=total>0?Math.round(count/total*100):0;
+  return '<div style="margin-bottom:12px">'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:5px">'+
+      '<span style="font-size:12px;font-weight:600;color:var(--primary)">'+name+'</span>'+
+      '<span style="font-size:12px;font-weight:700;color:var(--muted)">'+count+' ('+pct+'%)</span>'+
+    '</div>'+
+    '<div style="background:var(--bg);border-radius:999px;height:7px;overflow:hidden">'+
+      '<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:999px;transition:width .4s"></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderPayments(){
+  renderRevenueAnalytics();
+  var confirmed=requests.filter(function(r){return r.status==='confirmed';});
+  var list=document.getElementById('payList');
+  if(!list)return; // payList removed from Finance tab — skip
+  if(!confirmed.length){
+    list.innerHTML='<div class="empty-state"><div class="ico">💰</div>'+
+      '<h3>No confirmed bookings yet</h3><p>Confirmed bookings will appear here for payment tracking.</p></div>';
+    return;
+  }
+  list.innerHTML='';
+  confirmed.forEach(function(req){
+    var nights=0;
+    if(req.checkin&&req.checkout)nights=Math.round((new Date(req.checkout+'T12:00:00')-new Date(req.checkin+'T12:00:00'))/86400000);
+    var total=req.total_amount||0;
+    var deposit=Math.round(total/2);
+    var balance=total-deposit;
+    var card=document.createElement('div');
+    card.className='pay-card';
+    card.innerHTML=
+      '<div class="pay-top">'+
+        '<div>'+
+          '<div class="pay-guest">'+esc(req.guest_name)+'</div>'+
+          '<div class="pay-apt">'+esc(req.apt_name||'')+'  ·  '+fmtShort(req.checkin)+' → '+fmtShort(req.checkout)+' ('+nights+'n)</div>'+
+        '</div>'+
+        '<span class="status-badge '+(req.balance_paid?'status-confirmed':req.deposit_paid?'status-pending':'status-declined')+'">'+
+          (req.balance_paid?'✅ Fully paid':req.deposit_paid?'⏳ Deposit paid':'❌ Unpaid')+
+        '</span>'+
+      '</div>'+
+      '<div class="pay-body">'+
+        '<div class="pay-row"><span>Total</span><span>€'+total+'</span></div>'+
+        '<div class="pay-row"><span>Deposit (50%)</span>'+
+          '<span style="display:flex;align-items:center;gap:8px">€'+deposit+' '+
+            (req.deposit_paid?'<span style="color:var(--green);font-size:16px">✓</span>':'<span style="color:var(--red);font-size:11px">pending</span>')+
+          '</span>'+
+        '</div>'+
+        '<div class="pay-row"><span>Balance</span>'+
+          '<span style="display:flex;align-items:center;gap:8px">€'+balance+' '+
+            (req.balance_paid?'<span style="color:var(--green);font-size:16px">✓</span>':'<span style="color:var(--red);font-size:11px">pending</span>')+
+          '</span>'+
+        '</div>'+
+        '<div class="pay-row" style="color:var(--text);font-size:14px">'+
+          '<span>Outstanding</span>'+
+          '<span>€'+(req.balance_paid?0:req.deposit_paid?balance:total)+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="pay-actions">'+
+        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'✅ Mark deposit paid')+'</button>'+
+        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'✅ Mark balance paid')+'</button>'+
+        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">📧 Send reminder</button>'+
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function markPaid(id,type){
+  var req=requests.find(function(r){return r.id===id;});
+  if(!req)return;
+  var upd={updated_at:new Date().toISOString()};
+  if(type==='deposit')upd.deposit_paid=!req.deposit_paid;
+  if(type==='balance'){upd.balance_paid=!req.balance_paid;if(upd.balance_paid)upd.deposit_paid=true;}
+  sbF('PATCH','direct_requests?id=eq.'+id,upd).then(function(){
+    toast('Payment updated','ok');
+    loadRequests();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+// Also update payments after requests load
+var origLoadRequests=loadRequests;
+loadRequests=function(){origLoadRequests.apply(this,arguments);};
+
+// Override renderRequests to also re-render payments
+var _origRenderRequests=renderRequests;
+renderRequests=function(){_origRenderRequests();};
+
+// ── RESERVATIONS LIST VIEW ───────────────────────────────────────────────────
+function renderResList(){
+  var container=document.getElementById('resList');
+  if(!container)return;
+
+  // Merge allBookings + confirmed direct requests into one list
+  var today=new Date().toISOString().slice(0,10);
+  var items=[];
+
+  // Build a set of apt+checkin+checkout covered by confirmed direct_requests
+  // so we don't show allBookings duplicates for manually created or confirmed bookings
+  var reqCoveredKeys={};
+  requests.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    // Store both apt_id and apt_name variants so we match regardless of how b.apt was stored
+    if(r.apt_id)reqCoveredKeys[r.apt_id+'|'+r.checkin+'|'+r.checkout]=true;
+    if(r.apt_name)reqCoveredKeys[r.apt_name+'|'+r.checkin+'|'+r.checkout]=true;
+  });
+
+  allBookings.forEach(function(b){
+    // Skip if a confirmed direct_request covers the same slot (avoid duplicate)
+    if(reqCoveredKeys[(b.apt||'')+'|'+b.checkin+'|'+b.checkout])return;
+    var apt=aptById(b.apt);
+    var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
+    var fin=parseFin(b);
+    // Use gross from imported financial data if available; otherwise no total shown
+    var gross=fin.gross||0;
+    var isComp=fin.isComp;
+    items.push({
+      id:b.id,checkin:b.checkin,checkout:b.checkout,
+      guest:cleanNotesDisplay(b.notes)||b.guests||'Guest',email:'',phone:'',
+      aptId:b.apt,aptName:apt.name||b.apt,aptColor:apt.color||'#64748b',
+      source:b.source||'direct',nights:nights,
+      ratePerNight:0,cleanFee:fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt),
+      total:isComp?0:gross,isComp:isComp,
+      paid:b.paid,cleaned:b.cleaned,notes:b.notes||'',
+      origin:'summerclean',blocked:false
+    });
+  });
+
+  requests.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    var apt=aptById(r.apt_id||r.apt_name);
+    var nights=r.checkin&&r.checkout?Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000):0;
+    items.push({
+      id:r.id,checkin:r.checkin,checkout:r.checkout,
+      guest:r.guest_name||'Guest',email:r.guest_email||'',phone:r.guest_phone||'',
+      aptId:r.apt_id||apt.id||'',aptName:r.apt_name||apt.name,aptColor:apt.color||'#22c55e',
+      source:'direct',nights:nights,
+      ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
+      paid:r.deposit_paid?(r.balance_paid?'paid':'deposit'):'unpaid',
+      cleaned:importCleanedStatus(r.checkout),notes:r.notes||'',
+      origin:'direct',blocked:false
+    });
+  });
+
+  // Populate property filter pills (idempotent)
+  populateListPropFilters();
+
+  // Apply multi-group AND filters
+  var today2=new Date().toISOString().slice(0,10);
+  // Time filter
+  if(listTimeFilter==='upcoming')items=items.filter(function(i){return i.checkout&&i.checkout>=today2;});
+  else if(listTimeFilter==='past')items=items.filter(function(i){return i.checkout&&i.checkout<today2;});
+  // Source filter
+  if(listSourceFilter!=='all')items=items.filter(function(i){return i.source===listSourceFilter;});
+  // Property filter
+  if(listPropFilter!=='all')items=items.filter(function(i){
+    return i.aptId===listPropFilter;
+  });
+
+  // Sort by checkin
+  items.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
+
+  if(!items.length){
+    container.innerHTML='<div class="empty-state"><div class="ico">📅</div><h3>No reservations yet</h3><p>Confirmed bookings will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML='';
+  var lastMonth='';
+  items.forEach(function(item){
+    // Month separator
+    if(item.checkin){
+      var m=item.checkin.slice(0,7);
+      if(m!==lastMonth){
+        lastMonth=m;
+        var dt=new Date(item.checkin+'T12:00:00');
+        var sep=document.createElement('div');
+        sep.className='res-month-sep';
+        sep.textContent=dt.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+        container.appendChild(sep);
       }
     }
+
+    var isPast=item.checkout&&item.checkout<today;
+    var isActive=item.checkin&&item.checkout&&item.checkin<=today&&item.checkout>today;
+
+    var srcClass='src-'+(item.source==='airbnb'?'airbnb':item.source==='booking'?'booking':'direct')+'-card';
+    var srcLabel=item.source==='airbnb'?'🏠 Airbnb':item.source==='booking'?'📋 Booking.com':'🤝 Direct';
+    var srcBg=item.source==='airbnb'?'#fee2e2;color:#9f1239':item.source==='booking'?'#dbeafe;color:#1e40af':'#dcfce7;color:#15803d';
+
+    var paidLabel=item.paid==='paid'?'✅ Paid':item.paid==='deposit'?'⏳ Deposit paid':'❌ Unpaid';
+    var paidColor=item.paid==='paid'?'#15803d':item.paid==='deposit'?'#92400e':'#dc2626';
+
     var card=document.createElement('div');
     card.className='res-list-card '+srcClass;
     card.style.opacity=isPast?'0.6':'1';
@@ -1885,8 +2942,32 @@ function renderProps(){
         '<span>'+fmtShort(item.checkout)+'</span>'+
         '<span class="chip">'+item.nights+'n</span>'+
         (item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':'')+
-      '</div>'+
-      payHtml+
+      '</div>';
+    // Payment row
+    var isOTA=(item.source==='booking'||item.source==='airbnb');
+    if(!item.isComp&&item.total>0){
+      if(isOTA){
+        card.innerHTML+='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#f0fdf4">'+
+          '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
+          '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
+        '</div>';
+      } else {
+        var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
+        var amtDue=Math.max(0,item.total-amtPaid);
+        card.innerHTML+='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
+            '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Payment</span>'+
+            '<button data-pmid="'+item.id+'" data-pmorigin="'+item.origin+'" class="pm-open-btn" style="border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--primary);padding:0">+ Manage →</button>'+
+          '</div>'+
+          '<div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">'+
+            '<span>Total: <strong>€'+item.total+'</strong></span>'+
+            (amtPaid>0?'<span style="color:#15803d">Paid: <strong>€'+amtPaid+'</strong></span>':'')+
+            (amtDue>0?'<span style="color:#dc2626">Due: <strong>€'+amtDue+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
+          '</div>'+
+        '</div>';
+      }
+    }
+    card.innerHTML+=
       '<div class="res-list-actions">'+
         '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
         '<span style="flex:1"></span>'+
@@ -1894,67 +2975,63 @@ function renderProps(){
       '</div>';
     container.appendChild(card);
   });
-  // Delegated click for payment manage buttons
-  container.querySelectorAll('.pm-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){openPaymentPanel(this.dataset.id,this.dataset.origin);});
+  // Wire payment panel buttons
+  container.querySelectorAll('.pm-open-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){openPaymentPanel(this.dataset.pmid,this.dataset.pmorigin);});
   });
 }
 
 // ── PAYMENT MANAGEMENT ────────────────────────────────────────────────────────
-var _pmBookingId=null,_pmOrigin=null,_pmTotal=0;
+var _pmId=null,_pmOrigin=null,_pmTotal=0;
 function openPaymentPanel(id,origin){
-  _pmBookingId=id;_pmOrigin=origin;
+  _pmId=id;_pmOrigin=origin;
   var bk=allBookings.find(function(b){return b.id===id;});
-  var req=!bk?requests.find(function(r){return r.id===id;}):null;
-  var item=bk||req;
-  if(!item){toast('Booking not found','err');return;}
-  var fin=bk?parseFin(bk):{gross:req.total_amount||0,commission:0,cleanfee:-1};
-  _pmTotal=fin.gross||req&&req.total_amount||0;
+  var req=(requests||[]).find(function(r){return r.id===id;});
+  var item=bk||req;if(!item){toast('Not found','err');return;}
+  var fin=bk?parseFin(bk):{gross:req.total_amount||0};
+  _pmTotal=fin.gross||(req&&req.total_amount)||0;
   var gName=bk?cleanNotesDisplay(bk.notes)||bk.guests||'Guest':req.guest_name||'Guest';
   var aptId=bk?bk.apt:(req.apt_id||req.apt_name||'');
   var apt=aptById(aptId);
   document.getElementById('pmDetails').innerHTML=
-    '<div style="font-weight:700;font-size:14px;color:var(--primary);margin-bottom:2px">'+esc(gName)+'</div>'+
+    '<div style="font-weight:700;color:var(--primary)">'+esc(gName)+'</div>'+
     '<div style="font-size:12px;color:var(--muted)">'+esc(apt.name||aptId)+'</div>'+
-    '<div style="font-size:14px;font-weight:800;color:var(--text);margin-top:8px">Total: €'+_pmTotal+'</div>';
+    '<div style="font-size:14px;font-weight:800;margin-top:6px">Total: €'+_pmTotal+'</div>';
   var curPaid=bk?bk.paid:(req.balance_paid?'paid':req.deposit_paid?'deposit':'unpaid');
-  var curDeposit=req&&req.deposit_paid&&!req.balance_paid?(req.rate_per_night||0):0;
+  var curDep=(req&&req.deposit_paid&&!req.balance_paid)?(req.rate_per_night||0):0;
   document.getElementById('pmStatus').value=curPaid;
-  document.getElementById('pmDeposit').value=curDeposit||'';
+  document.getElementById('pmDeposit').value=curDep||'';
   document.getElementById('pmErr').textContent='';
   updatePmCalc();
   document.getElementById('paymentOverlay').classList.add('show');
 }
 function updatePmCalc(){
   var status=document.getElementById('pmStatus').value;
-  var depRow=document.getElementById('pmDepositRow');
-  var calc=document.getElementById('pmCalc');
-  depRow.style.display=status==='deposit'?'':'none';
+  document.getElementById('pmDepositRow').style.display=status==='deposit'?'':'none';
   var paid=0,due=_pmTotal;
   if(status==='paid'){paid=_pmTotal;due=0;}
   else if(status==='deposit'){paid=parseFloat(document.getElementById('pmDeposit').value)||0;due=_pmTotal-paid;}
-  calc.innerHTML='<div style="display:flex;gap:16px;flex-wrap:wrap">'+
-    '<span>Total: <strong>€'+_pmTotal+'</strong></span>'+
+  var el=document.getElementById('pmCalc');
+  el.innerHTML='<span>Total: <strong>€'+_pmTotal+'</strong></span>'+
     (paid>0?'<span style="color:#15803d">Paid: <strong>€'+paid.toFixed(2)+'</strong></span>':'')+
-    (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
-  '</div>';
+    (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':
+      '<span style="color:#15803d;font-weight:700">✅ Fully paid</span>');
 }
 function savePaymentStatus(){
   var status=document.getElementById('pmStatus').value;
-  var depositAmt=parseFloat(document.getElementById('pmDeposit').value)||0;
+  var dep=parseFloat(document.getElementById('pmDeposit').value)||0;
   var err=document.getElementById('pmErr');
-  if(status==='deposit'&&depositAmt<=0){err.textContent='Enter deposit amount.';return;}
-  var bk=allBookings.find(function(b){return b.id===_pmBookingId;});
+  if(status==='deposit'&&dep<=0){err.textContent='Enter deposit amount.';return;}
+  var bk=allBookings.find(function(b){return b.id===_pmId;});
   if(bk){
-    var paidVal=status;
-    sbF('PATCH','bookings?id=eq.'+_pmBookingId,{paid:paidVal}).then(function(){
-      bk.paid=paidVal;closeModal('paymentOverlay');toast('Payment updated','ok');renderResList();
+    sbF('PATCH','bookings?id=eq.'+_pmId,{paid:status}).then(function(){
+      bk.paid=status;closeModal('paymentOverlay');toast('Payment updated','ok');renderResList();
     }).catch(function(e){err.textContent='Error: '+e.message;});
   } else {
     var upd={deposit_paid:(status==='deposit'||status==='paid'),balance_paid:(status==='paid')};
-    if(status==='deposit')upd.rate_per_night=Math.round(depositAmt);
-    sbF('PATCH','direct_requests?id=eq.'+_pmBookingId,upd).then(function(){
-      var r=requests.find(function(x){return x.id===_pmBookingId;});
+    if(status==='deposit')upd.rate_per_night=Math.round(dep);
+    sbF('PATCH','direct_requests?id=eq.'+_pmId,upd).then(function(){
+      var r=(requests||[]).find(function(x){return x.id===_pmId;});
       if(r){r.deposit_paid=upd.deposit_paid;r.balance_paid=upd.balance_paid;if(upd.rate_per_night)r.rate_per_night=upd.rate_per_night;}
       closeModal('paymentOverlay');toast('Payment updated','ok');renderResList();
     }).catch(function(e){err.textContent='Error: '+e.message;});
@@ -2169,16 +3246,17 @@ function renderCleaningList(){
   if(!container)return;
   var tod=todayStr();
 
-  // Merge allBookings + confirmed direct_requests for cleaning
+  // Include confirmed direct_requests in cleaning list
   var cleanAll=(allBookings||[]).slice();
   var coveredForClean={};
   (allBookings||[]).forEach(function(b){coveredForClean[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
   (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
     var aptId=r.apt_id||r.apt_name||'';
     if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
-      cleanAll.push({id:r.id,apt:aptId,source:'direct',checkin:r.checkin,checkout:r.checkout,
-        guests:String(r.guests||''),notes:r.guest_name||'',paid:'unpaid',
-        cleaned:importCleanedStatus(r.checkout)});
+      cleanAll.push({id:r.id,apt:aptId,source:'direct',
+        checkin:r.checkin,checkout:r.checkout,
+        guests:String(r.guests||''),notes:r.guest_name||'',
+        paid:'unpaid',cleaned:importCleanedStatus(r.checkout)});
     }
   });
   var visible=cleanAll.filter(function(b){
@@ -2474,7 +3552,7 @@ function doMappedImport(){
       checkin:ci,checkout:co,clean:co,
       guests:iGuests>=0?_rv2(iGuests):'',
       notes:gName+finSuffix,
-      paid:'unpaid',cleaned:importCleanedStatus(co)
+      paid:(source==='booking'||source==='airbnb')?'paid':'unpaid',cleaned:importCleanedStatus(co)
     });
   }
   if(!parsed.length){setDIS2('No valid rows found ('+skipped+' skipped).','err');return;}
