@@ -4143,9 +4143,7 @@ function saveEditBooking(){
       loadAllBookings().then(function(){renderCalendar();renderResList();renderPayments();renderCleaning();renderOverview();});
     }).catch(function(e){errEl.textContent='Error: '+e.message;});
   } else {
-    // Update direct_requests table — include notes (payments + source) and source
-    var reqNotes=(cleanNotesDisplay(requests.find(function(r){return r.id===id;})||{}).notes||'');
-    // Rebuild notes with source marker and payments
+    // Update direct_requests table
     var srcMarker=newSource&&newSource!=='direct'?'\n__SRC__'+newSource:'';
     var paysMarker=_ebPayments.length?'\n__PAYMENTS__'+JSON.stringify(_ebPayments):'';
     var savedNotes=guestName+srcMarker+paysMarker;
