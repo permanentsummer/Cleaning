@@ -2928,6 +2928,7 @@ function renderResList(){
       source:(function(){var n=r.notes||'';var si=n.indexOf('\n__SRC__');return si!==-1?n.slice(si+8).split('\n')[0].trim()||'direct':'direct';}()),
       nights:nights,
       ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
+      isComp:(r.notes||'').indexOf('\n__COMP__')!==-1,
       paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
       cleaned:importCleanedStatus(r.checkout),notes:r.notes||'',
       origin:'direct',blocked:false
@@ -4164,7 +4165,7 @@ function saveEditBooking(){
 
   if(origin==='summerclean'){
     // OTA imported booking — update bookings table only
-    var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||b.guests||'',source:newSource};
+    var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||(b?b.guests:'')||'',source:newSource};
     sbF('PATCH','bookings?id=eq.'+id,upd).then(function(){
       closeModal('editBookingOverlay');
       toast('Booking updated','ok');
@@ -4174,7 +4175,7 @@ function saveEditBooking(){
     // Update direct_requests table
     var srcMarker=newSource&&newSource!=='direct'?'\n__SRC__'+newSource:'';
     var paysMarker=_ebPayments.length?'\n__PAYMENTS__'+JSON.stringify(_ebPayments):'';
-    var savedNotes=guestName+srcMarker+paysMarker;
+    var savedNotes=guestName+finSuffix+srcMarker+paysMarker;
     // Derive paid status from payments
     var totalAmt=gross||0;
     var paidAmt=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
