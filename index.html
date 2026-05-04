@@ -1119,7 +1119,29 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   </div>
 </div>
 
-<!-- MODAL: Add / edit property -->
+<!-- MODAL: Payment management -->
+<div class="overlay" id="paymentOverlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header"><h3>💳 Manage Payment</h3><button class="close-btn" onclick="closeModal('paymentOverlay')">✕</button></div>
+    <div style="padding:16px 20px">
+      <div id="pmDetails" style="margin-bottom:16px"></div>
+      <div class="fg"><label>Payment status</label>
+        <select id="pmStatus" onchange="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%">
+          <option value="unpaid">Unpaid</option>
+          <option value="deposit">Deposit paid</option>
+          <option value="paid">Fully paid</option>
+        </select>
+      </div>
+      <div class="fg" id="pmDepositRow" style="display:none">
+        <label>Deposit amount (€)</label>
+        <input type="number" id="pmDeposit" placeholder="0" min="0" step="0.01" oninput="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
+      </div>
+      <div id="pmCalc" style="background:var(--bg);border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:14px"></div>
+      <div class="aerr" id="pmErr"></div>
+      <button class="btn-primary" style="width:100%" onclick="savePaymentStatus()">💾 Save payment</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="propOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -2918,14 +2940,110 @@ function renderResList(){
         '<span class="chip">'+item.nights+'n</span>'+
         (item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':'')+
       '</div>'+
+      // Payment panel for direct bookings
+      (function(){
+        var isOTA=(item.source==='booking'||item.source==='airbnb');
+        var paySection='';
+        if(!item.isComp&&item.total>0){
+          if(isOTA){
+            // OTA: always paid via platform — simple badge
+            paySection='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#f0fdf4">'+
+              '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
+              '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
+            '</div>';
+          } else {
+            // Direct: show payment breakdown with edit capability
+            var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
+            var amtDue=item.total-amtPaid;
+            paySection='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+                '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Payment</span>'+
+                '<button class="pm-btn" data-id="'+item.id+'" data-origin="'+item.origin+'" style="border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--primary);padding:0">+ Manage</button>'+
+              '</div>'+
+              '<div style="display:flex;gap:16px;font-size:12px">'+
+                '<span>Total: <strong>€'+item.total+'</strong></span>'+
+                (amtPaid>0?'<span style="color:#15803d">Paid: <strong>€'+amtPaid+'</strong></span>':'')+
+                (amtDue>0?'<span style="color:#dc2626">Due: <strong>€'+amtDue+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
+              '</div>'+
+            '</div>';
+          }
+        }
+        card.innerHTML+=paySection;
+      })();
+      card.innerHTML+=
       '<div class="res-list-actions">'+
         '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
         '<span style="flex:1"></span>'+
-        '<span style="font-size:11px;font-weight:800;color:'+paidColor+'">'+paidLabel+'</span>'+
+        ((!isOTA&&!item.isComp&&item.total>0)?'':'')+
         '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
       '</div>';
     container.appendChild(card);
   });
+  // Delegated click for payment manage buttons
+  container.querySelectorAll('.pm-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){openPaymentPanel(this.dataset.id,this.dataset.origin);});
+  });
+}
+
+// ── PAYMENT MANAGEMENT ────────────────────────────────────────────────────────
+var _pmBookingId=null,_pmOrigin=null,_pmTotal=0;
+function openPaymentPanel(id,origin){
+  _pmBookingId=id;_pmOrigin=origin;
+  var bk=allBookings.find(function(b){return b.id===id;});
+  var req=!bk?requests.find(function(r){return r.id===id;}):null;
+  var item=bk||req;
+  if(!item){toast('Booking not found','err');return;}
+  var fin=bk?parseFin(bk):{gross:req.total_amount||0,commission:0,cleanfee:-1};
+  _pmTotal=fin.gross||req&&req.total_amount||0;
+  var gName=bk?cleanNotesDisplay(bk.notes)||bk.guests||'Guest':req.guest_name||'Guest';
+  var aptId=bk?bk.apt:(req.apt_id||req.apt_name||'');
+  var apt=aptById(aptId);
+  document.getElementById('pmDetails').innerHTML=
+    '<div style="font-weight:700;font-size:14px;color:var(--primary);margin-bottom:2px">'+esc(gName)+'</div>'+
+    '<div style="font-size:12px;color:var(--muted)">'+esc(apt.name||aptId)+'</div>'+
+    '<div style="font-size:14px;font-weight:800;color:var(--text);margin-top:8px">Total: €'+_pmTotal+'</div>';
+  var curPaid=bk?bk.paid:(req.balance_paid?'paid':req.deposit_paid?'deposit':'unpaid');
+  var curDeposit=req&&req.deposit_paid&&!req.balance_paid?(req.rate_per_night||0):0;
+  document.getElementById('pmStatus').value=curPaid;
+  document.getElementById('pmDeposit').value=curDeposit||'';
+  document.getElementById('pmErr').textContent='';
+  updatePmCalc();
+  document.getElementById('paymentOverlay').classList.add('show');
+}
+function updatePmCalc(){
+  var status=document.getElementById('pmStatus').value;
+  var depRow=document.getElementById('pmDepositRow');
+  var calc=document.getElementById('pmCalc');
+  depRow.style.display=status==='deposit'?'':'none';
+  var paid=0,due=_pmTotal;
+  if(status==='paid'){paid=_pmTotal;due=0;}
+  else if(status==='deposit'){paid=parseFloat(document.getElementById('pmDeposit').value)||0;due=_pmTotal-paid;}
+  calc.innerHTML='<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+    '<span>Total: <strong>€'+_pmTotal+'</strong></span>'+
+    (paid>0?'<span style="color:#15803d">Paid: <strong>€'+paid.toFixed(2)+'</strong></span>':'')+
+    (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
+  '</div>';
+}
+function savePaymentStatus(){
+  var status=document.getElementById('pmStatus').value;
+  var depositAmt=parseFloat(document.getElementById('pmDeposit').value)||0;
+  var err=document.getElementById('pmErr');
+  if(status==='deposit'&&depositAmt<=0){err.textContent='Enter deposit amount.';return;}
+  var bk=allBookings.find(function(b){return b.id===_pmBookingId;});
+  if(bk){
+    var paidVal=status;
+    sbF('PATCH','bookings?id=eq.'+_pmBookingId,{paid:paidVal}).then(function(){
+      bk.paid=paidVal;closeModal('paymentOverlay');toast('Payment updated','ok');renderResList();
+    }).catch(function(e){err.textContent='Error: '+e.message;});
+  } else {
+    var upd={deposit_paid:(status==='deposit'||status==='paid'),balance_paid:(status==='paid')};
+    if(status==='deposit')upd.rate_per_night=Math.round(depositAmt);
+    sbF('PATCH','direct_requests?id=eq.'+_pmBookingId,upd).then(function(){
+      var r=requests.find(function(x){return x.id===_pmBookingId;});
+      if(r){r.deposit_paid=upd.deposit_paid;r.balance_paid=upd.balance_paid;if(upd.rate_per_night)r.rate_per_night=upd.rate_per_night;}
+      closeModal('paymentOverlay');toast('Payment updated','ok');renderResList();
+    }).catch(function(e){err.textContent='Error: '+e.message;});
+  }
 }
 
 // ── CLEANING TAB (SummerFlow integrated) ─────────────────────────────────────
@@ -3136,8 +3254,20 @@ function renderCleaningList(){
   if(!container)return;
   var tod=todayStr();
 
-  var visible=(allBookings||[]).filter(function(b){
-    if(b.cleaned==='yes')return false; // hide once cleaned
+  // Merge allBookings + confirmed direct_requests for cleaning
+  var cleanAll=(allBookings||[]).slice();
+  var coveredForClean={};
+  (allBookings||[]).forEach(function(b){coveredForClean[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
+  (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    var aptId=r.apt_id||r.apt_name||'';
+    if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
+      cleanAll.push({id:r.id,apt:aptId,source:'direct',checkin:r.checkin,checkout:r.checkout,
+        guests:String(r.guests||''),notes:r.guest_name||'',paid:'unpaid',
+        cleaned:importCleanedStatus(r.checkout)});
+    }
+  });
+  var visible=cleanAll.filter(function(b){
+    if(b.cleaned==='yes')return false;
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
     if(cleanFilter==='upcoming')return b.checkin>tod;
@@ -3628,7 +3758,7 @@ function dashProcessImport(text,source,apt){
         checkin:ci,checkout:co,clean:co,
         guests:(ad+kd)>0?String(ad+kd):'',
         notes:gName+finSuffix,
-        paid:'unpaid',cleaned:importCleanedStatus(co)});
+        paid:'paid',cleaned:importCleanedStatus(co)});
     }
   } else if(source==='booking'){
     var iIn2=_dfc(h,'checkin','arrivee','arrival','arriv'),iOut2=_dfc(h,'checkout','depart','departure');
@@ -3653,7 +3783,7 @@ function dashProcessImport(text,source,apt){
         checkin:ci2,checkout:co2,clean:co2,
         guests:_rv(iP),
         notes:gName2+finSuffix2,
-        paid:'unpaid',cleaned:importCleanedStatus(co2)});
+        paid:'paid',cleaned:importCleanedStatus(co2)});
     }
   } else {
     // Direct: secondary source — only add if no OTA booking overlaps on this property
