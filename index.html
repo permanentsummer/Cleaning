@@ -3399,7 +3399,7 @@ function renderCleaningList(){
     }
   });
   var visible=cleanAll.filter(function(b){
-    if(b.cleaned==='yes')return false;
+    if(b.cleaned==='yes'&&b.checkout>tod)return false; // hide cleaned future bookings only
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
     if(cleanFilter==='upcoming')return b.checkin>tod;
