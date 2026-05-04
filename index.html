@@ -1260,6 +1260,15 @@ window.addEventListener('load',function(){
 });
 
 function loadWorkspace(){
+  if(!session||!session.user||!session.user.id){
+    document.getElementById('lErr').textContent='Session expired. Please sign in again.';
+    document.getElementById('lBtn').disabled=false;
+    document.getElementById('lBtn').textContent='Sign in →';
+    // Clear bad session
+    localStorage.removeItem('sb_session');
+    session=null;
+    return;
+  }
   var uid=session.user.id;
   sbF('GET','workspaces?select=*&user_id=eq.'+uid+'&limit=1').then(function(rows){
     if(!rows||!rows.length){document.getElementById('lErr').textContent='No workspace found.';return;}
