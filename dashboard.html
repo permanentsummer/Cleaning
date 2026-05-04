@@ -7,18 +7,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
+  --honey:#F9C332;--dijon:#C49125;--laguna:#F9E573;
+  --dark-blue:#114061;--turquoise:#64E0D0;--carmine:#D54047;
   --green:#059669;--green-bg:#d1fae5;--green-dark:#047857;
-  --red:#dc2626;--red-bg:#fee2e2;
-  --blue:#2563eb;--blue-bg:#dbeafe;
-  --yellow:#d97706;--yellow-bg:#fef3c7;
-  --orange:#ea580c;--orange-bg:#ffedd5;
-  --purple:#7c3aed;--purple-bg:#ede9fe;
-  --bg:#f4f6f9;--card:#fff;--text:#111827;--muted:#6b7280;
-  --border:#e5e7eb;--r:12px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
-  --shadow-md:0 4px 24px rgba(0,0,0,.08);
-  --primary:#1a2236;--primary-light:#243047;--accent:#2563eb;
-  --sidebar-w:256px;
+  --red:#D54047;--red-bg:#fde8e9;
+  --blue:#114061;--blue-bg:#e0eaf3;
+  --yellow:#F9C332;--yellow-bg:#fef9e7;
+  --bg:#f0f4f8;--card-bg:#fff;--border:#dde3ec;--muted:#5a7184;--text:#1a2a3a;
+  --shadow:0 1px 4px rgba(17,64,97,.08);--shadow-md:0 4px 20px rgba(17,64,97,.14);
+  --primary:#114061;--primary-light:#1a5278;--accent:#F9C332;
+  --sidebar-w:224px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
@@ -35,8 +33,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .afield label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
 .afield input{padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--text);outline:none;transition:border-color .15s}
 .afield input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.abtn{width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .15s;letter-spacing:.1px}
-.abtn:hover{background:var(--primary-light)}
+.abtn{width:100%;padding:13px;background:var(--honey);color:var(--dark-blue);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .15s;letter-spacing:.1px}
+.abtn:hover{background:var(--dijon)}
 .abtn:disabled{opacity:.5;cursor:wait}
 .aerr{font-size:12px;font-weight:600;color:var(--red);min-height:16px;text-align:center;margin-top:6px}
 
@@ -69,8 +67,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   font-size:13px;font-weight:500;color:#94a3b8;
   cursor:pointer;margin-bottom:2px;transition:all .15s;user-select:none;
 }
-.sb-item:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
-.sb-item.on{background:rgba(37,99,235,.2);color:#fff;font-weight:600}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#e2e8f0}
+.sb-item.on{background:rgba(249,195,50,.15);color:#F9C332}
 .sb-item.on .sb-icon-wrap{background:var(--accent)}
 .sb-icon-wrap{
   width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.06);
@@ -124,8 +122,10 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .section-head p{font-size:12px;color:var(--muted);margin-top:2px}
 .card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:14px;border:1px solid var(--border)}
 
-.btn-primary{background:var(--primary);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;letter-spacing:.1px}
-.btn-primary:hover{background:var(--primary-light)}
+.btn-primary{background:var(--dark-blue);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;letter-spacing:.1px}
+.btn-primary:hover{background:#1a5278}
+.btn-accent{background:var(--honey);color:var(--dark-blue);border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;cursor:pointer;transition:all .15s}
+.btn-accent:hover{background:var(--dijon);color:#fff}
 .btn-accent{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;transition:background .15s}
 .btn-accent:hover{background:#1d4ed8}
 .btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border);border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;transition:all .15s}
@@ -166,7 +166,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .filter-row::-webkit-scrollbar{display:none}
 .fbtn{flex-shrink:0;padding:7px 16px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
 .fbtn:hover{border-color:#9ca3af;color:var(--text)}
-.fbtn.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.fbtn.on{background:var(--dark-blue);border-color:var(--dark-blue);color:#fff;font-weight:600}
 
 /* ── REQUEST CARDS ─────────────────────────────────────────────────────────── */
 .req-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;border:1px solid var(--border);border-left:4px solid transparent;transition:box-shadow .15s}
@@ -273,7 +273,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .cal-legend-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--muted)}
 .cal-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
 .src-airbnb{background:#e8485a}
-.src-booking{background:#003580}
+.src-booking{background:#114061}
 .src-direct{background:#059669}
 .cal-popup{position:fixed;z-index:500;background:#fff;border-radius:14px;box-shadow:var(--shadow-md);padding:18px;min-width:250px;max-width:310px;border:1px solid var(--border)}
 .cal-popup h4{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--primary)}
@@ -420,6 +420,28 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   .ov-greeting-title{font-size:18px}
 }
 
+@media(max-width:768px){
+  :root{--sidebar-w:0px}
+  .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed;z-index:200;height:100%}
+  .sidebar.open{transform:translateX(0)}
+  .main-content{margin-left:0!important;width:100%!important}
+  .page{padding:14px 12px}
+  .fr{flex-direction:column}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .cal-grid{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .page-header{padding:14px 12px 0;flex-wrap:wrap;gap:8px}
+  .page-header h2{font-size:18px}
+  #calGrid{min-width:600px}
+  .res-list-card{padding:12px 14px}
+  .modal{max-height:95vh;border-radius:16px 16px 0 0;margin:auto 0 0}
+  .overlay{align-items:flex-end}
+  .sb-bottom{padding-bottom:env(safe-area-inset-bottom,0)}
+  /* Mobile hamburger */
+  #mobileMenuBtn{display:flex}
+  #mobileOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199}
+  #mobileOverlay.show{display:block}
+}
+@media(min-width:769px){#mobileMenuBtn{display:none!important}}
 </style>
 
 </head>
@@ -430,11 +452,26 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 <div id="authWrap" class="show">
   <div class="auth-box">
     <div class="auth-logo">
-      <div class="ico">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div class="ico" style="background:none;width:72px;height:72px;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 200 200" width="72" height="72" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" rx="44" fill="#fff"/>
+          <!-- Sun arc -->
+          <path d="M100 30 C140 30 168 58 168 95 C168 100 166 105 163 109" stroke="#F9C332" stroke-width="28" fill="none" stroke-linecap="round"/>
+          <!-- Sun circle -->
+          <circle cx="100" cy="88" r="18" fill="#F9E573"/>
+          <!-- Roof -->
+          <path d="M52 102 L100 62 L148 102" stroke="#114061" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Window -->
+          <rect x="88" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="102" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="88" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="102" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
+          <!-- Wave -->
+          <path d="M148 120 C130 110 110 135 85 125 C62 116 45 132 32 128 L32 160 C45 160 62 148 85 158 C110 170 130 148 148 158 Z" fill="#64E0D0"/>
+        </svg>
       </div>
-      <h1>Permanent Summer</h1>
-      <p>Property Management System</p>
+      <h1 style="font-size:24px;font-weight:900;letter-spacing:-.5px">SummerFlow</h1>
+      <p style="color:var(--muted);font-weight:500">by Permanent Summer</p>
     </div>
     <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
     <div class="afield"><label>Password</label><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"></div>
@@ -445,16 +482,35 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 </div>
 
 <!-- APP -->
+<div id="mobileOverlay" onclick="closeMobileMenu()"></div>
 <div id="appWrap">
+  <!-- Mobile top bar -->
+  <div id="mobileTopBar" style="display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--primary);z-index:150;align-items:center;padding:0 14px;gap:12px">
+    <button id="mobileMenuBtn" onclick="toggleMobileMenu()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;width:36px;height:36px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span style="color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;flex:1">SummerFlow</span>
+    <button onclick="openNewBooking()" style="background:var(--honey);color:var(--dark-blue);border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer">+ Booking</button>
+  </div>
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sb-logo">
-      <div class="sb-logo-ico">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div class="sb-logo-ico" style="background:none;width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0">
+        <svg viewBox="0 0 200 200" width="38" height="38" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" rx="44" fill="#fff"/>
+          <path d="M100 30 C140 30 168 58 168 95 C168 100 166 105 163 109" stroke="#F9C332" stroke-width="28" fill="none" stroke-linecap="round"/>
+          <circle cx="100" cy="88" r="18" fill="#F9E573"/>
+          <path d="M52 102 L100 62 L148 102" stroke="#114061" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="88" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="102" y="96" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="88" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
+          <rect x="102" y="109" width="10" height="10" rx="2" fill="#F9C332"/>
+          <path d="M148 120 C130 110 110 135 85 125 C62 116 45 132 32 128 L32 160 C45 160 62 148 85 158 C110 170 130 148 148 158 Z" fill="#64E0D0"/>
+        </svg>
       </div>
       <div>
-        <div class="sb-logo-name">Permanent Summer</div>
-        <div class="sb-logo-sub" id="navSub">Dashboard</div>
+        <div class="sb-logo-name" style="font-size:15px;font-weight:800;letter-spacing:-.2px">SummerFlow</div>
+        <div class="sb-logo-sub" id="navSub" style="font-size:10px;opacity:.6">by Permanent Summer</div>
       </div>
     </div>
     <nav class="sb-nav">
@@ -635,14 +691,14 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
     </div>
     <div class="filter-row">
-      <button class="fbtn on" data-rf="all" onclick="filterReqs('all',this)">All requests</button>
-      <button class="fbtn" data-rf="pending" onclick="filterReqs('pending',this)">
-        <span class="fbtn-dot" style="background:var(--yellow)"></span> Awaiting response
+      <button class="fbtn on" id="rfAll" onclick="filterReqs('all',this)">All requests</button>
+      <button class="fbtn" id="rfPending" onclick="filterReqs('pending',this)">
+        <span class="fbtn-dot" style="background:var(--honey)"></span> Awaiting response
       </button>
-      <button class="fbtn" data-rf="confirmed" onclick="filterReqs('confirmed',this)">
+      <button class="fbtn" id="rfConfirmed" onclick="filterReqs('confirmed',this)">
         <span class="fbtn-dot" style="background:var(--green)"></span> Confirmed
       </button>
-      <button class="fbtn" data-rf="declined" onclick="filterReqs('declined',this)">
+      <button class="fbtn" id="rfDeclined" onclick="filterReqs('declined',this)">
         <span class="fbtn-dot" style="background:var(--red)"></span> Declined
       </button>
     </div>
@@ -1344,14 +1400,19 @@ function updateStats(){
 
 function filterReqs(f,btn){
   reqFilter=f;
-  document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
-  if(btn)btn.classList.add('on');
+  ['All','Pending','Confirmed','Declined'].forEach(function(k){
+    var el=document.getElementById('rf'+k);
+    if(el)el.classList.toggle('on',k.toLowerCase()===f||(f==='all'&&k==='All'));
+  });
   renderRequests();
 }
 
 function renderRequests(){
   var list=document.getElementById('reqList');
   if(!list)return;
+  // Only show genuine booking requests (pending/awaiting), never imported OTA bookings
+  var filtered=requests.filter(function(r){return r.status!=='confirmed'||reqFilter==='confirmed';});
+  if(reqFilter!=='all')filtered=filtered.filter(function(r){return r.status===reqFilter;});
   if(!filtered.length){
     list.innerHTML='<div class="empty-state"><div class="ico">'+(reqFilter==='pending'?'⏳':'📭')+'</div>'+
       '<h3>'+(reqFilter==='pending'?'No pending requests':'No requests yet')+'</h3>'+
@@ -4683,6 +4744,25 @@ function sendCleaningWhatsApp(b){
   var url='https://wa.me/'+(waNum||'')+'?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
+
+// ── MOBILE MENU ───────────────────────────────────────────────────────────────
+function toggleMobileMenu(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('show');
+}
+function closeMobileMenu(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('show');
+}
+function checkMobileLayout(){
+  var isMobile=window.innerWidth<=768;
+  var mb=document.getElementById('mobileTopBar');
+  var mc=document.querySelector('.main-content');
+  if(mb)mb.style.display=isMobile?'flex':'none';
+  if(mc)mc.style.paddingTop=isMobile?'52px':'';
+}
+window.addEventListener('resize',checkMobileLayout);
+window.addEventListener('DOMContentLoaded',checkMobileLayout);
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
 function renderOverview(){
