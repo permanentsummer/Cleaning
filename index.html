@@ -859,11 +859,20 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Check-in</label><input type="date" id="ebCheckin"></div>
       <div class="fg"><label>Check-out</label><input type="date" id="ebCheckout"></div>
     </div>
-    <div class="fg"><label>Guests (count)</label><input type="number" id="ebGuests" min="1" max="20" placeholder="e.g. 2"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Guests (count)</label><input type="number" id="ebGuests" min="1" max="20" placeholder="e.g. 2"></div>
+      <div class="fg"><label>Source</label>
+        <select id="ebSource" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
+          <option value="direct">Direct</option>
+          <option value="booking">Booking.com</option>
+          <option value="airbnb">Airbnb</option>
+        </select>
+      </div>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:8px;margin-bottom:10px;border:1px solid #bbf7d0;cursor:pointer" onclick="document.getElementById('ebComp').click()">
       <input type="checkbox" id="ebComp" onchange="toggleCompFields()" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer" onclick="event.stopPropagation()">
       <div>
-        <div style="font-size:13px;font-weight:600;color:#15803d">🎁 Complimentary (Friends &amp; Family)</div>
+        <div style="font-size:13px;font-weight:600;color:#15803d">&#127873; Complimentary (Friends &amp; Family)</div>
         <div style="font-size:11px;color:var(--muted)">Revenue = €0 — excluded from warnings and financial reports.</div>
       </div>
     </div>
@@ -871,16 +880,27 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Gross revenue (€)</label><input type="number" id="ebGross" min="0" step="0.01" placeholder="e.g. 550"></div>
       <div class="fg"><label>Commission (€)</label><input type="number" id="ebComm" min="0" step="0.01" placeholder="0 for direct"></div>
       <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" id="ebCleanOverride" onchange="toggleCleanOverride()" style="accent-color:var(--primary)">
-        <span>Override cleaning fee for this booking</span>
-      </label>
-      <input type="number" id="ebClean" min="0" step="0.01" placeholder="Uses property default" disabled style="margin-top:6px;opacity:.5">
-      <div id="ebCleanHint" style="font-size:10px;color:var(--muted);margin-top:3px"></div>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="ebCleanOverride" onchange="toggleCleanOverride()" style="accent-color:var(--primary)">
+          <span>Override cleaning fee for this booking</span>
+        </label>
+        <input type="number" id="ebClean" min="0" step="0.01" placeholder="Uses property default" disabled style="margin-top:6px;opacity:.5">
+        <div id="ebCleanHint" style="font-size:10px;color:var(--muted);margin-top:3px"></div>
+      </div>
     </div>
+    <!-- Payment section — direct bookings only -->
+    <div id="ebPaymentSection" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Payment Tracking</div>
+      <div id="ebPaySummary" style="background:var(--bg);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap"></div>
+      <div id="ebPayTransactions" style="margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:flex-end">
+        <div class="fg" style="margin:0"><label style="font-size:11px">Description</label><input type="text" id="ebPayDesc" placeholder="e.g. Bank transfer, Deposit" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box"></div>
+        <div class="fg" style="margin:0"><label style="font-size:11px">Amount €</label><input type="number" id="ebPayAmt" placeholder="0" min="0" step="0.01" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box"></div>
+        <button onclick="addEbPayment()" style="background:var(--primary);color:#fff;border:none;border-radius:7px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;height:36px">+ Add</button>
+      </div>
     </div>
-    <div class="aerr" id="ebErr" style="margin-bottom:8px"></div>
-    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">💾 Save changes</button>
+    <div class="aerr" id="ebErr" style="margin:10px 0 8px"></div>
+    <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">&#128190; Save changes</button>
     <button class="btn-outline" style="width:100%" onclick="closeModal('editBookingOverlay')">Cancel</button>
   </div>
 </div>
@@ -2176,6 +2196,8 @@ function cleanNotesDisplay(n){
   if(idx3!==-1)n=n.slice(0,idx3);
   var idx4=n.indexOf('\n__SRC__');
   if(idx4!==-1)n=n.slice(0,idx4);
+  var idx5=n.indexOf('\n__PAYMENTS__');
+  if(idx5!==-1)n=n.slice(0,idx5);
   return n.trim();
 }
 
@@ -3042,6 +3064,60 @@ function savePaymentStatus(){
     }).catch(function(e){err.textContent='Error: '+e.message;});
   }
 }
+
+// ── EDIT BOOKING PAYMENT TRACKING ─────────────────────────────────────────────
+var _ebPayments=[]; // in-memory payment list for current edit session
+function ebInitPayments(req){
+  var paySection=document.getElementById('ebPaymentSection');
+  if(!paySection)return;
+  // Only show for direct source requests
+  var isDir=true; // req is always direct_requests origin
+  paySection.style.display=isDir?'':'none';
+  // Parse stored payments from notes (stored as \n__PAYMENTS__json)
+  _ebPayments=[];
+  var n=req.notes||'';
+  var pi=n.indexOf('\n__PAYMENTS__');
+  if(pi!==-1){try{_ebPayments=JSON.parse(n.slice(pi+13).split('\n')[0]);}catch(e){_ebPayments=[];}}
+  // Also seed from deposit if set
+  if(!_ebPayments.length&&req.deposit_paid&&req.rate_per_night>0){
+    _ebPayments=[{desc:'Deposit',amt:req.rate_per_night,date:new Date().toISOString().slice(0,10)}];
+  }
+  ebRenderPayments(req.total_amount||0);
+}
+function ebRenderPayments(total){
+  total=parseFloat(total)||parseFloat(document.getElementById('ebGross').value)||0;
+  var paid=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
+  var due=Math.max(0,total-paid);
+  // Summary
+  var sum=document.getElementById('ebPaySummary');
+  if(sum)sum.innerHTML=
+    '<span>Total: <strong>€'+total.toFixed(2)+'</strong></span>'+
+    (paid>0?'<span style="color:#15803d">Paid: <strong>€'+paid.toFixed(2)+'</strong></span>':'')+
+    (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':
+      '<span style="color:#15803d;font-weight:700">✅ Fully paid</span>');
+  // Transactions
+  var txEl=document.getElementById('ebPayTransactions');
+  if(!txEl)return;
+  if(!_ebPayments.length){txEl.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0">No payments recorded yet.</div>';return;}
+  txEl.innerHTML=_ebPayments.map(function(p,i){
+    return'<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:13px">'+
+      '<span style="flex:1;color:var(--muted)">'+esc(p.date||'')+'</span>'+
+      '<span style="flex:2;font-weight:600">'+esc(p.desc||'Payment')+'</span>'+
+      '<span style="color:#15803d;font-weight:700">€'+parseFloat(p.amt).toFixed(2)+'</span>'+
+      '<button onclick="removeEbPayment('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1">×</button>'+
+    '</div>';
+  }).join('');
+}
+function addEbPayment(){
+  var desc=(document.getElementById('ebPayDesc').value||'').trim()||'Payment';
+  var amt=parseFloat(document.getElementById('ebPayAmt').value)||0;
+  if(amt<=0){toast('Enter a valid amount','err');return;}
+  _ebPayments.push({desc:desc,amt:amt,date:new Date().toISOString().slice(0,10)});
+  document.getElementById('ebPayDesc').value='';
+  document.getElementById('ebPayAmt').value='';
+  ebRenderPayments();
+}
+function removeEbPayment(idx){_ebPayments.splice(idx,1);ebRenderPayments();}
 
 // ── CLEANING TAB (SummerFlow integrated) ─────────────────────────────────────
 var cleanLang='en';
@@ -3956,6 +4032,9 @@ function openEditBooking(id, origin){
     document.getElementById('ebCheckin').value=b.checkin||'';
     document.getElementById('ebCheckout').value=b.checkout||'';
     document.getElementById('ebGuests').value=b.guests&&/^\d+/.test(b.guests)?parseInt(b.guests):'';
+    // Source
+    var srcSel=document.getElementById('ebSource');
+    if(srcSel)srcSel.value=b.source||'direct';
     document.getElementById('ebComp').checked=isComp;
     document.getElementById('ebGross').value=isComp?'':fin.gross||'';
     document.getElementById('ebComm').value=isComp?'':fin.commission||'';
@@ -3974,6 +4053,10 @@ function openEditBooking(id, origin){
     document.getElementById('ebCheckin').value=req.checkin||'';
     document.getElementById('ebCheckout').value=req.checkout||'';
     document.getElementById('ebGuests').value=req.guests||'';
+    // Source from notes __SRC__
+    var reqSrcN=req.notes||'',reqSrcI=reqSrcN.indexOf('\n__SRC__');
+    var reqSrc=reqSrcI!==-1?reqSrcN.slice(reqSrcI+8).split('\n')[0].trim():'direct';
+    var srcSel2=document.getElementById('ebSource');if(srcSel2)srcSel2.value=reqSrc||'direct';
     document.getElementById('ebComp').checked=false;
     document.getElementById('ebGross').value=req.total_amount||'';
     document.getElementById('ebComm').value='';
@@ -3981,6 +4064,8 @@ function openEditBooking(id, origin){
     var ebCl=document.getElementById('ebClean');if(ebCl){ebCl.value='';ebCl.disabled=true;ebCl.style.opacity='0.5';}
     var ebCH=document.getElementById('ebCleanHint');if(ebCH){var apt2=aptById(req.apt_id||req.apt_name);ebCH.textContent='Property default: €'+getFinCleanFee(apt2.id||req.apt_id||'')+'  (applies automatically)';}
     toggleCompFields();
+    // Show payment section for direct bookings
+    ebInitPayments(req);
   }
   document.getElementById('editBookingOverlay').classList.add('show');
 }
@@ -3994,16 +4079,17 @@ function saveEditBooking(){
   var gCount=document.getElementById('ebGuests').value;
   var gross=parseFloat(document.getElementById('ebGross').value)||0;
   var comm=parseFloat(document.getElementById('ebComm').value)||0;
-  // Only store cleanfee if user explicitly overrode it for this booking
+  var newSource=document.getElementById('ebSource')?document.getElementById('ebSource').value:'direct';
   var cleanOverride=document.getElementById('ebCleanOverride')&&document.getElementById('ebCleanOverride').checked;
   var clean=cleanOverride?(parseFloat(document.getElementById('ebClean').value)||0):0;
 
   if(!ci||!co||ci>=co){document.getElementById('ebErr').textContent='Valid check-in and check-out dates required.';return;}
 
   var isComp=document.getElementById('ebComp').checked;
-  // Store clean=0 means "use property default"; positive value = manually overridden
   var finSuffix=isComp?'\n__COMP__':(gross>0||cleanOverride)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+(cleanOverride&&clean>0?clean.toFixed(2):'0'):'';
-  var newNotes=guestName+finSuffix;
+  // Append payments to notes if any
+  var paysSuffix=_ebPayments.length?'\n__PAYMENTS__'+JSON.stringify(_ebPayments):'';
+  var newNotes=guestName+finSuffix+paysSuffix;
 
   // Check for overlaps on same property (exclude self)
   var b=allBookings.find(function(x){return x.id===id;});
@@ -4021,7 +4107,7 @@ function saveEditBooking(){
 
   if(b){
     // Update bookings table
-    var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||b.guests||''};
+    var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||b.guests||'',source:newSource};
     sbF('PATCH','bookings?id=eq.'+id,upd).then(function(){
       closeModal('editBookingOverlay');
       toast('Booking updated','ok');
