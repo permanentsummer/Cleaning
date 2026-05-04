@@ -3335,9 +3335,10 @@ function buildCleanFilters(){
   if(!row)return;
   var filters=[
     {k:'all',label:CT('all')},
+    {k:'upcoming',label:CT('upcoming')},
     {k:'today',label:CT('today')},
     {k:'dirty',label:CT('dirty')},
-    {k:'upcoming',label:CT('upcoming')}
+    {k:'past',label:'Past'}
   ];
   // Add per-property filters
   properties.forEach(function(p){filters.push({k:p.id,label:p.short||p.name,color:p.color});});
@@ -3400,6 +3401,7 @@ function renderCleaningList(){
   });
   var visible=cleanAll.filter(function(b){
     if(b.cleaned==='yes'&&b.checkout>tod)return false; // hide cleaned future bookings only
+    if(cleanFilter==='past')return b.checkout<tod;
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
     if(cleanFilter==='upcoming')return b.checkin>tod;
@@ -3417,21 +3419,23 @@ function renderCleaningList(){
 
   container.innerHTML='';
 
-  // Group into Today/Active and Upcoming
-  var active=visible.filter(function(b){return b.checkin<=tod;});
+  // Group: Past / Active (today + current stays) / Upcoming
+  var past=visible.filter(function(b){return b.checkout<tod;});
+  var active=visible.filter(function(b){return b.checkin<=tod&&b.checkout>=tod;});
   var upcoming=visible.filter(function(b){return b.checkin>tod;});
 
-  function mkSection(label,items){
+  function mkSection(label,items,muted){
     if(!items.length)return;
     var lbl=document.createElement('div');
-    lbl.style.cssText='font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px';
+    lbl.style.cssText='font-size:11px;font-weight:700;color:'+(muted?'var(--muted)':'var(--primary)')+';text-transform:uppercase;letter-spacing:.7px;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px';
     lbl.textContent=label;
     container.appendChild(lbl);
     items.forEach(function(b){container.appendChild(mkCleanCard(b,tod));});
   }
 
-  mkSection(CT('today')+' & Active',active);
-  mkSection(CT('upcoming'),upcoming);
+  mkSection(CT('today')+' & Active',active,false);
+  mkSection(CT('upcoming'),upcoming,false);
+  mkSection('Past',past,true);
 }
 
 function mkCleanCard(b,tod){
