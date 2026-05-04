@@ -477,7 +477,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div class="afield"><label>Password</label><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"></div>
     <div class="aerr" id="lErr"></div>
     <button class="abtn" id="lBtn">Sign in →</button>
-    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:14px;font-weight:700">Same account as SummerClean</p>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:14px;font-weight:700">SummerFlow uses your Permanent Summer account</p>
   </div>
 </div>
 
@@ -1001,7 +1001,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   </div>
 </div>
 
-  <!-- CLEANING (SummerClean integrated) -->
+  <!-- CLEANING -->
   <div id="page-cleaning" class="page">
     <div class="page-header">
       <div><h2>Cleaning Schedule</h2><p>Manage cleaning tasks across all your properties</p></div>
@@ -1185,7 +1185,7 @@ var BOOKING_PAGE_URL='https://cleaning.permanentsummer.co/book.html';
 
 var session=null,workspace=null,requests=[],properties=[],reqFilter='all';
 var activeRequest=null,seasonCount=0;
-// Two-way sync: all confirmed bookings from the bookings table (SummerClean)
+// Two-way sync: all confirmed bookings from the bookings table (SummerFlow)
 var allBookings=[];
 // Calendar state
 var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calAptFilter='all';
@@ -1285,7 +1285,7 @@ function loadWorkspace(){
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
 }
 
-// Load ALL bookings from the shared bookings table (SummerClean + confirmed direct)
+// Load ALL bookings from the shared bookings table (SummerFlow + confirmed direct)
 function loadAllBookings(){
   if(!workspace)return Promise.resolve();
   return sbF('GET','bookings?select=*&workspace_id=eq.'+workspace.id+'&order=checkin.asc')
@@ -1302,7 +1302,7 @@ function switchTab(tab){
   if(tab==='cleaning'){renderCleaning();}
 }
 
-function openSummerClean(){window.open('index.html','_blank');}
+function openSummerClean(){}  // legacy no-op — SummerFlow handles cleaning directly
 
 // ── REQUESTS ────────────────────────────────────────────────────────────────
 function loadRequests(){
@@ -1378,7 +1378,7 @@ function refreshRequests(){
 function updateStats(){
   var pending=requests.filter(function(r){return r.status==='pending';}).length;
   var confirmedReqs=requests.filter(function(r){return r.status==='confirmed';});
-  // Total confirmed = direct confirmed requests + all SummerClean bookings
+  // Total confirmed = direct confirmed requests + all SummerFlow bookings
   var totalConfirmed=confirmedReqs.length+allBookings.length;
   var nights=allBookings.reduce(function(acc,b){
     if(b.checkin&&b.checkout)return acc+Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000);
@@ -1459,11 +1459,11 @@ function renderRequests(){
     list.appendChild(div);
   });
 
-  // ── TWO-WAY: show SummerClean imported bookings below ──────────────────
-  renderSummerCleanBookings(list);
+  // ── TWO-WAY: show SummerFlow imported bookings below ──────────────────
+  renderImportedBookings(list);
 }
 
-function renderSummerCleanBookings(list){
+function renderImportedBookings(list){
   if(!allBookings||!allBookings.length)return;
   var today=new Date().toISOString().slice(0,10);
   // Show upcoming + recent (checkout within last 7 days)
@@ -1476,7 +1476,7 @@ function renderSummerCleanBookings(list){
   section.innerHTML=
     '<div style="margin-top:24px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
       '<div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'+
-        '🧹 From SummerClean ('+visible.length+' booking'+(visible.length!==1?'s':'')+')</div>'+
+        '📋 Imported bookings ('+visible.length+' booking'+(visible.length!==1?'s':'')+')</div>'+
       '<div style="flex:1;height:1px;background:var(--border)"></div>'+
       '<span style="font-size:10px;font-weight:700;color:var(--muted)">Imported · read-only</span>'+
     '</div>';
@@ -1516,7 +1516,7 @@ function renderSummerCleanBookings(list){
         '<span class="chip '+(b.paid==='paid'?'':'')+'">💶 '+(b.paid==='paid'?'Paid':'Unpaid')+'</span>'+
       '</div>'+
       '<div class="req-actions" style="justify-content:flex-end">'+
-        '<span style="font-size:10px;color:var(--muted);font-weight:700">Manage in 🧹 SummerClean</span>'+
+        
       '</div>';
     list.appendChild(div);
   });
@@ -1597,7 +1597,7 @@ function sendReply(){
   sbF('PATCH','direct_requests?id=eq.'+activeRequest.id,{
     status:action,host_message:msg,updated_at:new Date().toISOString()
   }).then(function(){
-    // If confirmed → write to bookings table for SummerClean
+    // If confirmed → write to bookings table for SummerFlow
     if(action==='confirmed'){
       return confirmToBookings(activeRequest);
     }
@@ -1605,7 +1605,7 @@ function sendReply(){
     // Send email to guest
     return sendGuestEmail(activeRequest.guest_email,activeRequest.guest_name,msg,action);
   }).then(function(){
-    toast(action==='confirmed'?'✅ Booking confirmed & added to SummerClean!':
+    toast(action==='confirmed'?'✅ Booking confirmed!':
           action==='declined'?'❌ Request declined.':'⏳ Status updated.','ok');
     closeModal('respondOverlay');
     loadRequests();
@@ -1615,7 +1615,7 @@ function sendReply(){
 }
 
 function confirmToBookings(req){
-  // Write into the bookings table so SummerClean sees it
+  // Write into the bookings table so SummerFlow sees it
   var booking={
     id:uid(),workspace_id:workspace.id,
     apt:req.apt_id||req.apt_name,
@@ -1702,7 +1702,7 @@ function renderProps(){
   }
   list.innerHTML='';
   properties.forEach(function(p,i){
-    // Count from BOTH tables: direct_requests + allBookings (SummerClean)
+    // Count from BOTH tables: direct_requests + allBookings (SummerFlow)
     var directReqs=requests.filter(function(r){return r.apt_id===p.id||r.apt_name===p.name;});
     var scBookings=allBookings.filter(function(b){return b.apt===p.id||b.apt===p.short||b.apt===p.name;});
 
@@ -1877,10 +1877,10 @@ function deleteProp(i){
 
 function savePropsToWorkspace(){
   // Always re-fetch fresh settings from DB first so we never overwrite
-  // keys that SummerClean manages (pin, cleaner_token, etc.)
+  // keys that SummerFlow manages (pin, cleaner_token, etc.)
   return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
     var freshSettings=(rows&&rows.length&&rows[0].settings)||{};
-    // Merge: keep everything SummerClean owns, only overwrite apts
+    // Merge: keep everything SummerFlow owns, only overwrite apts
     freshSettings.apts=properties;
     return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:freshSettings});
   }).then(function(rows){
@@ -2856,7 +2856,7 @@ function renderResList(){
   });
 }
 
-// ── CLEANING TAB (SummerClean integrated) ─────────────────────────────────────
+// ── CLEANING TAB (SummerFlow integrated) ─────────────────────────────────────
 var cleanLang='en';
 var CLEAN_T={
   en:{
@@ -3855,12 +3855,12 @@ function saveEditBooking(){
 
 // ── DELETE RESERVATION ───────────────────────────────────────────────────────
 function deleteReservation(id, origin, guestName){
-  if(!confirm('Delete reservation for ' + (guestName||'this guest') + '?\n\nThis will remove it from both the dashboard and SummerClean.'))return;
+  if(!confirm('Delete reservation for ' + (guestName||'this guest') + '?'))return;
 
   var tasks=[];
 
   if(origin==='summerclean'){
-    // Booking is in the bookings table - delete it (SummerClean will see it gone)
+    // Booking is in the bookings table - delete it (SummerFlow will see it gone)
     tasks.push(sbF('DELETE','bookings?id=eq.'+id));
   } else if(origin==='direct'){
     // Direct booking: exists in direct_requests AND bookings table
@@ -3881,7 +3881,7 @@ function deleteReservation(id, origin, guestName){
   }
 
   Promise.all(tasks).then(function(){
-    toast('Reservation deleted — removed from SummerClean too','ok');
+    toast('Reservation deleted','ok');
     // Reload both data sources
     return Promise.all([loadRequests(), loadAllBookings()]);
   }).then(function(){
@@ -4017,7 +4017,7 @@ function saveNewBooking(){
       body:JSON.stringify({bookings_data:[booking]})
     }).then(function(r){
       if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
-      toast('📌 Dates blocked — visible in SummerClean','ok');
+      toast('📌 Dates blocked','ok');
       closeModal('newBookingOverlay');
       loadAllBookings().then(function(){renderCalendar();renderPayments();renderProps();});
     }).catch(function(e){err.textContent='Error: '+e.message;}).finally(function(){btn.disabled=false;btn.textContent='🚫 Block dates';});
@@ -4239,7 +4239,7 @@ function renderBarForDay(bookings,ds,aptColor){
     var posClass=isStart&&isLastNight?'bar-solo':isStart?'bar-start':isLastNight?'bar-end':'bar-middle';
     var src=b.source||'direct';
     var srcClass='src-'+src;
-    // Guest name: SummerClean stores name in notes, count in guests.
+    // Guest name: SummerFlow stores name in notes, count in guests.
     // Dashboard import stores name in notes too (fixed below).
     var label='';
     var _n=cleanNotesDisplay(b.notes||'').trim();
@@ -4286,7 +4286,7 @@ function showCalPopup(b,e){
     '<div class="cal-popup-row"><span class="lbl">Payment</span><span>'+(b.paid||'unpaid')+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Cleaned</span><span>'+(b.cleaned==='yes'?'✅ Yes':'❌ No')+'</span></div>'+
     (cleanNotesDisplay(b.notes)?'<div class="cal-popup-row" style="flex-direction:column;gap:4px"><span class="lbl">Notes</span><span style="font-size:11px">'+esc(cleanNotesDisplay(b.notes))+'</span></div>':'')+
-    '<p style="font-size:10px;color:var(--muted);margin-top:10px;font-weight:700">Manage cleaning in 🧹 SummerClean</p>';
+    '';
   // Position near click
   var x=e.clientX,y=e.clientY;
   var pw=280,ph=260;
