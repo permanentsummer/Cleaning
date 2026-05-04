@@ -727,27 +727,43 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
       <!-- List filters (only shown in list view) -->
       <div id="listFilterRow" style="display:none;flex-direction:column;gap:6px;flex:1">
-        <div style="display:flex;gap:5px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch">
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Time</span>
-          <button class="fbtn" data-tf="all" onclick="toggleListFilter('time','all',this)">All</button>
-          <button class="fbtn on" data-tf="upcoming" onclick="toggleListFilter('time','upcoming',this)">Upcoming</button>
-          <button class="fbtn" data-tf="past" onclick="toggleListFilter('time','past',this)">Past</button>
-          <span style="width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0"></span>
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Source</span>
-          <button class="fbtn on" data-sf="all" onclick="toggleListFilter('source','all',this)">All</button>
-          <button class="fbtn" data-sf="direct" onclick="toggleListFilter('source','direct',this)">Direct</button>
-          <button class="fbtn" data-sf="airbnb" onclick="toggleListFilter('source','airbnb',this)">Airbnb</button>
-          <button class="fbtn" data-sf="booking" onclick="toggleListFilter('source','booking',this)">Booking.com</button>
-          <span style="width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0"></span>
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Property</span>
-          <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)">All</button>
-          <div id="listPropFilters" style="display:contents"></div>
-          <span style="width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0"></span>
-          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Payment</span>
-          <button class="fbtn on" data-payf="all" onclick="toggleListFilter('pay','all',this)">All</button>
-          <button class="fbtn" data-payf="paid" onclick="toggleListFilter('pay','paid',this)">✅ Paid</button>
-          <button class="fbtn" data-payf="partial" onclick="toggleListFilter('pay','partial',this)">⏳ Partial</button>
-          <button class="fbtn" data-payf="unpaid" onclick="toggleListFilter('pay','unpaid',this)">❌ Unpaid</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+
+          <!-- Time group -->
+          <div style="display:flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px">
+            <button class="fbtn on" data-tf="all" onclick="toggleListFilter('time','all',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">All</button>
+            <button class="fbtn" data-tf="upcoming" onclick="toggleListFilter('time','upcoming',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">Upcoming</button>
+            <button class="fbtn" data-tf="past" onclick="toggleListFilter('time','past',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">Past</button>
+          </div>
+
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+
+          <!-- Source group -->
+          <div style="display:flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px">
+            <button class="fbtn on" data-sf="all" onclick="toggleListFilter('source','all',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">All</button>
+            <button class="fbtn" data-sf="direct" onclick="toggleListFilter('source','direct',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">Direct</button>
+            <button class="fbtn" data-sf="airbnb" onclick="toggleListFilter('source','airbnb',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">Airbnb</button>
+            <button class="fbtn" data-sf="booking" onclick="toggleListFilter('source','booking',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">Booking.com</button>
+          </div>
+
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+
+          <!-- Property group -->
+          <div style="display:flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px">
+            <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">All</button>
+            <div id="listPropFilters" style="display:contents"></div>
+          </div>
+
+          <div style="width:1px;height:20px;background:var(--border)"></div>
+
+          <!-- Payment group -->
+          <div style="display:flex;align-items:center;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px">
+            <button class="fbtn on" data-payf="all" onclick="toggleListFilter('pay','all',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">All</button>
+            <button class="fbtn" data-payf="paid" onclick="toggleListFilter('pay','paid',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">✅ Paid</button>
+            <button class="fbtn" data-payf="partial" onclick="toggleListFilter('pay','partial',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">⏳ Partial</button>
+            <button class="fbtn" data-payf="unpaid" onclick="toggleListFilter('pay','unpaid',this)" style="border-radius:6px;padding:5px 10px;font-size:12px">❌ Unpaid</button>
+          </div>
+
         </div>
       </div>
       <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
@@ -2992,7 +3008,7 @@ function renderResList(){
         '<span class="arrow">→</span>'+
         '<span>'+fmtShort(item.checkout)+'</span>'+
         '<span class="chip">'+item.nights+'n</span>'+
-        (item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':'')+
+        (item.isComp?'<span style="margin-left:auto;font-size:13px;font-weight:700;color:#15803d">🎁 Complimentary</span>':(item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':''))+
       '</div>';
     // Payment row
     var isOTA=(item.source==='booking'||item.source==='airbnb');
@@ -4498,7 +4514,7 @@ function drawCal(){
     var aptId=r.apt_id||r.apt_name||'';
     if(!reqCoveredForCal[aptId+'|'+r.checkin+'|'+r.checkout]){
       calBookings.push({
-        id:r.id,apt:aptId,source:(function(){
+        id:r.id,apt:aptId,_origin:'direct',source:(function(){
           var n=r.notes||'';
           var si=n.indexOf('\n__SRC__');
           if(si!==-1)return n.slice(si+8).split('\n')[0];
@@ -4547,7 +4563,7 @@ function drawCal(){
       e.stopPropagation();
       var id=bar.getAttribute('data-id');
       var b=calBookings.find(function(x){return x.id===id;});
-      if(b)showCalPopup(b,e);
+      if(b)openEditBooking(b.id,b._origin||'summerclean');
     });
   });
 
