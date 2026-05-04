@@ -1405,11 +1405,16 @@ function loadAllBookings(){
 
 // ── TABS ────────────────────────────────────────────────────────────────────
 function switchTab(tab){
+  closeMobileMenu();
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===tab);});
   document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-'+tab);});
-  if(tab==='calendar')renderCalendar();
   if(tab==='home')renderOverview();
-  if(tab==='cleaning'){renderCleaning();}
+  else if(tab==='calendar')renderCalendar();
+  else if(tab==='requests')loadRequests().then(function(){renderRequests();});
+  else if(tab==='properties'){renderProps();}
+  else if(tab==='payments')renderRevenueAnalytics();
+  else if(tab==='cleaning')renderCleaning();
+  else if(tab==='settings'){renderProps();loadEmailTemplates();loadWaTemplates();loadCleaningSettings();}
 }
 
 function openSummerClean(){}  // legacy no-op — SummerFlow handles cleaning directly
