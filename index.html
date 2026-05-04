@@ -890,13 +890,24 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
     <!-- Payment section — direct bookings only -->
     <div id="ebPaymentSection" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Payment Tracking</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Payment</div>
+      <!-- Summary -->
       <div id="ebPaySummary" style="background:var(--bg);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap"></div>
+      <!-- Payment status -->
+      <div class="fg" style="margin-bottom:10px">
+        <label style="font-size:11px">Payment status</label>
+        <select id="ebPayStatus" onchange="ebUpdatePayStatus()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
+          <option value="unpaid">❌ Unpaid</option>
+          <option value="partial">⏳ Partially paid</option>
+          <option value="paid">✅ Fully paid</option>
+        </select>
+      </div>
+      <!-- Transactions list -->
       <div id="ebPayTransactions" style="margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:flex-end">
-        <div class="fg" style="margin:0"><label style="font-size:11px">Description</label><input type="text" id="ebPayDesc" placeholder="e.g. Bank transfer, Deposit" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box"></div>
-        <div class="fg" style="margin:0"><label style="font-size:11px">Amount €</label><input type="number" id="ebPayAmt" placeholder="0" min="0" step="0.01" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box"></div>
-        <button onclick="addEbPayment()" style="background:var(--primary);color:#fff;border:none;border-radius:7px;padding:8px 12px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;height:36px">+ Add</button>
+      <!-- Add payment -->
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div class="fg" style="margin:0;flex:1"><label style="font-size:11px">Record a payment (€)</label><input type="number" id="ebPayAmt" placeholder="Amount" min="0" step="0.01" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box"></div>
+        <button onclick="addEbPayment()" style="background:var(--primary);color:#fff;border:none;border-radius:7px;padding:9px 14px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;height:38px">+ Add</button>
       </div>
     </div>
     <div class="aerr" id="ebErr" style="margin:10px 0 8px"></div>
@@ -3067,25 +3078,34 @@ function savePaymentStatus(){
 
 // ── EDIT BOOKING PAYMENT TRACKING ─────────────────────────────────────────────
 var _ebPayments=[]; // in-memory payment list for current edit session
+var _ebPayTotal=0;
 function ebInitPayments(req){
   var paySection=document.getElementById('ebPaymentSection');
   if(!paySection)return;
-  // Only show for direct source requests
-  var isDir=true; // req is always direct_requests origin
-  paySection.style.display=isDir?'':'none';
-  // Parse stored payments from notes (stored as \n__PAYMENTS__json)
+  paySection.style.display='';
+  _ebPayTotal=req.total_amount||0;
   _ebPayments=[];
   var n=req.notes||'';
   var pi=n.indexOf('\n__PAYMENTS__');
   if(pi!==-1){try{_ebPayments=JSON.parse(n.slice(pi+13).split('\n')[0]);}catch(e){_ebPayments=[];}}
-  // Also seed from deposit if set
-  if(!_ebPayments.length&&req.deposit_paid&&req.rate_per_night>0){
-    _ebPayments=[{desc:'Deposit',amt:req.rate_per_night,date:new Date().toISOString().slice(0,10)}];
+  // Derive status from deposit_paid / balance_paid
+  var statusEl=document.getElementById('ebPayStatus');
+  if(statusEl){
+    statusEl.value=req.balance_paid?'paid':(req.deposit_paid?'partial':'unpaid');
   }
-  ebRenderPayments(req.total_amount||0);
+  ebRenderPayments();
 }
-function ebRenderPayments(total){
-  total=parseFloat(total)||parseFloat(document.getElementById('ebGross').value)||0;
+function ebUpdatePayStatus(){
+  var status=document.getElementById('ebPayStatus').value;
+  if(status==='paid'&&_ebPayTotal>0){
+    // Auto-add full payment if no transactions yet
+    var paid=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
+    if(paid===0){_ebPayments=[{amt:_ebPayTotal,date:new Date().toISOString().slice(0,10)}];}
+  }
+  ebRenderPayments();
+}
+function ebRenderPayments(){
+  var total=_ebPayTotal||parseFloat(document.getElementById('ebGross').value)||0;
   var paid=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
   var due=Math.max(0,total-paid);
   // Summary
@@ -3098,26 +3118,35 @@ function ebRenderPayments(total){
   // Transactions
   var txEl=document.getElementById('ebPayTransactions');
   if(!txEl)return;
-  if(!_ebPayments.length){txEl.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0">No payments recorded yet.</div>';return;}
+  if(!_ebPayments.length){txEl.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0 8px">No payments recorded yet.</div>';return;}
   txEl.innerHTML=_ebPayments.map(function(p,i){
     return'<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:7px;margin-bottom:5px;font-size:13px">'+
-      '<span style="flex:1;color:var(--muted)">'+esc(p.date||'')+'</span>'+
-      '<span style="flex:2;font-weight:600">'+esc(p.desc||'Payment')+'</span>'+
-      '<span style="color:#15803d;font-weight:700">€'+parseFloat(p.amt).toFixed(2)+'</span>'+
-      '<button onclick="removeEbPayment('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1">×</button>'+
+      '<span style="color:var(--muted);font-size:11px;flex-shrink:0">'+esc(p.date||new Date().toISOString().slice(0,10))+'</span>'+
+      '<span style="flex:1;font-weight:600;color:#15803d">€'+parseFloat(p.amt).toFixed(2)+'</span>'+
+      '<button onclick="removeEbPayment('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:5px;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0">×</button>'+
     '</div>';
   }).join('');
 }
 function addEbPayment(){
-  var desc=(document.getElementById('ebPayDesc').value||'').trim()||'Payment';
   var amt=parseFloat(document.getElementById('ebPayAmt').value)||0;
   if(amt<=0){toast('Enter a valid amount','err');return;}
-  _ebPayments.push({desc:desc,amt:amt,date:new Date().toISOString().slice(0,10)});
-  document.getElementById('ebPayDesc').value='';
+  _ebPayments.push({amt:amt,date:new Date().toISOString().slice(0,10)});
   document.getElementById('ebPayAmt').value='';
+  // Auto-update status
+  var total=_ebPayTotal||0;
+  var paid=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
+  var statusEl=document.getElementById('ebPayStatus');
+  if(statusEl){statusEl.value=paid>=total&&total>0?'paid':'partial';}
   ebRenderPayments();
 }
-function removeEbPayment(idx){_ebPayments.splice(idx,1);ebRenderPayments();}
+function removeEbPayment(idx){
+  _ebPayments.splice(idx,1);
+  var total=_ebPayTotal||0;
+  var paid=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
+  var statusEl=document.getElementById('ebPayStatus');
+  if(statusEl){statusEl.value=paid<=0?'unpaid':(paid>=total?'paid':'partial');}
+  ebRenderPayments();
+}
 
 // ── CLEANING TAB (SummerFlow integrated) ─────────────────────────────────────
 var cleanLang='en';
@@ -4114,10 +4143,24 @@ function saveEditBooking(){
       loadAllBookings().then(function(){renderCalendar();renderResList();renderPayments();renderCleaning();renderOverview();});
     }).catch(function(e){errEl.textContent='Error: '+e.message;});
   } else {
-    // Update direct_requests table
+    // Update direct_requests table — include notes (payments + source) and source
+    var reqNotes=(cleanNotesDisplay(requests.find(function(r){return r.id===id;})||{}).notes||'');
+    // Rebuild notes with source marker and payments
+    var srcMarker=newSource&&newSource!=='direct'?'\n__SRC__'+newSource:'';
+    var paysMarker=_ebPayments.length?'\n__PAYMENTS__'+JSON.stringify(_ebPayments):'';
+    var savedNotes=guestName+srcMarker+paysMarker;
+    // Derive paid status from payments
+    var totalAmt=gross||0;
+    var paidAmt=_ebPayments.reduce(function(s,p){return s+(parseFloat(p.amt)||0);},0);
+    var payStatus=document.getElementById('ebPayStatus')?document.getElementById('ebPayStatus').value:'unpaid';
+    var balPaid=payStatus==='paid';
+    var depPaid=payStatus==='partial'||payStatus==='paid';
     var reqUpd={checkin:ci,checkout:co,guest_name:guestName,
-      total_amount:isComp?null:(gross||null),
-      guests:parseInt(gCount)||undefined};
+      total_amount:isComp?null:(gross?Math.round(gross):null),
+      guests:parseInt(gCount)||undefined,
+      notes:savedNotes,
+      deposit_paid:depPaid,balance_paid:balPaid,
+      rate_per_night:payStatus==='partial'?Math.round(paidAmt):undefined};
     sbF('PATCH','direct_requests?id=eq.'+id,reqUpd).then(function(){
       // Also update matching allBookings entry (from confirmToBookings sync)
       var aptId=requests.find(function(r){return r.id===id;});
