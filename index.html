@@ -742,6 +742,12 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
           <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Property</span>
           <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)">All</button>
           <div id="listPropFilters" style="display:contents"></div>
+          <span style="width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0"></span>
+          <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Payment</span>
+          <button class="fbtn on" data-payf="all" onclick="toggleListFilter('pay','all',this)">All</button>
+          <button class="fbtn" data-payf="paid" onclick="toggleListFilter('pay','paid',this)">✅ Paid</button>
+          <button class="fbtn" data-payf="partial" onclick="toggleListFilter('pay','partial',this)">⏳ Partial</button>
+          <button class="fbtn" data-payf="unpaid" onclick="toggleListFilter('pay','unpaid',this)">❌ Unpaid</button>
         </div>
       </div>
       <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
@@ -2903,9 +2909,10 @@ function renderResList(){
       id:r.id,checkin:r.checkin,checkout:r.checkout,
       guest:r.guest_name||'Guest',email:r.guest_email||'',phone:r.guest_phone||'',
       aptId:r.apt_id||apt.id||'',aptName:r.apt_name||apt.name,aptColor:apt.color||'#22c55e',
-      source:'direct',nights:nights,
+      source:(function(){var n=r.notes||'';var si=n.indexOf('\n__SRC__');return si!==-1?n.slice(si+8).split('\n')[0].trim()||'direct':'direct';}()),
+      nights:nights,
       ratePerNight:r.rate_per_night||0,cleanFee:0,total:r.total_amount||0,
-      paid:r.deposit_paid?(r.balance_paid?'paid':'deposit'):'unpaid',
+      paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
       cleaned:importCleanedStatus(r.checkout),notes:r.notes||'',
       origin:'direct',blocked:false
     });
@@ -2924,6 +2931,12 @@ function renderResList(){
   // Property filter
   if(listPropFilter!=='all')items=items.filter(function(i){
     return i.aptId===listPropFilter;
+  });
+  if(listPayFilter!=='all')items=items.filter(function(i){
+    if(listPayFilter==='paid')return i.paid==='paid';
+    if(listPayFilter==='partial')return i.paid==='deposit';
+    if(listPayFilter==='unpaid')return i.paid==='unpaid'||!i.paid;
+    return true;
   });
 
   // Sort by checkin
@@ -2993,9 +3006,8 @@ function renderResList(){
         var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
         var amtDue=Math.max(0,item.total-amtPaid);
         card.innerHTML+='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
-          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
+          '<div style="margin-bottom:6px">'+
             '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Payment</span>'+
-            '<button data-pmid="'+item.id+'" data-pmorigin="'+item.origin+'" class="pm-open-btn" style="border:none;background:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--primary);padding:0">+ Manage →</button>'+
           '</div>'+
           '<div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">'+
             '<span>Total: <strong>€'+item.total+'</strong></span>'+
@@ -4657,6 +4669,7 @@ function deleteRequest(){
 var listTimeFilter='upcoming'; // 'all' | 'upcoming' | 'past'
 var listSourceFilter='all'; // 'all' | 'direct' | 'airbnb' | 'booking'
 var listPropFilter='all';   // 'all' | apt.id
+var listPayFilter='all';    // 'all' | 'paid' | 'partial' | 'unpaid'
 
 function toggleListFilter(group, val, btn){
   if(group==='time'){
@@ -4678,6 +4691,9 @@ function toggleListFilter(group, val, btn){
   } else if(group==='prop'){
     listPropFilter=val;
     document.querySelectorAll('[data-pf]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-pf')===val);});
+  } else if(group==='pay'){
+    listPayFilter=val;
+    document.querySelectorAll('[data-payf]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-payf')===val);});
   }
   renderResList();
 }
