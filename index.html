@@ -4134,8 +4134,8 @@ function saveEditBooking(){
   var errEl=document.getElementById('ebErr');
   errEl.textContent='';
 
-  if(b){
-    // Update bookings table
+  if(origin==='summerclean'){
+    // OTA imported booking — update bookings table only
     var upd={checkin:ci,checkout:co,clean:co,notes:newNotes,guests:gCount||b.guests||'',source:newSource};
     sbF('PATCH','bookings?id=eq.'+id,upd).then(function(){
       closeModal('editBookingOverlay');
@@ -4157,10 +4157,10 @@ function saveEditBooking(){
     var depPaid=payStatus==='partial'||payStatus==='paid';
     var reqUpd={checkin:ci,checkout:co,guest_name:guestName,
       total_amount:isComp?null:(gross?Math.round(gross):null),
-      guests:parseInt(gCount)||undefined,
+      guests:parseInt(gCount)||2,
       notes:savedNotes,
-      deposit_paid:depPaid,balance_paid:balPaid,
-      rate_per_night:payStatus==='partial'?Math.round(paidAmt):undefined};
+      deposit_paid:depPaid,balance_paid:balPaid};
+    if(payStatus==='partial'&&paidAmt>0)reqUpd.rate_per_night=Math.round(paidAmt);
     sbF('PATCH','direct_requests?id=eq.'+id,reqUpd).then(function(){
       // Also update matching allBookings entry (from confirmToBookings sync)
       var aptId=requests.find(function(r){return r.id===id;});
