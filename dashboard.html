@@ -488,7 +488,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <span>Settings</span>
       </div>
       <div class="sb-item" data-tab="cleaning" onclick="switchTab('cleaning')">
-        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l9 1 9-1"/><path d="M12 7v10"/><path d="M5 9c0 4 2 6 7 8"/><path d="M19 9c0 4-2 6-7 8"/></svg></span>
+        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 0 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 8c1-.5 3.5-2 4-7"/><path d="M14.5 17.5 4.5 15"/></svg></span>
         <span>Cleaning</span>
       </div>
     </nav>
@@ -973,114 +973,75 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- SETTINGS -->
   <div id="page-settings" class="page">
     <div class="page-header">
-      <div><h2>Settings</h2><p>Email templates & preferences</p></div>
+      <div><h2>Settings</h2><p>Manage templates, email, and cleaning configuration</p></div>
     </div>
 
-    <!-- Email templates -->
-    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-      <div class="sep" style="margin-top:0">📧 Email Templates</div>
-      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">
-        These templates are used when you confirm or decline a booking request. Use variables: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{deposit}</code>
-      </p>
-
-      <!-- Confirmed template -->
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span>
-        </div>
-        <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed! 🎉"></div>
-        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplConfirmedBody" rows="7" placeholder="Hi {guest_name},&#10;&#10;Great news — your booking is confirmed! 🎉&#10;&#10;📍 {property}&#10;📅 {checkin} → {checkout}&#10;🌙 {nights} nights&#10;&#10;..."></textarea></div>
-      </div>
-
-      <!-- Declined template -->
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span>
-        </div>
-        <div class="fg"><label>Subject line</label><input type="text" id="tmplDeclinedSubject" placeholder="About your booking request"></div>
-        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplDeclinedBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Unfortunately those dates are not available..."></textarea></div>
-      </div>
-
-      <!-- Pending template -->
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending / Info</span>
-        </div>
-        <div class="fg"><label>Subject line</label><input type="text" id="tmplPendingSubject" placeholder="Your booking request — update"></div>
-        <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplPendingBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Thank you for your request. I'll confirm within 24 hours..."></textarea></div>
-      </div>
-
-      <button class="btn-primary" onclick="saveEmailTemplates()">💾 Save templates</button>
+    <!-- Horizontal tab nav -->
+    <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto">
+      <button id="stab-email" onclick="showSettingsTab('email')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--primary);color:var(--primary);white-space:nowrap;margin-bottom:-2px">📧 Email &amp; WhatsApp</button>
+      <button id="stab-cleaning" onclick="showSettingsTab('cleaning')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);white-space:nowrap;margin-bottom:-2px">🧹 Cleaning &amp; Cleaners</button>
     </div>
 
-    <!-- Resend config -->
-    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-      <div class="sep" style="margin-top:0">📬 Email Sender</div>
-      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">Currently sending from: <strong id="currentFromEmail">bookings@mail.permanentsummer.co</strong></p>
-      <button class="btn-outline" style="font-size:12px" onclick="testEmail()">🧪 Send test email to yourself</button>
-      <div id="testEmailResult" style="font-size:12px;font-weight:700;margin-top:8px"></div>
+    <!-- TAB: Email & WhatsApp -->
+    <div id="stab-panel-email">
+      <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+        <div class="sep" style="margin-top:0">📧 Email Templates</div>
+        <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">Variables: <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{deposit}</code></p>
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span></div>
+          <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed! 🎉"></div>
+          <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplConfirmedBody" rows="7" placeholder="Hi {guest_name},&#10;&#10;Great news — your booking is confirmed! 🎉&#10;&#10;📍 {property}&#10;📅 {checkin} → {checkout}&#10;🌙 {nights} nights&#10;&#10;..."></textarea></div>
+        </div>
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span></div>
+          <div class="fg"><label>Subject line</label><input type="text" id="tmplDeclinedSubject" placeholder="About your booking request"></div>
+          <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplDeclinedBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Unfortunately those dates are not available..."></textarea></div>
+        </div>
+        <div style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending / Info</span></div>
+          <div class="fg"><label>Subject line</label><input type="text" id="tmplPendingSubject" placeholder="Your booking request — update"></div>
+          <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplPendingBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Thank you for your request. I'll confirm within 24 hours..."></textarea></div>
+        </div>
+        <button class="btn-primary" onclick="saveEmailTemplates()">💾 Save templates</button>
+      </div>
+      <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+        <div class="sep" style="margin-top:0">📬 Email Sender</div>
+        <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">Currently sending from: <strong id="currentFromEmail">bookings@mail.permanentsummer.co</strong></p>
+        <button class="btn-outline" style="font-size:12px" onclick="testEmail()">🧪 Send test email to yourself</button>
+        <div id="testEmailResult" style="font-size:12px;font-weight:700;margin-top:8px"></div>
+      </div>
+      <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+        <div class="sep" style="margin-top:0">💬 WhatsApp Templates</div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailConfirmed"> Same as email</label></div>
+          <div class="fg" style="margin-bottom:0"><textarea id="tmplWaConfirmed" rows="4" placeholder="Hi {guest_name} ✅ Confirmed!&#10;📍 {property} | {checkin} → {checkout}&#10;💶 Total: €{total} | Deposit: €{deposit}"></textarea></div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailDeclined"> Same as email</label></div>
+          <div class="fg" style="margin-bottom:0"><textarea id="tmplWaDeclined" rows="3" placeholder="Hi {guest_name}, unfortunately {property} is not available for those dates."></textarea></div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailPending"> Same as email</label></div>
+          <div class="fg" style="margin-bottom:0"><textarea id="tmplWaPending" rows="3" placeholder="Hi {guest_name}, thanks for your request for {property}. I'll confirm within 24 hours!"></textarea></div>
+        </div>
+        <button class="btn-primary" onclick="saveWaTemplates()">💾 Save WhatsApp templates</button>
+      </div>
     </div>
 
-    <!-- WhatsApp templates -->
-    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-      <div class="sep" style="margin-top:0">💬 WhatsApp Templates</div>
-      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">
-        Shorter versions for WhatsApp. Same variables work: <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 6px;border-radius:5px;font-size:11px">{deposit}</code>
-      </p>
-      <div style="margin-bottom:12px;padding:10px;background:var(--bg);border-radius:10px;font-size:12px;font-weight:700;color:var(--muted)">
-        💡 Tip: Enable "Use email template for WhatsApp too" per action below to skip maintaining two versions.
+    <!-- TAB: Cleaning & Cleaners -->
+    <div id="stab-panel-cleaning" style="display:none">
+      <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="sep" style="margin:0">🧹 Cleaners</div>
+          <button class="btn-primary" style="font-size:12px;padding:7px 12px" onclick="addCleanerRow()">+ Add cleaner</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Assign a cleaner per property. The WhatsApp button in the Cleaning tab uses the assigned cleaner's number automatically.</p>
+        <div id="cleanersList"></div>
+        <button class="btn-primary" style="margin-top:14px" onclick="saveCleaningSettings()">💾 Save cleaners</button>
       </div>
-
-      <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span>
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
-            <input type="checkbox" id="waUseEmailConfirmed"> Same as email template
-          </label>
-        </div>
-        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
-          <textarea id="tmplWaConfirmed" rows="4" placeholder="Hi {guest_name} ✅ Your booking is confirmed!&#10;📍 {property} | {checkin} → {checkout}&#10;💶 Total: €{total} | Deposit: €{deposit}&#10;Payment details to follow shortly."></textarea>
-        </div>
-      </div>
-
-      <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span>
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
-            <input type="checkbox" id="waUseEmailDeclined"> Same as email template
-          </label>
-        </div>
-        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
-          <textarea id="tmplWaDeclined" rows="3" placeholder="Hi {guest_name}, unfortunately {property} is not available for those dates. Please try other dates!"></textarea>
-        </div>
-      </div>
-
-      <div style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending</span>
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer">
-            <input type="checkbox" id="waUseEmailPending"> Same as email template
-          </label>
-        </div>
-        <div class="fg" style="margin-bottom:0"><label>WhatsApp message body</label>
-          <textarea id="tmplWaPending" rows="3" placeholder="Hi {guest_name}, thanks for your request for {property}. I'll confirm within 24 hours!"></textarea>
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="saveWaTemplates()">💾 Save WhatsApp templates</button>
-    </div>
-
-    <!-- Cleaning settings -->
-    <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-      <div class="sep" style="margin-top:0">🧹 Cleaning Settings</div>
-      <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px">Cleaner contact details are used for the WhatsApp shortcut in the Cleaning tab.</p>
-      <div class="fr">
-        <div class="fg"><label>Cleaner name</label><input type="text" id="cleanerName" placeholder="e.g. Maria"></div>
-        <div class="fg"><label>Cleaner WhatsApp number</label><input type="tel" id="cleanerPhone" placeholder="+351 912 345 678"></div>
-      </div>
-      <button class="btn-primary" onclick="saveCleaningSettings()">💾 Save cleaning settings</button>
     </div>
   </div>
+
 
   </div><!-- end main-content -->
 </div><!-- end appWrap -->
@@ -4595,36 +4556,131 @@ function saveCleaningSettings(){
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
+// ── SETTINGS TAB SWITCHER ─────────────────────────────────────────────────────
+function showSettingsTab(tab){
+  ['email','cleaning'].forEach(function(t){
+    var btn=document.getElementById('stab-'+t);
+    var panel=document.getElementById('stab-panel-'+t);
+    var on=t===tab;
+    if(btn){btn.style.borderBottomColor=on?'var(--primary)':'transparent';btn.style.color=on?'var(--primary)':'var(--muted)';}
+    if(panel)panel.style.display=on?'':'none';
+  });
+  if(tab==='cleaning')renderCleanersList();
+}
+
+// ── CLEANERS ──────────────────────────────────────────────────────────────────
+function getCleaners(){
+  var cfg=workspace&&workspace.settings||{};
+  if(Array.isArray(cfg.cleaners))return cfg.cleaners;
+  if(cfg.cleanerName||cfg.cleanerPhone)return [{name:cfg.cleanerName||'',phone:cfg.cleanerPhone||'',apt:'all'}];
+  return [];
+}
+function getCleanerForApt(aptId){
+  var cleaners=getCleaners();
+  return cleaners.find(function(c){return c.apt===aptId;})||
+         cleaners.find(function(c){return c.apt==='all';})||
+         cleaners[0]||null;
+}
+function loadCleaningSettings(){renderCleanersList();}
+function renderCleanersList(){
+  var el=document.getElementById('cleanersList');if(!el)return;
+  var cleaners=getCleaners();
+  var aptOpts='<option value="all">All properties (default)</option>'+
+    (properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  if(!cleaners.length){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No cleaners yet. Click + Add cleaner to start.</div>';
+    return;
+  }
+  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 160px 36px;gap:8px;padding:4px 0 6px;border-bottom:2px solid var(--border);margin-bottom:6px">'+
+    ['Name','WhatsApp number','Assigned to',''].map(function(h){
+      return'<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+h+'</span>';
+    }).join('')+'</div>'+
+    cleaners.map(function(c,i){
+      return'<div class="cleaner-row" data-idx="'+i+'" style="display:grid;grid-template-columns:1fr 1fr 160px 36px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9">'+
+        '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Maria" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
+        '<input class="cl-phone" type="tel" value="'+esc(c.phone||'')+'" placeholder="+351 912 345 678" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
+        '<select class="cl-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12px;width:100%">'+
+          aptOpts.replace('value="'+(c.apt||'all')+'"','value="'+(c.apt||'all')+'" selected')+
+        '</select>'+
+        '<button onclick="removeCleanerRow('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1">×</button>'+
+      '</div>';
+    }).join('');
+}
+function addCleanerRow(){
+  var cleaners=getCleaners();
+  cleaners.push({name:'',phone:'',apt:'all'});
+  if(workspace.settings)workspace.settings.cleaners=cleaners;
+  renderCleanersList();
+  var rows=document.querySelectorAll('.cleaner-row');
+  if(rows.length){var inp=rows[rows.length-1].querySelector('.cl-name');if(inp)inp.focus();}
+}
+function removeCleanerRow(idx){
+  var cleaners=getCleaners();
+  cleaners.splice(idx,1);
+  if(workspace.settings)workspace.settings.cleaners=cleaners;
+  renderCleanersList();
+}
+function saveCleaningSettings(){
+  var rows=document.querySelectorAll('.cleaner-row');
+  var cleaners=[];
+  rows.forEach(function(row){
+    var name=row.querySelector('.cl-name').value.trim();
+    var phone=row.querySelector('.cl-phone').value.trim();
+    var apt=row.querySelector('.cl-apt').value;
+    if(name||phone)cleaners.push({name:name,phone:phone,apt:apt});
+  });
+  sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    fresh.cleaners=cleaners;
+    if(cleaners[0]){fresh.cleanerName=cleaners[0].name;fresh.cleanerPhone=cleaners[0].phone;}
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
+  }).then(function(){
+    if(workspace.settings){
+      workspace.settings.cleaners=cleaners;
+      if(cleaners[0]){workspace.settings.cleanerName=cleaners[0].name;workspace.settings.cleanerPhone=cleaners[0].phone;}
+    }
+    toast('Cleaners saved','ok');
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
 // ── CLEANING WHATSAPP ─────────────────────────────────────────────────────────
 function sendCleaningWhatsApp(b){
   var apt=aptById(b.apt);
-  var aptName=apt.name||b.apt||'appartamento';
+  var aptName=apt.name||b.apt||'apartamento';
+
+  // Get cleaner assigned to this specific apt, fallback to default/all
+  var cleaner=getCleanerForApt(b.apt);
+  var cleanerName=cleaner?cleaner.name:'';
+  var waNum=cleaner?(cleaner.phone||'').replace(/[^0-9]/g,''):'';
+
+  // Format checkout date in Portuguese
   var checkoutDate=b.checkout?new Date(b.checkout+'T12:00:00'):null;
   var checkoutFmt=checkoutDate?checkoutDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'}):'';
 
-  // Find the next booking after this checkout on the same apt
-  var nextBk=(allBookings||[]).filter(function(x){
-    return x.apt===b.apt&&x.checkin>b.checkout&&x.checkin!=null;
-  }).sort(function(a,c){return a.checkin.localeCompare(c.checkin);})[0];
+  // Find next booking on same apt (from both allBookings and confirmed requests)
+  var allForApt=(allBookings||[]).concat(
+    (requests||[]).filter(function(r){return r.status==='confirmed';})
+      .map(function(r){return{apt:r.apt_id||r.apt_name||'',checkin:r.checkin,checkout:r.checkout,guests:String(r.guests||'')};})
+  ).filter(function(x){return x.apt===b.apt&&x.checkin&&x.checkin>b.checkout;})
+   .sort(function(a,c){return a.checkin.localeCompare(c.checkin);})[0];
 
-  var msg='Olá! '+
-    'Saída no '+aptName+' a '+checkoutDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'})+'.';
+  // Build message in exact format requested
+  var msg='Olá'+(cleanerName?' '+cleanerName:'')+'!\n'+
+    'Saída no '+aptName+' a '+checkoutFmt+'.\n';
 
-  if(nextBk){
-    var nextCheckin=new Date(nextBk.checkin+'T12:00:00');
-    var nextFmt=nextCheckin.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
-    var guests=nextBk.guests&&/^\d+/.test(nextBk.guests)?nextBk.guests:'?';
-    msg+=' Por favor prepara o apartamento para a próxima entrada a '+nextFmt+
-      ' para '+guests+' pessoa'+(guests!=='1'?'s':'')+'. Obrigado! 🙏';
+  if(allForApt){
+    var nextDate=new Date(allForApt.checkin+'T12:00:00');
+    var nextFmt=nextDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+    var gRaw=(allForApt.guests||'').trim();
+    var gNum=/^\d+/.test(gRaw)?gRaw:'?';
+    msg+='Por favor prepara o apartamento para a próxima entrada a '+nextFmt+
+      ' para '+gNum+' pessoa'+(gNum!=='1'?'s':'')+'.\n';
   } else {
-    msg+=' Por favor prepara o apartamento. Obrigado! 🙏';
+    msg+='Por favor prepara o apartamento.\n';
   }
+  msg+='Obrigado!';
 
-  // Use workspace WhatsApp number if configured
-  var waNum=(workspace&&workspace.settings&&workspace.settings.cleanerPhone)||'';
-  // Strip non-digits, add country code if needed
-  waNum=waNum.replace(/[^0-9]/g,'');
-  var url='https://wa.me/'+(waNum?waNum:'')+'?text='+encodeURIComponent(msg);
+  var url='https://wa.me/'+(waNum||'')+'?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
 
