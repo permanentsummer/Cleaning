@@ -1526,13 +1526,14 @@ function renderRequests(){
   var list=document.getElementById('reqList');
   if(!list)return;
   // Only show genuine booking requests (pending/awaiting), never imported OTA bookings
-  // Only show genuine direct booking requests — never imported OTA bookings
-  // Confirmed bookings from widget are shown here; imported ones go to Reservations
+  // Only show genuine direct booking requests — exclude PDF imports and OTA bookings
+  // PDF/OTA imports stored in direct_requests have \n__SRC__booking or \n__SRC__airbnb in notes
   var genuineRequests=requests.filter(function(r){
-    // A "genuine request" is one submitted via the booking widget (has guest_email or was pending)
-    // Confirmed requests that came from the widget still show here
-    // We identify imported-then-confirmed by checking if they have a booking widget origin
-    return true; // all direct_requests are genuine — imported OTA goes to allBookings not here
+    var n=r.notes||'';
+    var si=n.indexOf('\n__SRC__');
+    if(si===-1)return true; // no source marker = genuine widget request
+    var src=n.slice(si+8).split('\n')[0].trim();
+    return src===''||src==='direct'; // exclude booking/airbnb sources
   });
   var filtered=reqFilter==='all'?genuineRequests:genuineRequests.filter(function(r){return r.status===reqFilter;});
   if(!filtered.length){
@@ -1567,7 +1568,7 @@ function renderRequests(){
         (req.rate_per_night?'<span class="chip">💶 €'+req.rate_per_night+'/nt</span>':'')+
         (req.total_amount?'<span class="chip" style="font-weight:900">Total: €'+req.total_amount+'</span>':'')+
       '</div>'+
-      (req.notes?'<div class="req-note">💬 '+esc(req.notes)+'</div>':'')+
+      (req.notes?'<div class="req-note">💬 '+esc(cleanNotesDisplay(req.notes))+'</div>':'')+
       '<div class="req-actions">'+
         (req.status==='pending'?
           '<button class="btn-green" onclick="openRespond(\''+req.id+'\',\'confirmed\')">✅ Confirm</button>'+
