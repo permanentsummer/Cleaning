@@ -2411,7 +2411,7 @@ function renderRevenueAnalytics(){
       yearAmt=parseFloat(e.amounts[String(_finYear)])||0;
     }
     // Determine effective period for this expense
-    var expStart=e.startDate?(e.startDate+'-01'):'2000-01-01';
+    var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
     var pStart=isAllTime?'2000-01-01':(String(_finYear)+'-01-01');
     var effStart=expStart>pStart?expStart:pStart;
     if(effStart>periodEnd)return; // not started yet
@@ -2436,7 +2436,7 @@ function renderRevenueAnalytics(){
       });
     } else if(e.freq==='monthly'){
       var s=new Date(effStart+'T12:00:00'),en=new Date(periodEnd+'T12:00:00');
-      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth())+1;
+      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
       totalExpenses+=yearAmt*Math.max(0,months);
     } else if(e.freq==='weekly'){
       var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
@@ -2724,7 +2724,7 @@ function renderExpensesList(){
         '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
         yearInputs+
         '<td style="padding:6px 4px;text-align:center">'+
-          '<input class="exp-start" type="month" value="'+startVal+'" title="First month this expense applies" '+
+          '<input class="exp-start" type="date" value="'+(startVal?(startVal.length===7?startVal+'-01':startVal):'')+'" title="Start date for this expense" '+
           'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:11px;width:100px;box-sizing:border-box">'+
         '</td>'+
         '<td style="padding:6px 4px;text-align:center">'+
@@ -2766,14 +2766,27 @@ function removeExpense(idx){
 }
 function saveExpenses(){
   var rows=document.querySelectorAll('.exp-row');
-  var expenses=[];
+  // Read the current filter so we know which apt is being edited
+  var filterAptEl=document.getElementById('expFilterApt');
+  var filterApt=filterAptEl?filterAptEl.value:'all';
+  // Start from the full existing expenses list
+  var allExpenses=getExpenses().slice();
+  if(filterApt==='all'){
+    // Replace everything — all rows are visible
+    allExpenses=[];
+  } else {
+    // Keep expenses NOT belonging to filtered apt, replace the ones that are
+    allExpenses=allExpenses.filter(function(e){
+      return e.apt!==filterApt;
+    });
+  }
+  // Add the rows currently visible
   rows.forEach(function(row){
     var name=row.querySelector('.exp-name').value.trim();
     if(!name)return;
     var apt=row.querySelector('.exp-apt').value;
     var freq=row.querySelector('.exp-freq').value;
     var startDate=row.querySelector('.exp-start')?row.querySelector('.exp-start').value.trim():'';
-    // Collect per-year amounts from year columns
     var amounts={};
     var defaultAmt=0;
     row.querySelectorAll('.exp-yr-amt').forEach(function(inp){
@@ -2782,12 +2795,11 @@ function saveExpenses(){
       if(y)amounts[y]=v;
       if(v>defaultAmt)defaultAmt=v;
     });
-    // Fallback: old amount field
     var amtEl=row.querySelector('.exp-amount');
     if(amtEl&&!defaultAmt)defaultAmt=parseFloat(amtEl.value)||0;
-    expenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
+    allExpenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
   });
-  saveFinExpenses(expenses).then(function(){
+  saveFinExpenses(allExpenses).then(function(){
     closeExpensesManager();
     renderRevenueAnalytics();
   }).catch(function(e){alert('Save failed: '+e.message);});
