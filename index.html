@@ -2435,8 +2435,11 @@ function renderRevenueAnalytics(){
         }
       });
     } else if(e.freq==='monthly'){
-      var s=new Date(effStart+'T12:00:00'),en=new Date(periodEnd+'T12:00:00');
-      var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
+      var s=new Date(effStart+'T12:00:00');
+      // Use first day of NEXT month after periodEnd for correct inclusive counting
+      var pEndD=new Date(periodEnd+'T12:00:00');
+      var enExcl=new Date(pEndD.getFullYear(),pEndD.getMonth()+1,1);
+      var months=(enExcl.getFullYear()-s.getFullYear())*12+(enExcl.getMonth()-s.getMonth());
       totalExpenses+=yearAmt*Math.max(0,months);
     } else if(e.freq==='weekly'){
       var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
