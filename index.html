@@ -944,7 +944,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
     <div class="aerr" id="ebErr" style="margin:10px 0 8px"></div>
     <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">&#128190; Save changes</button>
-    <button class="btn-outline" style="width:100%" onclick="closeModal('editBookingOverlay')">Cancel</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-outline" style="flex:1" onclick="closeModal('editBookingOverlay')">Cancel</button>
+      <button class="btn-red" style="flex:1" onclick="deleteFromEditModal()">🗑️ Delete</button>
+    </div>
   </div>
 </div>
 <!-- MODAL: New booking / Block dates -->
@@ -4140,6 +4143,14 @@ function openEditBooking(id, origin){
     ebInitPayments(req);
   }
   document.getElementById('editBookingOverlay').classList.add('show');
+}
+
+function deleteFromEditModal(){
+  var id=document.getElementById('ebId').value;
+  var origin=document.getElementById('ebOrigin').value;
+  var guest=document.getElementById('ebGuest').value||'this booking';
+  closeModal('editBookingOverlay');
+  deleteReservation(id,origin,guest);
 }
 
 function saveEditBooking(){
