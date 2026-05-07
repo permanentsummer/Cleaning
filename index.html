@@ -4924,10 +4924,14 @@ function parsePdfPasteRaw(raw){
     if(!checkout&&iso[1])checkout=iso[1];
   }
 
-  // ── Guests ────────────────────────────────────────────────────────────────
+  // ── Guests (adults + children) ────────────────────────────────────────────
   var guestsNum=2;
   var adultsM=raw.match(/(\d+)\s*adultes?/i)||raw.match(/nombre de personnes\s*:?\s*(\d+)/i)||raw.match(/(\d+)\s*adults?/i);
-  if(adultsM)guestsNum=parseInt(adultsM[1])||2;
+  var adultsCount=adultsM?parseInt(adultsM[1])||0:0;
+  var childM=raw.match(/(\d+)\s*enfants?/i)||raw.match(/(\d+)\s*children/i)||raw.match(/(\d+)\s*child/i);
+  var childCount=childM?parseInt(childM[1])||0:0;
+  if(adultsCount>0)guestsNum=adultsCount+childCount;
+  else if(childCount>0)guestsNum=childCount;
 
   // ── Amounts ───────────────────────────────────────────────────────────────
   // "Montant total :\n€ 539,60"  — may be on same line or next line
@@ -4964,7 +4968,13 @@ function parsePdfPasteRaw(raw){
   if(checkout){document.getElementById('nbOut').value=checkout;found.push('check-out');}
   if(guestsNum){document.getElementById('nbGuests').value=guestsNum;found.push(guestsNum+' guests');}
   if(gross){document.getElementById('nbGross').value=gross.toFixed(2);found.push('€'+gross+' gross');}
-  if(comm){document.getElementById('nbComm').value=comm.toFixed(2);found.push('€'+comm+' commission');}
+  if(comm){
+    // Add Booking.com payment processing fee: 1.14% of gross revenue
+    var paymentFee=gross?Math.round(gross*0.0114*100)/100:0;
+    var totalComm=Math.round((comm+paymentFee)*100)/100;
+    document.getElementById('nbComm').value=totalComm.toFixed(2);
+    found.push('€'+comm+' commission + €'+paymentFee.toFixed(2)+' payment fee = €'+totalComm.toFixed(2));
+  }
   if(cleanFee){document.getElementById('nbCleanFee').value=cleanFee;found.push('€'+cleanFee+' cleaning');}
   if(resNum){document.getElementById('nbNotes').value='Booking.com ref: '+resNum;}
 
@@ -5139,6 +5149,48 @@ function sendCleaningWhatsApp(b){
   var url='https://wa.me/'+(waNum||'')+'?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
+
+// ── MOBILE DRAG TO CLOSE MODALS ───────────────────────────────────────────────
+(function(){
+  var startY=0,startScrollTop=0,dragging=false;
+  document.addEventListener('touchstart',function(e){
+    var handle=e.target.closest('.modal-handle');
+    if(!handle)return;
+    var modal=handle.closest('.modal');
+    if(!modal)return;
+    startY=e.touches[0].clientY;
+    startScrollTop=modal.scrollTop;
+    dragging=true;
+    modal._dragActive=true;
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    var modal=document.querySelector('.modal[data-drag]')||document.querySelector('.overlay.show .modal');
+    if(!modal)return;
+    var dy=e.touches[0].clientY-startY;
+    if(dy>0){
+      modal.style.transform='translateY('+dy+'px)';
+      modal.style.transition='none';
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(!dragging)return;
+    dragging=false;
+    var modal=document.querySelector('.overlay.show .modal');
+    if(!modal)return;
+    var dy=e.changedTouches[0].clientY-startY;
+    modal.style.transition='';
+    modal.style.transform='';
+    if(dy>80){
+      // Close the overlay
+      var overlay=modal.closest('.overlay');
+      if(overlay){
+        var id=overlay.id;
+        if(id)closeModal(id);
+      }
+    }
+  },{passive:true});
+})();
 
 // ── MOBILE MENU ───────────────────────────────────────────────────────────────
 function toggleMobileMenu(){
