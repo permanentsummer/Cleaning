@@ -802,7 +802,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   <!-- WIDGET -->
   <div id="page-widget" class="page">
     <div class="page-header">
-      <div><h2>Direct Booking</h2><p>Share your booking link and generate your embeddable widget</p></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="background:#fff;border-radius:14px;overflow:hidden;width:48px;height:48px;flex-shrink:0;box-shadow:0 2px 10px rgba(249,168,0,.25)"><img src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCATmBOYDASIAAhEBAxEB/8QAHQABAQABBQEBAAAAAAAAAAAAAAECAwQFBgcICf/EAFsQAAIBAwEEBQQNBwgFCwUAAwABAgMEEQUGITFBBxJRYXETMoGRCBQVIlJicnWUobGz0SM0NkJUVcEkMzdDU2OCkhYnZZPCCTVERWRzdKKy4fAXJYOE0iaj8f/aAAwDAQACEQ" width="48" height="48" style="object-fit:cover" alt="SummerFlow"></div>
+        <div><h2>Direct Booking</h2><p>Share your booking link and generate your embeddable widget</p></div>
+      </div>
     </div>
     <div class="widget-flow" id="widgetFlow">
       <!-- filled by JS -->
@@ -1278,17 +1281,39 @@ function sbAuth(path,body){
     headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
     body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
-function sbF(method,path,body,raw){
-  var t=session?session.access_token:SB_KEY;
-  var h={'apikey':SB_KEY,'Authorization':'Bearer '+t,'Content-Type':'application/json'};
-  if(method==='POST'||method==='PATCH')h['Prefer']='return=representation';
-  var opts={method:method,headers:h};
-  if(body)opts.body=JSON.stringify(body);
-  return fetch(SB_URL+'/rest/v1/'+path,opts).then(function(r){
-    if(!r.ok)return r.text().then(function(t2){throw new Error(t2);});
-    if(r.status===204)return[];
-    return r.text().then(function(t2){try{return t2?JSON.parse(t2):[];}catch(e){return[];}});
+function sbRefreshToken(){
+  var stored=ll('sb_session',null);
+  if(!stored||!stored.refresh_token)return Promise.reject(new Error('No refresh token'));
+  return fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({refresh_token:stored.refresh_token})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(!data.access_token)throw new Error('Refresh failed');
+    session=data;sl('sb_session',data);
+    return data;
   });
+}
+
+function sbF(method,path,body,raw){
+  function _doFetch(token){
+    var t=token||(session?session.access_token:SB_KEY);
+    var h={'apikey':SB_KEY,'Authorization':'Bearer '+t,'Content-Type':'application/json'};
+    if(method==='POST'||method==='PATCH')h['Prefer']='return=representation';
+    var opts={method:method,headers:h};
+    if(body)opts.body=JSON.stringify(body);
+    return fetch(SB_URL+'/rest/v1/'+path,opts).then(function(r){
+      if(r.status===401){
+        // JWT expired — try refresh then retry once
+        return sbRefreshToken().then(function(newSess){
+          return _doFetch(newSess.access_token);
+        });
+      }
+      if(!r.ok)return r.text().then(function(t2){throw new Error(t2);});
+      if(r.status===204)return[];
+      return r.text().then(function(t2){try{return t2?JSON.parse(t2):[];}catch(e){return[];}});
+    });
+  }
+  return _doFetch();
 }
 function sl(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function ll(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
