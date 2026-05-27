@@ -253,7 +253,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .cal-filters::-webkit-scrollbar{display:none}
 .cal-fb{flex-shrink:0;padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
 .cal-fb.on{color:#fff;border-color:currentColor;font-weight:600}
-.cal-scroll{overflow-x:hidden}
+.cal-scroll{overflow-x:hidden;width:100%}
 .cal-grid{width:100%;font-size:11px}
 .cal-head{display:grid;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;background:#fff}
 .cal-head-cell{padding:10px 4px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-right:1px solid var(--border)}
@@ -437,7 +437,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   .cal-grid{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .page-header{padding:14px 12px 0;flex-wrap:wrap;gap:8px}
   .page-header h2{font-size:18px}
-  #calGrid{min-width:600px}
+  #calGrid{min-width:0;width:100%}
   .res-list-card{padding:12px 14px}
   .modal{max-height:92vh;border-radius:20px 20px 0 0;margin:auto 0 0}
   .overlay{align-items:flex-end}
@@ -3463,7 +3463,7 @@ function renderCleaningList(){
     if(cleanFilter==='past')return b.checkout<tod;
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
-    if(cleanFilter==='unpaid')return b.paid!=='paid'&&b.cleaned==='yes';
+    if(cleanFilter==='unpaid')return b.paid!=='paid'&&b.cleaned==='yes'&&b.checkout<=tod;
     if(cleanFilter==='upcoming')return b.checkin>tod;
     if(cleanFilter!=='all')return b.apt===cleanFilter;
     return true;
@@ -5231,12 +5231,18 @@ function sendCleaningWhatsApp(b){
     }
   });
   document.addEventListener('touchstart',function(e){
+    // Allow drag from the handle OR from anywhere in the top 60px of a modal
     var handle=e.target.closest('.modal-handle');
-    if(!handle)return;
-    curModal=handle.closest('.modal');
-    if(!curModal)return;
-    startY=e.touches[0].clientY;
-    dragging=true;
+    var modal=e.target.closest('.modal');
+    if(!modal)return;
+    var rect=modal.getBoundingClientRect();
+    var touchY=e.touches[0].clientY;
+    // Start drag if touching the handle OR the top portion of modal
+    if(handle||(touchY-rect.top<60)){
+      curModal=modal;
+      startY=touchY;
+      dragging=true;
+    }
   },{passive:true});
   document.addEventListener('touchmove',function(e){
     if(!dragging||!curModal)return;
