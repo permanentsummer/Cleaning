@@ -253,8 +253,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .cal-filters::-webkit-scrollbar{display:none}
 .cal-fb{flex-shrink:0;padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
 .cal-fb.on{color:#fff;border-color:currentColor;font-weight:600}
-.cal-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.cal-grid{min-width:700px;font-size:12px}
+.cal-scroll{overflow-x:hidden}
+.cal-grid{width:100%;font-size:11px}
 .cal-head{display:grid;border-bottom:2px solid var(--border);position:sticky;top:0;z-index:10;background:#fff}
 .cal-head-cell{padding:10px 4px;text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-right:1px solid var(--border)}
 .cal-head-cell:last-child{border-right:none}
@@ -275,7 +275,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .cal-bar.bar-solo{border-radius:6px;left:5px;right:5px}
 .cal-bar.bar-start::before{content:'↓';margin-right:4px}
 .cal-bar.bar-end::before{content:'↑';margin-right:4px}
-.cal-legend{display:flex;flex-wrap:wrap;gap:12px;padding:14px 24px;border-top:1px solid var(--border);background:#fff}
+.cal-legend{display:none}
 .cal-legend-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--muted)}
 .cal-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
 .src-airbnb{background:#e8485a}
@@ -797,12 +797,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="cal-scroll">
         <div class="cal-grid" id="calGrid"></div>
       </div>
-      <div class="cal-legend" id="calLegend">
-        <div class="cal-legend-item"><div class="cal-legend-dot src-airbnb"></div>Airbnb</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot src-booking"></div>Booking.com</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot src-direct"></div>Direct</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#94a3b8"></div>Blocked</div>
-      </div>
+      
     </div>
     <!-- List view -->
     <div id="resListView" style="display:none;padding:16px">
@@ -3401,6 +3396,7 @@ function buildCleanFilters(){
     {k:'upcoming',label:CT('upcoming')},
     {k:'today',label:CT('today')},
     {k:'dirty',label:CT('dirty')},
+    {k:'unpaid',label:'Unpaid'},
     {k:'past',label:'Past'}
   ];
   // Add per-property filters
@@ -3467,6 +3463,7 @@ function renderCleaningList(){
     if(cleanFilter==='past')return b.checkout<tod;
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
+    if(cleanFilter==='unpaid')return b.paid!=='paid'&&b.cleaned==='yes';
     if(cleanFilter==='upcoming')return b.checkin>tod;
     if(cleanFilter!=='all')return b.apt===cleanFilter;
     return true;
@@ -3478,7 +3475,7 @@ function renderCleaningList(){
   }
 
   // Sort: checkout asc
-  visible.sort(function(a,b){return(a.checkout||'').localeCompare(b.checkout||'');});
+  visible.sort(function(a,b){return(b.checkout||'').localeCompare(a.checkout||'');});
 
   container.innerHTML='';
 
@@ -4649,7 +4646,7 @@ function drawCal(){
           var atEnd=di===6||!dates[di+1]||bk.checkout<=dates[di+1];
           var dur=Math.round((new Date(bk.checkout+'T12:00:00')-new Date(bk.checkin+'T12:00:00'))/86400000);
           var pc=dur<=1?'mx':(atStart&&atEnd?'mx':atStart?'ms':atEnd?'me':'mm');
-          var bg=srcBg[bk.source||'direct']||'#059669';
+          var _apt=aptById(bk.apt);var bg=(_apt&&_apt.color)||srcBg[bk.source||'direct']||'#059669';
           var gn=cleanNotesDisplay(bk.notes||'').trim()||'Guest';
           if(gn.indexOf('\u2013')!==-1)gn=gn.split('\u2013')[1].trim();
           var lbl=atStart?(gn.length>16?gn.slice(0,15)+'\u2026':gn):'';
@@ -5225,6 +5222,14 @@ function sendCleaningWhatsApp(b){
 // ── MOBILE DRAG TO CLOSE MODALS ───────────────────────────────────────────────
 (function(){
   var startY=0,curModal=null,dragging=false;
+  // Tap overlay backdrop (outside modal) to close
+  document.addEventListener('click',function(e){
+    var ov=e.target.closest('.overlay');
+    if(ov&&!e.target.closest('.modal')&&!e.target.closest('.modal-sheet')){
+      ov.classList.remove('show');
+      ov.style.display='';
+    }
+  });
   document.addEventListener('touchstart',function(e){
     var handle=e.target.closest('.modal-handle');
     if(!handle)return;
@@ -5347,11 +5352,13 @@ function renderUpcoming(){
   (allBookings||[]).forEach(function(b){
     if(b.checkin>=today&&b.checkin<=cutoffStr){
       var apt=aptById(b.apt);
-      items.push({type:'in',date:b.checkin,name:b.guests||'Guest',apt:apt.name||b.apt,color:apt.color});
+      var gName=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
+      items.push({type:'in',date:b.checkin,name:gName,apt:apt.name||b.apt,color:apt.color});
     }
     if(b.checkout>=today&&b.checkout<=cutoffStr){
       var apt2=aptById(b.apt);
-      items.push({type:'out',date:b.checkout,name:b.guests||'Guest',apt:apt2.name||b.apt,color:apt2.color});
+      var gName2=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
+      items.push({type:'out',date:b.checkout,name:gName2,apt:apt2.name||b.apt,color:apt2.color});
     }
   });
 
@@ -5359,7 +5366,8 @@ function renderUpcoming(){
   (allBookings||[]).forEach(function(b){
     if(b.checkin<today&&b.checkout>today){
       var apt=aptById(b.apt);
-      items.push({type:'stay',date:b.checkout,name:b.guests||'Guest',apt:apt.name||b.apt,color:apt.color,checkout:b.checkout});
+      var gName3=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
+      items.push({type:'stay',date:b.checkout,name:gName3,apt:apt.name||b.apt,color:apt.color,checkout:b.checkout});
     }
   });
 
