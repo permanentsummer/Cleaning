@@ -90,8 +90,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 
 .prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:2px solid transparent;transition:border-color .15s;display:flex;flex-direction:row;align-items:stretch;min-height:200px}
 .prop-card:hover{border-color:var(--accent)}
-.prop-photo{width:220px;min-width:220px;height:200px;background:#f1f5f9;position:relative;overflow:hidden;flex-shrink:0}
-.prop-photo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.prop-photo{width:200px;min-width:200px;background:#f1f5f9;position:relative;overflow:hidden;flex-shrink:0;align-self:stretch}
+.prop-photo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;position:absolute;top:0;left:0}
 @media(max-width:600px){.prop-card{flex-direction:column;height:auto}.prop-photo{width:100%;min-width:0;height:180px}}
 .prop-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;background:linear-gradient(135deg,#e2e8f0,#f1f5f9)}
 .ph-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 6px;pointer-events:none}
@@ -604,6 +604,8 @@ function renderProps(){
   if(!avail.length){
     // Smart: find next available dates for each property
     var suggestions=[];
+    // Debug: log what we have
+    console.log('No avail. Properties:',properties.length,'Bookings:',existingBookings.length,'blockedMap keys:',Object.keys(blockedMap));
     properties.forEach(function(prop){
       // Search forward up to 60 days for availability
       var n2=nights(checkIn,checkOut);
@@ -634,7 +636,7 @@ function renderProps(){
       '</div>';
     });
     list.innerHTML=
-      '<div class="no-avail" style="margin-bottom:'+(suggestions.length?'0':'0')+'px">'+
+      '<div class="no-avail">'+
         '<div class="ico">&#128532;</div>'+
         '<h3>Not available for these dates</h3>'+
         '<p style="color:var(--muted);font-size:13px">No properties available for '+fmtS(checkIn)+' → '+fmtS(checkOut)+'.</p>'+
@@ -642,12 +644,14 @@ function renderProps(){
           '<div style="margin-top:16px;text-align:left"><div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">✨ Next available dates</div>'+sugHtml+'</div>':
           '<a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link-btn" style="margin-top:12px;display:inline-block">Contact host</a>')+
       '</div>';
-    // Wire up suggestion clicks via event delegation
-    list.querySelectorAll('.alt-suggest').forEach(function(el){
-      el.addEventListener('click',function(){
-        applyAltDates(this.getAttribute('data-ci'),this.getAttribute('data-co'));
+    // Wire clicks after DOM is updated
+    setTimeout(function(){
+      list.querySelectorAll('.alt-suggest').forEach(function(el){
+        el.addEventListener('click',function(){
+          applyAltDates(this.getAttribute('data-ci'),this.getAttribute('data-co'));
+        });
       });
-    });
+    },50);
     return;
   }
   avail.forEach(function(prop){
@@ -688,8 +692,6 @@ function renderProps(){
     if(prop.maxGuests)feats.push(T('maxG')+' '+prop.maxGuests+' '+T('guests').toLowerCase());
     if(prop.minNights)feats.push(T('minN')+' '+prop.minNights+' '+(prop.minNights===1?T('nights'):T('nightsp')));
     if(prop.cleanFee)feats.push('\u20ac'+prop.cleanFee+' '+T('cleaning'));
-    if(prop.features)feats.push(prop.features);
-
     var card=document.createElement('div');card.className='prop-card';
     card.innerHTML=photoHtml+
       '<div class="prop-body">'+
