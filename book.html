@@ -616,7 +616,7 @@ function renderProps(){
     if(photos.length){
       photoHtml='<div class="prop-photo" id="pp_'+propIdx+'">'+
         '<img src="'+fixPhotoUrl(photos[0])+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'" '+
-          'onerror="this.style.display=\'none\';this.parentNode.style.background=\'#f1f5f9\'">'+
+          'onerror="this.style.display=\'none\';this.insertAdjacentHTML(\'afterend\',\'<div class=\\"prop-photo-ph\\">&#127968;</div>\')">'+
         (photos.length>1?
           '<div class="ph-nav">'+
             '<button class="ph-btn" onclick="phPrev('+propIdx+','+photos.length+')">&#8249;</button>'+
@@ -813,21 +813,15 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 
 function fixPhotoUrl(url){
   if(!url)return '';
-  // Convert Google Drive share link to thumbnail URL (works for embedding)
+  // Convert Google Drive share link → lh3.googleusercontent.com/d/ (most reliable for public files)
   var gdMatch=url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if(gdMatch){
-    return 'https://drive.google.com/thumbnail?id='+gdMatch[1]+'&sz=w1200';
-  }
-  // Convert Google Drive open link
+  if(gdMatch)return 'https://lh3.googleusercontent.com/d/'+gdMatch[1];
   var gdOpen=url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
-  if(gdOpen){
-    return 'https://drive.google.com/thumbnail?id='+gdOpen[1]+'&sz=w1200';
-  }
-  // Convert Google Drive uc?id= format
-  var gdUc=url.match(/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/);
-  if(gdUc){
-    return 'https://drive.google.com/thumbnail?id='+gdUc[1]+'&sz=w1200';
-  }
+  if(gdOpen)return 'https://lh3.googleusercontent.com/d/'+gdOpen[1];
+  var gdUc=url.match(/drive\.google\.com\/uc\?.*[?&]id=([a-zA-Z0-9_-]+)/);
+  if(gdUc)return 'https://lh3.googleusercontent.com/d/'+gdUc[1];
+  var gdThumb=url.match(/drive\.google\.com\/thumbnail\?.*id=([a-zA-Z0-9_-]+)/);
+  if(gdThumb)return 'https://lh3.googleusercontent.com/d/'+gdThumb[1];
   return url;
 }
 function sr(l,v){return v?'<div class="srow"><span class="l">'+esc(l)+'</span><span class="v">'+esc(v)+'</span></div>':'';}
