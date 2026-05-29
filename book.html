@@ -813,16 +813,20 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 
 function fixPhotoUrl(url){
   if(!url)return '';
-  // Convert Google Drive share link to direct image URL
-  // Format: https://drive.google.com/file/d/FILE_ID/view?...
+  // Convert Google Drive share link to thumbnail URL (works for embedding)
   var gdMatch=url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
   if(gdMatch){
-    return 'https://drive.google.com/uc?export=view&id='+gdMatch[1];
+    return 'https://drive.google.com/thumbnail?id='+gdMatch[1]+'&sz=w1200';
   }
-  // Convert Google Drive open link: https://drive.google.com/open?id=FILE_ID
+  // Convert Google Drive open link
   var gdOpen=url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
   if(gdOpen){
-    return 'https://drive.google.com/uc?export=view&id='+gdOpen[1];
+    return 'https://drive.google.com/thumbnail?id='+gdOpen[1]+'&sz=w1200';
+  }
+  // Convert Google Drive uc?id= format
+  var gdUc=url.match(/drive\.google\.com\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+  if(gdUc){
+    return 'https://drive.google.com/thumbnail?id='+gdUc[1]+'&sz=w1200';
   }
   return url;
 }
