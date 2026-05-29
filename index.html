@@ -1231,7 +1231,29 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Color</label><input type="color" id="pColor" value="#8b5cf6" style="height:42px"></div>
     </div>
     <div class="fg"><label>Location / description</label><input type="text" id="pLocation" placeholder="Lagos, Algarve · 2 bed · Pool"></div>
-    <div class="fg"><label>Features (shown to guests)</label><input type="text" id="pFeatures" placeholder="2 bedrooms · 1 bath · Pool access"></div>
+    <div class="sep">Property features</div>
+    <div class="fr">
+      <div class="fg"><label>Bedrooms</label><input type="number" id="pBedrooms" placeholder="1" min="0" max="20"></div>
+      <div class="fg"><label>Bathrooms</label><input type="number" id="pBathrooms" placeholder="1" min="0" max="20"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Beds</label><input type="number" id="pBeds" placeholder="2" min="0" max="20"></div>
+      <div class="fg"><label>Size (m²)</label><input type="number" id="pSize" placeholder="65" min="0"></div>
+    </div>
+    <div class="fg"><label>Amenities</label>
+      <div id="pAmenities" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Pool"> Pool</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="WiFi"> WiFi</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="AC"> AC</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Parking"> Parking</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Balcony"> Balcony</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Sea view"> Sea view</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Kitchen"> Kitchen</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Washer"> Washer</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="BBQ"> BBQ</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Garden"> Garden</label>
+      </div>
+    </div>
     <div class="sep">Rates & availability</div>
     <div class="fr">
       <div class="fg"><label>Base rate / night (€)</label><input type="number" id="pRate" placeholder="120" min="0"></div>
@@ -1980,6 +2002,11 @@ function openAddProp(){
   document.getElementById('propModalTitle').textContent='Add property';
   document.getElementById('pEditId').value='';
   document.getElementById('pName').value='';
+  document.getElementById('pBedrooms').value='';
+  document.getElementById('pBathrooms').value='';
+  document.getElementById('pBeds').value='';
+  document.getElementById('pSize').value='';
+  document.querySelectorAll('#pAmenities input[type=checkbox]').forEach(function(cb){cb.checked=false;});
   document.getElementById('pShort').value='';
   document.getElementById('pColor').value='#8b5cf6';
   document.getElementById('pLocation').value='';
@@ -2014,6 +2041,12 @@ function editProp(i){
   document.getElementById('photoInputs').innerHTML='';
   seasonCount=0;
   if(p.seasonRates){p.seasonRates.forEach(function(sr){addSeasonRate(sr);});}
+  document.getElementById('pBedrooms').value=p.bedrooms||'';
+  document.getElementById('pBathrooms').value=p.bathrooms||'';
+  document.getElementById('pBeds').value=p.beds||'';
+  document.getElementById('pSize').value=p.size||'';
+  var saved=p.amenities||[];
+  document.querySelectorAll('#pAmenities input[type=checkbox]').forEach(function(cb){cb.checked=saved.indexOf(cb.value)!==-1;});
   var photos=p.photos||[];
   photos.forEach(function(url){addPhotoInput(url);});
   while(document.querySelectorAll('#photoInputs .purl').length<2)addPhotoInput();
@@ -2057,6 +2090,20 @@ function saveProp(){
     var rate=parseInt(document.getElementById('srRate'+id).value)||0;
     if(from&&to&&rate)seasonRates.push({from:from,to:to,rate:rate});
   });
+  // Build features from structured inputs
+  var bedrooms=parseInt(document.getElementById('pBedrooms').value)||0;
+  var bathrooms=parseInt(document.getElementById('pBathrooms').value)||0;
+  var beds=parseInt(document.getElementById('pBeds').value)||0;
+  var size=parseInt(document.getElementById('pSize').value)||0;
+  var amenities=[];
+  document.querySelectorAll('#pAmenities input[type=checkbox]:checked').forEach(function(cb){amenities.push(cb.value);});
+  var feats=[];
+  if(bedrooms)feats.push(bedrooms+(bedrooms===1?' bedroom':' bedrooms'));
+  if(bathrooms)feats.push(bathrooms+(bathrooms===1?' bathroom':' bathrooms'));
+  if(beds)feats.push(beds+(beds===1?' bed':' beds'));
+  if(size)feats.push(size+' m²');
+  amenities.forEach(function(a){feats.push(a);});
+
   var photos=[];
   document.querySelectorAll('#photoInputs .purl input').forEach(function(inp){
     var v=inp.value.trim();if(v&&photos.length<5)photos.push(v);
@@ -2073,7 +2120,9 @@ function saveProp(){
     cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
     requireDeposit:document.getElementById('pDeposit').value==='1',
     seasonRates:seasonRates,
-    photos:photos
+    photos:photos,
+    bedrooms:bedrooms,bathrooms:bathrooms,beds:beds,size:size,amenities:amenities,
+    features:feats.join(' · ')
   };
   if(editIdx!==''){
     prop.hiddenFromGuests=properties[parseInt(editIdx)].hiddenFromGuests||false;
