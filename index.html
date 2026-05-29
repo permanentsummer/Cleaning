@@ -3463,7 +3463,7 @@ function renderCleaningList(){
     if(cleanFilter==='past')return b.checkout<tod;
     if(cleanFilter==='today')return b.checkout===tod;
     if(cleanFilter==='dirty')return b.cleaned!=='yes'&&b.checkout<=tod;
-    if(cleanFilter==='unpaid')return b.paid!=='paid'&&b.cleaned==='yes'&&b.checkout<=tod;
+    if(cleanFilter==='unpaid')return b.cleaned==='yes'&&(b.notes||'').indexOf('\n__CLEANERPAID__')===-1&&b.checkout<=tod;
     if(cleanFilter==='upcoming')return b.checkin>tod;
     if(cleanFilter!=='all')return b.apt===cleanFilter;
     return true;
