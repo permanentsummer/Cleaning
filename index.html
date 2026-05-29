@@ -2010,7 +2010,6 @@ function openAddProp(){
   document.getElementById('pShort').value='';
   document.getElementById('pColor').value='#8b5cf6';
   document.getElementById('pLocation').value='';
-  document.getElementById('pFeatures').value='';
   document.getElementById('pRate').value='';
   document.getElementById('pMinNights').value='3';
   document.getElementById('pMaxGuests').value='6';
@@ -2031,7 +2030,6 @@ function editProp(i){
   document.getElementById('pShort').value=p.short||'';
   document.getElementById('pColor').value=p.color||'#8b5cf6';
   document.getElementById('pLocation').value=p.location||'';
-  document.getElementById('pFeatures').value=p.features||'';
   document.getElementById('pRate').value=p.ratePerNight||'';
   document.getElementById('pMinNights').value=p.minNights||'3';
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
@@ -2113,7 +2111,6 @@ function saveProp(){
     name:name,short:document.getElementById('pShort').value||name,
     color:document.getElementById('pColor').value,
     location:document.getElementById('pLocation').value,
-    features:document.getElementById('pFeatures').value,
     ratePerNight:parseInt(document.getElementById('pRate').value)||0,
     minNights:parseInt(document.getElementById('pMinNights').value)||3,
     maxGuests:parseInt(document.getElementById('pMaxGuests').value)||6,
