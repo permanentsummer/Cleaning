@@ -88,9 +88,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .avail-hd p{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
 .dates-chip{background:var(--accent-light);color:var(--accent);font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap}
 
-.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:2px solid transparent;transition:border-color .15s;display:flex;flex-direction:row;align-items:stretch;height:200px}
+.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;border:2px solid transparent;transition:border-color .15s;display:flex;flex-direction:row;align-items:stretch;min-height:200px}
 .prop-card:hover{border-color:var(--accent)}
-.prop-photo{width:220px;min-width:220px;background:#f1f5f9;position:relative;overflow:hidden;flex-shrink:0}
+.prop-photo{width:220px;min-width:220px;height:200px;background:#f1f5f9;position:relative;overflow:hidden;flex-shrink:0}
 .prop-photo img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
 @media(max-width:600px){.prop-card{flex-direction:column;height:auto}.prop-photo{width:100%;min-width:0;height:180px}}
 .prop-photo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;background:linear-gradient(135deg,#e2e8f0,#f1f5f9)}
@@ -428,6 +428,10 @@ window.addEventListener('load',function(){
 
 function r2j(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
 
+function aptById(id){
+  return properties.find(function(p){return p.id===id||p.name===id;})||{id:id,name:id};
+}
+
 function buildBlockedMap(){
   blockedMap={};
   existingBookings.forEach(function(b){
@@ -552,6 +556,14 @@ function setStep(n){
 
 function goStep1(){setStep(1);}
 
+function applyAltDates(ci,co){
+  checkIn=ci;checkOut=co;
+  // Update display
+  var el=document.getElementById('datesChip');
+  if(el)el.textContent='Check-in: '+fmtS(ci)+' – Check-out: '+fmtS(co)+' · '+nights(ci,co)+'n ✏';
+  goStep2();
+}
+
 function goStep2(){
   if(!checkIn||!checkOut){
     document.getElementById('calHint').textContent=T('selCheckin');
@@ -590,13 +602,52 @@ function renderProps(){
   var n=nights(checkIn,checkOut);
   var avail=properties.filter(function(p){return isAvail(p,checkIn,checkOut);});
   if(!avail.length){
-    list.innerHTML=
-      '<div class="no-avail">'+
-        '<div class="ico">&#128532;</div>'+
-        '<h3>'+T('noProps')+'</h3>'+
-        '<p>'+T('noPropsSub')+'</p>'+
-        '<a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link-btn">'+T('contactHost')+'</a>'+
+    // Smart: find next available dates for each property
+    var suggestions=[];
+    properties.forEach(function(prop){
+      // Search forward up to 60 days for availability
+      var n2=nights(checkIn,checkOut);
+      if(!n2||n2<1)n2=1;
+      var tryDate=new Date(checkIn+'T12:00:00');
+      tryDate.setDate(tryDate.getDate()+1);
+      for(var d=0;d<60;d++){
+        var ci=tryDate.toISOString().slice(0,10);
+        var coDate=new Date(tryDate);coDate.setDate(coDate.getDate()+n2);
+        var co=coDate.toISOString().slice(0,10);
+        if(isAvail(prop,ci,co)){
+          suggestions.push({prop:prop,ci:ci,co:co,n:n2});
+          break;
+        }
+        tryDate.setDate(tryDate.getDate()+1);
+      }
+    });
+    var sugHtml='';
+    suggestions.forEach(function(s){
+      var apt=aptById?aptById(s.prop.id):s.prop;
+      var ciSafe=s.ci,coSafe=s.co;
+      sugHtml+='<div class="alt-suggest" data-ci="'+ciSafe+'" data-co="'+coSafe+'" style="cursor:pointer;background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">'+
+        '<div>'+
+          '<div style="font-weight:800;font-size:13px">'+esc(s.prop.name)+'</div>'+
+          '<div style="font-size:12px;color:#0369a1;margin-top:2px">Next available: '+fmtS(s.ci)+' → '+fmtS(s.co)+'</div>'+
+        '</div>'+
+        '<div style="background:#0ea5e9;color:#fff;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800">Check</div>'+
       '</div>';
+    });
+    list.innerHTML=
+      '<div class="no-avail" style="margin-bottom:'+(suggestions.length?'0':'0')+'px">'+
+        '<div class="ico">&#128532;</div>'+
+        '<h3>Not available for these dates</h3>'+
+        '<p style="color:var(--muted);font-size:13px">No properties available for '+fmtS(checkIn)+' → '+fmtS(checkOut)+'.</p>'+
+        (suggestions.length?
+          '<div style="margin-top:16px;text-align:left"><div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">✨ Next available dates</div>'+sugHtml+'</div>':
+          '<a href="https://wa.me/'+HOST_WA+'" target="_blank" class="wa-link-btn" style="margin-top:12px;display:inline-block">Contact host</a>')+
+      '</div>';
+    // Wire up suggestion clicks via event delegation
+    list.querySelectorAll('.alt-suggest').forEach(function(el){
+      el.addEventListener('click',function(){
+        applyAltDates(this.getAttribute('data-ci'),this.getAttribute('data-co'));
+      });
+    });
     return;
   }
   avail.forEach(function(prop){
