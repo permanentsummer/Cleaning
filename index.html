@@ -1238,6 +1238,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
     <div class="fr">
       <div class="fg"><label>Beds</label><input type="number" id="pBeds" placeholder="2" min="0" max="20"></div>
+      <div class="fg"><label>Sofa beds</label><input type="number" id="pSofaBeds" placeholder="0" min="0" max="10"></div>
       <div class="fg"><label>Size (m²)</label><input type="number" id="pSize" placeholder="65" min="0"></div>
     </div>
     <div class="fg"><label>Amenities</label>
@@ -1252,6 +1253,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Washer"> Washer</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="BBQ"> BBQ</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Garden"> Garden</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;cursor:pointer"><input type="checkbox" value="Dishwasher"> Dishwasher</label>
       </div>
     </div>
     <div class="sep">Rates & availability</div>
@@ -2003,6 +2005,7 @@ function openAddProp(){
   document.getElementById('pEditId').value='';
   document.getElementById('pName').value='';
   document.getElementById('pBedrooms').value='';
+  document.getElementById('pSofaBeds').value='';
   document.getElementById('pBathrooms').value='';
   document.getElementById('pBeds').value='';
   document.getElementById('pSize').value='';
@@ -2040,6 +2043,7 @@ function editProp(i){
   seasonCount=0;
   if(p.seasonRates){p.seasonRates.forEach(function(sr){addSeasonRate(sr);});}
   document.getElementById('pBedrooms').value=p.bedrooms||'';
+  document.getElementById('pSofaBeds').value=p.sofaBeds||'';
   document.getElementById('pBathrooms').value=p.bathrooms||'';
   document.getElementById('pBeds').value=p.beds||'';
   document.getElementById('pSize').value=p.size||'';
@@ -2092,6 +2096,7 @@ function saveProp(){
   var bedrooms=parseInt(document.getElementById('pBedrooms').value)||0;
   var bathrooms=parseInt(document.getElementById('pBathrooms').value)||0;
   var beds=parseInt(document.getElementById('pBeds').value)||0;
+  var sofaBeds=parseInt(document.getElementById('pSofaBeds').value)||0;
   var size=parseInt(document.getElementById('pSize').value)||0;
   var amenities=[];
   document.querySelectorAll('#pAmenities input[type=checkbox]:checked').forEach(function(cb){amenities.push(cb.value);});
@@ -2099,6 +2104,7 @@ function saveProp(){
   if(bedrooms)feats.push(bedrooms+(bedrooms===1?' bedroom':' bedrooms'));
   if(bathrooms)feats.push(bathrooms+(bathrooms===1?' bathroom':' bathrooms'));
   if(beds)feats.push(beds+(beds===1?' bed':' beds'));
+  if(sofaBeds)feats.push(sofaBeds+(sofaBeds===1?' sofa bed':' sofa beds'));
   if(size)feats.push(size+' m²');
   amenities.forEach(function(a){feats.push(a);});
 
@@ -2118,7 +2124,7 @@ function saveProp(){
     requireDeposit:document.getElementById('pDeposit').value==='1',
     seasonRates:seasonRates,
     photos:photos,
-    bedrooms:bedrooms,bathrooms:bathrooms,beds:beds,size:size,amenities:amenities,
+    bedrooms:bedrooms,bathrooms:bathrooms,beds:beds,sofaBeds:sofaBeds,size:size,amenities:amenities,
     features:feats.join(' · ')
   };
   if(editIdx!==''){
