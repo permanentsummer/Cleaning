@@ -615,8 +615,8 @@ function renderProps(){
     var photoHtml='';
     if(photos.length){
       photoHtml='<div class="prop-photo" id="pp_'+propIdx+'">'+
-        '<img src="'+esc(photos[0])+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'" '+
-          'onerror="this.parentNode.innerHTML=\'<div class=\\\"prop-photo-ph\\\">&#127968;</div>\'">'+
+        '<img src="'+fixPhotoUrl(photos[0])+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'" '+
+          'onerror="this.style.display=\'none\';this.parentNode.style.background=\'#f1f5f9\'">'+
         (photos.length>1?
           '<div class="ph-nav">'+
             '<button class="ph-btn" onclick="phPrev('+propIdx+','+photos.length+')">&#8249;</button>'+
@@ -810,6 +810,22 @@ function nights(ci,co){if(!ci||!co)return 0;return Math.round((new Date(co+'T12:
 function fmtS(d){if(!d)return'';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
 function fmtF(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString(lang==='fr'?'fr-FR':lang==='pt'?'pt-PT':'en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function fixPhotoUrl(url){
+  if(!url)return '';
+  // Convert Google Drive share link to direct image URL
+  // Format: https://drive.google.com/file/d/FILE_ID/view?...
+  var gdMatch=url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if(gdMatch){
+    return 'https://drive.google.com/uc?export=view&id='+gdMatch[1];
+  }
+  // Convert Google Drive open link: https://drive.google.com/open?id=FILE_ID
+  var gdOpen=url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if(gdOpen){
+    return 'https://drive.google.com/uc?export=view&id='+gdOpen[1];
+  }
+  return url;
+}
 function sr(l,v){return v?'<div class="srow"><span class="l">'+esc(l)+'</span><span class="v">'+esc(v)+'</span></div>':'';}
 function tr2(l,v){return'<tr><td style="padding:7px 0;color:#64748b;border-bottom:1px solid #e2e8f0;width:38%">'+l+'</td><td style="padding:7px 0;border-bottom:1px solid #e2e8f0;font-weight:700">'+esc(v)+'</td></tr>';}
 </script>
