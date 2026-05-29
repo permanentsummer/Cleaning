@@ -1279,10 +1279,36 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
       <input type="hidden" id="pDeposit" value="1">
     </div>
-    <div class="sep">Photos (max 5 URLs)</div>
-    <p style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.5">Paste direct image URLs (e.g. from Google Drive, Cloudinary, Imgur, or your GitHub repo raw links).</p>
-    <div id="photoInputs"></div>
-    <button class="btn-outline" style="width:100%;margin-bottom:14px;font-size:12px" onclick="addPhotoInput()">+ Add photo URL</button>
+    <div class="sep">Photos</div>
+    <!-- Drag & drop upload zone -->
+    <div id="photoDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:10px;position:relative"
+      onclick="document.getElementById('photoFileInput').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='#f0f9ff'"
+      ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
+      ondrop="handlePhotoDrop(event)">
+      <input type="file" id="photoFileInput" multiple accept="image/*" style="display:none" onchange="handlePhotoFiles(this.files)">
+      <div style="font-size:28px;margin-bottom:6px">📸</div>
+      <div style="font-size:13px;font-weight:800;color:var(--text)">Drag photos here or tap to select</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:3px">JPG, PNG, WEBP · Max 5 photos · 5MB each</div>
+      <div id="photoUploadProgress" style="display:none;margin-top:10px">
+        <div style="height:4px;background:#e2e8f0;border-radius:999px;overflow:hidden">
+          <div id="photoProgressBar" style="height:100%;background:var(--accent);border-radius:999px;width:0%;transition:width .3s"></div>
+        </div>
+        <div id="photoProgressLabel" style="font-size:11px;font-weight:700;color:var(--accent);margin-top:4px"></div>
+      </div>
+    </div>
+    <!-- Preview grid -->
+    <div id="photoInputs" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px"></div>
+    <!-- URL fallback -->
+    <div id="photoUrlToggle" style="text-align:center;margin-bottom:12px">
+      <button class="btn-outline" style="font-size:11px;padding:6px 14px" onclick="togglePhotoUrlInput()">+ Add by URL instead</button>
+    </div>
+    <div id="photoUrlInput" style="display:none;margin-bottom:10px">
+      <div style="display:flex;gap:8px">
+        <input type="url" id="photoUrlField" placeholder="https://... paste image URL" style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none">
+        <button onclick="addPhotoByUrl()" style="background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer;font-size:13px">Add</button>
+      </div>
+    </div>
     <button class="btn-primary" style="width:100%" onclick="saveProp()">💾 Save property</button>
     <button class="btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('propOverlay')">Cancel</button>
   </div>
@@ -2019,6 +2045,8 @@ function openAddProp(){
   document.getElementById('pCleanFee').value='';
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
+  document.getElementById('photoUrlInput').style.display='none';
+  if(document.getElementById('photoUrlField'))document.getElementById('photoUrlField').value='';
   seasonCount=0;
   addPhotoInput();addPhotoInput();
   document.getElementById('propOverlay').classList.add('show');
@@ -2040,6 +2068,8 @@ function editProp(i){
   var _dep=p.requireDeposit!==false;
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
+  document.getElementById('photoUrlInput').style.display='none';
+  if(document.getElementById('photoUrlField'))document.getElementById('photoUrlField').value='';
   seasonCount=0;
   if(p.seasonRates){p.seasonRates.forEach(function(sr){addSeasonRate(sr);});}
   document.getElementById('pBedrooms').value=p.bedrooms||'';
@@ -2056,13 +2086,103 @@ function editProp(i){
   setTimeout(function(){setDepositToggle(_dep);},10);
 }
 
+// Photo upload system
 function addPhotoInput(url){
-  if(document.querySelectorAll('#photoInputs .purl').length>=5){toast('Maximum 5 photos','warn');return;}
-  var div=document.createElement('div');div.className='purl';
-  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:8px';
-  div.innerHTML='<input type="url" placeholder="https://... image URL" value="'+(url||'')+'" style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-family:\'Inter\',sans-serif;font-size:13px;font-weight:600;outline:none">'+
-    '<button onclick="this.parentNode.remove()" style="background:var(--red-bg);color:var(--red);border:none;border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13px;flex-shrink:0">✕</button>';
-  document.getElementById('photoInputs').appendChild(div);
+  // Legacy: add URL as a photo card (used when loading saved photos)
+  addPhotoCard(url);
+}
+
+function addPhotoCard(url){
+  var grid=document.getElementById('photoInputs');
+  if(!grid)return;
+  if(grid.querySelectorAll('.purl').length>=5){toast('Maximum 5 photos','warn');return;}
+  var div=document.createElement('div');
+  div.className='purl';
+  div.style.cssText='position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;background:#f1f5f9';
+  div.innerHTML=
+    '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;display:block">'+
+    '<input type="hidden" class="purl-val" value="'+url+'">'+
+    '<button onclick="this.parentNode.remove()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>';
+  grid.appendChild(div);
+}
+
+function togglePhotoUrlInput(){
+  var el=document.getElementById('photoUrlInput');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function addPhotoByUrl(){
+  var inp=document.getElementById('photoUrlField');
+  var url=inp.value.trim();
+  if(!url){toast('Paste an image URL first','err');return;}
+  addPhotoCard(url);
+  inp.value='';
+  document.getElementById('photoUrlInput').style.display='none';
+}
+
+function handlePhotoDrop(e){
+  e.preventDefault();
+  document.getElementById('photoDropZone').style.borderColor='var(--border)';
+  document.getElementById('photoDropZone').style.background='';
+  handlePhotoFiles(e.dataTransfer.files);
+}
+
+function handlePhotoFiles(files){
+  if(!files||!files.length)return;
+  var allowed=5-document.getElementById('photoInputs').querySelectorAll('.purl').length;
+  if(allowed<=0){toast('Maximum 5 photos','warn');return;}
+  var toUpload=Array.from(files).filter(function(f){return f.type.startsWith('image/');}).slice(0,allowed);
+  if(!toUpload.length)return;
+  if(!workspace){toast('Save your account first','err');return;}
+  var propId=document.getElementById('pEditId').value||'new_'+Date.now();
+  uploadPhotosToSupabase(toUpload,propId);
+}
+
+function uploadPhotosToSupabase(files,propId){
+  var prog=document.getElementById('photoUploadProgress');
+  var bar=document.getElementById('photoProgressBar');
+  var lbl=document.getElementById('photoProgressLabel');
+  prog.style.display='block';
+  var total=files.length,done=0,failed=0;
+
+  files.forEach(function(file){
+    // Unique filename: workspace/propId/timestamp_filename
+    var ext=file.name.split('.').pop().toLowerCase()||'jpg';
+    var fname=workspace.id+'/'+propId+'/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+
+    var formData=new FormData();
+    formData.append('',file,fname);
+
+    fetch(SB_URL+'/storage/v1/object/property-photos/'+fname,{
+      method:'POST',
+      headers:{
+        'apikey':SB_KEY,
+        'Authorization':'Bearer '+(session?session.access_token:SB_KEY),
+        'x-upsert':'true'
+      },
+      body:file
+    }).then(function(r){
+      if(!r.ok)return r.text().then(function(t){throw new Error(t);});
+      // Build public URL
+      var publicUrl=SB_URL+'/storage/v1/object/public/property-photos/'+fname;
+      addPhotoCard(publicUrl);
+      done++;
+      bar.style.width=Math.round((done+failed)/total*100)+'%';
+      lbl.textContent='Uploaded '+done+' of '+total+'...';
+      if(done+failed===total){
+        setTimeout(function(){prog.style.display='none';bar.style.width='0%';},1500);
+        if(failed)toast(failed+' photo(s) failed to upload','err');
+        else toast(done+' photo(s) uploaded ✓','ok');
+      }
+    }).catch(function(e){
+      failed++;
+      bar.style.width=Math.round((done+failed)/total*100)+'%';
+      lbl.textContent='Error: '+e.message;
+      if(done+failed===total){
+        setTimeout(function(){prog.style.display='none';bar.style.width='0%';},2000);
+      }
+    });
+  });
 }
 
 function addSeasonRate(existing){
@@ -2109,7 +2229,7 @@ function saveProp(){
   amenities.forEach(function(a){feats.push(a);});
 
   var photos=[];
-  document.querySelectorAll('#photoInputs .purl input').forEach(function(inp){
+  document.querySelectorAll('#photoInputs .purl-val').forEach(function(inp){
     var v=inp.value.trim();if(v&&photos.length<5)photos.push(v);
   });
   var prop={
