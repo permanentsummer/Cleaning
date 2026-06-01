@@ -3683,6 +3683,8 @@ function mkCleanCard(b,tod){
   var srcColor=srcColors[b.source||'direct']||'var(--green)';
   var guestName=cleanNotesDisplay(b.notes)||b.guests||'Guest';
   if(guestName.indexOf('–')!==-1)guestName=guestName.split('–')[1].trim();
+  // Strip booking reference prefix — show guest count or 'Guest' instead
+  if(/^Booking\.com ref:/i.test(guestName)||/^Airbnb ref:/i.test(guestName))guestName=b.guests||'Guest';
   var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
   var cleanerPaid=(b.notes||'').indexOf('\n__CLEANERPAID__')!==-1;
 
