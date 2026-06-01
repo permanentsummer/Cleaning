@@ -3753,12 +3753,21 @@ function mkCleanCard(b,tod){
       var id=cleanBtn.getAttribute('data-id');
       var nc=isCleaned?'no':'yes';
       var bk=allBookings.find(function(x){return x.id===id;});
+      var rk=(requests||[]).find(function(x){return x.id===id;});
       if(bk){
         bk.cleaned=nc;
-        var tok=session?session.access_token:SB_KEY;
-        fetch(SB_URL+'/rest/v1/bookings?id=eq.'+id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({cleaned:nc})})
-          .then(function(r){if(!r.ok)r.text().then(function(t){toast('Save failed: '+t,'err');});else renderCleaningBanner();})
+        sbF('PATCH','bookings?id=eq.'+id,{cleaned:nc})
+          .then(function(){renderCleaningBanner();})
           .catch(function(e){toast('Save failed: '+e.message,'err');});
+      } else if(rk){
+        rk.cleaned=nc;
+        var mirror=allBookings.find(function(x){return x.checkin===rk.checkin&&x.checkout===rk.checkout;});
+        if(mirror){
+          mirror.cleaned=nc;
+          sbF('PATCH','bookings?id=eq.'+mirror.id,{cleaned:nc})
+            .then(function(){renderCleaningBanner();})
+            .catch(function(e){toast('Save failed: '+e.message,'err');});
+        }
       }
     });
   }
