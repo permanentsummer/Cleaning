@@ -2446,6 +2446,8 @@ function cleanNotesDisplay(n){
   if(idx4!==-1)n=n.slice(0,idx4);
   var idx5=n.indexOf('\n__PAYMENTS__');
   if(idx5!==-1)n=n.slice(0,idx5);
+  var idx6=n.indexOf('\n__CLEANERPAID__');
+  if(idx6!==-1)n=n.slice(0,idx6);
   return n.trim();
 }
 
@@ -3627,7 +3629,7 @@ function renderCleaningList(){
       cleanAll.push({id:r.id,apt:aptId,source:'direct',
         checkin:r.checkin,checkout:r.checkout,
         guests:String(r.guests||''),
-        notes:(r.notes||r.guest_name||''),
+        notes:(r.guest_name?r.guest_name+(r.notes?' '+r.notes:''):(r.notes||'')),
         paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
         cleaned:(r.cleaned||importCleanedStatus(r.checkout))});
     }
@@ -3681,10 +3683,11 @@ function mkCleanCard(b,tod){
   var isActive=b.checkout<=tod||isCurrent; // show button for active+past
   var srcColors={airbnb:'#e8485a',booking:'#003580',direct:'var(--green)'};
   var srcColor=srcColors[b.source||'direct']||'var(--green)';
-  var guestName=cleanNotesDisplay(b.notes)||b.guests||'Guest';
+  var _rawName=cleanNotesDisplay(b.notes)||'';
+  // Strip booking/airbnb reference lines — not a real guest name
+  if(/^Booking\.com ref:/i.test(_rawName)||/^Airbnb ref:/i.test(_rawName))_rawName='';
+  var guestName=_rawName||b.guests||'Guest';
   if(guestName.indexOf('–')!==-1)guestName=guestName.split('–')[1].trim();
-  // Strip booking reference prefix — show guest count or 'Guest' instead
-  if(/^Booking\.com ref:/i.test(guestName)||/^Airbnb ref:/i.test(guestName))guestName=b.guests||'Guest';
   var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
   var cleanerPaid=(b.notes||'').indexOf('\n__CLEANERPAID__')!==-1;
 
@@ -3797,8 +3800,7 @@ function mkCleanCard(b,tod){
     } else if(rk){
       var n2=rk.notes||'';n2=n2.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n2+='\n__CLEANERPAID__';
       rk.notes=n2;
-      fetch(SB_URL+'/rest/v1/direct_requests?id=eq.'+id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok2,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({notes:n2})})
-        .then(function(r){if(!r.ok)r.text().then(function(t){toast('Save failed: '+t,'err');});})
+      sbF('PATCH','direct_requests?id=eq.'+id,{notes:n2})
         .catch(function(e){toast('Save failed: '+e.message,'err');});
     }
   });
