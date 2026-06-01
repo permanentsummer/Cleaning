@@ -3579,10 +3579,31 @@ function mkCleanCard(b,tod){
       if(bk)bk.cleaned=nc;
       if(rk)rk.cleaned=nc;
       renderCleaningList();renderCleaningBanner();renderOverview();
-      var table=bk?'bookings':'direct_requests';
-      var patchId=bk?id:(rk?(function(){var m=allBookings.find(function(x){return x.checkin===(rk.checkin)&&x.checkout===(rk.checkout);});return m?m.id:null;})():null);
-      if(patchId)sbF('PATCH','bookings?id=eq.'+patchId,{cleaned:nc}).then(function(){toast(nc==='yes'?'✅ Marked cleaned':'🧹 Marked dirty','ok');}).catch(function(e){b.cleaned=nc==='yes'?'no':'yes';if(bk)bk.cleaned=b.cleaned;toast('Error: '+e.message,'err');renderCleaningList();});
-      else if(rk)sbF('PATCH','direct_requests?id=eq.'+id,{cleaned:nc}).then(function(){toast(nc==='yes'?'✅ Marked cleaned':'🧹 Marked dirty','ok');}).catch(function(e){b.cleaned=nc==='yes'?'no':'yes';rk.cleaned=b.cleaned;toast('Error: '+e.message,'err');renderCleaningList();});
+      // cleaned column only exists in bookings table
+      // For direct_requests, find the matching booking entry by dates
+      var bookingToUpdate=bk;
+      if(!bookingToUpdate&&rk){
+        bookingToUpdate=allBookings.find(function(x){
+          return x.checkin===rk.checkin&&x.checkout===rk.checkout;
+        });
+      }
+      if(bookingToUpdate){
+        bookingToUpdate.cleaned=nc; // keep in sync
+        sbF('PATCH','bookings?id=eq.'+bookingToUpdate.id,{cleaned:nc})
+          .then(function(){toast(nc==='yes'?'✅ Marked cleaned':'🧹 Marked dirty','ok');})
+          .catch(function(e){
+            b.cleaned=nc==='yes'?'no':'yes';
+            bookingToUpdate.cleaned=b.cleaned;
+            toast('Error: '+e.message,'err');
+            renderCleaningList();
+          });
+      } else {
+        toast('Could not find booking to update','err');
+        b.cleaned=nc==='yes'?'no':'yes';
+        if(bk)bk.cleaned=b.cleaned;
+        if(rk)rk.cleaned=b.cleaned;
+        renderCleaningList();
+      }
     });
   }
   // Wire cleaner payment toggle
@@ -3593,8 +3614,30 @@ function mkCleanCard(b,tod){
     else{payBtn.textContent='💸 Pay cleaner';payBtn.style.cssText='font-size:12px;background:#fde8e9;border:1px solid #fca5a5;color:#991b1b;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700;white-space:nowrap';}
     var bk=allBookings.find(function(x){return x.id===id;});
     var rk=(requests||[]).find(function(x){return x.id===id;});
-    if(bk){var n=bk.notes||'';n=n.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n+='\n__CLEANERPAID__';bk.notes=n;b.notes=n;renderCleaning();sbF('PATCH','bookings?id=eq.'+id,{notes:n}).then(function(){toast(newPaid?'💶 Cleaner paid recorded':'Payment removed','ok');}).catch(function(e){var rb=n.replace(/\n__CLEANERPAID__/g,'');if(!newPaid)rb+='\n__CLEANERPAID__';bk.notes=rb;b.notes=rb;toast('Error: '+e.message,'err');renderCleaning();});}
-    else if(rk){var n2=rk.notes||'';n2=n2.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n2+='\n__CLEANERPAID__';rk.notes=n2;b.notes=n2;renderCleaning();sbF('PATCH','direct_requests?id=eq.'+id,{notes:n2}).then(function(){toast(newPaid?'💶 Cleaner paid recorded':'Payment removed','ok');}).catch(function(e){var rb2=n2.replace(/\n__CLEANERPAID__/g,'');if(!newPaid)rb2+='\n__CLEANERPAID__';rk.notes=rb2;b.notes=rb2;toast('Error: '+e.message,'err');renderCleaning();});}
+    if(bk){
+      var n=bk.notes||'';n=n.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n+='\n__CLEANERPAID__';
+      bk.notes=n; // update in-memory immediately
+      renderCleaning(); // re-render with updated notes
+      sbF('PATCH','bookings?id=eq.'+id,{notes:n})
+        .then(function(){toast(newPaid?'💶 Cleaner paid recorded':'Payment removed','ok');})
+        .catch(function(e){
+          var rb=n.replace(/\n__CLEANERPAID__/g,'');if(!newPaid)rb+='\n__CLEANERPAID__';
+          bk.notes=rb;toast('Error: '+e.message,'err');renderCleaning();
+        });
+    } else if(rk){
+      var n2=rk.notes||'';n2=n2.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n2+='\n__CLEANERPAID__';
+      rk.notes=n2; // update in-memory
+      // Also sync the matching allBookings entry
+      var bkM=allBookings.find(function(x){return x.checkin===rk.checkin&&x.checkout===rk.checkout;});
+      if(bkM){bkM.notes=(bkM.notes||'').replace(/\n__CLEANERPAID__/g,'');if(newPaid)bkM.notes+='\n__CLEANERPAID__';}
+      renderCleaning();
+      sbF('PATCH','direct_requests?id=eq.'+id,{notes:n2})
+        .then(function(){toast(newPaid?'💶 Cleaner paid recorded':'Payment removed','ok');})
+        .catch(function(e){
+          var rb2=n2.replace(/\n__CLEANERPAID__/g,'');if(!newPaid)rb2+='\n__CLEANERPAID__';
+          rk.notes=rb2;if(bkM){bkM.notes=rb2;}toast('Error: '+e.message,'err');renderCleaning();
+        });
+    }
   });
   // Wire WhatsApp
   waBtn.addEventListener('click',function(){sendCleaningWhatsApp(b);});
