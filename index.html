@@ -3626,12 +3626,15 @@ function renderCleaningList(){
   (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
     var aptId=r.apt_id||r.apt_name||'';
     if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
+      var _mirrorBk=allBookings.find(function(x){return x.checkin===r.checkin&&x.checkout===r.checkout;});
+      var _dispName=r.guest_name||(_mirrorBk?cleanNotesDisplay(_mirrorBk.notes):'');
+      var _fullNotes=_dispName+(r.notes?'\n'+r.notes:'');
       cleanAll.push({id:r.id,apt:aptId,source:'direct',
         checkin:r.checkin,checkout:r.checkout,
         guests:String(r.guests||''),
-        notes:(r.guest_name?r.guest_name+(r.notes?' '+r.notes:''):(r.notes||'')),
+        notes:_fullNotes,
         paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
-        cleaned:(r.cleaned||importCleanedStatus(r.checkout))});
+        cleaned:(r.cleaned||(_mirrorBk?_mirrorBk.cleaned:importCleanedStatus(r.checkout)))});
     }
   });
   var visible=cleanAll.filter(function(b){
