@@ -3687,8 +3687,8 @@ function mkCleanCard(b,tod){
   var srcColors={airbnb:'#e8485a',booking:'#003580',direct:'var(--green)'};
   var srcColor=srcColors[b.source||'direct']||'var(--green)';
   var _rawName=cleanNotesDisplay(b.notes)||'';
-  // Strip booking/airbnb reference lines — not a real guest name
-  if(/^Booking\.com ref:/i.test(_rawName)||/^Airbnb ref:/i.test(_rawName))_rawName='';
+  // Strip booking/airbnb reference from anywhere in the name
+  _rawName=_rawName.replace(/\s*Booking\.com ref:.*$/i,'').replace(/\s*Airbnb ref:.*$/i,'').trim();
   var guestName=_rawName||b.guests||'Guest';
   if(guestName.indexOf('–')!==-1)guestName=guestName.split('–')[1].trim();
   var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
