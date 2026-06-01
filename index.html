@@ -3772,7 +3772,7 @@ function mkCleanCard(b,tod){
   // Wire cleaner payment toggle
   payBtn.addEventListener('click',function(){
     var id=this.getAttribute('data-id');
-    var newPaid=!cleanerPaid;cleanerPaid=newPaid;
+    var newPaid=((bk?bk.notes:rk?rk.notes:'')||'').indexOf('\n__CLEANERPAID__')===-1;
     if(newPaid){payBtn.textContent='💶 Cleaner paid';payBtn.style.cssText='font-size:12px;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700;white-space:nowrap';}
     else{payBtn.textContent='💸 Pay cleaner';payBtn.style.cssText='font-size:12px;background:#fde8e9;border:1px solid #fca5a5;color:#991b1b;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:700;white-space:nowrap';}
     var bk=allBookings.find(function(x){return x.id===id;});
