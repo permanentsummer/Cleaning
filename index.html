@@ -3628,7 +3628,8 @@ function renderCleaningList(){
     if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
       var _mirrorBk=allBookings.find(function(x){return x.checkin===r.checkin&&x.checkout===r.checkout;});
       var _dispName=r.guest_name||(_mirrorBk?cleanNotesDisplay(_mirrorBk.notes):'');
-      var _fullNotes=_dispName+(r.notes?'\n'+r.notes:'');
+      var _cpFlag=(r.notes||'').indexOf('\n__CLEANERPAID__')!==-1?'\n__CLEANERPAID__':'';
+      var _fullNotes=_dispName+_cpFlag;
       cleanAll.push({id:r.id,apt:aptId,source:'direct',
         checkin:r.checkin,checkout:r.checkout,
         guests:String(r.guests||''),
