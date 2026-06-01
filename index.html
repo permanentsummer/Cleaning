@@ -3626,8 +3626,10 @@ function renderCleaningList(){
     if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
       cleanAll.push({id:r.id,apt:aptId,source:'direct',
         checkin:r.checkin,checkout:r.checkout,
-        guests:String(r.guests||''),notes:r.guest_name||'',
-        paid:'unpaid',cleaned:importCleanedStatus(r.checkout)});
+        guests:String(r.guests||''),
+        notes:(r.notes||r.guest_name||''),
+        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
+        cleaned:(r.cleaned||importCleanedStatus(r.checkout))});
     }
   });
   var visible=cleanAll.filter(function(b){
