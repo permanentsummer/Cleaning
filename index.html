@@ -742,6 +742,11 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <div class="cal-filters" id="calFilters"></div>
       </div>
     </div>
+    <!-- Calendar search bar -->
+    <div id="calSearchBar" style="padding:0 0 10px;position:relative">
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;margin-top:-5px">🔍</span>
+      <input type="text" id="calSearch" placeholder="Search guest name..." oninput="calSearchQuery=this.value.trim().toLowerCase();drawCal()" style="width:100%;padding:8px 12px 8px 34px;border:2px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
     <!-- Shared top bar for both views -->
     <div class="res-topbar">
       <div class="view-toggle">
@@ -979,22 +984,19 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="font-size:12px;font-weight:700;color:#1d4ed8">⚡ Auto-fill from PDF or Screenshot</div>
-          <label style="background:#6366f1;color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px">
-            📸 Scan image
-            <input type="file" id="nbScreenshotInput" accept="image/*" style="display:none" onchange="scanBookingScreenshot(this)">
-          </label>
+
         </div>
         <!-- Tab switcher -->
         <div style="display:flex;gap:0;border:1px solid #bfdbfe;border-radius:7px;overflow:hidden;margin-bottom:10px">
-          <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">📎 Share / Upload PDF</button>
+          <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">📎 Upload file</button>
           <button id="pdfTabPaste" onclick="setPdfTab('paste')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#fff;color:#1d4ed8;border:none;cursor:pointer">📋 Paste text</button>
         </div>
         <!-- Upload panel -->
         <div id="pdfPanelUpload">
           <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">On your phone: open the PDF → tap Share → select this app. Or tap below to pick the file.</div>
           <label style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1d4ed8;color:#fff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
-            📄 Choose PDF file
-            <input type="file" id="nbPdfFile" accept=".pdf,application/pdf" style="display:none" onchange="handlePdfFile(this)">
+            📎 Upload file (PDF or image)
+            <input type="file" id="nbPdfFile" accept=".pdf,application/pdf,image/*" style="display:none" onchange="handleUploadFile(this)">
           </label>
           <div id="nbPdfFileStatus" style="display:none;font-size:11px;font-weight:700;margin-top:8px;text-align:center"></div>
         </div>
@@ -1338,7 +1340,7 @@ var activeRequest=null,seasonCount=0;
 // Two-way sync: all confirmed bookings from the bookings table (SummerFlow)
 var allBookings=[];
 // Calendar state
-var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calAptFilter='all';
+var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calAptFilter='all',calSearchQuery='';
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
 function sbAuth(path,body){
@@ -4891,6 +4893,12 @@ function drawCal(){
   });
 
   var filtered=calAptFilter==='all'?calBookings:calBookings.filter(function(b){return b.apt===calAptFilter;});
+  if(calSearchQuery){
+    filtered=filtered.filter(function(b){
+      var name=cleanNotesDisplay(b.notes||'').toLowerCase();
+      return name.indexOf(calSearchQuery)!==-1||String(b.guests||'').toLowerCase().indexOf(calSearchQuery)!==-1;
+    });
+  }
   var srcBg={airbnb:'#e8485a',booking:'#003580',direct:'#059669'};
 
   // Build weeks
@@ -5173,6 +5181,62 @@ function setPdfTab(tab){
   document.getElementById('pdfTabUpload').style.color=isUpload?'#fff':'#1d4ed8';
   document.getElementById('pdfTabPaste').style.background=isUpload?'#fff':'#1d4ed8';
   document.getElementById('pdfTabPaste').style.color=isUpload?'#1d4ed8':'#fff';
+}
+
+function handleUploadFile(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.type.startsWith('image/')||file.name.match(/\.(png|jpg|jpeg|webp|gif)$/i)){
+    handleImageFile(file);
+  } else {
+    handlePdfFile(input);
+  }
+}
+
+function handleImageFile(file){
+  var st=document.getElementById('nbPdfFileStatus');
+  st.style.display='block';st.style.color='#1d4ed8';st.textContent='🔍 Reading image with AI...';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result.split(',')[1];
+    var mime=file.type||'image/jpeg';
+    fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-ipc':'1'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:500,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          {type:'text',text:'Extract booking details from this screenshot. Return ONLY valid JSON with keys: guest_name, checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), guests (integer), total_price (number), commission (number), booking_number, source (airbnb/booking/direct). Use null for missing fields. No markdown, just JSON.'}
+        ]}]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error){st.style.color='#dc2626';st.textContent='❌ AI error: '+data.error.message;return;}
+      var text=(data.content&&data.content[0]&&data.content[0].text)||'';
+      var clean=text.replace(/```json|```/g,'').trim();
+      var info=JSON.parse(clean);
+      var filled=[];
+      if(info.guest_name){document.getElementById('nbGuest').value=info.guest_name;filled.push('Guest: '+info.guest_name);}
+      if(info.checkin){document.getElementById('nbIn').value=info.checkin;filled.push(info.checkin);}
+      if(info.checkout){document.getElementById('nbOut').value=info.checkout;filled.push('→'+info.checkout);}
+      if(info.guests){document.getElementById('nbGuests').value=info.guests;}
+      if(info.total_price){document.getElementById('nbGross').value=info.total_price;filled.push('€'+info.total_price);}
+      if(info.commission){document.getElementById('nbComm').value=info.commission;filled.push('comm €'+info.commission);}
+      if(info.source){var sel=document.getElementById('nbSource');if(sel){var src=String(info.source).toLowerCase();sel.value=src.indexOf('airbnb')!==-1?'airbnb':src.indexOf('booking')!==-1?'booking':'direct';togglePricingFields();}}
+      if(info.booking_number){var n=document.getElementById('nbNotes');if(n&&!n.value)n.value='Booking.com ref: '+info.booking_number;}
+      if(typeof calcNbTotal==='function')calcNbTotal();
+      if(typeof updateNbCheckout==='function')updateNbCheckout();
+      st.style.color='#15803d';
+      st.textContent='✅ Auto-filled: '+filled.join(' · ')+(filled.length?' — select the apartment and verify':'Could not detect fields');
+    })
+    .catch(function(e){
+      st.style.color='#dc2626';
+      st.textContent='❌ Error: '+e.message+' — try the paste mode instead';
+    });
+  };
+  reader.readAsDataURL(file);
 }
 
 function handlePdfFile(input){
