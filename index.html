@@ -4447,7 +4447,7 @@ function saveEditBooking(){
   if(!ci||!co||ci>=co){document.getElementById('ebErr').textContent='Valid check-in and check-out dates required.';return;}
 
   var isComp=document.getElementById('ebComp').checked;
-  var finSuffix=isComp?'\n__COMP__':(gross>0||cleanOverride)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+(cleanOverride&&clean>0?clean.toFixed(2):'0'):'';
+  var finSuffix=isComp?'\n__COMP__':(gross>0||comm>0||cleanOverride)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|'+(cleanOverride&&clean>0?clean.toFixed(2):'0'):'';
   // Append payments to notes if any
   var paysSuffix=_ebPayments.length?'\n__PAYMENTS__'+JSON.stringify(_ebPayments):'';
   var newNotes=guestName+finSuffix+paysSuffix;
