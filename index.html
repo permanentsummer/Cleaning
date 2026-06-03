@@ -4429,9 +4429,12 @@ function openEditBooking(id, origin){
     var reqSrcN=req.notes||'',reqSrcI=reqSrcN.indexOf('\n__SRC__');
     var reqSrc=reqSrcI!==-1?reqSrcN.slice(reqSrcI+8).split('\n')[0].trim():'direct';
     var srcSel2=document.getElementById('ebSource');if(srcSel2)srcSel2.value=reqSrc||'direct';
-    document.getElementById('ebComp').checked=false;
-    document.getElementById('ebGross').value=req.total_amount||'';
-    document.getElementById('ebComm').value='';
+    var reqFin=parseFin({notes:req.notes||''});
+    var reqIsComp=(req.notes||'').indexOf('\n__COMP__')!==-1;
+    document.getElementById('ebComp').checked=reqIsComp;
+    toggleCompFields();
+    document.getElementById('ebGross').value=reqIsComp?'':(reqFin.gross||req.total_amount||'');
+    document.getElementById('ebComm').value=reqIsComp?'':(reqFin.commission||'');
     var ebCO=document.getElementById('ebCleanOverride');if(ebCO)ebCO.checked=false;
     var ebCl=document.getElementById('ebClean');if(ebCl){ebCl.value='';ebCl.disabled=true;ebCl.style.opacity='0.5';}
     var ebCH=document.getElementById('ebCleanHint');if(ebCH){var apt2=aptById(req.apt_id||req.apt_name);ebCH.textContent='Property default: €'+getFinCleanFee(apt2.id||req.apt_id||'')+'  (applies automatically)';}
