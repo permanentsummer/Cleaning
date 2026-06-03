@@ -4410,6 +4410,8 @@ function openEditBooking(id, origin){
     document.getElementById('ebComp').checked=isComp;
     document.getElementById('ebGross').value=isComp?'':fin.gross||'';
     document.getElementById('ebComm').value=isComp?'':(fin.commission>0?fin.commission:'');
+    // Debug: show what parseFin found
+    toast('fin: gross='+fin.gross+' comm='+fin.commission,'ok');
     // cleanfee: -1 = use property default (not overridden), positive = manually set
     var isCleanOverride=(!isComp&&fin.cleanfee>0);
     document.getElementById('ebCleanOverride').checked=isCleanOverride;
