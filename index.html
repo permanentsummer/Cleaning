@@ -5626,10 +5626,13 @@ function sendCleaningReminder(b){
   var allForApt=(allBookings||[]).concat((requests||[]).filter(function(r){return r.status==='confirmed';}).map(function(r){return{apt:r.apt_id||r.apt_name,checkin:r.checkin,checkout:r.checkout};}));
   var nextBk=allForApt.find(function(x){return(x.apt===b.apt)&&x.checkin===b.checkout;});
   var b2bMsg=nextBk?'\n⚡ ATENÇÃO: Reserva seguida! Check-out às 12:00 e próximo check-in às 15:00. Tens apenas 3 horas para limpar.':'';
-  var msg='🔔 LEMBRETE'+b2bMsg+'\n\n'+
-    'Olá'+(cleanerName?' '+cleanerName:'')+'!\n'+
-    'Só a confirmar: saída no '+aptName+' a '+checkoutFmt+'.\n'+
-    'Por favor confirma que estás disponível para limpar.\nObrigado!';
+  var nextGuests='';
+  if(nextBk){
+    var nextFull=allBookings.find(function(x){return x.apt===b.apt&&x.checkin===b.checkout;})||(requests||[]).find(function(r){return(r.apt_id===b.apt||r.apt_name===b.apt)&&r.checkin===b.checkout;});
+    nextGuests=nextFull?(nextFull.guests||nextFull.guests_count||''):'';
+  }
+  var b2bExtra=nextBk?'\nAtencao: reserva seguida. Check-out '+checkoutFmt+' as 12:00, proximo check-in as 15:00'+(nextGuests?' para '+nextGuests+' pessoa'+(nextGuests==='1'?'':'s')+'.':'.'):'' ;
+  var msg='Lembrete - '+checkoutFmt+' em '+aptName+'.'+b2bExtra;
   var url='https://wa.me/'+(waNum||'')+'?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
   toast('Reminder sent to '+(cleanerName||'cleaner'),'ok');
