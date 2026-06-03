@@ -5586,24 +5586,32 @@ function sendCleaningWhatsApp(b){
   var checkoutDate=b.checkout?new Date(b.checkout+'T12:00:00'):null;
   var checkoutFmt=checkoutDate?checkoutDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'}):'';
 
-  // Find next booking on same apt (from both allBookings and confirmed requests)
-  var allForApt=(allBookings||[]).concat(
+  // Find ALL future bookings on same apt, sorted by checkin
+  var allCombined=(allBookings||[]).concat(
     (requests||[]).filter(function(r){return r.status==='confirmed';})
       .map(function(r){return{apt:r.apt_id||r.apt_name||'',checkin:r.checkin,checkout:r.checkout,guests:String(r.guests||'')};})
-  ).filter(function(x){return x.apt===b.apt&&x.checkin&&x.checkin>b.checkout;})
+  );
+  // Next booking = soonest checkin AFTER this checkout
+  var nextBk=allCombined.filter(function(x){return x.apt===b.apt&&x.checkin&&x.checkin>=b.checkout;})
    .sort(function(a,c){return a.checkin.localeCompare(c.checkin);})[0];
 
-  // Build message in exact format requested
-  var msg='Olá'+(cleanerName?' '+cleanerName:'')+'!\n'+
-    'Saída no '+aptName+' a '+checkoutFmt+'.\n';
+  // Back-to-back = next checkin is same day as this checkout
+  var isB2B=nextBk&&nextBk.checkin===b.checkout;
 
-  if(allForApt){
-    var nextDate=new Date(allForApt.checkin+'T12:00:00');
+  var msg='Olá'+(cleanerName?' '+cleanerName:'')+'!\n'+
+    'Saída no '+aptName+' a '+checkoutFmt+'.'+(isB2B?' Check-out às 12:00.':'')+('\n');
+
+  if(nextBk){
+    var nextDate=new Date(nextBk.checkin+'T12:00:00');
     var nextFmt=nextDate.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
-    var gRaw=(allForApt.guests||'').trim();
+    var gRaw=(nextBk.guests||'').trim();
     var gNum=/^\d+/.test(gRaw)?gRaw:'?';
-    msg+='Por favor prepara o apartamento para a próxima entrada a '+nextFmt+
-      ' para '+gNum+' pessoa'+(gNum!=='1'?'s':'')+'.\n';
+    if(isB2B){
+      msg+='ATENÇÃO: reserva seguida. Próximo check-in às 15:00 para '+gNum+' pessoa'+(gNum!=='1'?'s':'')+'.\n';
+    } else {
+      msg+='Por favor prepara o apartamento para a próxima entrada a '+nextFmt+
+        ' para '+gNum+' pessoa'+(gNum!=='1'?'s':'')+'.\n';
+    }
   } else {
     msg+='Por favor prepara o apartamento.\n';
   }
