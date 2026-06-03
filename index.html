@@ -4817,7 +4817,7 @@ function saveNewBooking(){
     workspace_id:workspace.id,apt_id:aptId,apt_name:apt.name||aptId,
     guest_name:guest,guest_email:email||null,guest_phone:phone||null,
     checkin:ci,checkout:co,guests:parseInt(guests)||2,
-    notes:(notes||'')+(source&&source!=='direct'?'\n__SRC__'+source:''),
+    notes:(notes||'')+(isComp?'\n__COMP__':((gross>0||comm>0)?'\n__€__'+gross.toFixed(2)+'|'+comm.toFixed(2)+'|0':''))+(source&&source!=='direct'?'\n__SRC__'+source:''),
     rate_per_night:isComp?null:(rate?Math.round(rate):null),total_amount:isComp?null:(actualTotal?Math.round(actualTotal):null),
     status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
