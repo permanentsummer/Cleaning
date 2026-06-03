@@ -4409,9 +4409,11 @@ function openEditBooking(id, origin){
     if(srcSel)srcSel.value=b.source||'direct';
     document.getElementById('ebComp').checked=isComp;
     document.getElementById('ebGross').value=isComp?'':fin.gross||'';
-    document.getElementById('ebComm').value=isComp?'':(fin.commission>0?fin.commission:'');
-    // Debug: show what parseFin found
-    toast('fin: gross='+fin.gross+' comm='+fin.commission,'ok');
+    var _bComm=fin.commission;
+    if(!_bComm&&fin.gross>0&&(b.source==='booking'||b.source==='airbnb')){
+      _bComm=b.source==='booking'?Math.round(fin.gross*0.164*100)/100:Math.round(fin.gross*0.03*100)/100;
+    }
+    document.getElementById('ebComm').value=isComp?'':(_bComm>0?_bComm:'');
     // cleanfee: -1 = use property default (not overridden), positive = manually set
     var isCleanOverride=(!isComp&&fin.cleanfee>0);
     document.getElementById('ebCleanOverride').checked=isCleanOverride;
@@ -4436,7 +4438,12 @@ function openEditBooking(id, origin){
     document.getElementById('ebComp').checked=reqIsComp;
     toggleCompFields();
     document.getElementById('ebGross').value=reqIsComp?'':(reqFin.gross||req.total_amount||'');
-    document.getElementById('ebComm').value=reqIsComp?'':(reqFin.commission||'');
+    var _reqSrc2=(function(){var n=req.notes||'';var si=n.indexOf('\n__SRC__');return si!==-1?n.slice(si+8).split('\n')[0].trim():'';}());
+    var _reqComm=reqFin.commission;
+    if(!_reqComm&&reqFin.gross>0&&(_reqSrc2==='booking'||_reqSrc2==='airbnb')){
+      _reqComm=_reqSrc2==='booking'?Math.round(reqFin.gross*0.164*100)/100:Math.round(reqFin.gross*0.03*100)/100;
+    }
+    document.getElementById('ebComm').value=reqIsComp?'':(_reqComm>0?_reqComm:'');
     var ebCO=document.getElementById('ebCleanOverride');if(ebCO)ebCO.checked=false;
     var ebCl=document.getElementById('ebClean');if(ebCl){ebCl.value='';ebCl.disabled=true;ebCl.style.opacity='0.5';}
     var ebCH=document.getElementById('ebCleanHint');if(ebCH){var apt2=aptById(req.apt_id||req.apt_name);ebCH.textContent='Property default: €'+getFinCleanFee(apt2.id||req.apt_id||'')+'  (applies automatically)';}
