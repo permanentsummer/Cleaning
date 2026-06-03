@@ -750,6 +750,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       </div>
       <!-- List filters (only shown in list view) -->
       <div id="listFilterRow" style="display:none;flex-direction:column;gap:6px;flex:1">
+        <div style="position:relative;margin-bottom:2px">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none">🔍</span>
+          <input type="text" id="resSearch" placeholder="Search guest, property, date..." oninput="listSearch=this.value.trim().toLowerCase();renderResList()" style="width:100%;padding:9px 12px 9px 34px;border:2px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 
           <!-- Time group -->
@@ -973,7 +977,13 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div class="fg"><label>Property *</label><select id="nbApt"></select></div>
       <!-- PDF auto-fill -->
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:10px">⚡ Auto-fill from Booking.com PDF</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:#1d4ed8">⚡ Auto-fill from PDF or Screenshot</div>
+          <label style="background:#6366f1;color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px">
+            📸 Scan image
+            <input type="file" id="nbScreenshotInput" accept="image/*" style="display:none" onchange="scanBookingScreenshot(this)">
+          </label>
+        </div>
         <!-- Tab switcher -->
         <div style="display:flex;gap:0;border:1px solid #bfdbfe;border-radius:7px;overflow:hidden;margin-bottom:10px">
           <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">📎 Share / Upload PDF</button>
@@ -3188,6 +3198,13 @@ function renderResList(){
     return true;
   });
 
+  // Search filter
+  if(listSearch){
+    items=items.filter(function(i){
+      var hay=(i.guest+' '+i.aptName+' '+(i.checkin||'')+' '+(i.checkout||'')+' '+i.source).toLowerCase();
+      return hay.indexOf(listSearch)!==-1;
+    });
+  }
   // Sort by checkin
   items.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
 
@@ -4553,6 +4570,89 @@ function deleteReservation(id, origin, guestName){
 }
 
 // ── NEW BOOKING / BLOCK DATES ─────────────────────────────────────────────────
+function scanBookingScreenshot(input){
+  var file=input.files[0];
+  if(!file)return;
+  var statusEl=document.getElementById('nbScanStatus');
+  if(!statusEl){
+    statusEl=document.createElement('div');
+    statusEl.id='nbScanStatus';
+    statusEl.style.cssText='font-size:12px;font-weight:700;margin-top:8px;padding:8px;border-radius:7px;background:#eff6ff;color:#1d4ed8';
+    input.closest('div[style]').appendChild(statusEl);
+  }
+  statusEl.textContent='🔍 Scanning image...';
+
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result.split(',')[1];
+    var mime=file.type||'image/jpeg';
+
+    fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+            {type:'text',text:'Extract booking details from this screenshot. Return ONLY a JSON object with these exact keys: guest_name, checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), guests (number), total_price (number, no currency symbol), commission (number, no currency symbol), booking_number, source (airbnb/booking/direct). If a field is not visible write null. No explanation, just JSON.'}
+          ]
+        }]
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var text=data.content&&data.content[0]?data.content[0].text:'';
+      var clean=text.replace(/```json|```/g,'').trim();
+      var info=JSON.parse(clean);
+
+      // Fill form fields
+      if(info.guest_name)document.getElementById('nbGuest').value=info.guest_name;
+      if(info.checkin)document.getElementById('nbIn').value=info.checkin;
+      if(info.checkout)document.getElementById('nbOut').value=info.checkout;
+      if(info.guests)document.getElementById('nbGuests').value=info.guests;
+      if(info.total_price)document.getElementById('nbGross').value=info.total_price;
+      if(info.commission)document.getElementById('nbComm').value=info.commission;
+      if(info.source){
+        var sel=document.getElementById('nbSource');
+        if(sel){
+          var opts=Array.from(sel.options).map(function(o){return o.value;});
+          var src=info.source.toLowerCase();
+          if(src.indexOf('airbnb')!==-1&&opts.indexOf('airbnb')!==-1)sel.value='airbnb';
+          else if(src.indexOf('booking')!==-1&&opts.indexOf('booking')!==-1)sel.value='booking';
+          else sel.value='direct';
+          togglePricingFields();
+        }
+      }
+      if(info.booking_number){
+        var notesEl=document.getElementById('nbNotes');
+        if(notesEl&&!notesEl.value)notesEl.value='Booking.com ref: '+info.booking_number;
+      }
+      // Trigger total recalc
+      if(typeof calcNbTotal==='function')calcNbTotal();
+      if(typeof updateNbCheckout==='function')updateNbCheckout();
+
+      // Summary
+      var filled=[];
+      if(info.guest_name)filled.push('Guest: '+info.guest_name);
+      if(info.checkin)filled.push('Check-in: '+info.checkin);
+      if(info.checkout)filled.push('Check-out: '+info.checkout);
+      if(info.total_price)filled.push('Total: €'+info.total_price);
+      if(info.commission)filled.push('Commission: €'+info.commission);
+      statusEl.style.background='#f0fdf4';statusEl.style.color='#15803d';
+      statusEl.textContent='✅ Filled: '+filled.join(' · ')+' — please select the apartment and verify.';
+    })
+    .catch(function(e){
+      statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
+      statusEl.textContent='❌ Could not read image: '+e.message;
+    });
+  };
+  reader.readAsDataURL(file);
+  input.value=''; // allow re-upload same file
+}
+
 function openNewBooking(){
   // Populate apartment selects
   ['nbApt','nbBlockApt'].forEach(function(selId){
@@ -4731,6 +4831,8 @@ function saveNewBooking(){
 // ── CALENDAR ─────────────────────────────────────────────────────────────────
 function renderCalendar(){
   buildCalFilters();
+  // Reset search when switching views
+  if(resView==='list'){var rs=document.getElementById('resSearch');if(rs&&listSearch==='')rs.value='';}
   // Ensure toolbar/filter visibility matches current view
   var ct=document.getElementById('calToolbar');if(ct)ct.style.display=resView==='calendar'?'':'none';
   var lf=document.getElementById('listFilterRow');if(lf)lf.style.display=resView==='list'?'flex':'none';
