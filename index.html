@@ -5195,48 +5195,18 @@ function handleUploadFile(input){
 
 function handleImageFile(file){
   var st=document.getElementById('nbPdfFileStatus');
-  st.style.display='block';st.style.color='#1d4ed8';st.textContent='🔍 Reading image with AI...';
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var b64=e.target.result.split(',')[1];
-    var mime=file.type||'image/jpeg';
-    fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','anthropic-dangerous-direct-browser-ipc':'1'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:500,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-          {type:'text',text:'Extract booking details from this screenshot. Return ONLY valid JSON with keys: guest_name, checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), guests (integer), total_price (number), commission (number), booking_number, source (airbnb/booking/direct). Use null for missing fields. No markdown, just JSON.'}
-        ]}]
-      })
-    })
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(data.error){st.style.color='#dc2626';st.textContent='❌ AI error: '+data.error.message;return;}
-      var text=(data.content&&data.content[0]&&data.content[0].text)||'';
-      var clean=text.replace(/```json|```/g,'').trim();
-      var info=JSON.parse(clean);
-      var filled=[];
-      if(info.guest_name){document.getElementById('nbGuest').value=info.guest_name;filled.push('Guest: '+info.guest_name);}
-      if(info.checkin){document.getElementById('nbIn').value=info.checkin;filled.push(info.checkin);}
-      if(info.checkout){document.getElementById('nbOut').value=info.checkout;filled.push('→'+info.checkout);}
-      if(info.guests){document.getElementById('nbGuests').value=info.guests;}
-      if(info.total_price){document.getElementById('nbGross').value=info.total_price;filled.push('€'+info.total_price);}
-      if(info.commission){document.getElementById('nbComm').value=info.commission;filled.push('comm €'+info.commission);}
-      if(info.source){var sel=document.getElementById('nbSource');if(sel){var src=String(info.source).toLowerCase();sel.value=src.indexOf('airbnb')!==-1?'airbnb':src.indexOf('booking')!==-1?'booking':'direct';togglePricingFields();}}
-      if(info.booking_number){var n=document.getElementById('nbNotes');if(n&&!n.value)n.value='Booking.com ref: '+info.booking_number;}
-      if(typeof calcNbTotal==='function')calcNbTotal();
-      if(typeof updateNbCheckout==='function')updateNbCheckout();
-      st.style.color='#15803d';
-      st.textContent='✅ Auto-filled: '+filled.join(' · ')+(filled.length?' — select the apartment and verify':'Could not detect fields');
-    })
-    .catch(function(e){
-      st.style.color='#dc2626';
-      st.textContent='❌ Error: '+e.message+' — try the paste mode instead';
-    });
-  };
-  reader.readAsDataURL(file);
+  st.style.display='block';
+  st.style.color='#92400e';
+  st.style.background='#fef3c7';
+  st.style.padding='10px';
+  st.style.borderRadius='8px';
+  st.innerHTML='📋 <strong>For screenshots:</strong> Images cannot be read automatically. Instead: open the Booking.com page, Select All text, Copy, then use Paste mode below.';
+  st.style.marginBottom='8px';
+  var switchBtn=document.createElement('button');
+  switchBtn.textContent='📋 Switch to Paste mode';
+  switchBtn.style.cssText='display:block;margin-top:8px;background:#1d4ed8;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer';
+  switchBtn.onclick=function(){setPdfTab('paste');document.getElementById('nbPdfPaste').focus();};
+  st.appendChild(switchBtn);
 }
 
 function handlePdfFile(input){
@@ -5327,7 +5297,9 @@ function parsePdfPasteRaw(raw){
   // ── Date parser (French/English month names) ──────────────────────────────
   var MONTHS={janv:1,'fév':2,fevr:2,mars:3,avr:4,mai:5,juin:6,
     juil:7,aout:8,sept:9,oct:10,nov:11,dec:12,
-    jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9};
+    jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,
+    january:1,february:2,march:3,april:4,may:5,june:6,
+    july:7,august:8,september:9,october:10,november:11,december:12};
   function parseTextDate(s){
     if(!s)return'';
     // Remove day-of-week abbreviations (mar., sam., lun. etc.)
@@ -5345,12 +5317,16 @@ function parsePdfPasteRaw(raw){
 
   // ── Reservation number ────────────────────────────────────────────────────
   var resNum=(raw.match(/(?:r[eé]servation|booking)\s*:?\s*\n?\s*(\d{7,12})/i)||[])[1]||'';
+  // English: "Booking number:\n6932163470"
+  if(!resNum){var bnM=raw.match(/booking number\s*:?\s*\n(\d{7,12})/i);if(bnM)resNum=bnM[1];}
 
   // ── Guest name ────────────────────────────────────────────────────────────
   // PDF renders as "Informations client :\nConstanze Cholmakow - Bodechtel"
   var guestName='';
   var clientM=raw.match(/informations?\s*client\s*:?\s*\n([^\n]+)/i);
   if(clientM)guestName=clientM[1].trim();
+  // Booking.com English format: "Guest name:\nLidia Mellado Genius"
+  if(!guestName){var gnM=raw.match(/guest name\s*:\s*\n([^\n]+)/i);if(gnM)guestName=gnM[1].trim();}
   // Fallback: line after the reservation number
   if(!guestName){
     var lines=raw.split('\n');
@@ -5361,6 +5337,8 @@ function parsePdfPasteRaw(raw){
       }
     }
   }
+  // Strip Booking.com loyalty badges from name
+  guestName=guestName.replace(/\s*(Genius|Loyalty|VIP)\s*$/i,'').trim();
 
   // ── Dates ─────────────────────────────────────────────────────────────────
   // "Arrivée :\nmar. 8 sept. 2026" — label and value on separate lines
@@ -5368,9 +5346,13 @@ function parsePdfPasteRaw(raw){
   var arrM=raw.match(/arriv[eé][a-z]*\s*:\s*\n([^\n]+)/i);
   if(arrM)checkin=parseTextDate(arrM[1]);
   if(!checkin){var arrM2=raw.match(/arriv[eé][a-z]*\s*:?\s*([^\n]+)/i);if(arrM2)checkin=parseTextDate(arrM2[1]);}
+  // English: "Check-in\nFri 3 Jul 2026"
+  if(!checkin){var ciM=raw.match(/check-?in\s*\n([^\n]+)/i);if(ciM)checkin=parseTextDate(ciM[1]);}
   var depM=raw.match(/d[eé]part\s*:\s*\n([^\n]+)/i);
   if(depM)checkout=parseTextDate(depM[1]);
   if(!checkout){var depM2=raw.match(/d[eé]part\s*:?\s*([^\n]+)/i);if(depM2)checkout=parseTextDate(depM2[1]);}
+  // English: "Check-out\nSun 5 Jul 2026"
+  if(!checkout){var coM=raw.match(/check-?out\s*\n([^\n]+)/i);if(coM)checkout=parseTextDate(coM[1]);}
   // Last fallback: ISO dates
   if(!checkin||!checkout){
     var iso=(raw.match(/\d{4}-\d{2}-\d{2}/g)||[]).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
@@ -5401,14 +5383,17 @@ function parsePdfPasteRaw(raw){
              raw.match(/montant total\s*:\s*€\s*([\d\s,.']+)/i);
   var gross=totalM?_parseAmt(totalM[1]):0;
   if(!gross){
-    // Try: "Montant total :\n€ 539,60"
     var tlm=raw.match(/montant total\s*:?\s*\n\s*€\s*([\d ,.]+)/i);
     if(tlm)gross=_parseAmt(tlm[1]);
   }
+  // English: "Total price\n€ 276.18"
+  if(!gross){var tpM=raw.match(/total price\s*\n[^\d€]*€?\s*([\d\s,.]+)/i);if(tpM)gross=_parseAmt(tpM[1]);}
 
   var commM=raw.match(/commission\s*:?\s*\n?\s*€\s*([\d ,.]+)/i)||
             raw.match(/commission\s*:?\s*€?\s*([\d ,.]+)/i);
   var comm=commM?_parseAmt(commM[1]):0;
+  // English: "Commission and charges:\n€ 45.29"
+  if(!comm){var caM=raw.match(/commission and charges\s*:?\s*\n?[^\d€]*€?\s*([\d\s,.]+)/i);if(caM)comm=_parseAmt(caM[1]);}
 
   var cleanM=raw.match(/frais de m[eé]nage[^\n]*\n[^\n]*\n\s*€?\s*([\d.,]+)/i)||
              raw.match(/cleaning fee[^\n€]*€\s*([\d.,]+)/i);
