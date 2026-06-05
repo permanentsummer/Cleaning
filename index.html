@@ -1675,6 +1675,8 @@ function initViewMode(){
       // Hide action buttons in toolbar
       ['dashImportBtn','newBookingBtn'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
       document.querySelectorAll('[onclick*="openNewBooking"],[onclick*="openDashImport"],[onclick*="Import"]').forEach(function(el){el.style.display='none';});
+      // In view mode default to showing all bookings
+      listTimeFilter='all';
     });
   }).catch(function(){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#ef4444">Error loading view.</div>';});
 }
