@@ -1592,7 +1592,15 @@ function generateViewToken(){
 function copyViewLink(){
   var f=document.getElementById('viewLinkField');
   if(!f.value){toast('Generate a link first','err');return;}
-  navigator.clipboard.writeText(f.value).then(function(){toast('Link copied!','ok');});
+  f.select();f.setSelectionRange(0,9999);
+  try{
+    document.execCommand('copy');
+    toast('Link copied!','ok');
+  }catch(e){
+    navigator.clipboard&&navigator.clipboard.writeText(f.value)
+      .then(function(){toast('Link copied!','ok');})
+      .catch(function(){toast('Select the link and copy manually','err');});
+  }
 }
 
 function loadViewLink(){
@@ -1603,36 +1611,65 @@ function loadViewLink(){
   }
 }
 
+function openViewBooking(id,origin){
+  var b=allBookings.find(function(x){return x.id===id;});
+  var req=requests.find(function(x){return x.id===id;});
+  var src=b||req;if(!src)return;
+  var apt=aptById(b?b.apt:(req.apt_id||req.apt_name));
+  var guest=b?cleanNotesDisplay(b.notes):req.guest_name;
+  var checkin=src.checkin||'';var checkout=src.checkout||'';
+  var guests=src.guests||'';
+  var nights=checkin&&checkout?Math.round((new Date(checkout+'T12:00:00')-new Date(checkin+'T12:00:00'))/86400000):0;
+  // Show a simple read-only overlay
+  var ov=document.getElementById('editBookingOverlay');
+  ov.classList.add('show');
+  var modal=ov.querySelector('.modal');
+  modal.innerHTML=
+    '<div class="modal-handle"></div>'+
+    '<h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📋 Reservation Details</h3>'+
+    '<div style="display:flex;flex-direction:column;gap:12px">'+
+      '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Guest</div>'+
+      '<div style="font-size:15px;font-weight:700">'+esc(guest||'—')+'</div></div>'+
+      '<div style="display:flex;gap:16px">'+
+        '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Check-in</div><div style="font-weight:700">'+checkin+'</div></div>'+
+        '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Check-out</div><div style="font-weight:700">'+checkout+'</div></div>'+
+        '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Nights</div><div style="font-weight:700">'+nights+'</div></div>'+
+      '</div>'+
+      '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Property</div>'+
+      '<div style="font-weight:700">'+esc(apt.name||'—')+'</div></div>'+
+      '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Guests</div>'+
+      '<div style="font-weight:700">'+esc(String(guests||'—'))+'</div></div>'+
+    '</div>'+
+    '<button id="viewCloseBtn" style="margin-top:20px;width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer">Close</button>';
+  var cb=document.getElementById('viewCloseBtn');if(cb)cb.onclick=function(){closeModal('editBookingOverlay');};
+}
+
 function initViewMode(){
-  // Load workspace by matching view_token in settings
   fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&limit=100',{
     headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
   }).then(function(r){return r.json();})
   .then(function(rows){
-    var ws=rows.find(function(w){return(w.settings&&w.settings.view_token)===VIEW_TOKEN;});
+    var ws=rows.find(function(w){return w.settings&&w.settings.view_token===VIEW_TOKEN;});
     if(!ws){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#64748b;font-size:15px">Invalid or expired link.</div>';return;}
     workspace=ws;
-    var s=ws.settings||{};
-    properties=s.apts||[];
-    // Show read-only view
+    properties=(ws.settings||{}).apts||[];
     document.getElementById('authWrap').classList.remove('show');
     document.getElementById('appWrap').classList.add('show');
-    // Hide sidebar completely, show only calendar tab
     document.getElementById('sidebar').style.display='none';
     document.getElementById('appWrap').style.gridTemplateColumns='1fr';
-    // Show only reservations page
-    Promise.all([loadAllBookings()]).then(function(){
-      renderCalendar();
+    // Add read-only banner
+    var banner=document.createElement('div');
+    banner.style.cssText='background:#0a2540;color:#fff;text-align:center;padding:10px;font-size:12px;font-weight:800;letter-spacing:.5px';
+    banner.textContent='VIEW ONLY — Reservations';
+    document.body.insertBefore(banner,document.body.firstChild);
+    // Load data
+    Promise.all([loadAllBookings(),loadRequests()]).then(function(){
+      // Show reservations page only
       document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-calendar');});
-      // Add read-only banner
-      var banner=document.createElement('div');
-      banner.style.cssText='background:#0a2540;color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:700;letter-spacing:.5px';
-      banner.textContent='VIEW ONLY — Reservations';
-      document.body.insertBefore(banner,document.body.firstChild);
-      // Disable all edit buttons
-      document.querySelectorAll('button').forEach(function(b){
-        if(b.textContent.indexOf('New booking')!==-1||b.textContent.indexOf('Import')!==-1||b.textContent.indexOf('Edit')!==-1){b.style.display='none';}
-      });
+      renderCalendar();
+      // Hide action buttons in toolbar
+      ['dashImportBtn','newBookingBtn'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+      document.querySelectorAll('[onclick*="openNewBooking"],[onclick*="openDashImport"],[onclick*="Import"]').forEach(function(el){el.style.display='none';});
     });
   }).catch(function(){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#ef4444">Error loading view.</div>';});
 }
@@ -4479,6 +4516,7 @@ function toggleCleanOverride(){
   } else if(hint){hint.textContent='';}
 }
 function openEditBooking(id, origin){
+  if(VIEW_MODE){openViewBooking(id,origin);return;}
   var b=allBookings.find(function(x){return x.id===id;});
   var req=null;
   if(!b&&origin==='direct'){req=requests.find(function(x){return x.id===id;});}
