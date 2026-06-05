@@ -751,7 +751,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <div class="res-topbar">
       <div class="view-toggle">
         <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">Calendar</button>
-        <button class="vtab" id="vtabList" onclick="setResView('list')">List view</button>
+        <button class="vtab" id="vtabList" onclick="listTimeFilter='all';setResView('list')">List view</button>
       </div>
       <!-- List filters (only shown in list view) -->
       <div id="listFilterRow" style="display:none;flex-direction:column;gap:6px;flex:1">
@@ -1517,6 +1517,7 @@ document.getElementById('signOutBtn').addEventListener('click',function(){
 
 // ── BOOT ────────────────────────────────────────────────────────────────────
 window.addEventListener('load',function(){
+  if(VIEW_MODE){return;}
   var stored=ll('sb_session',null);
   if(!stored||!stored.access_token){return;}
   // Refresh token
@@ -2083,7 +2084,7 @@ function setResView(v){
   document.getElementById('vtabCal').classList.toggle('on',v==='calendar');
   document.getElementById('vtabList').classList.toggle('on',v==='list');
   document.getElementById('resCalView').style.display=v==='calendar'?'block':'none';
-  document.getElementById('resListView').style.display=v==='list'?'block':'none';
+  var rlv=document.getElementById('resListView');rlv.style.display=v==='list'?'block':'none';rlv.style.visibility=v==='list'?'visible':'hidden';rlv.style.height=v==='list'?'auto':'0';
   // Show calendar toolbar only in calendar view
   var ct=document.getElementById('calToolbar');if(ct)ct.style.display=v==='calendar'?'':'none';
   // Show list filters only in list view
