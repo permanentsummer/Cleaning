@@ -1115,7 +1115,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div style="font-size:12px;color:#64748b;margin-bottom:12px">Give this read-only link to staff, co-hosts or partners. They can see the reservations calendar only — no editing, no sensitive data.</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input type="text" id="viewLinkField" readonly style="flex:1;padding:9px 12px;border:2px solid #bae6fd;border-radius:9px;font-size:12px;font-family:monospace;background:#fff;min-width:200px" placeholder="Click Generate to create link">
-        <button onclick="generateViewToken()" style="background:#0369a1;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Generate</button>
+        <button onclick="generateViewToken()" style="background:#0369a1;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Generate new link</button>
         <button onclick="copyViewLink()" style="background:#fff;color:#0369a1;border:2px solid #bae6fd;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Copy</button>
       </div>
     </div>
@@ -3382,7 +3382,7 @@ function renderResList(){
           '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
           '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
         '</div>';
-      } else {
+      } else if(!VIEW_MODE){
         var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
         var amtDue=Math.max(0,item.total-amtPaid);
         card.innerHTML+='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
@@ -3398,11 +3398,12 @@ function renderResList(){
       }
     }
     card.innerHTML+=
+      (VIEW_MODE?'<div class="res-list-actions"><button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openViewBooking(\''+item.id+'\',\''+item.origin+'\');">👁 View</button></div>':
       '<div class="res-list-actions">'+
         '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
         '<span style="flex:1"></span>'+
         '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
-      '</div>';
+      '</div>');
     container.appendChild(card);
   });
   // Wire payment panel buttons
