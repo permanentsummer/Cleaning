@@ -2077,6 +2077,9 @@ var resView='calendar'; // 'calendar' | 'list'
 
 function setResView(v){
   resView=v;
+  if(VIEW_MODE&&v==='list'){
+    toast('Loading: '+allBookings.length+' bookings, '+properties.length+' props','ok');
+  }
   document.getElementById('vtabCal').classList.toggle('on',v==='calendar');
   document.getElementById('vtabList').classList.toggle('on',v==='list');
   document.getElementById('resCalView').style.display=v==='calendar'?'':'none';
