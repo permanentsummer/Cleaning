@@ -2077,13 +2077,11 @@ var resView='calendar'; // 'calendar' | 'list'
 
 function setResView(v){
   resView=v;
-  if(VIEW_MODE&&v==='list'){
-    toast('Loading: '+allBookings.length+' bookings, '+properties.length+' props','ok');
-  }
+
   document.getElementById('vtabCal').classList.toggle('on',v==='calendar');
   document.getElementById('vtabList').classList.toggle('on',v==='list');
-  document.getElementById('resCalView').style.display=v==='calendar'?'':'none';
-  document.getElementById('resListView').style.display=v==='list'?'':'none';
+  document.getElementById('resCalView').style.display=v==='calendar'?'block':'none';
+  document.getElementById('resListView').style.display=v==='list'?'block':'none';
   // Show calendar toolbar only in calendar view
   var ct=document.getElementById('calToolbar');if(ct)ct.style.display=v==='calendar'?'':'none';
   // Show list filters only in list view
