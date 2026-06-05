@@ -1109,6 +1109,17 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       <div><h2>Settings</h2><p>Manage templates, email, and cleaning configuration</p></div>
     </div>
 
+    <!-- Share View Link -->
+    <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:18px;margin-bottom:20px">
+      <div style="font-weight:800;font-size:14px;color:#0369a1;margin-bottom:6px">🔗 Share View Link</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px">Give this read-only link to staff, co-hosts or partners. They can see the reservations calendar only — no editing, no sensitive data.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="viewLinkField" readonly style="flex:1;padding:9px 12px;border:2px solid #bae6fd;border-radius:9px;font-size:12px;font-family:monospace;background:#fff;min-width:200px" placeholder="Click Generate to create link">
+        <button onclick="generateViewToken()" style="background:#0369a1;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Generate</button>
+        <button onclick="copyViewLink()" style="background:#fff;color:#0369a1;border:2px solid #bae6fd;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Copy</button>
+      </div>
+    </div>
+
     <!-- Horizontal tab nav -->
     <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto">
       <button id="stab-email" onclick="showSettingsTab('email')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--primary);color:var(--primary);white-space:nowrap;margin-bottom:-2px">📧 Email &amp; WhatsApp</button>
@@ -1329,6 +1340,9 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
+// View-only mode: ?view=TOKEN
+var VIEW_TOKEN=new URLSearchParams(window.location.search).get('view');
+var VIEW_MODE=!!VIEW_TOKEN;
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
 var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
 var FROM_EMAIL='Permanent Summer <bookings@mail.permanentsummer.co>';
@@ -1562,6 +1576,67 @@ function loadAllBookings(){
 }
 
 // ── TABS ────────────────────────────────────────────────────────────────────
+function generateViewToken(){
+  var tok=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+  var s=workspace.settings||{};
+  s.view_token=tok;
+  workspace.settings=s;
+  sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s})
+    .then(function(){
+      var link=window.location.origin+window.location.pathname+'?view='+tok;
+      document.getElementById('viewLinkField').value=link;
+      toast('View link generated!','ok');
+    }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
+function copyViewLink(){
+  var f=document.getElementById('viewLinkField');
+  if(!f.value){toast('Generate a link first','err');return;}
+  navigator.clipboard.writeText(f.value).then(function(){toast('Link copied!','ok');});
+}
+
+function loadViewLink(){
+  var tok=(workspace.settings||{}).view_token;
+  if(tok){
+    var link=window.location.origin+window.location.pathname+'?view='+tok;
+    document.getElementById('viewLinkField').value=link;
+  }
+}
+
+function initViewMode(){
+  // Load workspace by matching view_token in settings
+  fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&limit=100',{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  }).then(function(r){return r.json();})
+  .then(function(rows){
+    var ws=rows.find(function(w){return(w.settings&&w.settings.view_token)===VIEW_TOKEN;});
+    if(!ws){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#64748b;font-size:15px">Invalid or expired link.</div>';return;}
+    workspace=ws;
+    var s=ws.settings||{};
+    properties=s.apts||[];
+    // Show read-only view
+    document.getElementById('authWrap').classList.remove('show');
+    document.getElementById('appWrap').classList.add('show');
+    // Hide sidebar completely, show only calendar tab
+    document.getElementById('sidebar').style.display='none';
+    document.getElementById('appWrap').style.gridTemplateColumns='1fr';
+    // Show only reservations page
+    Promise.all([loadAllBookings()]).then(function(){
+      renderCalendar();
+      document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-calendar');});
+      // Add read-only banner
+      var banner=document.createElement('div');
+      banner.style.cssText='background:#0a2540;color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:700;letter-spacing:.5px';
+      banner.textContent='VIEW ONLY — Reservations';
+      document.body.insertBefore(banner,document.body.firstChild);
+      // Disable all edit buttons
+      document.querySelectorAll('button').forEach(function(b){
+        if(b.textContent.indexOf('New booking')!==-1||b.textContent.indexOf('Import')!==-1||b.textContent.indexOf('Edit')!==-1){b.style.display='none';}
+      });
+    });
+  }).catch(function(){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#ef4444">Error loading view.</div>';});
+}
+
 function switchTab(tab){
   closeMobileMenu();
   document.querySelectorAll('.sb-item').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===tab);});
@@ -5728,7 +5803,8 @@ function checkMobileLayout(){
   // CSS handles display via media queries — JS only needed for dynamic tweaks
 }
 window.addEventListener('resize',checkMobileLayout);
-document.addEventListener('DOMContentLoaded',function(){checkMobileLayout();});
+document.addEventListener('DOMContentLoaded',function(){
+  if(VIEW_MODE){initViewMode();return;}checkMobileLayout();});
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
 function renderOverview(){
