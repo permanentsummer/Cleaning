@@ -1663,7 +1663,12 @@ function initViewMode(){
     banner.textContent='VIEW ONLY — Reservations';
     document.body.insertBefore(banner,document.body.firstChild);
     // Load data
-    Promise.all([loadAllBookings(),loadRequests()]).then(function(){
+    // In view mode: fetch bookings directly with workspace_id (no auth needed if RLS allows)
+    var wsId=ws.id;
+    Promise.all([
+      fetch(SB_URL+'/rest/v1/bookings?select=*&workspace_id=eq.'+wsId+'&order=checkin.asc',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){return r.json();}).then(function(rows){allBookings=rows||[];}),
+      fetch(SB_URL+'/rest/v1/direct_requests?select=*&workspace_id=eq.'+wsId,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){return r.json();}).then(function(rows){requests=rows||[];})
+    ]).then(function(){
       // Show reservations page only
       document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('on',p.id==='page-calendar');});
       renderCalendar();
