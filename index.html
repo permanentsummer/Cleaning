@@ -5279,10 +5279,11 @@ function deleteRequest(){
 
 // List view filter state
 // Multi-select list filters
-var listTimeFilter='upcoming'; // 'all' | 'upcoming' | 'past'
+var listTimeFilter='all'; // 'all' | 'upcoming' | 'past'
 var listSourceFilter='all'; // 'all' | 'direct' | 'airbnb' | 'booking'
 var listPropFilter='all';   // 'all' | apt.id
 var listPayFilter='all';    // 'all' | 'paid' | 'partial' | 'unpaid'
+var listSearch='';
 
 function toggleListFilter(group, val, btn){
   if(group==='time'){
