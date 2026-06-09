@@ -762,7 +762,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <button id="sortBtn" onclick="listSortAsc=!listSortAsc;this.textContent=listSortAsc?'↑ Oldest':'↓ Newest';renderResList()" style="display:none;padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0">↑ Oldest</button>
         <!-- Filters (always visible) -->
         <div style="position:relative;flex-shrink:0">
-          <button id="filterMenuBtn" onclick="toggleFilterMenu()" style="padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
+          <button id="filterMenuBtn" onclick="toggleFilterMenu()" style="display:none;padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;align-items:center;gap:6px">
             <span>⚙ Filters</span><span id="filterCount" style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:1px 6px;display:none">0</span>
           </button>
           <div id="filterMenu" style="display:none;position:absolute;left:0;top:calc(100% + 6px);background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px;z-index:200;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.12)">
@@ -2088,6 +2088,7 @@ function showListView(){
   var sb=document.getElementById('calSearchBar');if(sb)sb.style.display='none';
   var lf=document.getElementById('listFilterRow');if(lf)lf.style.display='flex';
   var srt=document.getElementById('sortBtn');if(srt)srt.style.display='';
+  var fm=document.getElementById('filterMenuBtn');if(fm)fm.style.display='flex';
   listTimeFilter='all';
   renderResList();
 }
@@ -2102,6 +2103,7 @@ function hideListView(){
   var sb=document.getElementById('calSearchBar');if(sb)sb.style.display='';
   var lf=document.getElementById('listFilterRow');if(lf)lf.style.display='none';
   var srt=document.getElementById('sortBtn');if(srt)srt.style.display='none';
+  var fm=document.getElementById('filterMenuBtn');if(fm)fm.style.display='none';
   drawCal();
 }
 
@@ -3344,8 +3346,33 @@ function renderResList(){
       return hay.indexOf(listSearch)!==-1;
     });
   }
-  // Sort by checkin
-  items.sort(function(a,b){var c=(a.checkin||'').localeCompare(b.checkin||'');return listSortAsc?c:-c;});
+  // Sort: Newest = active now first, then upcoming soonest, then past most-recent-last
+  // Oldest = past first (oldest checkin), then active, then upcoming
+  var tod3=new Date().toISOString().slice(0,10);
+  function sortGroup(i){
+    if(i.checkin<=tod3&&i.checkout>tod3)return 1; // active now
+    if(i.checkin>tod3)return 2; // upcoming
+    return 3; // past
+  }
+  if(!listSortAsc){
+    // Newest first: active(1) → upcoming asc(2) → past desc(3)
+    items.sort(function(a,b){
+      var ga=sortGroup(a),gb=sortGroup(b);
+      if(ga!==gb)return ga-gb;
+      if(ga===2)return(a.checkin||'').localeCompare(b.checkin||''); // upcoming: soonest first
+      if(ga===3)return(b.checkin||'').localeCompare(a.checkin||''); // past: most recent first
+      return(a.checkin||'').localeCompare(b.checkin||'');
+    });
+  } else {
+    // Oldest first: past asc → active → upcoming asc
+    items.sort(function(a,b){
+      var ga=sortGroup(a),gb=sortGroup(b);
+      // Reverse group order for oldest: past(3)→active(1)→upcoming(2)
+      var oa=ga===3?1:ga===1?2:3, ob=gb===3?1:gb===1?2:3;
+      if(oa!==ob)return oa-ob;
+      return(a.checkin||'').localeCompare(b.checkin||'');
+    });
+  }
 
   if(!items.length){
     container.innerHTML='<div class="empty-state"><div class="ico">📅</div><h3>No reservations yet</h3><p>Confirmed bookings will appear here.</p></div>';
