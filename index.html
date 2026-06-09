@@ -303,6 +303,8 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 .res-topbar{display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid var(--border);flex-wrap:wrap}
 
 /* ── RESERVATIONS LIST ─────────────────────────────────────────────────────── */
+#resListView{display:none}
+#resListView.active{display:block}
 .res-list-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;border:1px solid var(--border);border-left:4px solid var(--border);transition:box-shadow .15s}
 .res-list-card:hover{box-shadow:var(--shadow-md)}
 .res-list-card.src-airbnb-card{border-left-color:#e8485a}
@@ -438,7 +440,9 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   .page-header{padding:14px 12px 0;flex-wrap:wrap;gap:8px}
   .page-header h2{font-size:18px}
   #calGrid{min-width:0;width:100%}
-  .res-list-card{padding:12px 14px}
+  #resListView{display:none}
+#resListView.active{display:block}
+.res-list-card{padding:12px 14px}
   .modal{max-height:92vh;border-radius:20px 20px 0 0;margin:auto 0 0}
   .overlay{align-items:flex-end}
   .sb-bottom{padding-bottom:env(safe-area-inset-bottom,12px)}
@@ -750,8 +754,8 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     <!-- Shared top bar for both views -->
     <div class="res-topbar">
       <div class="view-toggle">
-        <button class="vtab on" id="vtabCal" onclick="setResView('calendar')">Calendar</button>
-        <button class="vtab" id="vtabList" onclick="listTimeFilter='all';setResView('list')">List view</button>
+        <button class="vtab on" id="vtabCal" onclick="hideListView()">Calendar</button>
+        <button class="vtab" id="vtabList" onclick="showListView()">List view</button>
       </div>
       <!-- List filters (only shown in list view) -->
       <div id="listFilterRow" style="display:none;flex-direction:column;gap:6px;flex:1">
@@ -809,7 +813,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
       
     </div>
     <!-- List view -->
-    <div id="resListView" style="display:none;padding:16px">
+    <div id="resListView" style="padding:16px">
       <div id="resList"></div>
     </div>
   </div>
@@ -2078,19 +2082,33 @@ function sendGuestEmail(email,name,message,action){
 // Calendar view state
 var resView='calendar'; // 'calendar' | 'list'
 
-function setResView(v){
-  resView=v;
+function showListView(){
+  resView='list';
+  document.getElementById('vtabCal').classList.remove('on');
+  document.getElementById('vtabList').classList.add('on');
+  document.getElementById('resCalView').style.display='none';
+  document.getElementById('resListView').classList.add('active');
+  var ct=document.getElementById('calToolbar');if(ct)ct.style.display='none';
+  var sb=document.getElementById('calSearchBar');if(sb)sb.style.display='none';
+  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display='flex';
+  listTimeFilter='all';
+  renderResList();
+}
 
-  document.getElementById('vtabCal').classList.toggle('on',v==='calendar');
-  document.getElementById('vtabList').classList.toggle('on',v==='list');
-  document.getElementById('resCalView').style.display=v==='calendar'?'block':'none';
-  var rlv=document.getElementById('resListView');rlv.style.display=v==='list'?'block':'none';rlv.style.visibility=v==='list'?'visible':'hidden';rlv.style.height=v==='list'?'auto':'0';
-  // Show calendar toolbar only in calendar view
-  var ct=document.getElementById('calToolbar');if(ct)ct.style.display=v==='calendar'?'':'none';
-  // Show list filters only in list view
-  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display=v==='list'?'flex':'none';
-  if(v==='calendar')drawCal();
-  else renderResList();
+function hideListView(){
+  resView='calendar';
+  document.getElementById('vtabCal').classList.add('on');
+  document.getElementById('vtabList').classList.remove('on');
+  document.getElementById('resCalView').style.display='';
+  document.getElementById('resListView').classList.remove('active');
+  var ct=document.getElementById('calToolbar');if(ct)ct.style.display='';
+  var sb=document.getElementById('calSearchBar');if(sb)sb.style.display='';
+  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display='none';
+  drawCal();
+}
+
+function setResView(v){
+  if(v==='list')showListView(); else hideListView();
 }
 
 function renderProps(){
@@ -3337,8 +3355,6 @@ function renderResList(){
   }
 
   container.innerHTML='';
-  container.style.minHeight='100px'; // ensure visible
-  toast(items.length+' reservations in list','ok');
   var lastMonth='';
   items.forEach(function(item){
     // Month separator
@@ -4985,10 +5001,8 @@ function renderCalendar(){
   // Reset search when switching views
   if(resView==='list'){var rs=document.getElementById('resSearch');if(rs&&listSearch==='')rs.value='';}
   // Ensure toolbar/filter visibility matches current view
-  var ct=document.getElementById('calToolbar');if(ct)ct.style.display=resView==='calendar'?'':'none';
-  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display=resView==='list'?'flex':'none';
-  if(resView==='list')renderResList();
-  else drawCal();
+  if(resView==='list'){showListView();}
+  else{hideListView();}
 }
 
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}if(resView==='calendar')drawCal();}
