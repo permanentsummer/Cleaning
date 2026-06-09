@@ -753,55 +753,54 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
     </div>
     <!-- Shared top bar for both views -->
     <div class="res-topbar">
-      <div class="view-toggle">
-        <button class="vtab on" id="vtabCal" onclick="hideListView()">Calendar</button>
-        <button class="vtab" id="vtabList" onclick="showListView()">List view</button>
-      </div>
-      <!-- List filters (only shown in list view) -->
-      <div id="listFilterRow" style="display:none;gap:8px;align-items:center;flex:1;flex-wrap:wrap">
-        <!-- Search -->
-        <div style="position:relative;flex:1;min-width:160px">
-          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none">🔍</span>
-          <input type="text" id="resSearch" placeholder="Search..." oninput="listSearch=this.value.trim().toLowerCase();renderResList()" style="width:100%;padding:8px 12px 8px 30px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%">
+        <div class="view-toggle">
+          <button class="vtab on" id="vtabCal" onclick="hideListView()">Calendar</button>
+          <button class="vtab" id="vtabList" onclick="showListView()">List view</button>
         </div>
-        <!-- Sort -->
-        <button id="sortBtn" onclick="listSortAsc=!listSortAsc;this.textContent=listSortAsc?'↑ Oldest':'↓ Newest';renderResList()" style="padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0">↑ Oldest</button>
-        <!-- Filters dropdown -->
-        <div style="position:relative;flex-shrink:0">
-          <button id="filterMenuBtn" onclick="toggleFilterMenu()" style="padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
-            <span>⚙ Filters</span><span id="filterCount" style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:1px 6px;display:none">0</span>
-          </button>
-          <div id="filterMenu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px;z-index:100;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.12)">
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Period</div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-              <button class="fbtn on" data-tf="all" onclick="toggleListFilter('time','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
-              <button class="fbtn" data-tf="upcoming" onclick="toggleListFilter('time','upcoming',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Upcoming</button>
-              <button class="fbtn" data-tf="past" onclick="toggleListFilter('time','past',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Past</button>
-            </div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Source</div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-              <button class="fbtn on" data-sf="all" onclick="toggleListFilter('source','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
-              <button class="fbtn" data-sf="direct" onclick="toggleListFilter('source','direct',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Direct</button>
-              <button class="fbtn" data-sf="airbnb" onclick="toggleListFilter('source','airbnb',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Airbnb</button>
-              <button class="fbtn" data-sf="booking" onclick="toggleListFilter('source','booking',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Booking</button>
-            </div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Property</div>
-            <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-              <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
-              <div id="listPropFilters" style="display:contents"></div>
-            </div>
-            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button class="fbtn on" data-payf="all" onclick="toggleListFilter('pay','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
-              <button class="fbtn" data-payf="paid" onclick="toggleListFilter('pay','paid',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Paid</button>
-              <button class="fbtn" data-payf="partial" onclick="toggleListFilter('pay','partial',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Partial</button>
-              <button class="fbtn" data-payf="unpaid" onclick="toggleListFilter('pay','unpaid',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Unpaid</button>
+        <!-- List filters (only shown in list view) -->
+        <div id="listFilterRow" style="display:none;gap:8px;align-items:center;flex:1;flex-wrap:wrap">
+          <div style="position:relative;flex:1;min-width:140px">
+            <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none">🔍</span>
+            <input type="text" id="resSearch" placeholder="Search..." oninput="listSearch=this.value.trim().toLowerCase();renderResList()" style="width:100%;padding:8px 12px 8px 30px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <button id="sortBtn" onclick="listSortAsc=!listSortAsc;this.textContent=listSortAsc?'↑ Oldest':'↓ Newest';renderResList()" style="padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0">↑ Oldest</button>
+          <div style="position:relative;flex-shrink:0">
+            <button id="filterMenuBtn" onclick="toggleFilterMenu()" style="padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
+              <span>⚙ Filters</span><span id="filterCount" style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:1px 6px;display:none">0</span>
+            </button>
+            <div id="filterMenu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px;z-index:200;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.12)">
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Period</div>
+              <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="fbtn on" data-tf="all" onclick="toggleListFilter('time','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
+                <button class="fbtn" data-tf="upcoming" onclick="toggleListFilter('time','upcoming',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Upcoming</button>
+                <button class="fbtn" data-tf="past" onclick="toggleListFilter('time','past',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Past</button>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Source</div>
+              <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="fbtn on" data-sf="all" onclick="toggleListFilter('source','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
+                <button class="fbtn" data-sf="direct" onclick="toggleListFilter('source','direct',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Direct</button>
+                <button class="fbtn" data-sf="airbnb" onclick="toggleListFilter('source','airbnb',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Airbnb</button>
+                <button class="fbtn" data-sf="booking" onclick="toggleListFilter('source','booking',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Booking</button>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Property</div>
+              <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+                <button class="fbtn on" data-pf="all" onclick="toggleListFilter('prop','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
+                <div id="listPropFilters" style="display:contents"></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="fbtn on" data-payf="all" onclick="toggleListFilter('pay','all',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">All</button>
+                <button class="fbtn" data-payf="paid" onclick="toggleListFilter('pay','paid',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Paid</button>
+                <button class="fbtn" data-payf="partial" onclick="toggleListFilter('pay','partial',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Partial</button>
+                <button class="fbtn" data-payf="unpaid" onclick="toggleListFilter('pay','unpaid',this)" style="font-size:12px;padding:5px 10px;border-radius:7px">Unpaid</button>
+              </div>
             </div>
           </div>
         </div>
-      <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
-      <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()">📥 Import CSV/XLS</button>
-    </div>
+        <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
+        <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()">📥 Import CSV/XLS</button>
+      </div>
     <!-- Calendar view -->
     <div id="resCalView">
       <div class="cal-scroll">
@@ -2087,7 +2086,7 @@ function showListView(){
   document.getElementById('resListView').classList.add('active');
   var ct=document.getElementById('calToolbar');if(ct)ct.style.display='none';
   var sb=document.getElementById('calSearchBar');if(sb)sb.style.display='none';
-  var lf=document.getElementById('listFilterRow');if(lf)lf.style.display='flex';
+  var lf=document.getElementById('listFilterRow');if(lf){lf.style.display='flex';lf.style.gap='8px';}
   listTimeFilter='all';
   renderResList();
 }
