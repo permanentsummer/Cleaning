@@ -3337,6 +3337,8 @@ function renderResList(){
   }
 
   container.innerHTML='';
+  container.style.minHeight='100px'; // ensure visible
+  toast(items.length+' reservations in list','ok');
   var lastMonth='';
   items.forEach(function(item){
     // Month separator
