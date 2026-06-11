@@ -1683,6 +1683,7 @@ function switchTab(tab){
   else if(tab==='calendar')renderCalendar();
   else if(tab==='requests')loadRequests().then(function(){renderRequests();});
   else if(tab==='properties'){renderProps();}
+  else if(tab==='widget')renderWidget();
   else if(tab==='payments')renderRevenueAnalytics();
   else if(tab==='cleaning')renderCleaning();
   else if(tab==='settings'){renderProps();loadEmailTemplates();loadWaTemplates();loadCleaningSettings();}
