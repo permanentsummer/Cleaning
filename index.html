@@ -23,6 +23,13 @@
   --primary:#114061;--primary-light:#1a5278;--accent:#F9C332;
   --sidebar-w:224px;
 }
+body.dark{
+  --bg:#0f1923;--card-bg:#1a2636;--border:#253547;--muted:#7a9bb5;--text:#d6e8f7;
+  --shadow:0 1px 4px rgba(0,0,0,.35);--shadow-md:0 4px 20px rgba(0,0,0,.5);
+  --primary:#1a3a55;--primary-light:#234d6e;
+  --green-bg:#0d2e20;--green-dark:#34d399;
+  --red-bg:#2e1215;--blue-bg:#0d1f30;--yellow-bg:#2a200a;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
 
@@ -340,7 +347,32 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   .page{padding:16px}
 }
 
-/* ── OVERVIEW PAGE ─────────────────────────────────────────────────────────── */
+/* ── DARK MODE ─────────────────────────────────────────────────────────────── */
+body.dark .kpi-card,body.dark .ov-panel,body.dark .qa-btn,body.dark .widget-step,
+body.dark .pay-card,body.dark .req-card,body.dark .res-list-card,body.dark .prop-card,
+body.dark .modal,body.dark .cal-toolbar,body.dark .cal-head,body.dark .cal-row-label{background:var(--card-bg);border-color:var(--border)}
+body.dark .kpi-yellow .kpi-icon{background:#2a1f02}
+body.dark .kpi-blue .kpi-icon{background:#0a1d2e}
+body.dark .kpi-green .kpi-icon{background:#0a2218}
+body.dark .kpi-purple .kpi-icon{background:#1a112e}
+body.dark .ov-stay:hover{background:#1f2f42}
+body.dark .qa-btn:hover{background:#1f3a52;border-color:var(--accent)}
+body.dark input,body.dark select,body.dark textarea{background:#12202e;border-color:var(--border);color:var(--text)}
+body.dark input:focus,body.dark select:focus{border-color:var(--accent)}
+body.dark .fbtn{background:#1a2636;border-color:var(--border);color:var(--muted)}
+body.dark .fbtn.on{background:var(--accent);border-color:var(--accent);color:#0f1923}
+body.dark .filter-row .fbtn{background:#1a2636}
+body.dark .status-badge{opacity:.9}
+body.dark #toast.ok{background:#1a2636;border-color:#253547}
+body.dark .code-box{background:#07111a}
+body.dark .link-box{background:#12202e}
+body.dark .cal-popup{background:var(--card-bg);border-color:var(--border)}
+body.dark .cal-bar{box-shadow:0 2px 6px rgba(0,0,0,.4)}
+body.dark .res-topbar{background:var(--card-bg);border-color:var(--border)}
+body.dark .mobileTopBar-dark,body.dark #mobileTopBar{background:#0d1e2e}
+body.dark .occ-bar-wrap{background:#1a2636}
+body.dark .ov-greeting{background:linear-gradient(135deg,#0d1e2e 0%,#162535 100%)}
+
 .ov-greeting{
   background:linear-gradient(135deg,var(--primary) 0%,#243047 100%);
   border-radius:16px;padding:28px 32px;margin-bottom:24px;
@@ -431,7 +463,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 
 @media(max-width:600px){
   :root{--sidebar-w:0px}
-  .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed;top:0;left:0;height:100%;z-index:300;width:220px;max-width:70vw}
+  .sidebar{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);position:fixed;top:0;left:0;height:100%;z-index:300;width:185px;max-width:58vw}
   .sidebar.open{transform:translateX(0)}
   .main-content{margin-left:0!important;width:100%!important;padding-top:52px}
   .page{padding:14px 12px}
@@ -573,6 +605,10 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <button class="fbtn" id="dLang-pt" onclick="setDashLang('pt')" style="flex:1;font-size:11px;padding:5px 0">PT</button>
         <button class="fbtn" id="dLang-fr" onclick="setDashLang('fr')" style="flex:1;font-size:11px;padding:5px 0">FR</button>
       </div>
+      <button class="sb-action" id="darkModeBtn" onclick="toggleDarkMode()" style="margin-bottom:4px">
+        <svg id="darkModeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span id="darkModeLabel">Dark mode</span>
+      </button>
       <button class="sb-action" id="signOutBtn">
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Sign out</span>
@@ -3688,6 +3724,31 @@ function setDashLang(l){
   else if(activeTab==='payments')renderRevenueAnalytics();
 }
 function setCleanLang(l){cleanLang=l;}
+
+function toggleDarkMode(){
+  var dark=document.body.classList.toggle('dark');
+  localStorage.setItem('sf_dark',dark?'1':'0');
+  var icon=document.getElementById('darkModeIcon');
+  var lbl=document.getElementById('darkModeLabel');
+  if(dark){
+    icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+    if(lbl)lbl.textContent='Light mode';
+  } else {
+    icon.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    if(lbl)lbl.textContent='Dark mode';
+  }
+}
+(function(){
+  if(localStorage.getItem('sf_dark')==='1'){
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded',function(){
+      var icon=document.getElementById('darkModeIcon');
+      var lbl=document.getElementById('darkModeLabel');
+      if(icon)icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+      if(lbl)lbl.textContent='Light mode';
+    });
+  }
+})();
 
 function applyTranslations(){
   // Sidebar labels
