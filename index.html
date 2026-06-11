@@ -323,11 +323,12 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
 .res-list-actions{border-top:1px solid var(--border);padding:10px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#fafafa}
 .res-month-sep{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:18px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px}
 
-@media(max-width:900px){
-  :root{--sidebar-w:70px}
+@media(max-width:680px){
+  :root{--sidebar-w:64px}
   .sb-logo-sub,.sb-action>span,.sb-section{display:none}
   .sb-logo{padding:18px 15px;justify-content:center}
   .sb-item{justify-content:center;padding:12px 0}
+  .sb-item span:not(.sb-icon-wrap):not(.badge){display:none}
   .sb-item .badge{position:absolute;top:6px;right:6px;font-size:8px;padding:1px 5px}
   .sb-bottom{padding:8px 8px 20px}
   .sb-action{justify-content:center;padding:10px 0}
