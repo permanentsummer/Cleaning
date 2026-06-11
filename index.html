@@ -888,15 +888,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
   </div>
 </div>
 <!-- MODAL: Import Log -->
-<div class="overlay" id="importLogOverlay">
-  <div class="modal" style="max-height:85vh;overflow-y:auto">
-    <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Import Report</h3>
-    <p id="importLogSummary" style="font-size:12px;color:var(--muted);margin-bottom:14px"></p>
-    <div id="importLogBody" style="font-size:12px;line-height:1.9;font-family:monospace;background:#f8fafc;border-radius:8px;padding:12px;max-height:400px;overflow-y:auto;white-space:pre-wrap"></div>
-    <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
-  </div>
-</div>
+
 <!-- MODAL: Edit Booking -->
 <div class="overlay" id="editBookingOverlay">
   <div class="modal">
@@ -5310,7 +5302,7 @@ var listSourceFilter='all'; // 'all' | 'direct' | 'airbnb' | 'booking'
 var listPropFilter='all';   // 'all' | apt.id
 var listPayFilter='all';    // 'all' | 'paid' | 'partial' | 'unpaid'
 var listSearch='';
-var listSortAsc=true; // true=oldest first, false=newest first
+var listSortAsc=false; // true=oldest first, false=newest first
 
 function toggleFilterMenu(){
   var m=document.getElementById('filterMenu');
@@ -5660,26 +5652,8 @@ function parsePdfPasteRaw(raw){
 
 
 // ── CLEANING SETTINGS ────────────────────────────────────────────────────────
-function loadCleaningSettings(){
-  var cfg=workspace&&workspace.settings||{};
-  var nameEl=document.getElementById('cleanerName');
-  var phoneEl=document.getElementById('cleanerPhone');
-  if(nameEl)nameEl.value=cfg.cleanerName||'';
-  if(phoneEl)phoneEl.value=cfg.cleanerPhone||'';
-}
-function saveCleaningSettings(){
-  var name=(document.getElementById('cleanerName')||{}).value||'';
-  var phone=(document.getElementById('cleanerPhone')||{}).value||'';
-  sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
-    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
-    fresh.cleanerName=name;
-    fresh.cleanerPhone=phone;
-    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
-  }).then(function(){
-    if(workspace.settings){workspace.settings.cleanerName=name;workspace.settings.cleanerPhone=phone;}
-    toast('Cleaning settings saved','ok');
-  }).catch(function(e){toast('Error: '+e.message,'err');});
-}
+// loadCleaningSettings defined below
+// saveCleaningSettings defined below
 
 // ── SETTINGS TAB SWITCHER ─────────────────────────────────────────────────────
 function showSettingsTab(tab){
