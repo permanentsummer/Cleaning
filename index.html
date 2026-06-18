@@ -418,6 +418,45 @@ body.dark [style*="color:#15803d"],body.dark [style*="color:#166534"]{color:#34d
 body.dark [style*="color:#dc2626"],body.dark [style*="color:#991b1b"],body.dark [style*="color:#9f1239"]{color:#f87171!important}
 body.dark [style*="color:#854d0e"]{color:#fbbf24!important}
 body.dark [style*="color:#64748b"]{color:#7a9bb5!important}
+/* Catch-all: any component still using hardcoded white/light backgrounds */
+body.dark .card,body.dark .widget-step,body.dark .pay-card,body.dark .req-card,
+body.dark .res-list-card,body.dark .prop-card,body.dark .modal,body.dark .cal-toolbar,
+body.dark .cal-head,body.dark .cal-row-label,body.dark .cal-popup,body.dark .res-topbar,
+body.dark .stat-card,body.dark .auth-box{background:var(--card-bg);border-color:var(--border)}
+/* Buttons that were hardcoded white */
+body.dark .btn-outline{background:#1a2636;color:#d6e8f7;border-color:#253547}
+body.dark .btn-outline:hover{background:#22324a;border-color:#34495f}
+body.dark .fbtn,body.dark .cal-fb{background:#1a2636;border-color:#253547;color:#7a9bb5}
+body.dark .cal-nav-btn,body.dark .cal-today-btn{background:#1a2636;border-color:#253547;color:#b0cce0}
+body.dark .vtab.on{background:#253547;color:#d6e8f7;box-shadow:none}
+/* Inputs */
+body.dark .fg input,body.dark .fg select,body.dark .fg textarea{background:#12202e;border-color:#253547;color:#d6e8f7}
+/* Card footers that used #fafafa */
+body.dark .req-actions,body.dark .pay-actions,body.dark .res-list-actions{background:#12202e;border-color:#253547}
+/* Calendar weekend/today columns */
+body.dark .cal-day-cell.weekend{background:#0a1622}
+body.dark .cal-day-cell.today-col{background:#2a2308}
+body.dark .cal-day-cell{border-color:#253547}
+/* Toasts */
+body.dark #toast.ok,body.dark #toast.err,body.dark #toast.warn{background:#1a2636}
+/* Settings card borders (inline 2px border var(--border) already adapts via var, but bg needs it) */
+body.dark .req-card.declined{opacity:.75}
+/* Universal catch: any inline white background not yet handled by class rules */
+body.dark [style*="background:#fff"]{background:var(--card-bg)!important}
+body.dark [style*="background: #fff"]{background:var(--card-bg)!important}
+body.dark [style*="background:#fafafa"]{background:#12202e!important}
+body.dark [style*="background:#fffbeb"]{background:#2a2308!important}
+body.dark [style*="background:#fff7ed"]{background:#2a2308!important}
+/* Inline text colors used on those white surfaces */
+body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
+body.dark [style*="color:#92400e"]{color:#fbbf24!important}
+body.dark [style*="color:var(--primary)"]{color:#d6e8f7!important}
+/* Borders that were tuned for white backgrounds */
+body.dark [style*="border:1px solid #e2e8f0"]{border-color:#253547!important}
+body.dark [style*="border:2px solid #bae6fd"]{border-color:#1a3a55!important}
+body.dark [style*="border:1px solid #bfdbfe"]{border-color:#1a3a55!important}
+body.dark [style*="border:1px solid #fcd34d"]{border-color:#4a3a0a!important}
+
 /* Inline background chips */
 body.dark [style*="background:#fee2e2"]{background:#2e1215!important;color:#f87171!important}
 body.dark [style*="background:#dbeafe"]{background:#0a1d2e!important;color:#7ab8d6!important}
