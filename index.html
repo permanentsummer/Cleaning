@@ -798,10 +798,7 @@ span[id*=Slider]::before{content:'';position:absolute;height:18px;width:18px;lef
         <div class="cal-grid" id="calGrid"></div>
       </div>
       <div class="cal-legend" id="calLegend">
-        <div class="cal-legend-item"><div class="cal-legend-dot src-airbnb"></div>Airbnb</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot src-booking"></div>Booking.com</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot src-direct"></div>Direct</div>
-        <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#94a3b8"></div>Blocked</div>
+        <!-- filled dynamically by drawCal() to show each property's color -->
       </div>
     </div>
     <!-- List view -->
@@ -4573,7 +4570,6 @@ function drawCal(){
   });
 
   var filtered=calAptFilter==='all'?calBookings:calBookings.filter(function(b){return b.apt===calAptFilter;});
-  var srcBg={airbnb:'#e8485a',booking:'#003580',direct:'#059669'};
 
   // Build weeks
   var weeks=[];var week=[];
@@ -4649,11 +4645,13 @@ function drawCal(){
           var atEnd=di===6||!dates[di+1]||bk.checkout<=dates[di+1];
           var dur=Math.round((new Date(bk.checkout+'T12:00:00')-new Date(bk.checkin+'T12:00:00'))/86400000);
           var pc=dur<=1?'mx':(atStart&&atEnd?'mx':atStart?'ms':atEnd?'me':'mm');
-          var bg=srcBg[bk.source||'direct']||'#059669';
+          var bg=aptById(bk.apt).color||'#64748b';
+          var srcDotColor=bk.source==='airbnb'?'#e8485a':bk.source==='booking'?'#0a2540':'rgba(255,255,255,.6)';
+          var srcDot=atStart?'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+srcDotColor+';margin-right:4px;flex-shrink:0;vertical-align:middle"></span>':'';
           var gn=cleanNotesDisplay(bk.notes||'').trim()||'Guest';
           if(gn.indexOf('\u2013')!==-1)gn=gn.split('\u2013')[1].trim();
           var lbl=atStart?(gn.length>16?gn.slice(0,15)+'\u2026':gn):'';
-          html+='<span class="mbar '+pc+'" style="background:'+bg+'" data-id="'+bk.id+'\" title="'+esc(gn)+'">'+esc(lbl)+'</span>';
+          html+='<span class="mbar '+pc+'" style="background:'+bg+'" data-id="'+bk.id+'\" title="'+esc(gn)+'">'+srcDot+esc(lbl)+'</span>';
         }
       }
       html+='</td>';
@@ -4672,6 +4670,20 @@ function drawCal(){
       if(bk)openEditBooking(bk.id,bk._origin||'summerclean');
     });
   });
+
+  // ── Legend: property colors + source dot key ──────────────────────────────
+  var legendEl=document.getElementById('calLegend');
+  if(legendEl){
+    var legendHtml='';
+    properties.forEach(function(p){
+      legendHtml+='<div class="cal-legend-item"><div class="cal-legend-dot" style="background:'+(p.color||'#64748b')+'"></div>'+esc(p.name)+'</div>';
+    });
+    legendHtml+='<div class="cal-legend-item" style="margin-left:10px;padding-left:10px;border-left:1px solid var(--border)">'+
+      '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#e8485a;display:inline-block"></span>Airbnb</span></div>'+
+      '<div class="cal-legend-item"><span style="display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#0a2540;display:inline-block"></span>Booking.com</span></div>'+
+      '<div class="cal-legend-item"><span style="display:inline-flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;border:1px solid #fff"></span>Direct</span></div>';
+    legendEl.innerHTML=legendHtml;
+  }
 }
 
 function renderBarForDay(bookings,ds,aptColor){
