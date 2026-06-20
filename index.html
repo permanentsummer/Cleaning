@@ -4953,9 +4953,14 @@ function parsePdfPasteRaw(raw){
   raw=raw.replace(/\u00a0/g,' ');
 
   // ── Date parser (French/English month names) ──────────────────────────────
-  var MONTHS={janv:1,'fév':2,fevr:2,mars:3,avr:4,mai:5,juin:6,
+  var MONTHS={janv:1,fev:2,fevr:2,mars:3,avr:4,mai:5,juin:6,
     juil:7,aout:8,sept:9,oct:10,nov:11,dec:12,
     jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9};
+  function stripAccents(s){
+    // Normalize accented chars (août, déc, février...) to plain ASCII
+    // so month lookups work regardless of how the PDF encoded accents.
+    return s.normalize?s.normalize('NFD').replace(/[\u0300-\u036f]/g,''):s;
+  }
   function parseTextDate(s){
     if(!s)return'';
     // Remove day-of-week abbreviations (mar., sam., lun. etc.)
@@ -4964,8 +4969,9 @@ function parsePdfPasteRaw(raw){
     var iso=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[0];
     var m=s.match(/(\d{1,2})\s+([a-z\u00e0-\u00ff]{2,6})\s+(\d{4})/);
     if(m){
-      var mkey=m[2].slice(0,4);
-      var mo=MONTHS[mkey]||MONTHS[m[2].slice(0,3)]||MONTHS[m[2].slice(0,5)];
+      var monthWord=stripAccents(m[2]);
+      var mkey=monthWord.slice(0,4);
+      var mo=MONTHS[mkey]||MONTHS[monthWord.slice(0,3)]||MONTHS[monthWord.slice(0,5)];
       if(mo)return m[3]+'-'+String(mo).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
     }
     return'';
