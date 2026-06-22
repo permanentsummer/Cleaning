@@ -446,6 +446,9 @@ body.dark .req-card.declined{opacity:.75}
 body.dark [style*="background:#fff"]{background:var(--card-bg)!important}
 body.dark [style*="background: #fff"]{background:var(--card-bg)!important}
 body.dark [style*="background:#fafafa"]{background:#12202e!important}
+body.dark [style*="background:#f8fafc"]{background:#0f1c28!important}
+body.dark [style*="background:#f0fdf4"]{background:#0a2218!important}
+body.dark [style*="background:#f1f5f9"]{background:#12202e!important}
 body.dark [style*="background:#fffbeb"]{background:#2a2308!important}
 body.dark [style*="background:#fff7ed"]{background:#2a2308!important}
 /* Inline text colors used on those white surfaces */
@@ -457,6 +460,17 @@ body.dark [style*="border:1px solid #e2e8f0"]{border-color:#253547!important}
 body.dark [style*="border:2px solid #bae6fd"]{border-color:#1a3a55!important}
 body.dark [style*="border:1px solid #bfdbfe"]{border-color:#1a3a55!important}
 body.dark [style*="border:1px solid #fcd34d"]{border-color:#4a3a0a!important}
+body.dark [style*="border:1px solid #bbf7d0"]{border-color:#1a3a28!important}
+body.dark [style*="border:1px solid #a7f3d0"]{border-color:#1a3a28!important}
+/* Cleaning card action row + date strip */
+body.dark .clean-card [style*="background"]{background:#0f1c28!important}
+/* Ensure cleaning card itself is dark */
+body.dark .clean-card{background:var(--card-bg)!important;border-color:#253547!important}
+/* Finance expense table */
+body.dark .exp-row input,body.dark .exp-row select{background:#12202e!important;color:#d6e8f7!important;border-color:#253547!important}
+/* Reservations: Paid via platform green strip text stays readable */
+body.dark [style*="color:#15803d"]{color:#34d399!important}
+body.dark [style*="color:#065f46"]{color:#34d399!important}
 
 /* Inline background chips */
 body.dark [style*="background:#fee2e2"]{background:#2e1215!important;color:#f87171!important}
@@ -4050,6 +4064,7 @@ function mkCleanCard(b,tod){
   var isBackToBack=b.checkout&&allForApt.some(function(x){return(x.apt===b.apt)&&x.checkin===b.checkout&&x.id!==b.id;});
 
   var card=document.createElement('div');
+  card.className='clean-card';
   var isPaid=b.paid==='paid'||b.paid==='deposit';
   var isFullPaid=b.paid==='paid';
   var borderCol=isToday?'var(--yellow)':(b.cleaned==='yes'?'var(--green)':'var(--border)');
