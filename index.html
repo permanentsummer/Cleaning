@@ -5294,10 +5294,17 @@ function drawCal(){
     var wkStart=dates.find(function(x){return x;});
     var wkEnd=dates.filter(function(x){return x;}).slice(-1)[0];
 
-    // Bookings active this week
+    // Bookings active this week — sorted by property order first, then checkin date
+    // This ensures Property 1 always renders above Property 2 regardless of which starts first
     var wkBks=filtered.filter(function(b){
       return b.checkin&&b.checkout&&b.checkin<=(wkEnd||'')&&b.checkout>(wkStart||'');
-    }).sort(function(a,b){return a.checkin.localeCompare(b.checkin);});
+    }).sort(function(a,b){
+      var ai=properties.findIndex(function(p){return p.id===a.apt||p.name===a.apt||p.short===a.apt;});
+      var bi=properties.findIndex(function(p){return p.id===b.apt||p.name===b.apt||p.short===b.apt;});
+      if(ai===-1)ai=999;if(bi===-1)bi=999;
+      if(ai!==bi)return ai-bi;
+      return a.checkin.localeCompare(b.checkin);
+    });
 
     // Lane assignment (avoid overlap)
     var lanes=[];
