@@ -30,6 +30,7 @@ body.dark{
   --blue:#7ab8d6;
   --green-bg:#0d2e20;--green-dark:#34d399;
   --red-bg:#2e1215;--blue-bg:#0d1f30;--yellow-bg:#2a200a;
+  --mcal-today:#2a2308;--mcal-wknd:#131f2d;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
@@ -3025,7 +3026,7 @@ function renderRevenueAnalytics(){
   function fmt(n){return'€'+Math.round(n).toLocaleString('en-GB');}
   function fmtPct(n){return n.toFixed(1)+'%';}
   function kpiCard(label,val,sub,color){
-    return'<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
+    return'<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow)">'+
       '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">'+label+'</div>'+
       '<div style="font-size:22px;font-weight:800;color:'+(color||'var(--primary)')+';letter-spacing:-.5px">'+val+'</div>'+
       (sub?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+sub+'</div>':'')+
@@ -3091,12 +3092,12 @@ function renderRevenueAnalytics(){
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
       kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
       kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),(yBks.length+yDirect.length)+' stays (from import or default €50)','#7c3aed')+
-      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' — <a href="#" onclick="openExpensesManager(event)" style="color:var(--blue);text-decoration:none">Edit</a>','#f59e0b')+
+      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+'','#f59e0b')+
       kpiCard(CT('pandl'),fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
     // ── Charts ──
     '<div style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+      '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'+
           '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">'+(isAllTime?'Revenue — All time':'Monthly Revenue — '+_finYear)+'</div>'+
           '<div style="font-size:11px;color:var(--muted)">Gross (grey) vs Net after commissions (coloured)</div></div>'+
@@ -3118,7 +3119,7 @@ function renderRevenueAnalytics(){
           }).join('')+
         '</div>'+
       '</div>'+
-      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
+      '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
         '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Platform Breakdown</div>'+
         finPlatCard('Airbnb',byPlat.airbnb,totalBks,'#e8485a')+
         finPlatCard('Booking.com',byPlat.booking,totalBks,'#003580')+
@@ -3129,7 +3130,7 @@ function renderRevenueAnalytics(){
         '</div>'+
       '</div>'+
     '</div>'+
-    '<div id="expensesManagerPanel" style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);display:none">'+
+    '<div id="expensesManagerPanel" style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
         '<div>'+
           '<div style="font-size:14px;font-weight:700;color:var(--primary)">Recurring Expenses</div>'+
@@ -3318,7 +3319,7 @@ function saveExpenses(){
 
 
 function revKpi(label,val,color,icon){
-  return '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)">'+
+  return '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:18px;box-shadow:var(--shadow)">'+
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
       '<div style="width:36px;height:36px;border-radius:10px;background:'+color+'18;display:flex;align-items:center;justify-content:center;color:'+color+'">'+icon+'</div>'+
       '<div style="font-size:11px;font-weight:600;color:var(--muted)">'+label+'</div>'+
@@ -3849,36 +3850,48 @@ function setCleanLang(l){cleanLang=l;}
 
 function applyDarkStyles(){
   var dark=document.body.classList.contains('dark');
-  // Map of light → dark replacements for JS-generated inline background colors
+  if(!dark)return;
+  // Light backgrounds → dark (ONLY neutral/white backgrounds, NOT colored buttons)
   var bgMap={
-    'rgb(255, 255, 255)':dark?'#0f1c28':'#fff',
-    'rgb(248, 250, 252)':dark?'#0f1c28':'#f8fafc',
-    'rgb(240, 253, 244)':dark?'#0a2218':'#f0fdf4',
-    'rgb(250, 250, 250)':dark?'#12202e':'#fafafa',
-    'rgb(241, 245, 249)':dark?'#12202e':'#f1f5f9',
-    'rgb(255, 251, 235)':dark?'#2a2308':'#fffbeb',
-    'rgb(255, 247, 237)':dark?'#2a2308':'#fff7ed',
-    'rgb(253, 232, 233)':dark?'#2e1215':'#fde8e9',
-    'rgb(209, 250, 229)':dark?'#0a2218':'#d1fae5',
-    'rgb(254, 232, 233)':dark?'#2e1215':'#fee2e2'
+    'rgb(255, 255, 255)':'#0f1c28',
+    'rgb(248, 250, 252)':'#0f1c28',
+    'rgb(240, 253, 244)':'#0a2218',
+    'rgb(250, 250, 250)':'#12202e',
+    'rgb(241, 245, 249)':'#12202e',
+    'rgb(255, 251, 235)':'#2a2308',
+    'rgb(255, 247, 237)':'#2a2308',
+    'rgb(253, 232, 233)':'#2e1215'
   };
-  var colorMap={
-    'rgb(21, 128, 61)':dark?'#34d399':'#15803d',
-    'rgb(6, 95, 70)':dark?'#34d399':'#065f46',
-    'rgb(153, 27, 27)':dark?'#f87171':'#991b1b',
-    'rgb(220, 38, 38)':dark?'#f87171':'#dc2626',
-    'rgb(17, 64, 97)':dark?'#d6e8f7':'#114061',
-    'rgb(30, 64, 175)':dark?'#7ab8d6':'#1e40af',
-    'rgb(146, 64, 14)':dark?'#fbbf24':'#92400e',
-    'rgb(29, 78, 216)':dark?'#7ab8d6':'#1d4ed8'
-  };
+  // Button/badge backgrounds to PRESERVE (colored elements)
+  var preserveBg=['rgb(37, 211, 102)','rgb(234, 72, 90)','rgb(0, 53, 128)',
+    'rgb(5, 150, 105)','rgb(21, 128, 61)','rgb(6, 95, 70)','rgb(249, 195, 50)',
+    'rgb(17, 64, 97)','rgb(220, 38, 38)','rgb(209, 250, 229)','rgb(254, 226, 226)',
+    'rgb(254, 232, 233)','rgb(255, 251, 235)'];
   document.querySelectorAll('[style]').forEach(function(el){
     var bg=el.style.backgroundColor;
+    // Skip if it's a colored/intentional background
+    if(bg&&bgMap[bg]&&preserveBg.indexOf(bg)===-1){
+      el.style.backgroundColor=bgMap[bg];
+    }
+    // Fix dark text colors on now-dark backgrounds
     var co=el.style.color;
-    if(bg&&bgMap[bg])el.style.backgroundColor=bgMap[bg];
-    if(co&&colorMap[co])el.style.color=colorMap[co];
+    if(co==='rgb(17, 64, 97)')el.style.color='#d6e8f7';  // --primary
+    if(co==='rgb(51, 65, 85)')el.style.color='#d6e8f7';  // #334155
+    if(co==='rgb(30, 41, 59)')el.style.color='#d6e8f7';  // #1e293b
   });
+  // Also fix the mcal style element if present
+  var mcalStyle=document.getElementById('mcal-style');
+  if(mcalStyle&&!mcalStyle.hasAttribute('data-dark')){
+    mcalStyle.setAttribute('data-dark','1');
+    mcalStyle.textContent+=
+      'body.dark .mcal td{background:#0f1923!important;border-color:#253547!important}'+
+      'body.dark .mcal th{color:#7a9bb5!important;border-color:#253547!important}'+
+      'body.dark .mcal td.mtoday{background:#2a2308!important}'+
+      'body.dark .mcal td.mwknd{background:#131f2d!important}'+
+      'body.dark .mday-num{color:#d6e8f7!important}';
+  }
 }
+
 
 function toggleDarkMode(){
   var dark=document.body.classList.toggle('dark');
@@ -5321,10 +5334,10 @@ function drawCal(){
   if(!styleEl){styleEl=document.createElement('style');styleEl.id='mcal-style';document.head.appendChild(styleEl);}
   styleEl.textContent=
     '.mcal{width:100%;border-collapse:collapse;table-layout:fixed}'+
-    '.mcal th{padding:10px 4px;font-size:11px;font-weight:700;color:#64748b;text-align:center;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:.5px}'+
-    '.mcal td{vertical-align:top;border:1px solid #f1f5f9;padding:6px 4px 4px;height:90px;width:14.28%;position:relative;cursor:default;overflow:hidden}'+
-    '.mcal td.mtoday{background:#fff7ed}.mcal td.mwknd{background:#fafbfc}'+
-    '.mday-num{font-size:13px;font-weight:700;color:#334155;margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%}'+
+    '.mcal th{padding:10px 4px;font-size:11px;font-weight:700;color:var(--muted,#64748b);text-align:center;border-bottom:2px solid var(--border,#e2e8f0);text-transform:uppercase;letter-spacing:.5px}'+
+    '.mcal td{vertical-align:top;border:1px solid var(--border,#f1f5f9);padding:6px 4px 4px;height:90px;width:14.28%;position:relative;cursor:default;overflow:hidden;background:var(--bg,#fff)}'+
+    '.mcal td.mtoday{background:var(--mcal-today,#fff7ed)}.mcal td.mwknd{background:var(--mcal-wknd,#fafbfc)}'+
+    '.mday-num{font-size:13px;font-weight:700;color:var(--text,#334155);margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%}'+
     '.mcal td.mtoday .mday-num{background:#ea580c;color:#fff}'+
     '.mbar{display:block;height:24px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;line-height:24px;padding:0 8px;margin-bottom:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;transition:filter .12s,transform .1s;box-shadow:0 1px 4px rgba(0,0,0,.15)}'+
     '.mbar:hover{filter:brightness(1.1);transform:translateY(-1px)}'+
