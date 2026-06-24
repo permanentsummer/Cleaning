@@ -26,7 +26,7 @@
 body.dark{
   --bg:#0f1923;--card-bg:#1a2636;--border:#253547;--muted:#7a9bb5;--text:#d6e8f7;
   --shadow:0 1px 4px rgba(0,0,0,.35);--shadow-md:0 4px 20px rgba(0,0,0,.5);
-  --primary:#1a3a55;--primary-light:#234d6e;
+  --primary:#7ab8d6;--primary-light:#9dcce8;
   --blue:#7ab8d6;
   --green-bg:#0d2e20;--green-dark:#34d399;
   --red-bg:#2e1215;--blue-bg:#0d1f30;--yellow-bg:#2a200a;
@@ -493,7 +493,34 @@ body.dark [style*="color:#065f46"]{color:#34d399!important}
 body.dark [style*="color:#991b1b"]{color:#f87171!important}
 body.dark [style*="border-bottom:1px solid #f1f5f9"]{border-bottom-color:#253547!important}
 
-
+/* ── Calendar month grid (mcal) dark mode — STATIC rules always win ───────── */
+body.dark #mcal-style ~ * .mcal td,
+body.dark .mcal td{background:#0f1923!important;border-color:#253547!important;color:#d6e8f7!important}
+body.dark .mcal th{color:#7a9bb5!important;border-color:#253547!important;background:#0f1923!important}
+body.dark .mcal td.mtoday{background:#2a2308!important}
+body.dark .mcal td.mwknd{background:#131f2d!important}
+body.dark .mcal{border-color:#253547!important}
+body.dark .mday-num{color:#d6e8f7!important}
+body.dark .mcal td.mtoday .mday-num{background:#ea580c!important;color:#fff!important}
+/* Finance selects */
+body.dark select{background:#1a2636!important;color:#d6e8f7!important;border-color:#253547!important}
+/* Finance cards with inline background */
+body.dark [style*="background:var(--card-bg"]{background:#1a2636!important}
+/* Text that is invisible: dark blue on dark bg */
+body.dark [style*="color:var(--primary)"]{color:#7ab8d6!important}
+body.dark [style*="color:#114061"]{color:#7ab8d6!important}
+body.dark [style*="color:#1e293b"]{color:#d6e8f7!important}
+body.dark [style*="color:#334155"]{color:#d6e8f7!important}
+body.dark [style*="color:#475569"]{color:#b0cce0!important}
+body.dark [style*="color:#374151"]{color:#d6e8f7!important}
+body.dark [style*="color:#1f2937"]{color:#d6e8f7!important}
+body.dark [style*="color:#111827"]{color:#d6e8f7!important}
+body.dark [style*="color:#6b7280"]{color:#7a9bb5!important}
+/* Expense table inputs */
+body.dark .exp-row input,body.dark .exp-row select{background:#12202e!important;color:#d6e8f7!important;border-color:#253547!important}
+/* Finance platform breakdown text */
+body.dark [style*="color:#0f172a"]{color:#d6e8f7!important}
+body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
 .ov-greeting{
   background:linear-gradient(135deg,var(--primary) 0%,#243047 100%);
@@ -3879,17 +3906,7 @@ function applyDarkStyles(){
     if(co==='rgb(51, 65, 85)')el.style.color='#d6e8f7';  // #334155
     if(co==='rgb(30, 41, 59)')el.style.color='#d6e8f7';  // #1e293b
   });
-  // Also fix the mcal style element if present
-  var mcalStyle=document.getElementById('mcal-style');
-  if(mcalStyle&&!mcalStyle.hasAttribute('data-dark')){
-    mcalStyle.setAttribute('data-dark','1');
-    mcalStyle.textContent+=
-      'body.dark .mcal td{background:#0f1923!important;border-color:#253547!important}'+
-      'body.dark .mcal th{color:#7a9bb5!important;border-color:#253547!important}'+
-      'body.dark .mcal td.mtoday{background:#2a2308!important}'+
-      'body.dark .mcal td.mwknd{background:#131f2d!important}'+
-      'body.dark .mday-num{color:#d6e8f7!important}';
-  }
+  // mcal dark mode handled by static CSS rules in <style> tag
 }
 
 
@@ -5423,6 +5440,12 @@ function drawCal(){
       if(bk)openEditBooking(bk.id,bk._origin||'summerclean');
     });
   });
+  // Force dark mode on calendar cells after every render
+  if(document.body.classList.contains('dark')){setTimeout(function(){
+    document.querySelectorAll('.mcal td').forEach(function(td){
+      td.style.backgroundColor='';// clear any JS-set bg so CSS wins
+    });
+  },10);}
 }
 
 function renderBarForDay(bookings,ds,aptColor){
