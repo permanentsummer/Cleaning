@@ -754,6 +754,10 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <button class="fbtn" id="dLang-pt" onclick="setDashLang('pt')" style="flex:1;font-size:11px;padding:5px 0">PT</button>
         <button class="fbtn" id="dLang-fr" onclick="setDashLang('fr')" style="flex:1;font-size:11px;padding:5px 0">FR</button>
       </div>
+      <button class="sb-action" id="notifBtn" onclick="sfToggleNotifications()" style="margin-bottom:4px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notifLabel">Notifications</span>
+      </button>
       <button class="sb-action" id="darkModeBtn" onclick="toggleDarkMode()" style="margin-bottom:4px">
         <svg id="darkModeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <span id="darkModeLabel">Dark mode</span>
@@ -1743,6 +1747,8 @@ function loadWorkspace(){
       applyTranslations();
       // Start on Overview tab
       switchTab('home');
+      // Start notification system
+      sfNotifyInit();
     });
   }).catch(function(e){document.getElementById('lErr').textContent='Error: '+e.message;});
 }
@@ -6485,6 +6491,186 @@ function fmtAgo(d){if(!d)return'';var diff=Date.now()-new Date(d).getTime();var 
 function statusLabel(s){return{pending:'⏳ Pending',confirmed:'✅ Confirmed',declined:'❌ Declined',cancelled:'🚫 Cancelled'}[s]||s;}
 function mailGuest(email){window.open('mailto:'+email);}
 function whatsApp(phone){var p=phone.replace(/\D/g,'');if(!p.startsWith('351')&&!p.startsWith('+'))p='351'+p;window.open('https://wa.me/'+p);}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── SUMMERFLOW NOTIFICATION SYSTEM (Option A — Browser + Realtime) ─────────
+// ═══════════════════════════════════════════════════════════════════════════
+var _sfNotifyReady=false;
+var _sfRealtimeWs=null;
+var _sfNotifiedKeys={};  // prevent duplicate notifications
+
+function sfNotifyInit(){
+  // Load previously shown notification keys from localStorage
+  try{var k=localStorage.getItem('sf_notif_keys');if(k)_sfNotifiedKeys=JSON.parse(k);}catch(e){}
+  // Request permission then run daily check + realtime
+  sfRequestPermission(function(granted){
+    if(granted){
+      _sfNotifyReady=true;
+      sfDailyCheck();            // check today's events immediately
+      sfStartRealtime();         // listen for new bookings live
+    }
+  });
+}
+
+// ── Permission ────────────────────────────────────────────────────────────
+function sfRequestPermission(cb){
+  if(!('Notification' in window)){cb(false);return;}
+  if(Notification.permission==='granted'){cb(true);return;}
+  if(Notification.permission==='denied'){cb(false);return;}
+  // First time — ask
+  Notification.requestPermission().then(function(result){cb(result==='granted');});
+}
+
+// ── Send a notification ───────────────────────────────────────────────────
+function sfSend(key,title,body,icon,onClick){
+  if(!_sfNotifyReady||Notification.permission!=='granted')return;
+  if(_sfNotifiedKeys[key])return; // already shown today
+  _sfNotifiedKeys[key]=Date.now();
+  try{localStorage.setItem('sf_notif_keys',JSON.stringify(_sfNotifiedKeys));}catch(e){}
+  var n=new Notification(title,{
+    body:body,
+    icon:icon||'https://summerflow.permanentsummer.co/icon-192.png',
+    badge:'https://summerflow.permanentsummer.co/icon-192.png',
+    tag:key,
+    renotify:false,
+    requireInteraction:false
+  });
+  n.onclick=function(){window.focus();if(onClick)onClick();n.close();};
+}
+
+// ── Daily check: today's events ───────────────────────────────────────────
+function sfDailyCheck(){
+  var tod=new Date().toISOString().slice(0,10);
+  var todKey='sf_day_'+tod; // reset shown keys each new day
+  var lastDay=localStorage.getItem('sf_last_notify_day');
+  if(lastDay!==tod){
+    // New day — clear yesterday's notification keys
+    _sfNotifiedKeys={};
+    try{localStorage.setItem('sf_notif_keys','{}');
+        localStorage.setItem('sf_last_notify_day',tod);}catch(e){}
+  }
+  // Wait for data to be loaded
+  setTimeout(function(){
+    var bks=allBookings||[];
+    var apts=properties||[];
+    function aptName(id){var p=apts.find(function(a){return a.id===id||a.name===id;});return p?p.name:id;}
+
+    // 1. Check-outs today → cleaning needed
+    var checkoutsToday=bks.filter(function(b){return b.checkout===tod&&b.cleaned!=='yes';});
+    checkoutsToday.forEach(function(b){
+      var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
+      sfSend('clean_'+b.id+'_'+tod,
+        '🧹 Cleaning needed today',
+        (nm||'Guest')+' checks out · '+aptName(b.apt),
+        null,
+        function(){switchTab('cleaning');}
+      );
+    });
+
+    // 2. Check-ins today
+    var checkinsToday=bks.filter(function(b){return b.checkin===tod;});
+    checkinsToday.forEach(function(b){
+      var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
+      sfSend('checkin_'+b.id+'_'+tod,
+        '🔑 Check-in today',
+        (nm||'Guest')+' · '+aptName(b.apt),
+        null,
+        function(){switchTab('calendar');}
+      );
+    });
+
+    // 3. Unpaid direct bookings arriving soon (within 3 days)
+    var in3=new Date();in3.setDate(in3.getDate()+3);var in3s=in3.toISOString().slice(0,10);
+    bks.filter(function(b){
+      return b.checkin>=tod&&b.checkin<=in3s&&b.paid!=='paid'&&b.source==='direct';
+    }).forEach(function(b){
+      var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
+      sfSend('unpaid_'+b.id+'_'+tod,
+        '💶 Unpaid booking arriving soon',
+        (nm||'Guest')+' · '+aptName(b.apt)+' · '+fmtShort(b.checkin),
+        null,
+        function(){switchTab('calendar');}
+      );
+    });
+
+  },2500); // wait 2.5s for allBookings to load
+}
+
+// ── Supabase Realtime: new booking requests ───────────────────────────────
+function sfStartRealtime(){
+  if(!workspace||!workspace.id)return;
+  if(_sfRealtimeWs)return; // already connected
+  // Supabase Realtime WebSocket URL
+  var wsBase=SB_URL.replace('https://','wss://').replace('http://','ws://');
+  var wsUrl=wsBase+'/realtime/v1/websocket?apikey='+SB_KEY+'&vsn=1.0.0';
+  try{
+    var ws=new WebSocket(wsUrl);
+    _sfRealtimeWs=ws;
+    ws.onopen=function(){
+      // Join channel to listen for INSERT on direct_requests
+      ws.send(JSON.stringify({
+        topic:'realtime:public:direct_requests',
+        event:'phx_join',
+        payload:{},ref:'1'
+      }));
+    };
+    ws.onmessage=function(ev){
+      try{
+        var msg=JSON.parse(ev.data);
+        if(msg.event==='INSERT'||
+           (msg.payload&&msg.payload.type==='INSERT')){
+          var row=msg.payload&&msg.payload.record;
+          if(!row)return;
+          // Only notify about our workspace
+          if(row.workspace_id&&row.workspace_id!==workspace.id)return;
+          var guestName=row.guest_name||'A guest';
+          var aptId=row.apt_id||row.apt_name||'';
+          var apts2=properties||[];
+          var apt2=apts2.find(function(a){return a.id===aptId||a.name===aptId;});
+          var aptLabel=apt2?apt2.name:aptId;
+          sfSend('new_req_'+row.id,
+            '📬 New booking request',
+            guestName+(aptLabel?' · '+aptLabel:'')+
+              (row.checkin?' · '+fmtShort(row.checkin):''),
+            null,
+            function(){switchTab('requests');}
+          );
+        }
+      }catch(e){}
+    };
+    ws.onerror=function(){_sfRealtimeWs=null;};
+    ws.onclose=function(){
+      _sfRealtimeWs=null;
+      // Reconnect after 30s
+      setTimeout(sfStartRealtime,30000);
+    };
+    // Heartbeat every 25s
+    setInterval(function(){
+      if(ws.readyState===WebSocket.OPEN){
+        ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));
+      }
+    },25000);
+  }catch(e){}
+}
+
+// ── Notification settings toggle in sidebar ───────────────────────────────
+function sfToggleNotifications(){
+  if(!('Notification' in window)){alert('Your browser does not support notifications.');return;}
+  if(Notification.permission==='granted'){
+    // Already granted — show status
+    toast('Notifications are ON ✅','ok');
+    sfDailyCheck();
+  } else if(Notification.permission==='denied'){
+    alert('Notifications are blocked. Please allow them in your browser/phone settings, then reload the app.');
+  } else {
+    sfRequestPermission(function(granted){
+      if(granted){_sfNotifyReady=true;sfDailyCheck();sfStartRealtime();toast('Notifications enabled ✅','ok');}
+      else{toast('Permission denied','err');}
+    });
+  }
+}
+// ── End Notification System ───────────────────────────────────────────────
+
 </script>
 </div>
 </body>
