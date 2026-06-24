@@ -1845,6 +1845,7 @@ function switchTab(tab){
   else if(tab==='payments')renderRevenueAnalytics();
   else if(tab==='cleaning')renderCleaning();
   else if(tab==='settings'){renderProps();loadEmailTemplates();loadWaTemplates();loadCleaningSettings();}
+  if(document.body.classList.contains('dark')){setTimeout(applyDarkStyles,120);}
 }
 
 function openSummerClean(){}  // legacy no-op — SummerFlow handles cleaning directly
@@ -3846,6 +3847,39 @@ function setDashLang(l){
 }
 function setCleanLang(l){cleanLang=l;}
 
+function applyDarkStyles(){
+  var dark=document.body.classList.contains('dark');
+  // Map of light → dark replacements for JS-generated inline background colors
+  var bgMap={
+    'rgb(255, 255, 255)':dark?'#0f1c28':'#fff',
+    'rgb(248, 250, 252)':dark?'#0f1c28':'#f8fafc',
+    'rgb(240, 253, 244)':dark?'#0a2218':'#f0fdf4',
+    'rgb(250, 250, 250)':dark?'#12202e':'#fafafa',
+    'rgb(241, 245, 249)':dark?'#12202e':'#f1f5f9',
+    'rgb(255, 251, 235)':dark?'#2a2308':'#fffbeb',
+    'rgb(255, 247, 237)':dark?'#2a2308':'#fff7ed',
+    'rgb(253, 232, 233)':dark?'#2e1215':'#fde8e9',
+    'rgb(209, 250, 229)':dark?'#0a2218':'#d1fae5',
+    'rgb(254, 232, 233)':dark?'#2e1215':'#fee2e2'
+  };
+  var colorMap={
+    'rgb(21, 128, 61)':dark?'#34d399':'#15803d',
+    'rgb(6, 95, 70)':dark?'#34d399':'#065f46',
+    'rgb(153, 27, 27)':dark?'#f87171':'#991b1b',
+    'rgb(220, 38, 38)':dark?'#f87171':'#dc2626',
+    'rgb(17, 64, 97)':dark?'#d6e8f7':'#114061',
+    'rgb(30, 64, 175)':dark?'#7ab8d6':'#1e40af',
+    'rgb(146, 64, 14)':dark?'#fbbf24':'#92400e',
+    'rgb(29, 78, 216)':dark?'#7ab8d6':'#1d4ed8'
+  };
+  document.querySelectorAll('[style]').forEach(function(el){
+    var bg=el.style.backgroundColor;
+    var co=el.style.color;
+    if(bg&&bgMap[bg])el.style.backgroundColor=bgMap[bg];
+    if(co&&colorMap[co])el.style.color=colorMap[co];
+  });
+}
+
 function toggleDarkMode(){
   var dark=document.body.classList.toggle('dark');
   localStorage.setItem('sf_dark',dark?'1':'0');
@@ -3858,6 +3892,10 @@ function toggleDarkMode(){
     icon.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
     if(lbl)lbl.textContent='Dark mode';
   }
+  applyDarkStyles();
+  // Re-render active tab so newly rendered elements also get patched
+  var activeTab=document.querySelector('.page:not([style*="display:none"])');
+  if(activeTab){setTimeout(applyDarkStyles,80);}
 }
 (function(){
   if(localStorage.getItem('sf_dark')==='1'){
@@ -3867,6 +3905,7 @@ function toggleDarkMode(){
       var lbl=document.getElementById('darkModeLabel');
       if(icon)icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
       if(lbl)lbl.textContent='Light mode';
+      setTimeout(applyDarkStyles,300);
     });
   }
 })();
