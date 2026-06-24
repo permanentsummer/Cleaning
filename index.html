@@ -3103,8 +3103,8 @@ function renderRevenueAnalytics(){
   container.innerHTML=
     // ── Controls ──
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'+
-      '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+yearOpts+'</select>'+
-      '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--primary);background:#fff">'+aptOpts+'</select>'+
+      '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+yearOpts+'</select>'+
+      '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+aptOpts+'</select>'+
       '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied · '+numDays+' available days × '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
     '</div>'+
     qualityWarning+
@@ -3611,14 +3611,14 @@ function renderResList(){
     var isOTA=(item.source==='booking'||item.source==='airbnb');
     if(!item.isComp&&item.total>0){
       if(isOTA){
-        card.innerHTML+='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#f0fdf4">'+
+        card.innerHTML+='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:'+(document.body.classList.contains('dark')?'#0a2218':'#f0fdf4')+'">'+
           '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
           '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
         '</div>';
       } else if(!VIEW_MODE){
         var amtPaid=item.paid==='paid'?item.total:item.paid==='deposit'?(item.ratePerNight||0):0;
         var amtDue=Math.max(0,item.total-amtPaid);
-        card.innerHTML+='<div style="padding:10px 18px;border-top:1px solid var(--border);background:#fffbeb">'+
+        card.innerHTML+='<div style="padding:10px 18px;border-top:1px solid var(--border);background:'+(document.body.classList.contains('dark')?'#2a2308':'#fffbeb')+'">'+
           '<div style="margin-bottom:6px">'+
             '<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Payment</span>'+
           '</div>'+
@@ -4134,10 +4134,17 @@ function mkCleanCard(b,tod){
 
   var card=document.createElement('div');
   card.className='clean-card';
+  var _dk=document.body.classList.contains('dark');
+  var _bg=_dk?'#1a2636':'#fff';
+  var _bg2=_dk?'#0f1c28':'#f8fafc';
+  var _bgGreen=_dk?'#0a2218':'#f0fdf4';
+  var _bgYellow=_dk?'#2a2308':'#fffbeb';
+  var _txt=_dk?'#d6e8f7':'inherit';
+  var _brd=_dk?'#253547':'var(--border)';
   var isPaid=b.paid==='paid'||b.paid==='deposit';
   var isFullPaid=b.paid==='paid';
   var borderCol=isToday?'var(--yellow)':(b.cleaned==='yes'?'var(--green)':'var(--border)');
-  card.style.cssText='background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;border-left:4px solid '+borderCol;
+  card.style.cssText='background:'+_bg+';border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;border-left:4px solid '+borderCol;
 
   var b2bBadge=isBackToBack?
     '<span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px;background:#fef3c7;color:#92400e;border:1.5px solid #f59e0b">⚡ Back-to-back · Check-out 12:00 → Check-in 15:00</span>':
@@ -4162,14 +4169,14 @@ function mkCleanCard(b,tod){
       '</div>'+
       '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;align-items:flex-end">'+cleanBadge+payBadge+'</div>'+
     '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 16px;gap:8px;border-top:1px solid var(--border);background:#f8fafc">'+
+    '<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 16px;gap:8px;border-top:1px solid var(--border);background:'+_bg2+'">'+
       '<div><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+CT('checkin')+'</div><div style="font-size:15px;font-weight:800;color:var(--primary)">'+fmtShort(b.checkin)+'</div></div>'+
       '<div style="color:var(--border);font-size:16px">→</div>'+
       '<div style="text-align:right"><div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+CT('checkout')+'</div><div style="font-size:15px;font-weight:800;color:var(--primary)">'+fmtShort(b.checkout)+'</div></div>'+
     '</div>';
   // ── Action row ────────────────────────────────────────────────────────────────
   var actionDiv=document.createElement('div');
-  actionDiv.style.cssText='padding:10px 16px;border-top:1px solid var(--border);background:#f8fafc;display:flex;gap:8px;flex-wrap:wrap';
+  actionDiv.style.cssText='padding:10px 16px;border-top:1px solid var(--border);background:'+_bg2+';display:flex;gap:8px;flex-wrap:wrap';
   // Cleaning toggle
   var cleanBtn=document.createElement('button');
   cleanBtn.className='clean-mark-btn';cleanBtn.setAttribute('data-id',b.id);
@@ -5364,6 +5371,15 @@ function drawCal(){
     '.mbar.mx{border-radius:4px}'+
     '.mbar-sp{display:block;height:24px;margin-bottom:3px}'+
     '@media(max-width:600px){.mcal th{font-size:9px;padding:5px 1px}.mcal td{height:70px;padding:3px 1px 2px;overflow:hidden}.mday-num{font-size:10px;width:20px;height:20px}.mbar{height:16px;line-height:16px;font-size:8px;padding:0 2px;margin-bottom:2px}.mbar-sp{height:16px;margin-bottom:2px}}';
+  // Append dark mode overrides directly into the same style element
+  if(document.body.classList.contains('dark')){
+    styleEl.textContent+=
+      '.mcal td{background:#0f1923!important;border-color:#253547!important}'+
+      '.mcal th{background:#0f1923!important;color:#7a9bb5!important;border-color:#253547!important}'+
+      '.mcal td.mtoday{background:#2a2308!important}'+
+      '.mcal td.mwknd{background:#131f2d!important}'+
+      '.mday-num{color:#d6e8f7!important}';
+  }
 
   // Render table
   var html='<table class="mcal"><thead><tr>';
