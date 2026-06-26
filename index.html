@@ -26,7 +26,7 @@
 body.dark{
   --bg:#0f1923;--card-bg:#1a2636;--border:#253547;--muted:#7a9bb5;--text:#d6e8f7;
   --shadow:0 1px 4px rgba(0,0,0,.35);--shadow-md:0 4px 20px rgba(0,0,0,.5);
-  --primary:#7ab8d6;--primary-light:#9dcce8;
+  --primary:#1a3a55;--primary-light:#234d6e;
   --blue:#7ab8d6;
   --green-bg:#0d2e20;--green-dark:#34d399;
   --red-bg:#2e1215;--blue-bg:#0d1f30;--yellow-bg:#2a200a;
@@ -502,6 +502,16 @@ body.dark .mcal td.mwknd{background:#131f2d!important}
 body.dark .mcal{border-color:#253547!important}
 body.dark .mday-num{color:#d6e8f7!important}
 body.dark .mcal td.mtoday .mday-num{background:#ea580c!important;color:#fff!important}
+/* ── Text using --primary that must be readable on dark card backgrounds ─── */
+body.dark .page-header h2,
+body.dark .stat-card .sval,
+body.dark .req-guest,
+body.dark .rdval,
+body.dark .prop-name,
+body.dark .prop-stat .val,
+body.dark .widget-step-head h3,
+body.dark .empty-state h3,
+body.dark .auth-logo h1{color:#7ab8d6!important}
 /* Finance selects */
 body.dark select{background:#1a2636!important;color:#d6e8f7!important;border-color:#253547!important}
 /* Finance cards with inline background */
@@ -3908,9 +3918,11 @@ function applyDarkStyles(){
     }
     // Fix dark text colors on now-dark backgrounds
     var co=el.style.color;
-    if(co==='rgb(17, 64, 97)')el.style.color='#d6e8f7';  // --primary
-    if(co==='rgb(51, 65, 85)')el.style.color='#d6e8f7';  // #334155
-    if(co==='rgb(30, 41, 59)')el.style.color='#d6e8f7';  // #1e293b
+    if(co==='rgb(17, 64, 97)')el.style.color='#7ab8d6';   // #114061 → readable blue
+    if(co==='rgb(26, 58, 85)')el.style.color='#7ab8d6';   // #1a3a55 → readable blue
+    if(co==='rgb(51, 65, 85)')el.style.color='#d6e8f7';   // #334155
+    if(co==='rgb(30, 41, 59)')el.style.color='#d6e8f7';   // #1e293b
+    if(co==='rgb(30, 64, 175)')el.style.color='#7ab8d6';  // #1e40af
   });
   // mcal dark mode handled by static CSS rules in <style> tag
 }
@@ -6656,18 +6668,79 @@ function sfStartRealtime(){
 // ── Notification settings toggle in sidebar ───────────────────────────────
 function sfToggleNotifications(){
   if(!('Notification' in window)){alert('Your browser does not support notifications.');return;}
-  if(Notification.permission==='granted'){
-    // Already granted — show status
-    toast('Notifications are ON ✅','ok');
-    sfDailyCheck();
-  } else if(Notification.permission==='denied'){
+  if(Notification.permission==='denied'){
     alert('Notifications are blocked. Please allow them in your browser/phone settings, then reload the app.');
-  } else {
-    sfRequestPermission(function(granted){
-      if(granted){_sfNotifyReady=true;sfDailyCheck();sfStartRealtime();toast('Notifications enabled ✅','ok');}
-      else{toast('Permission denied','err');}
-    });
+    return;
   }
+  sfRequestPermission(function(granted){
+    if(!granted){toast('Permission denied','err');return;}
+    _sfNotifyReady=true;
+    sfDailyCheck();
+    sfStartRealtime();
+    // Also enable true push (Option B) if service worker available
+    if('serviceWorker' in navigator&&'PushManager' in window){
+      sfSubscribePush().catch(function(){
+        // Option B failed silently — Option A still works
+      });
+    }
+    toast('🔔 Notifications enabled!','ok');
+  });
+}
+// ── Option B: True Push Notifications (Service Worker + Web Push) ────────────
+var SF_VAPID_PUBLIC='njv7ciFqMXG-YBpfQfH8rqQpeAN6zaqHChY3L5439wkbiLIFbqJtpQWXyFFzOK50t3p6FtRn3byvDsPMlCEAgg';
+var _sfSwReg=null;
+
+function sfRegisterServiceWorker(){
+  if(!('serviceWorker' in navigator)){return Promise.reject(new Error('SW not supported'));}
+  return navigator.serviceWorker.register('/sw.js',{scope:'/'})
+    .then(function(reg){_sfSwReg=reg;return reg;});
+}
+
+function sfUrlBase64ToUint8(base64String){
+  var padding='='.repeat((4-base64String.length%4)%4);
+  var base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  var rawData=window.atob(base64);
+  var outputArray=new Uint8Array(rawData.length);
+  for(var i=0;i<rawData.length;++i)outputArray[i]=rawData.charCodeAt(i);
+  return outputArray;
+}
+
+function sfSubscribePush(){
+  return sfRegisterServiceWorker().then(function(reg){
+    return reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:sfUrlBase64ToUint8(SF_VAPID_PUBLIC)
+    });
+  }).then(function(sub){
+    // Save subscription to Supabase via Edge Function
+    return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/push-subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session?session.access_token:SB_KEY)},
+      body:JSON.stringify({subscription:sub.toJSON(),workspace_id:workspace?workspace.id:null})
+    });
+  }).then(function(){
+    localStorage.setItem('sf_push_enabled','1');
+    toast('🔔 Push notifications enabled!','ok');
+  });
+}
+
+function sfInitPushB(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){
+    toast('Push notifications not supported on this browser','err');return;
+  }
+  sfRequestPermission(function(granted){
+    if(!granted){toast('Permission denied','err');return;}
+    // Check if already subscribed
+    if(localStorage.getItem('sf_push_enabled')==='1'){
+      toast('Push notifications already active ✅','ok');return;
+    }
+    sfSubscribePush().catch(function(e){toast('Push setup failed: '+e.message,'err');});
+  });
+}
+
+// Auto-init push B if previously enabled
+if(localStorage.getItem('sf_push_enabled')==='1'&&'serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(function(r){_sfSwReg=r;}).catch(function(){});
 }
 // ── End Notification System ───────────────────────────────────────────────
 
