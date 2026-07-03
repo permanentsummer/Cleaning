@@ -437,6 +437,8 @@ body.dark .res-list-card,body.dark .prop-card,body.dark .modal,body.dark .cal-to
 body.dark .cal-head,body.dark .cal-row-label,body.dark .cal-popup,body.dark .res-topbar,
 body.dark .stat-card{background:var(--card-bg);border-color:var(--border)}
 body.dark .auth-box{background:#FDFAF4;border-color:#e5e1d8}
+body.dark #authWrap .fbtn{background:#fff!important;border-color:#e5e1d8!important;color:#7a8699!important}
+body.dark #authWrap .fbtn.on{background:#0A2540!important;border-color:#0A2540!important;color:#fff!important}
 /* Buttons that were hardcoded white */
 body.dark .btn-outline{background:#1a2636;color:#d6e8f7;border-color:#253547}
 body.dark .btn-outline:hover{background:#22324a;border-color:#34495f}
@@ -712,6 +714,24 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div class="auth-switch">Already have an account? <a href="#" onclick="showSignIn(event)">Sign in</a></div>
     </div>
 
+    <div id="profilePanel" style="display:none">
+      <p style="font-size:13px;color:#7a8699;margin-bottom:14px;text-align:center;line-height:1.5">Almost there — a few details to finish setting up your account.</p>
+      <div class="afield"><label>Business / your name</label><input type="text" id="pfName" placeholder="e.g. Permanent Summer"></div>
+      <div class="afield">
+        <label>Preferred language</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="fbtn on" id="pfLang-en" onclick="setProfileLang('en')" style="flex:1">English</button>
+          <button type="button" class="fbtn" id="pfLang-pt" onclick="setProfileLang('pt')" style="flex:1">Português</button>
+          <button type="button" class="fbtn" id="pfLang-fr" onclick="setProfileLang('fr')" style="flex:1">Français</button>
+        </div>
+      </div>
+      <div class="afield"><label>Email</label><input type="email" id="pfEmail" placeholder="you@example.com"></div>
+      <div class="afield"><label>Phone number <span style="color:#9aa5b5;font-weight:500">(optional)</span></label><input type="tel" id="pfPhone" placeholder="+351 ..."></div>
+      <div class="afield"><label>Website <span style="color:#9aa5b5;font-weight:500">(optional)</span></label><input type="text" id="pfWebsite" placeholder="https://..."></div>
+      <div class="aerr" id="pfErr"></div>
+      <button class="abtn" id="pfBtn" onclick="saveProfileSetup()">Continue →</button>
+    </div>
+
     <div id="forgotPanel" style="display:none">
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Enter your email and we'll send a password reset link.</p>
       <div class="afield"><label>Email</label><input type="email" id="fpEmail" placeholder="you@example.com" autocomplete="email"></div>
@@ -781,6 +801,10 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <span class="sb-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.37 2.63 14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 0 0-3-3Z"/><path d="M9 8c-2 3-4 3.5-7 4l8 8c1-.5 3.5-2 4-7"/><path d="M14.5 17.5 4.5 15"/></svg></span>
         <span>Cleaning</span>
       </div>
+      <div class="sb-item" data-tab="account" onclick="switchTab('account')">
+        <span class="sb-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <span>Account</span>
+      </div>
     </nav>
     <div class="sb-bottom">
       <div id="dashLangRow" style="display:flex;gap:4px;justify-content:center;margin-bottom:10px">
@@ -824,6 +848,19 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
           View requests
         </button>
       </div>
+    </div>
+
+    <!-- Getting Started checklist (new accounts only) -->
+    <div id="gettingStartedPanel" class="card" style="display:none;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(249,195,50,.1),rgba(249,195,50,.02));margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
+        <div style="font-size:15px;font-weight:800;color:var(--primary)">👋 Let's get SummerFlow set up</div>
+        <button onclick="dismissOnboarding()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;flex-shrink:0">Skip intro ✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">A few quick steps and you'll be ready to run things on your own.</div>
+      <div style="background:var(--bg);border-radius:999px;height:8px;overflow:hidden;margin-bottom:16px">
+        <div id="gsProgressBar" style="height:100%;background:var(--accent);border-radius:999px;width:0%;transition:width .3s"></div>
+      </div>
+      <div id="gsChecklist" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
     <!-- KPI row -->
@@ -1320,6 +1357,39 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div id="cleanList"><div class="spinner"></div></div>
   </div>
 
+  <!-- ACCOUNT -->
+  <div id="page-account" class="page">
+    <div class="page-header">
+      <div><h2>Account</h2><p>Your business profile and login details</p></div>
+    </div>
+
+    <div class="card" style="border:2px solid var(--border);max-width:560px;margin-bottom:16px">
+      <div class="sep" style="margin-top:0">🏢 Business profile</div>
+      <div class="fg"><label>Business / your name</label><input type="text" id="acctBusinessName" placeholder="e.g. Permanent Summer"></div>
+      <div class="fg">
+        <label>Preferred language</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="fbtn" id="acctLang-en" onclick="setAccountLang('en')" style="flex:1">English</button>
+          <button type="button" class="fbtn" id="acctLang-pt" onclick="setAccountLang('pt')" style="flex:1">Português</button>
+          <button type="button" class="fbtn" id="acctLang-fr" onclick="setAccountLang('fr')" style="flex:1">Français</button>
+        </div>
+      </div>
+      <div class="fg"><label>Contact email</label><input type="email" id="acctEmail" placeholder="you@example.com"></div>
+      <div class="fg"><label>Phone number <span style="color:var(--muted);font-weight:500">(optional)</span></label><input type="tel" id="acctPhone" placeholder="+351 ..."></div>
+      <div class="fg" style="margin-bottom:0"><label>Website <span style="color:var(--muted);font-weight:500">(optional)</span></label><input type="text" id="acctWebsite" placeholder="https://..."></div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;max-width:560px;margin-bottom:20px">
+      <button class="btn-primary" onclick="saveAccountProfile()">💾 Save profile</button>
+      <span id="acctSaveMsg" style="font-size:12px;font-weight:700"></span>
+    </div>
+
+    <div class="card" style="border:2px solid var(--border);max-width:560px">
+      <div class="sep" style="margin-top:0">🔐 Login</div>
+      <div style="font-size:12px;color:var(--muted)">You're signed in as <strong id="acctLoginEmail">—</strong></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:8px">To change your password, sign out and use "Forgot password?" on the sign-in screen.</p>
+    </div>
+  </div>
+
   <!-- SETTINGS -->
   <div id="page-settings" class="page">
     <div class="page-header">
@@ -1675,6 +1745,7 @@ function showForgotPassword(e){
   if(e)e.preventDefault();
   document.getElementById('signInPanel').style.display='none';
   document.getElementById('signUpPanel').style.display='none';
+  document.getElementById('profilePanel').style.display='none';
   document.getElementById('forgotPanel').style.display='';
   document.getElementById('fpErr').textContent='';
   document.getElementById('fpSuccess').style.display='none';
@@ -1685,6 +1756,7 @@ function showSignIn(e){
   if(e)e.preventDefault();
   document.getElementById('forgotPanel').style.display='none';
   document.getElementById('signUpPanel').style.display='none';
+  document.getElementById('profilePanel').style.display='none';
   document.getElementById('signInPanel').style.display='';
   document.getElementById('lErr').textContent='';
 }
@@ -1692,6 +1764,7 @@ function showSignUp(e){
   if(e)e.preventDefault();
   document.getElementById('signInPanel').style.display='none';
   document.getElementById('forgotPanel').style.display='none';
+  document.getElementById('profilePanel').style.display='none';
   document.getElementById('signUpPanel').style.display='';
   document.getElementById('suErr').textContent='';
   document.getElementById('suSuccess').style.display='none';
@@ -1737,9 +1810,13 @@ function doSignUp(){
       return;
     }
     session=data;sl('sb_session',data);
-    // New account: provision a starter workspace, then load it like a normal sign-in.
+    // New account: provision a starter workspace, then walk them through the profile step.
     sbF('POST','workspaces',{user_id:data.user.id,settings:{apts:[],workspaceName:name||email}})
-      .then(function(){loadWorkspace();})
+      .then(function(rows){
+        workspace=(rows&&rows[0])||null;
+        btn.disabled=false;btn.textContent='Create account →';
+        showProfileSetup(name,email);
+      })
       .catch(function(e){
         err.textContent='Account created, but workspace setup failed: '+e.message+'. Contact support.';
         btn.disabled=false;btn.textContent='Create account →';
@@ -1747,6 +1824,55 @@ function doSignUp(){
   }).catch(function(e){
     err.textContent='Error: '+e.message;
     btn.disabled=false;btn.textContent='Create account →';
+  });
+}
+
+// ── PROFILE SETUP (post-signup step 1) ────────────────────────────────────────
+var _profileLangSelected='en';
+function setProfileLang(l){
+  _profileLangSelected=l;
+  ['en','pt','fr'].forEach(function(lg){var b=document.getElementById('pfLang-'+lg);if(b)b.classList.toggle('on',lg===l);});
+}
+function showProfileSetup(name,email){
+  document.getElementById('signUpPanel').style.display='none';
+  document.getElementById('signInPanel').style.display='none';
+  document.getElementById('forgotPanel').style.display='none';
+  document.getElementById('profilePanel').style.display='';
+  document.getElementById('pfName').value=name||'';
+  document.getElementById('pfEmail').value=email||'';
+  document.getElementById('pfErr').textContent='';
+  setProfileLang('en');
+}
+function saveProfileSetup(){
+  var name=(document.getElementById('pfName').value||'').trim();
+  var email=(document.getElementById('pfEmail').value||'').trim();
+  var phone=(document.getElementById('pfPhone').value||'').trim();
+  var website=(document.getElementById('pfWebsite').value||'').trim();
+  var err=document.getElementById('pfErr');
+  var btn=document.getElementById('pfBtn');
+  err.textContent='';
+  if(!name||!email){err.textContent='Please fill in your business/name and email.';return;}
+  btn.disabled=true;btn.textContent='Saving…';
+  patchWorkspaceSettings({profile:{businessName:name,language:_profileLangSelected,email:email,phone:phone,website:website}})
+    .then(function(){
+      cleanLang=_profileLangSelected;
+      loadWorkspace();
+    })
+    .catch(function(e){
+      err.textContent='Error: '+e.message;
+      btn.disabled=false;btn.textContent='Continue →';
+    });
+}
+// Generic GET-merge-PATCH helper for workspace.settings, reused by profile/account/onboarding
+function patchWorkspaceSettings(partial){
+  if(!workspace)return Promise.reject(new Error('No workspace loaded yet'));
+  return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    Object.keys(partial).forEach(function(k){fresh[k]=partial[k];});
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh}).then(function(){return fresh;});
+  }).then(function(fresh){
+    workspace.settings=fresh;
+    return fresh;
   });
 }
 
@@ -1830,6 +1956,10 @@ function loadWorkspace(){
     workspace=rows[0];
     var s=workspace.settings||{};
     properties=s.apts||[];
+    if(s.profile&&s.profile.language){
+      cleanLang=s.profile.language;
+      ['en','pt','fr'].forEach(function(lg){var b=document.getElementById('dLang-'+lg);if(b)b.classList.toggle('on',lg===cleanLang);});
+    }
     document.getElementById('navSub').textContent=session.user.email;
     document.getElementById('authWrap').classList.remove('show');
     document.getElementById('appWrap').classList.add('show');
@@ -1977,6 +2107,7 @@ function switchTab(tab){
   else if(tab==='payments')renderRevenueAnalytics();
   else if(tab==='cleaning')renderCleaning();
   else if(tab==='settings'){renderProps();loadEmailTemplates();loadWaTemplates();loadCleaningSettings();}
+  else if(tab==='account'){renderAccountTab();}
   if(document.body.classList.contains('dark')){setTimeout(applyDarkStyles,120);}
 }
 
@@ -6124,6 +6255,45 @@ function getCleanerForApt(aptId){
          cleaners[0]||null;
 }
 function loadCleaningSettings(){renderCleanersList();}
+
+// ── ACCOUNT TAB ────────────────────────────────────────────────────────────────
+var _accountLangSelected='en';
+function setAccountLang(l){
+  _accountLangSelected=l;
+  ['en','pt','fr'].forEach(function(lg){var b=document.getElementById('acctLang-'+lg);if(b)b.classList.toggle('on',lg===l);});
+}
+function renderAccountTab(){
+  if(!workspace)return;
+  var s=workspace.settings||{};
+  var p=s.profile||{};
+  document.getElementById('acctBusinessName').value=p.businessName||s.workspaceName||'';
+  document.getElementById('acctEmail').value=p.email||(session&&session.user&&session.user.email)||'';
+  document.getElementById('acctPhone').value=p.phone||'';
+  document.getElementById('acctWebsite').value=p.website||'';
+  setAccountLang(p.language||cleanLang||'en');
+  var loginEl=document.getElementById('acctLoginEmail');
+  if(loginEl)loginEl.textContent=(session&&session.user&&session.user.email)||'—';
+  document.getElementById('acctSaveMsg').textContent='';
+}
+function saveAccountProfile(){
+  var name=(document.getElementById('acctBusinessName').value||'').trim();
+  var email=(document.getElementById('acctEmail').value||'').trim();
+  var phone=(document.getElementById('acctPhone').value||'').trim();
+  var website=(document.getElementById('acctWebsite').value||'').trim();
+  var msg=document.getElementById('acctSaveMsg');
+  if(!name||!email){msg.style.color='#dc2626';msg.textContent='Business name and email are required.';return;}
+  msg.style.color='var(--muted)';msg.textContent='Saving…';
+  patchWorkspaceSettings({profile:{businessName:name,language:_accountLangSelected,email:email,phone:phone,website:website}})
+    .then(function(){
+      cleanLang=_accountLangSelected;
+      ['en','pt','fr'].forEach(function(lg){var b=document.getElementById('dLang-'+lg);if(b)b.classList.toggle('on',lg===cleanLang);});
+      applyTranslations();
+      msg.style.color='#15803d';msg.textContent='✅ Saved';
+      renderGettingStarted();
+    })
+    .catch(function(e){msg.style.color='#dc2626';msg.textContent='Error: '+e.message;});
+}
+
 function renderCleanersList(){
   var el=document.getElementById('cleanersList');if(!el)return;
   var cleaners=getCleaners();
@@ -6350,6 +6520,52 @@ function renderOverview(){
   renderKPIs();
   renderUpcoming();
   renderOccupancy();
+  renderGettingStarted();
+}
+
+// ── GETTING STARTED (onboarding checklist, step 2) ────────────────────────────
+function renderGettingStarted(){
+  var panel=document.getElementById('gettingStartedPanel');
+  if(!panel||!workspace)return;
+  var s=workspace.settings||{};
+  if(s.onboardingComplete){panel.style.display='none';return;}
+  var profileDone=!!(s.profile&&s.profile.businessName);
+  var propDone=(properties||[]).length>0;
+  var bookingDone=(allBookings||[]).length>0||(requests||[]).length>0;
+  var cleanersDone=(s.cleaners||[]).length>0;
+  var financeDone=!!s.onboardingFinanceSeen;
+  var items=[
+    {done:profileDone,title:'Complete your business profile',sub:'Business name, language, and contact info',action:"switchTab('account')"},
+    {done:propDone,title:'Add your first property',sub:'Rooms, rates, photos and amenities',action:"switchTab('properties');setTimeout(openAddProp,150)"},
+    {done:bookingDone,title:'Add your first reservation',sub:'Import from Airbnb/Booking.com or add manually',action:"switchTab('calendar');setTimeout(openNewBooking,150)"},
+    {done:cleanersDone,title:'Set up your cleaning team',sub:'Optional — assign cleaners per property',action:"switchTab('settings');setTimeout(function(){showSettingsTab('cleaning');},150)"},
+    {done:financeDone,title:'Explore your Finance dashboard',sub:'Revenue, occupancy, ADR and P&L in one place',action:"markOnboardingFinanceSeen();switchTab('payments')"}
+  ];
+  var doneCount=items.filter(function(i){return i.done;}).length;
+  var pct=Math.round(doneCount/items.length*100);
+  var bar=document.getElementById('gsProgressBar');
+  if(bar)bar.style.width=pct+'%';
+  var list=document.getElementById('gsChecklist');
+  if(list){
+    list.innerHTML=items.map(function(it,idx){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:'+(it.done?'var(--green-bg)':'var(--card-bg,#fff)')+';border:1px solid '+(it.done?'transparent':'var(--border)')+'">'+
+        '<div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;background:'+(it.done?'var(--green)':'var(--border)')+';color:'+(it.done?'#fff':'var(--muted)')+'">'+(it.done?'✓':(idx+1))+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--primary)'+(it.done?';text-decoration:line-through;opacity:.65':'')+'">'+it.title+'</div><div style="font-size:11px;color:var(--muted)">'+it.sub+'</div></div>'+
+        (it.done?'':'<button class="btn-outline" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="'+it.action+'">Go →</button>')+
+      '</div>';
+    }).join('');
+  }
+  panel.style.display='';
+  if(doneCount===items.length)patchWorkspaceSettings({onboardingComplete:true}).catch(function(){});
+}
+function markOnboardingFinanceSeen(){
+  patchWorkspaceSettings({onboardingFinanceSeen:true}).catch(function(){});
+}
+function dismissOnboarding(){
+  patchWorkspaceSettings({onboardingComplete:true}).then(function(){
+    var panel=document.getElementById('gettingStartedPanel');
+    if(panel)panel.style.display='none';
+  }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
 function renderGreeting(){
