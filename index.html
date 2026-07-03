@@ -36,20 +36,29 @@ body.dark{
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
 
 /* ── AUTH ──────────────────────────────────────────────────────────────────── */
-#authWrap{display:none;min-height:100vh;background:var(--primary);align-items:center;justify-content:center;padding:24px}
+#authWrap{display:none;min-height:100vh;min-height:100dvh;background:radial-gradient(circle at 12% 10%,#173f61 0%,#0A2540 45%,#071627 100%);align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
 #authWrap.show{display:flex}
-.auth-box{background:#fff;border-radius:20px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 32px 80px rgba(0,0,0,.35)}
+#authWrap::before{content:'';position:absolute;top:-130px;right:-110px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,212,71,.22) 0%,transparent 70%);pointer-events:none}
+#authWrap::after{content:'';position:absolute;bottom:-150px;left:-110px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(0,199,177,.16) 0%,transparent 70%);pointer-events:none}
+.auth-box{background:#FDFAF4;border-radius:24px;padding:40px 36px;width:100%;max-width:420px;box-shadow:0 40px 100px rgba(0,0,0,.45);position:relative;z-index:1}
 .auth-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:32px}
 .auth-logo .ico{width:56px;height:56px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center}
 .auth-logo h1{font-size:22px;font-weight:800;color:var(--primary);letter-spacing:-.3px}
 .auth-logo p{font-size:12px;color:var(--muted);font-weight:500;margin-top:-6px}
 .afield{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
-.afield label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
-.afield input{padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--text);outline:none;transition:border-color .15s}
-.afield input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.abtn{width:100%;padding:13px;background:var(--honey);color:var(--dark-blue);color:#fff;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .15s;letter-spacing:.1px}
-.abtn:hover{background:var(--dijon)}
-.abtn:disabled{opacity:.5;cursor:wait}
+.afield label{font-size:11px;font-weight:600;color:#7a8699;text-transform:uppercase;letter-spacing:.6px}
+.afield input{padding:12px 14px;border:1.5px solid #e5e1d8;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:#0A2540;outline:none;transition:border-color .15s,box-shadow .15s;background:#fff;width:100%}
+.afield input:focus{border-color:#00C7B1;box-shadow:0 0 0 3px rgba(0,199,177,.14)}
+.pwd-wrap{position:relative}
+.pwd-wrap input{padding-right:42px!important}
+.pwd-eye{position:absolute;right:5px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:#9aa5b5;border-radius:6px;transition:color .15s,background .15s}
+.pwd-eye:hover{color:#0A2540;background:#f0ede4}
+.abtn{width:100%;padding:13px;background:linear-gradient(135deg,#FFD447,#F9A800);color:#0A2540;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:14.5px;font-weight:800;cursor:pointer;margin-top:6px;transition:transform .15s,box-shadow .15s;letter-spacing:.1px;box-shadow:0 8px 20px rgba(249,168,0,.3)}
+.abtn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(249,168,0,.4)}
+.abtn:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+.auth-switch{text-align:center;margin-top:18px;padding-top:16px;border-top:1px solid #ece8de;font-size:12.5px;color:#7a8699;font-weight:500}
+.auth-switch a{color:#0A2540;font-weight:700;text-decoration:none}
+.auth-switch a:hover{color:#00C7B1}
 .aerr{font-size:12px;font-weight:600;color:var(--red);min-height:16px;text-align:center;margin-top:6px}
 
 /* ── SIDEBAR LAYOUT ────────────────────────────────────────────────────────── */
@@ -376,6 +385,8 @@ body.dark input,body.dark select,body.dark textarea{background:#12202e;border-co
 body.dark input::placeholder,body.dark textarea::placeholder{color:#4a6a82}
 body.dark input:focus,body.dark select:focus,body.dark textarea:focus{border-color:var(--accent)}
 body.dark input[type=checkbox]{accent-color:var(--accent)}
+body.dark .afield input{background:#fff!important;color:#0A2540!important;border-color:#e5e1d8!important}
+body.dark .afield input::placeholder{color:#9aa5b5!important}
 /* Filter buttons */
 body.dark .fbtn{background:#1a2636;border-color:#253547;color:#7a9bb5}
 body.dark .fbtn.on{background:var(--accent);border-color:var(--accent);color:#0f1923}
@@ -424,7 +435,8 @@ body.dark [style*="color:#64748b"]{color:#7a9bb5!important}
 body.dark .card,body.dark .widget-step,body.dark .pay-card,body.dark .req-card,
 body.dark .res-list-card,body.dark .prop-card,body.dark .modal,body.dark .cal-toolbar,
 body.dark .cal-head,body.dark .cal-row-label,body.dark .cal-popup,body.dark .res-topbar,
-body.dark .stat-card,body.dark .auth-box{background:var(--card-bg);border-color:var(--border)}
+body.dark .stat-card{background:var(--card-bg);border-color:var(--border)}
+body.dark .auth-box{background:#FDFAF4;border-color:#e5e1d8}
 /* Buttons that were hardcoded white */
 body.dark .btn-outline{background:#1a2636;color:#d6e8f7;border-color:#253547}
 body.dark .btn-outline:hover{background:#22324a;border-color:#34495f}
@@ -673,8 +685,8 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <div id="resetPanel" style="display:none">
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Choose a new password for your account.</p>
-      <div class="afield"><label>New password</label><input type="password" id="rpPwd" placeholder="Min. 8 characters" autocomplete="new-password"></div>
-      <div class="afield"><label>Confirm password</label><input type="password" id="rpPwd2" placeholder="Repeat password" autocomplete="new-password"></div>
+      <div class="afield"><label>New password</label><div class="pwd-wrap"><input type="password" id="rpPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd',this)" aria-label="Show password">👁</button></div></div>
+      <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="rpPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd2',this)" aria-label="Show password">👁</button></div></div>
       <div class="aerr" id="rpErr"></div>
       <div id="rpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">✅ Password updated! You can now sign in.</div>
       <button class="abtn" id="rpBtn" onclick="doPasswordReset()">Set new password</button>
@@ -682,10 +694,22 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <div id="signInPanel">
       <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="afield"><label>Password</label><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('lPwd',this)" aria-label="Show password">👁</button></div></div>
       <div class="aerr" id="lErr"></div>
       <button class="abtn" id="lBtn">Sign in →</button>
       <p style="text-align:center;margin-top:14px"><a href="#" onclick="showForgotPassword(event)" style="font-size:12px;color:var(--muted);text-decoration:none;font-weight:600">Forgot password?</a></p>
+      <div class="auth-switch">New to SummerFlow? <a href="#" onclick="showSignUp(event)">Create an account</a></div>
+    </div>
+
+    <div id="signUpPanel" style="display:none">
+      <div class="afield"><label>Business / your name</label><input type="text" id="suName" placeholder="e.g. Permanent Summer" autocomplete="organization"></div>
+      <div class="afield"><label>Email</label><input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="suPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd',this)" aria-label="Show password">👁</button></div></div>
+      <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="suPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd2',this)" aria-label="Show password">👁</button></div></div>
+      <div class="aerr" id="suErr"></div>
+      <div id="suSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px"></div>
+      <button class="abtn" id="suBtn" onclick="doSignUp()">Create account →</button>
+      <div class="auth-switch">Already have an account? <a href="#" onclick="showSignIn(event)">Sign in</a></div>
     </div>
 
     <div id="forgotPanel" style="display:none">
@@ -1650,6 +1674,7 @@ function doPasswordReset(){
 function showForgotPassword(e){
   if(e)e.preventDefault();
   document.getElementById('signInPanel').style.display='none';
+  document.getElementById('signUpPanel').style.display='none';
   document.getElementById('forgotPanel').style.display='';
   document.getElementById('fpErr').textContent='';
   document.getElementById('fpSuccess').style.display='none';
@@ -1659,9 +1684,72 @@ function showForgotPassword(e){
 function showSignIn(e){
   if(e)e.preventDefault();
   document.getElementById('forgotPanel').style.display='none';
+  document.getElementById('signUpPanel').style.display='none';
   document.getElementById('signInPanel').style.display='';
   document.getElementById('lErr').textContent='';
 }
+function showSignUp(e){
+  if(e)e.preventDefault();
+  document.getElementById('signInPanel').style.display='none';
+  document.getElementById('forgotPanel').style.display='none';
+  document.getElementById('signUpPanel').style.display='';
+  document.getElementById('suErr').textContent='';
+  document.getElementById('suSuccess').style.display='none';
+  var suE=document.getElementById('suEmail');
+  if(suE){suE.value=document.getElementById('lEmail').value||'';}
+}
+// Show/hide a password field's plain text; shared by every password input on the auth screen
+function togglePwd(id,btn){
+  var inp=document.getElementById(id);
+  if(!inp)return;
+  var showing=inp.type==='text';
+  inp.type=showing?'password':'text';
+  btn.textContent=showing?'👁':'🙈';
+  btn.setAttribute('aria-label',showing?'Show password':'Hide password');
+}
+function doSignUp(){
+  var name=(document.getElementById('suName').value||'').trim();
+  var email=(document.getElementById('suEmail').value||'').trim();
+  var pwd=document.getElementById('suPwd').value;
+  var pwd2=document.getElementById('suPwd2').value;
+  var err=document.getElementById('suErr');
+  var btn=document.getElementById('suBtn');
+  err.textContent='';
+  if(!email||!pwd){err.textContent='Please fill in email and password.';return;}
+  if(pwd.length<8){err.textContent='Password must be at least 8 characters.';return;}
+  if(pwd!==pwd2){err.textContent='Passwords do not match.';return;}
+  btn.disabled=true;btn.textContent='Creating account…';
+  fetch(SB_URL+'/auth/v1/signup',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({email:email,password:pwd,data:{full_name:name}})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.error||data.error_description||data.msg){
+      err.textContent=data.error_description||data.msg||data.error||'Could not create account.';
+      btn.disabled=false;btn.textContent='Create account →';
+      return;
+    }
+    // Supabase projects with email confirmation ON return a user but no session here.
+    if(!data.access_token||!data.user){
+      document.getElementById('suSuccess').textContent='✅ Account created! Check your email to confirm, then sign in.';
+      document.getElementById('suSuccess').style.display='';
+      btn.disabled=false;btn.textContent='Create account →';
+      return;
+    }
+    session=data;sl('sb_session',data);
+    // New account: provision a starter workspace, then load it like a normal sign-in.
+    sbF('POST','workspaces',{user_id:data.user.id,settings:{apts:[],workspaceName:name||email}})
+      .then(function(){loadWorkspace();})
+      .catch(function(e){
+        err.textContent='Account created, but workspace setup failed: '+e.message+'. Contact support.';
+        btn.disabled=false;btn.textContent='Create account →';
+      });
+  }).catch(function(e){
+    err.textContent='Error: '+e.message;
+    btn.disabled=false;btn.textContent='Create account →';
+  });
+}
+
 function sendPasswordReset(){
   var email=(document.getElementById('fpEmail').value||'').trim();
   var err=document.getElementById('fpErr');
