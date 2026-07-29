@@ -21,7 +21,7 @@
   --bg:#f0f4f8;--card-bg:#fff;--border:#dde3ec;--muted:#5a7184;--text:#1a2a3a;
   --shadow:0 1px 4px rgba(17,64,97,.08);--shadow-md:0 4px 20px rgba(17,64,97,.14);
   --primary:#114061;--primary-light:#1a5278;--accent:#F9C332;
-  --sidebar-w:224px;
+  --sidebar-w:236px;
 }
 body.dark{
   --bg:#0f1923;--card-bg:#1a2636;--border:#253547;--muted:#7a9bb5;--text:#d6e8f7;
@@ -122,19 +122,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .sidebar.collapsed #sbCollapseBtn{margin-left:0!important}
 .sidebar.collapsed .sb-item,.sidebar.collapsed .sb-action{justify-content:center;padding:8px}
 .sidebar.collapsed .sb-nav{padding:8px}
-.sb-collapse-btn{margin-left:auto;background:rgba(255,255,255,.1);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .25s}
+.sb-collapse-btn{margin-left:auto;background:rgba(255,255,255,.1);border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .25s}
 .sb-collapse-btn:hover{background:rgba(255,255,255,.2)}
 .sidebar.collapsed .sb-collapse-btn svg{transform:rotate(180deg)}
 @media(max-width:600px){.sb-collapse-btn{display:none!important}}
 .sb-logo{
-  display:flex;align-items:center;gap:12px;
-  padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;gap:10px;
+  padding:24px 18px 20px;border-bottom:1px solid rgba(255,255,255,.07);
 }
 .sb-logo-ico{
   width:40px;height:40px;background:var(--accent);
   border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.sb-logo-name{font-size:14px;font-weight:700;line-height:1.3;letter-spacing:-.2px}
+.sb-logo-name{font-size:14px;font-weight:700;line-height:1.3;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-logo-sub{font-size:11px;color:#94a3b8;font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 
 /* Nav section label */
@@ -4420,7 +4420,7 @@ function toggleSidebarCollapse(){
   if(window.innerWidth<=600)return; // collapse is a desktop-only affordance; mobile uses the drawer pattern
   var sb=document.getElementById('sidebar');
   var collapsed=sb.classList.toggle('collapsed');
-  document.documentElement.style.setProperty('--sidebar-w',collapsed?'76px':'224px');
+  document.documentElement.style.setProperty('--sidebar-w',collapsed?'76px':'236px');
   localStorage.setItem('sf_sidebar_collapsed',collapsed?'1':'0');
   var btn=document.getElementById('sbCollapseBtn');
   if(btn)btn.title=collapsed?'Expand menu':'Collapse menu';
