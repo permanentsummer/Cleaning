@@ -85,6 +85,9 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .auth-split-right::before{content:'';position:absolute;top:-120px;right:-100px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,212,71,.16) 0%,transparent 70%)}
 .auth-split-right::after{content:'';position:absolute;bottom:-140px;left:-100px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(0,199,177,.1) 0%,transparent 70%)}
 .auth-hero-inner{position:relative;z-index:1;max-width:400px;width:100%}
+.hero-signup,.hero-signin{display:none}
+#authSplitWrap.mode-signup .hero-signup{display:block}
+#authSplitWrap.mode-signin .hero-signin{display:block}
 .auth-hero-textbox{background:rgba(4,13,23,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:24px 26px;margin-bottom:26px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
 .auth-hero-headline{font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:800;color:#FFD447;line-height:1.12;letter-spacing:-.4px;margin-bottom:10px}
 .auth-hero-sub{font-size:14.5px;color:#eef2f6;line-height:1.55}
@@ -859,7 +862,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     </div>
 
     <div class="auth-split-right">
-      <div class="auth-hero-inner">
+      <div class="auth-hero-inner hero-signup">
         <div class="auth-hero-textbox">
           <div class="auth-hero-headline">HOSPITALITY OPERATIONS,<br>SIMPLIFIED</div>
           <div class="auth-hero-sub">Bookings, cleaning, and finance for independent hosts — all in one place.</div>
@@ -871,6 +874,21 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
           <div class="auth-hero-booking">🏠 J. Silva — €450 — 2 guests</div>
           <div class="auth-hero-booking">🏠 A. Costa — €610 — 3 guests</div>
           <div class="auth-hero-booking">🏠 M. Dubois — €380 — 1 guest</div>
+        </div>
+      </div>
+
+      <div class="auth-hero-inner hero-signin">
+        <div class="auth-hero-textbox">
+          <div class="auth-hero-headline">EVERYTHING, RIGHT<br>WHERE YOU LEFT IT</div>
+          <div class="auth-hero-sub">Bookings, cleaning schedules, and payments — synced and up to date.</div>
+        </div>
+        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#059669">✓</div>Cleaning completed — Unit 2</div>
+        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#2563eb">€</div>Payment received — €610</div>
+        <div class="auth-hero-cal">
+          <div class="auth-hero-cal-row"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="auth-hero-booking">✅ Jose Saramago — cleaned &amp; ready</div>
+          <div class="auth-hero-booking">🧹 Al-Paranaguá — cleaning today</div>
+          <div class="auth-hero-booking">💶 3 payments recorded this week</div>
         </div>
       </div>
     </div>
