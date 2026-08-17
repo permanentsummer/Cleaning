@@ -98,8 +98,23 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .auth-hero-booking{font-size:10.5px;font-weight:700;color:#0A2540;background:#FDFAF4;border:1px solid #e5e1d8;border-radius:8px;padding:5px 7px;margin-bottom:6px;display:flex;align-items:center;gap:5px}
 @media(max-width:900px){
   .auth-split{flex-direction:column;min-height:0}
-  .auth-split-right{display:none}
-  .auth-split-left{max-width:100%;padding:32px 24px;min-height:100vh}
+  .auth-split-right{
+    display:flex!important;order:-1;flex:none;
+    height:200px;min-height:200px;padding:20px;
+    align-items:flex-end;justify-content:flex-start;
+  }
+  .auth-split-right .auth-hero-card,.auth-split-right .auth-hero-cal{display:none!important}
+  .auth-hero-inner{max-width:100%;width:100%}
+  .auth-hero-textbox{padding:14px 16px;margin-bottom:0}
+  .auth-hero-headline{font-size:21px;line-height:1.15;margin-bottom:4px}
+  .auth-hero-sub{font-size:12px;line-height:1.4}
+  .auth-split-left{max-width:100%;padding:28px 24px;min-height:auto}
+  .auth-split-logo{margin-bottom:16px}
+}
+@media(max-width:420px){
+  .auth-split-right{height:160px;min-height:160px;padding:16px}
+  .auth-hero-headline{font-size:18px}
+  .auth-hero-sub{display:none}
 }
 .aerr{font-size:12px;font-weight:600;color:var(--red);min-height:16px;text-align:center;margin-top:6px}
 
