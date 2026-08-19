@@ -303,16 +303,26 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .req-note{padding:0 16px 12px;font-size:12px;color:var(--muted);font-weight:400;font-style:italic}
 
 /* ── PROPERTY CARDS ────────────────────────────────────────────────────────── */
-.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;border:1px solid var(--border)}
+#propList{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border);display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
+.prop-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.1)}
+.prop-photo-strip{display:grid;gap:2px;height:130px;background:var(--bg);position:relative;cursor:pointer}
+.prop-photo-strip img{width:100%;height:100%;object-fit:cover;display:block}
+.prop-photo-more{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;pointer-events:none}
+.prop-photo-placeholder{height:130px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg),var(--border));font-size:34px;cursor:pointer;color:var(--muted);flex-direction:column;gap:4px}
+.prop-photo-placeholder span.txt{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.prop-edit-fab{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.prop-edit-fab:hover{background:#fff}
 .prop-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
 .prop-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0}
 .prop-name{font-size:15px;font-weight:700;flex:1;color:var(--primary)}
 .prop-badge{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;background:var(--green-bg);color:var(--green-dark)}
-.prop-body{padding:16px 20px}
-.prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.prop-stat{background:var(--bg);border-radius:9px;padding:12px;text-align:center;border:1px solid var(--border)}
-.prop-stat .val{font-size:20px;font-weight:800;display:block;color:var(--primary)}
-.prop-stat .lbl{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.prop-body{padding:16px 20px;display:flex;flex-direction:column;flex:1}
+.prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.prop-stat{background:var(--bg);border-radius:9px;padding:10px 6px;text-align:center;border:1px solid var(--border)}
+.prop-stat .val{font-size:18px;font-weight:800;display:block;color:var(--primary)}
+.prop-stat .lbl{font-size:9.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.prop-actions-row{display:flex;gap:8px;margin-top:auto;padding-top:14px}
 
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
@@ -2786,7 +2796,7 @@ function setResView(v){
 function renderProps(){
   var list=document.getElementById('propList');
   if(!properties.length){
-    list.innerHTML='<div class="empty-state"><div class="ico">🏡</div><h3>No properties yet</h3>'+
+    list.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ico">🏡</div><h3>No properties yet</h3>'+
       '<p>Add your first property to start accepting direct bookings.</p>'+
       '<button class="btn-primary" style="margin-top:16px" onclick="openAddProp()">+ Add property</button></div>';
     return;
@@ -2817,7 +2827,22 @@ function renderProps(){
 
     var card=document.createElement('div');
     card.className='prop-card';
+    var photos=(p.photos||[]).filter(function(u){return u;});
+    var photoHtml;
+    if(photos.length){
+      var shown=photos.slice(0,3);
+      photoHtml='<div class="prop-photo-strip" style="grid-template-columns:repeat('+shown.length+',1fr)" onclick="editProp('+i+')">'+
+        shown.map(function(u){return '<img src="'+esc(u)+'" alt="">';}).join('')+
+        (photos.length>shown.length?'<div class="prop-photo-more">+'+(photos.length-shown.length)+' more</div>':'')+
+        '<button class="prop-edit-fab" onclick="event.stopPropagation();editProp('+i+')" title="Edit property">✏️</button>'+
+      '</div>';
+    }else{
+      photoHtml='<div class="prop-photo-placeholder" onclick="editProp('+i+')">🏡<span class="txt">Add photos</span>'+
+        '<button class="prop-edit-fab" onclick="event.stopPropagation();editProp('+i+')" title="Edit property">✏️</button>'+
+      '</div>';
+    }
     card.innerHTML=
+      photoHtml+
       '<div class="prop-head">'+
         '<div class="prop-dot" style="background:'+p.color+'"></div>'+
         '<div style="flex:1">'+
@@ -2840,8 +2865,8 @@ function renderProps(){
           (p.maxGuests?'<span class="chip">Max '+p.maxGuests+' guests</span>':'')+
           (p.cleanFee?'<span class="chip">🧹 €'+p.cleanFee+' cleaning</span>':'')+
         '</div>'+
-        '<div style="display:flex;gap:8px">'+
-          '<button class="btn-primary" style="font-size:12px" onclick="editProp('+i+')">✏️ Edit</button>'+
+        '<div class="prop-actions-row">'+
+          '<button class="btn-primary" style="font-size:12px;flex:1" onclick="editProp('+i+')">✏️ Edit</button>'+
           '<button class="btn-outline" style="font-size:12px;color:var(--red)" onclick="deleteProp('+i+')">🗑️ Remove</button>'+
         '</div>'+
       '</div>';
