@@ -325,17 +325,20 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .prop-hero-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.55)}
 .prop-body{padding:16px 20px;display:flex;flex-direction:column;flex:1}
 @media(min-width:900px){.prop-body{padding:20px 22px}}
-.prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.prop-stat{background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border);transition:border-color .15s}
-@media(min-width:900px){.prop-stat{padding:13px 8px}}
+.prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.prop-stat{background:var(--bg);border-radius:10px;padding:10px 4px;text-align:center;border:1px solid var(--border);transition:border-color .15s;min-width:0;overflow:hidden}
+@media(min-width:900px){.prop-stat{padding:13px 6px}}
 .prop-stat .ic{font-size:13px;display:block;margin-bottom:3px;opacity:.75}
-.prop-stat .val{font-size:18px;font-weight:800;display:block;color:var(--primary)}
-@media(min-width:900px){.prop-stat .val{font-size:20px}}
+.prop-stat .val{font-size:16px;font-weight:800;display:block;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:900px){.prop-stat .val{font-size:18px}}
 .prop-stat .val.rev{color:var(--green-dark)}
 .prop-stat .lbl{font-size:9.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.prop-specs-line{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px;line-height:1.5}
 .prop-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .prop-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--text);border:1px solid var(--border)}
-.prop-chip.amen{background:var(--accent-bg,#eef2ff);border-color:transparent;color:var(--accent,#4f46e5)}
+.prop-chip.amen{background:#eef2ff;border-color:transparent;color:#4338ca}
+body.dark .prop-chip{background:#1a2636;border-color:#253547;color:#b0cce0}
+body.dark .prop-chip.amen{background:#241a36;color:#c4b5fd}
 .prop-actions-row{display:flex;gap:8px;margin-top:auto;padding-top:14px}
 @media(min-width:900px){.prop-actions-row button{padding-top:10px;padding-bottom:10px}}
 
@@ -2865,6 +2868,13 @@ function renderProps(){
       '</div>';
     var amenIcons={Pool:'🏊',WiFi:'📶',AC:'❄️','Sea view':'🌊',Parking:'🅿️',Balcony:'🌇',Kitchen:'🍳',Washer:'🧺',BBQ:'🔥',Garden:'🌿',Dishwasher:'🍽️'};
     var amenChips=(p.amenities||[]).map(function(a){return '<span class="prop-chip amen">'+(amenIcons[a]||'✓')+' '+esc(a)+'</span>';}).join('');
+    var specsParts=[];
+    if(p.bedrooms)specsParts.push(p.bedrooms+' bedroom'+(p.bedrooms==1?'':'s'));
+    if(p.bathrooms)specsParts.push(p.bathrooms+' bathroom'+(p.bathrooms==1?'':'s'));
+    if(p.beds)specsParts.push(p.beds+' bed'+(p.beds==1?'':'s'));
+    if(p.sofaBeds)specsParts.push(p.sofaBeds+' sofa bed'+(p.sofaBeds==1?'':'s'));
+    if(p.size)specsParts.push(p.size+' m²');
+    var specsLine=specsParts.length?specsParts.join(' · '):(p.features||'');
     card.innerHTML=
       heroHtml+
       '<div class="prop-body">'+
@@ -2874,8 +2884,8 @@ function renderProps(){
           '<div class="prop-stat"><span class="ic">⏱️</span><span class="val">'+(pending||'—')+'</span><div class="lbl">Pending</div></div>'+
           '<div class="prop-stat"><span class="ic">💰</span><span class="val rev">'+(totalRevenue?'€'+Math.round(totalRevenue).toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
         '</div>'+
+        (specsLine?'<div class="prop-specs-line">'+esc(specsLine)+'</div>':'')+
         '<div class="prop-chips">'+
-          (p.features?'<span class="prop-chip">'+esc(p.features)+'</span>':'')+
           (p.minNights?'<span class="prop-chip">Min '+p.minNights+' nights</span>':'')+
           (p.maxGuests?'<span class="prop-chip">Max '+p.maxGuests+' guests</span>':'')+
           (p.cleanFee?'<span class="prop-chip">🧹 €'+p.cleanFee+' cleaning</span>':'')+
