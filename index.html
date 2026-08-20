@@ -304,25 +304,40 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 /* ── PROPERTY CARDS ────────────────────────────────────────────────────────── */
 #propList{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
-.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border);display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s}
-.prop-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.1)}
-.prop-photo-strip{display:grid;gap:2px;height:130px;background:var(--bg);position:relative;cursor:pointer}
-.prop-photo-strip img{width:100%;height:100%;object-fit:cover;display:block}
-.prop-photo-more{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;pointer-events:none}
-.prop-photo-placeholder{height:130px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg),var(--border));font-size:34px;cursor:pointer;color:var(--muted);flex-direction:column;gap:4px}
-.prop-photo-placeholder span.txt{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.prop-edit-fab{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+@media(min-width:900px){#propList{grid-template-columns:repeat(3,1fr);gap:22px}}
+@media(min-width:1360px){#propList{grid-template-columns:repeat(4,1fr)}}
+.prop-card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border);display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s}
+.prop-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(0,0,0,.12)}
+.prop-hero{position:relative;height:150px;cursor:pointer;overflow:hidden}
+@media(min-width:900px){.prop-hero{height:190px}}
+.prop-hero img{width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0}
+.prop-hero-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 30%,rgba(0,0,0,.78) 100%)}
+.prop-hero-badges{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:2}
+.prop-hero-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.92);color:var(--primary);backdrop-filter:blur(4px)}
+.prop-hero-badge.hidden{background:rgba(15,23,42,.7);color:#fff}
+.prop-photo-count{position:absolute;top:10px;right:46px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;z-index:2;display:flex;align-items:center;gap:4px}
+.prop-edit-fab{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2);z-index:2}
 .prop-edit-fab:hover{background:#fff}
-.prop-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border)}
-.prop-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0}
-.prop-name{font-size:15px;font-weight:700;flex:1;color:var(--primary)}
-.prop-badge{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;background:var(--green-bg);color:var(--green-dark)}
+.prop-hero-info{position:absolute;left:16px;right:16px;bottom:12px;z-index:2}
+.prop-hero-name{font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:800;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.45);line-height:1.15;letter-spacing:-.2px}
+@media(min-width:900px){.prop-hero-name{font-size:23px}}
+.prop-hero-loc{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;margin-top:3px;display:flex;align-items:center;gap:5px}
+.prop-hero-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.55)}
 .prop-body{padding:16px 20px;display:flex;flex-direction:column;flex:1}
+@media(min-width:900px){.prop-body{padding:20px 22px}}
 .prop-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.prop-stat{background:var(--bg);border-radius:9px;padding:10px 6px;text-align:center;border:1px solid var(--border)}
+.prop-stat{background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border);transition:border-color .15s}
+@media(min-width:900px){.prop-stat{padding:13px 8px}}
+.prop-stat .ic{font-size:13px;display:block;margin-bottom:3px;opacity:.75}
 .prop-stat .val{font-size:18px;font-weight:800;display:block;color:var(--primary)}
+@media(min-width:900px){.prop-stat .val{font-size:20px}}
+.prop-stat .val.rev{color:var(--green-dark)}
 .prop-stat .lbl{font-size:9.5px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:3px}
+.prop-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.prop-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--text);border:1px solid var(--border)}
+.prop-chip.amen{background:var(--accent-bg,#eef2ff);border-color:transparent;color:var(--accent,#4f46e5)}
 .prop-actions-row{display:flex;gap:8px;margin-top:auto;padding-top:14px}
+@media(min-width:900px){.prop-actions-row button{padding-top:10px;padding-bottom:10px}}
 
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
@@ -2828,42 +2843,43 @@ function renderProps(){
     var card=document.createElement('div');
     card.className='prop-card';
     var photos=(p.photos||[]).filter(function(u){return u;});
-    var photoHtml;
-    if(photos.length){
-      var shown=photos.slice(0,3);
-      photoHtml='<div class="prop-photo-strip" style="grid-template-columns:repeat('+shown.length+',1fr)" onclick="editProp('+i+')">'+
-        shown.map(function(u){return '<img src="'+esc(u)+'" alt="">';}).join('')+
-        (photos.length>shown.length?'<div class="prop-photo-more">+'+(photos.length-shown.length)+' more</div>':'')+
+    var heroBg=photos.length
+      ? '<img src="'+esc(photos[0])+'" alt="">'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+(p.color||'#8b5cf6')+'55,var(--bg))"></div>';
+    var badgesHtml='<div class="prop-hero-badges">'+
+      (p.ratePerNight?'<span class="prop-hero-badge">€'+p.ratePerNight+'/nt</span>':'')+
+      (p.hiddenFromGuests?'<span class="prop-hero-badge hidden">🙈 Hidden</span>':'')+
+    '</div>';
+    var countHtml=photos.length>1?'<div class="prop-photo-count">📷 '+photos.length+'</div>':'';
+    var heroHtml=
+      '<div class="prop-hero" onclick="editProp('+i+')">'+
+        heroBg+
+        '<div class="prop-hero-scrim"></div>'+
+        badgesHtml+
+        countHtml+
         '<button class="prop-edit-fab" onclick="event.stopPropagation();editProp('+i+')" title="Edit property">✏️</button>'+
-      '</div>';
-    }else{
-      photoHtml='<div class="prop-photo-placeholder" onclick="editProp('+i+')">🏡<span class="txt">Add photos</span>'+
-        '<button class="prop-edit-fab" onclick="event.stopPropagation();editProp('+i+')" title="Edit property">✏️</button>'+
-      '</div>';
-    }
-    card.innerHTML=
-      photoHtml+
-      '<div class="prop-head">'+
-        '<div class="prop-dot" style="background:'+p.color+'"></div>'+
-        '<div style="flex:1">'+
-          '<div class="prop-name">'+esc(p.name)+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);font-weight:700">'+esc(p.location||p.short||'')+'</div>'+
+        '<div class="prop-hero-info">'+
+          '<div class="prop-hero-name">'+esc(p.name)+'</div>'+
+          '<div class="prop-hero-loc"><span class="prop-hero-dot" style="background:'+p.color+'"></span>'+esc(p.location||p.short||'')+'</div>'+
         '</div>'+
-        (p.ratePerNight?'<span class="prop-badge">€'+p.ratePerNight+'/nt</span>':'')+
-        (p.hiddenFromGuests?'<span class="prop-badge" style="background:#f1f5f9;color:var(--muted)">🙈 Hidden</span>':'')+
-      '</div>'+
+      '</div>';
+    var amenIcons={Pool:'🏊',WiFi:'📶',AC:'❄️','Sea view':'🌊',Parking:'🅿️',Balcony:'🌇',Kitchen:'🍳',Washer:'🧺',BBQ:'🔥',Garden:'🌿',Dishwasher:'🍽️'};
+    var amenChips=(p.amenities||[]).map(function(a){return '<span class="prop-chip amen">'+(amenIcons[a]||'✓')+' '+esc(a)+'</span>';}).join('');
+    card.innerHTML=
+      heroHtml+
       '<div class="prop-body">'+
         '<div class="prop-stat-row">'+
-          '<div class="prop-stat"><span class="val">'+confirmedTotal+'</span><div class="lbl">Total bookings</div></div>'+
-          '<div class="prop-stat"><span class="val">'+upcoming+'</span><div class="lbl">Upcoming</div></div>'+
-          '<div class="prop-stat"><span class="val">'+(pending||'—')+'</span><div class="lbl">Pending</div></div>'+
-          '<div class="prop-stat"><span class="val">'+(totalRevenue?'€'+Math.round(totalRevenue).toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
+          '<div class="prop-stat"><span class="ic">📅</span><span class="val">'+confirmedTotal+'</span><div class="lbl">Bookings</div></div>'+
+          '<div class="prop-stat"><span class="ic">⏳</span><span class="val">'+upcoming+'</span><div class="lbl">Upcoming</div></div>'+
+          '<div class="prop-stat"><span class="ic">⏱️</span><span class="val">'+(pending||'—')+'</span><div class="lbl">Pending</div></div>'+
+          '<div class="prop-stat"><span class="ic">💰</span><span class="val rev">'+(totalRevenue?'€'+Math.round(totalRevenue).toLocaleString():'—')+'</span><div class="lbl">Revenue</div></div>'+
         '</div>'+
-        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">'+
-          (p.features?'<span class="chip">'+esc(p.features)+'</span>':'')+
-          (p.minNights?'<span class="chip">Min '+p.minNights+' nights</span>':'')+
-          (p.maxGuests?'<span class="chip">Max '+p.maxGuests+' guests</span>':'')+
-          (p.cleanFee?'<span class="chip">🧹 €'+p.cleanFee+' cleaning</span>':'')+
+        '<div class="prop-chips">'+
+          (p.features?'<span class="prop-chip">'+esc(p.features)+'</span>':'')+
+          (p.minNights?'<span class="prop-chip">Min '+p.minNights+' nights</span>':'')+
+          (p.maxGuests?'<span class="prop-chip">Max '+p.maxGuests+' guests</span>':'')+
+          (p.cleanFee?'<span class="prop-chip">🧹 €'+p.cleanFee+' cleaning</span>':'')+
+          amenChips+
         '</div>'+
         '<div class="prop-actions-row">'+
           '<button class="btn-primary" style="font-size:12px;flex:1" onclick="editProp('+i+')">✏️ Edit</button>'+
