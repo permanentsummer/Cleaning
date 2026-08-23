@@ -386,6 +386,29 @@ body.dark .ccard-btn-yellow{color:#fbbf24}
 .ccard-section-lbl.muted{color:var(--muted)}
 .ccard-section-count{background:var(--bg);color:var(--muted);font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
 
+/* ── CLEANING DASHBOARD (stats + payouts) ─────────────────────────────────── */
+.clean-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.clean-stat{background:var(--card-bg);border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--border)}
+.clean-stat.red{border-left-color:var(--red)}
+.clean-stat.yellow{border-left-color:var(--yellow)}
+.clean-stat.blue{border-left-color:var(--blue)}
+.clean-stat.green{border-left-color:var(--green)}
+.clean-stat-val{font-size:27px;font-weight:800;color:var(--primary);line-height:1}
+.clean-stat-val.red{color:var(--red)}
+.clean-stat-val.yellow{color:#d97706}
+body.dark .clean-stat-val.yellow{color:#fbbf24}
+.clean-stat-val.green{color:var(--green-dark)}
+.clean-stat-lbl{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:5px}
+.clean-payouts-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--red);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.clean-payouts-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);background:var(--red-bg)}
+.clean-payouts-title{font-size:12.5px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.4px}
+.clean-payouts-total{font-size:18px;font-weight:800;color:var(--red)}
+.clean-payout-row{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.clean-payout-row:last-child{border-bottom:none}
+.clean-payout-name{font-size:13.5px;font-weight:700;color:var(--text)}
+.clean-payout-count{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
+.clean-payout-amt{font-size:15px;font-weight:800;color:var(--red)}
+
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
 .widget-step{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
@@ -1619,10 +1642,19 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       </div>
     </div>
 
-    <!-- Today banner -->
-    <div id="cleanBanner" style="display:none;border-radius:12px;padding:14px 20px;margin-bottom:16px;color:#fff;display:none">
-      <div style="font-size:15px;font-weight:700" id="cleanBannerMsg"></div>
-      <div style="font-size:12px;opacity:.85;margin-top:2px" id="cleanBannerApts"></div>
+    <!-- Overview stats -->
+    <div class="clean-stats-grid" id="cleanStatsGrid"></div>
+
+    <!-- Cleaner payouts -->
+    <div class="clean-payouts-card" id="cleanPayoutsCard" style="display:none">
+      <div class="clean-payouts-head">
+        <div class="clean-payouts-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Cleaner payouts due
+        </div>
+        <div class="clean-payouts-total" id="cleanPayoutsTotal"></div>
+      </div>
+      <div id="cleanPayoutsList"></div>
     </div>
 
     <!-- Filter row -->
@@ -4683,8 +4715,85 @@ function refreshCleaning(){
 
 function renderCleaning(){
   buildCleanFilters();
-  renderCleaningBanner();
+  renderCleaningStats();
   renderCleaningList();
+}
+
+// Shared: merge allBookings + confirmed direct_requests not already covered.
+// Extracted so the stats/payouts panel and the task list always agree on the same data.
+function buildCleanAllList(){
+  var cleanAll=(allBookings||[]).slice();
+  var coveredForClean={};
+  (allBookings||[]).forEach(function(b){coveredForClean[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
+  (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+    var aptId=r.apt_id||r.apt_name||'';
+    if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
+      var _mirrorBk=allBookings.find(function(x){return x.checkin===r.checkin&&x.checkout===r.checkout;});
+      var _dispName=r.guest_name||(_mirrorBk?cleanNotesDisplay(_mirrorBk.notes):'');
+      var _cpFlag=(r.notes||'').indexOf('\n__CLEANERPAID__')!==-1?'\n__CLEANERPAID__':'';
+      var _fullNotes=_dispName+_cpFlag;
+      cleanAll.push({id:r.id,apt:aptId,source:'direct',
+        checkin:r.checkin,checkout:r.checkout,
+        guests:String(r.guests||''),
+        notes:_fullNotes,
+        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
+        cleaned:(r.cleaned||(_mirrorBk?_mirrorBk.cleaned:importCleanedStatus(r.checkout)))});
+    }
+  });
+  return cleanAll;
+}
+
+function renderCleaningStats(){
+  var statsGrid=document.getElementById('cleanStatsGrid');
+  var payoutsCard=document.getElementById('cleanPayoutsCard');
+  if(!statsGrid)return;
+  var tod=todayStr();
+  var cleanAll=buildCleanAllList();
+  var weekAhead=new Date();weekAhead.setDate(weekAhead.getDate()+7);
+  var weekAheadStr=weekAhead.toISOString().slice(0,10);
+
+  var needsCleaning=cleanAll.filter(function(b){return b.checkout<=tod&&b.cleaned!=='yes';}).length;
+  var guestsInHouse=cleanAll.filter(function(b){return b.checkin<=tod&&b.checkout>tod;}).length;
+  var upcoming7=cleanAll.filter(function(b){return b.checkin>tod&&b.checkin<=weekAheadStr;}).length;
+
+  // Cleaner payouts: matches the existing "Unpaid" filter definition exactly —
+  // cleaned='yes', checkout in the past or today, cleaner not yet marked paid.
+  var payoutTotals={};// name -> {amount, count}
+  var grandTotal=0;
+  cleanAll.forEach(function(b){
+    if(!(b.checkout<=tod&&b.cleaned==='yes'))return;
+    if((b.notes||'').indexOf('\n__CLEANERPAID__')!==-1)return;
+    var cleaner=getCleanerForApt(b.apt);
+    var name=(cleaner&&cleaner.name)?cleaner.name:'Unassigned';
+    var fin=parseFin(b);
+    var fee=fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt);
+    if(!payoutTotals[name])payoutTotals[name]={amount:0,count:0};
+    payoutTotals[name].amount+=fee;
+    payoutTotals[name].count+=1;
+    grandTotal+=fee;
+  });
+
+  statsGrid.innerHTML=
+    '<div class="clean-stat red"><div class="clean-stat-val red">'+needsCleaning+'</div><div class="clean-stat-lbl">Needs cleaning</div></div>'+
+    '<div class="clean-stat yellow"><div class="clean-stat-val yellow">'+guestsInHouse+'</div><div class="clean-stat-lbl">Guests in house</div></div>'+
+    '<div class="clean-stat red"><div class="clean-stat-val red">€'+Math.round(grandTotal).toLocaleString()+'</div><div class="clean-stat-lbl">Unpaid to cleaners</div></div>'+
+    '<div class="clean-stat blue"><div class="clean-stat-val">'+upcoming7+'</div><div class="clean-stat-lbl">Check-ins next 7 days</div></div>';
+
+  var names=Object.keys(payoutTotals);
+  if(!names.length||grandTotal<=0){
+    payoutsCard.style.display='none';
+  } else {
+    payoutsCard.style.display='block';
+    names.sort(function(a,b){return payoutTotals[b].amount-payoutTotals[a].amount;});
+    document.getElementById('cleanPayoutsTotal').textContent='€'+Math.round(grandTotal).toLocaleString();
+    document.getElementById('cleanPayoutsList').innerHTML=names.map(function(name){
+      var t=payoutTotals[name];
+      return '<div class="clean-payout-row">'+
+        '<div><div class="clean-payout-name">'+esc(name)+'</div><div class="clean-payout-count">'+t.count+' unpaid job'+(t.count===1?'':'s')+'</div></div>'+
+        '<div class="clean-payout-amt">€'+Math.round(t.amount).toLocaleString()+'</div>'+
+      '</div>';
+    }).join('');
+  }
 }
 
 function buildCleanFilters(){
@@ -4745,24 +4854,7 @@ function renderCleaningList(){
   var tod=todayStr();
 
   // Include confirmed direct_requests in cleaning list
-  var cleanAll=(allBookings||[]).slice();
-  var coveredForClean={};
-  (allBookings||[]).forEach(function(b){coveredForClean[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
-  (requests||[]).filter(function(r){return r.status==='confirmed';}).forEach(function(r){
-    var aptId=r.apt_id||r.apt_name||'';
-    if(!coveredForClean[aptId+'|'+r.checkin+'|'+r.checkout]){
-      var _mirrorBk=allBookings.find(function(x){return x.checkin===r.checkin&&x.checkout===r.checkout;});
-      var _dispName=r.guest_name||(_mirrorBk?cleanNotesDisplay(_mirrorBk.notes):'');
-      var _cpFlag=(r.notes||'').indexOf('\n__CLEANERPAID__')!==-1?'\n__CLEANERPAID__':'';
-      var _fullNotes=_dispName+_cpFlag;
-      cleanAll.push({id:r.id,apt:aptId,source:'direct',
-        checkin:r.checkin,checkout:r.checkout,
-        guests:String(r.guests||''),
-        notes:_fullNotes,
-        paid:r.balance_paid?'paid':(r.deposit_paid?'deposit':'unpaid'),
-        cleaned:(r.cleaned||(_mirrorBk?_mirrorBk.cleaned:importCleanedStatus(r.checkout)))});
-    }
-  });
+  var cleanAll=buildCleanAllList();
   var visible=cleanAll.filter(function(b){
     if(b.cleaned==='yes'&&b.checkout>tod)return false; // hide cleaned future bookings only
     if(cleanFilter==='past')return b.checkout<tod;
@@ -4877,7 +4969,7 @@ function mkCleanCard(b,tod){
   var cleanBtn=document.createElement('button');
   cleanBtn.setAttribute('data-id',b.id);
   if(isFuture){cleanBtn.textContent='Upcoming';cleanBtn.className='ccard-btn flex clean-mark-btn ccard-btn-grey';}
-  else if(isCurrent){cleanBtn.textContent='Guest in house — clean on '+fmtShort(b.checkout);cleanBtn.className='ccard-btn flex clean-mark-btn ccard-btn-yellow';}
+  else if(isCurrent){cleanBtn.textContent='Guest in house — clean on '+fmtShort(b.checkout);cleanBtn.className='ccard-btn flex clean-mark-btn ccard-btn-grey';}
   else if(b.cleaned==='yes'){cleanBtn.textContent='Cleaned';cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-green';}
   else{cleanBtn.textContent='Mark as cleaned';cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-red';}
   // Cleaner payment toggle
@@ -4899,8 +4991,8 @@ function mkCleanCard(b,tod){
   remBtn.addEventListener('click',function(){sendCleaningReminder(b);});
   actionDiv.appendChild(cleanBtn);actionDiv.appendChild(payBtn);actionDiv.appendChild(waBtn);actionDiv.appendChild(remBtn);
   card.appendChild(actionDiv);
-  // Wire cleaning toggle
-  if(!isFuture){
+  // Wire cleaning toggle (not for future bookings, and not while the guest is still in house)
+  if(!isFuture&&!isCurrent){
     cleanBtn.addEventListener('click',function(){
       var isCleaned=cleanBtn.textContent.indexOf('Cleaned')!==-1;
       if(isCleaned){
@@ -4917,7 +5009,7 @@ function mkCleanCard(b,tod){
       if(bk){
         bk.cleaned=nc;
         sbF('PATCH','bookings?id=eq.'+id,{cleaned:nc})
-          .then(function(){renderCleaningBanner();})
+          .then(function(){renderCleaningStats();})
           .catch(function(e){toast('Save failed: '+e.message,'err');});
       } else if(rk){
         rk.cleaned=nc;
@@ -4925,7 +5017,7 @@ function mkCleanCard(b,tod){
         if(mirror){
           mirror.cleaned=nc;
           sbF('PATCH','bookings?id=eq.'+mirror.id,{cleaned:nc})
-            .then(function(){renderCleaningBanner();})
+            .then(function(){renderCleaningStats();})
             .catch(function(e){toast('Save failed: '+e.message,'err');});
         }
       }
@@ -4950,12 +5042,13 @@ function mkCleanCard(b,tod){
       var n=bk.notes||'';n=n.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n+='\n__CLEANERPAID__';
       bk.notes=n;
       fetch(SB_URL+'/rest/v1/bookings?id=eq.'+id,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+tok2,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({notes:n})})
-        .then(function(r){if(!r.ok)r.text().then(function(t){toast('Save failed: '+t,'err');});})
+        .then(function(r){if(!r.ok){r.text().then(function(t){toast('Save failed: '+t,'err');});}else{renderCleaningStats();}})
         .catch(function(e){toast('Save failed: '+e.message,'err');});
     } else if(rk){
       var n2=rk.notes||'';n2=n2.replace(/\n__CLEANERPAID__/g,'');if(newPaid)n2+='\n__CLEANERPAID__';
       rk.notes=n2;
       sbF('PATCH','direct_requests?id=eq.'+id,{notes:n2})
+        .then(function(){renderCleaningStats();})
         .catch(function(e){toast('Save failed: '+e.message,'err');});
     }
   });
