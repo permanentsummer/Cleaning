@@ -344,7 +344,9 @@ body.dark .prop-chip.amen{background:#241a36;color:#c4b5fd}
 @media(min-width:900px){.prop-actions-row button{padding-top:10px;padding-bottom:10px}}
 
 /* ── CLEANING TAB CARDS ────────────────────────────────────────────────────── */
-.clean-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-left:4px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.clean-list-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-bottom:8px}
+.clean-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--border);border-left:4px solid var(--border);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+.clean-card .ccard-actions{margin-top:auto}
 .clean-card.today{border-left-color:var(--yellow)}
 .clean-card.done{border-left-color:var(--green)}
 .ccard-top{padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -408,6 +410,19 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 .clean-payout-name{font-size:13.5px;font-weight:700;color:var(--text)}
 .clean-payout-count{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:1px}
 .clean-payout-amt{font-size:15px;font-weight:800;color:var(--red)}
+
+/* ── CLEANER SETTINGS (multi-property assignment) ─────────────────────────── */
+.cleaner-row{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--card-bg)}
+.cleaner-row-top{display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:10px}
+.cleaner-row-top input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box;background:var(--bg);color:var(--text)}
+.cleaner-remove-btn{border:none;background:var(--red-bg);color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1}
+.cleaner-row-apts-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.cleaner-row-apts{display:flex;flex-wrap:wrap;gap:6px}
+.cl-apt-pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;user-select:none}
+.cl-apt-pill input{cursor:pointer}
+.cl-apt-pill.on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue)}
+.cl-apt-pill.all.on{background:var(--green-bg);border-color:var(--green);color:var(--green-dark)}
+.cl-apt-pill.disabled{opacity:.4;cursor:not-allowed}
 
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
@@ -4891,7 +4906,10 @@ function renderCleaningList(){
     lbl.className='ccard-section-lbl'+(muted?' muted':'');
     lbl.innerHTML=esc(label)+'<span class="ccard-section-count">'+items.length+'</span>';
     container.appendChild(lbl);
-    items.forEach(function(b){container.appendChild(mkCleanCard(b,tod));});
+    var grid=document.createElement('div');
+    grid.className='clean-list-grid';
+    items.forEach(function(b){grid.appendChild(mkCleanCard(b,tod));});
+    container.appendChild(grid);
   }
 
   mkSection(CT('today')+' & Active',active,false);
@@ -6743,14 +6761,19 @@ function showSettingsTab(tab){
 // ── CLEANERS ──────────────────────────────────────────────────────────────────
 function getCleaners(){
   var cfg=workspace&&workspace.settings||{};
-  if(Array.isArray(cfg.cleaners))return cfg.cleaners;
-  if(cfg.cleanerName||cfg.cleanerPhone)return [{name:cfg.cleanerName||'',phone:cfg.cleanerPhone||'',apt:'all'}];
-  return [];
+  var list=Array.isArray(cfg.cleaners)?cfg.cleaners:
+    (cfg.cleanerName||cfg.cleanerPhone?[{name:cfg.cleanerName||'',phone:cfg.cleanerPhone||'',apt:'all'}]:[]);
+  // Normalize legacy single-property entries (apt:'all' or apt:'<id>') into the new
+  // {allProps, apts:[...]} shape. Read-time only — doesn't touch stored data until re-saved.
+  return list.map(function(c){
+    if(c.allProps!==undefined||Array.isArray(c.apts))return c;
+    return{name:c.name,phone:c.phone,allProps:(!c.apt||c.apt==='all'),apts:(c.apt&&c.apt!=='all')?[c.apt]:[]};
+  });
 }
 function getCleanerForApt(aptId){
   var cleaners=getCleaners();
-  return cleaners.find(function(c){return c.apt===aptId;})||
-         cleaners.find(function(c){return c.apt==='all';})||
+  return cleaners.find(function(c){return !c.allProps&&Array.isArray(c.apts)&&c.apts.indexOf(aptId)!==-1;})||
+         cleaners.find(function(c){return c.allProps;})||
          cleaners[0]||null;
 }
 function loadCleaningSettings(){renderCleanersList();}
@@ -6797,30 +6820,46 @@ function saveAccountProfile(){
 function renderCleanersList(){
   var el=document.getElementById('cleanersList');if(!el)return;
   var cleaners=getCleaners();
-  var aptOpts='<option value="all">All properties (default)</option>'+
-    (properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   if(!cleaners.length){
     el.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No cleaners yet. Click + Add cleaner to start.</div>';
     return;
   }
-  el.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 160px 36px;gap:8px;padding:4px 0 6px;border-bottom:2px solid var(--border);margin-bottom:6px">'+
-    ['Name','WhatsApp number','Assigned to',''].map(function(h){
-      return'<span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+h+'</span>';
-    }).join('')+'</div>'+
-    cleaners.map(function(c,i){
-      return'<div class="cleaner-row" data-idx="'+i+'" style="display:grid;grid-template-columns:1fr 1fr 160px 36px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #f1f5f9">'+
-        '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Maria" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
-        '<input class="cl-phone" type="tel" value="'+esc(c.phone||'')+'" placeholder="+351 912 345 678" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13px;width:100%;box-sizing:border-box">'+
-        '<select class="cl-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12px;width:100%">'+
-          aptOpts.replace('value="'+(c.apt||'all')+'"','value="'+(c.apt||'all')+'" selected')+
-        '</select>'+
-        '<button onclick="removeCleanerRow('+i+')" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1">×</button>'+
-      '</div>';
+  el.innerHTML=cleaners.map(function(c,i){
+    var aptPills=(properties||[]).map(function(p){
+      var checked=!c.allProps&&Array.isArray(c.apts)&&c.apts.indexOf(p.id)!==-1;
+      return '<label class="cl-apt-pill'+(checked?' on':'')+(c.allProps?' disabled':'')+'">'+
+        '<input type="checkbox" class="cl-apt-cb" value="'+esc(p.id)+'" '+(checked?'checked':'')+(c.allProps?' disabled':'')+' onchange="this.closest(\'.cl-apt-pill\').classList.toggle(\'on\',this.checked)">'+
+        esc(p.short||p.name)+
+      '</label>';
     }).join('');
+    return '<div class="cleaner-row" data-idx="'+i+'">'+
+      '<div class="cleaner-row-top">'+
+        '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Cleaner name">'+
+        '<input class="cl-phone" type="tel" value="'+esc(c.phone||'')+'" placeholder="+351 912 345 678">'+
+        '<button class="cleaner-remove-btn" onclick="removeCleanerRow('+i+')" title="Remove cleaner">×</button>'+
+      '</div>'+
+      '<div class="cleaner-row-apts-lbl">Cleans:</div>'+
+      '<div class="cleaner-row-apts">'+
+        '<label class="cl-apt-pill all'+(c.allProps?' on':'')+'">'+
+          '<input type="checkbox" class="cl-apt-all" '+(c.allProps?'checked':'')+' onchange="toggleCleanerAllProps(this)">'+
+          'All properties'+
+        '</label>'+
+        aptPills+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function toggleCleanerAllProps(cb){
+  var row=cb.closest('.cleaner-row');
+  cb.closest('.cl-apt-pill').classList.toggle('on',cb.checked);
+  row.querySelectorAll('.cl-apt-cb').forEach(function(c){
+    c.disabled=cb.checked;
+    c.closest('.cl-apt-pill').classList.toggle('disabled',cb.checked);
+  });
 }
 function addCleanerRow(){
   var cleaners=getCleaners();
-  cleaners.push({name:'',phone:'',apt:'all'});
+  cleaners.push({name:'',phone:'',allProps:true,apts:[]});
   if(workspace.settings)workspace.settings.cleaners=cleaners;
   renderCleanersList();
   var rows=document.querySelectorAll('.cleaner-row');
@@ -6838,8 +6877,10 @@ function saveCleaningSettings(){
   rows.forEach(function(row){
     var name=row.querySelector('.cl-name').value.trim();
     var phone=row.querySelector('.cl-phone').value.trim();
-    var apt=row.querySelector('.cl-apt').value;
-    if(name||phone)cleaners.push({name:name,phone:phone,apt:apt});
+    var allCb=row.querySelector('.cl-apt-all');
+    var allProps=!!(allCb&&allCb.checked);
+    var apts=Array.prototype.slice.call(row.querySelectorAll('.cl-apt-cb:checked')).map(function(cb){return cb.value;});
+    if(name||phone)cleaners.push({name:name,phone:phone,allProps:allProps,apts:allProps?[]:apts});
   });
   sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
     var fresh=(rows&&rows[0]&&rows[0].settings)||{};
