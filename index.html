@@ -424,6 +424,30 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 .cl-apt-pill.all.on{background:var(--green-bg);border-color:var(--green);color:var(--green-dark)}
 .cl-apt-pill.disabled{opacity:.4;cursor:not-allowed}
 
+/* ── CLEANING TABLE (task-manager style) ──────────────────────────────────── */
+.ctable-wrap{background:var(--card-bg);border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow);overflow-x:auto}
+.ctable{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
+.ctable thead th{background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ctable td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ctable tr.ctable-row:hover td{background:var(--bg)}
+.ctable tbody tr:last-child td{border-bottom:none}
+.ctable-bar{width:4px;padding:0!important}
+.ctable-section td{background:var(--bg);font-size:10.5px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:.6px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.ctable-section.past td{color:var(--muted)}
+.ctable-section-count{background:var(--card-bg);color:var(--muted);font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:4px}
+.ctable-propname{font-weight:700;color:var(--primary);display:flex;align-items:center;gap:8px;white-space:nowrap}
+.ctable-propdot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.ctable-guest{color:var(--muted);font-weight:600;font-size:11.5px;margin-top:2px;margin-left:17px;white-space:nowrap}
+.ctable-dates{white-space:nowrap;font-size:12px;color:var(--text)}
+.ctable-b2b{font-size:10px;font-weight:700;color:#92400e;background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:6px;padding:2px 6px;margin-left:4px}
+body.dark .ctable-b2b{color:#fbbf24}
+.ctable-pill-btn{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:6px 12px;border-radius:20px;white-space:nowrap;border:none;cursor:pointer;font-family:inherit}
+.cleaner-cell{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.cleaner-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0}
+.cleaner-name-sm{font-size:12px;font-weight:600;color:var(--text)}
+.ctable-actions{display:flex;gap:6px}
+.ctable-icon-btn{border:none;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
 .widget-step{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
@@ -4886,9 +4910,6 @@ function renderCleaningList(){
     return;
   }
 
-  // Sort: checkout asc
-  container.innerHTML='';
-
   // Group: Past / Active / Upcoming — each sorted independently
   var past=visible.filter(function(b){return b.checkout<tod;});
   var active=visible.filter(function(b){return b.checkin<=tod&&b.checkout>=tod;});
@@ -4900,21 +4921,37 @@ function renderCleaningList(){
   // Upcoming: soonest checkin first
   upcoming.sort(function(a,b){return(a.checkin||'').localeCompare(b.checkin||'');});
 
-  function mkSection(label,items,muted){
+  var tbody=document.createElement('tbody');
+  function mkSectionRow(label,items,cls){
     if(!items.length)return;
-    var lbl=document.createElement('div');
-    lbl.className='ccard-section-lbl'+(muted?' muted':'');
-    lbl.innerHTML=esc(label)+'<span class="ccard-section-count">'+items.length+'</span>';
-    container.appendChild(lbl);
-    var grid=document.createElement('div');
-    grid.className='clean-list-grid';
-    items.forEach(function(b){grid.appendChild(mkCleanCard(b,tod));});
-    container.appendChild(grid);
+    var tr=document.createElement('tr');
+    tr.className='ctable-section'+(cls?' '+cls:'');
+    tr.innerHTML='<td colspan="7">'+esc(label)+' <span class="ctable-section-count">'+items.length+'</span></td>';
+    tbody.appendChild(tr);
+    items.forEach(function(b){tbody.appendChild(mkCleanCard(b,tod));});
   }
+  mkSectionRow(CT('today')+' & Active',active,'active');
+  mkSectionRow(CT('upcoming'),upcoming,'upcoming');
+  mkSectionRow('Past',past,'past');
 
-  mkSection(CT('today')+' & Active',active,false);
-  mkSection(CT('upcoming'),upcoming,false);
-  mkSection('Past',past,true);
+  container.innerHTML=
+    '<div class="ctable-wrap"><table class="ctable">'+
+      '<thead><tr><th style="width:4px;padding:0"></th><th>Property &amp; Guest</th><th>Dates</th><th>Status</th><th>Cleaner</th><th>Payment</th><th>Actions</th></tr></thead>'+
+    '</table></div>';
+  container.querySelector('table').appendChild(tbody);
+}
+
+function initials(name){
+  if(!name)return '?';
+  var parts=name.trim().split(/\s+/);
+  if(parts.length===1)return parts[0].slice(0,2).toUpperCase();
+  return(parts[0][0]+parts[1][0]).toUpperCase();
+}
+function colorFromName(name){
+  var palette=['#F9A800','#4338ca','#059669','#D54047','#0369a1','#7c3aed','#db2777','#0d9488'];
+  var hash=0;
+  for(var i=0;i<(name||'x').length;i++){hash=name.charCodeAt(i)+((hash<<5)-hash);}
+  return palette[Math.abs(hash)%palette.length];
 }
 
 function mkCleanCard(b,tod){
@@ -4941,84 +4978,70 @@ function mkCleanCard(b,tod){
 
   // Cleaner assigned to this property + the fee owed (respects a per-booking override if one was set)
   var cleaner=getCleanerForApt(b.apt);
-  var cleanerLabel=(cleaner&&cleaner.name)?cleaner.name:'No cleaner assigned';
+  var cleanerLabel=(cleaner&&cleaner.name)?cleaner.name:'Unassigned';
   var fin=parseFin(b);
   var feeAmount=fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt);
 
-  var card=document.createElement('div');
-  card.className='clean-card'+(isToday?' today':'')+(b.cleaned==='yes'?' done':'');
+  var barColor=isToday?'var(--yellow)':(b.cleaned==='yes'?'var(--green)':(isFuture?'var(--border)':'var(--red)'));
+  var tr=document.createElement('tr');
+  tr.className='ctable-row';
 
-  var b2bBadge=isBackToBack?
-    '<div class="ccard-b2b">Back-to-back · Check-out 12:00 → Check-in 15:00</div>':'';
-  var cleanBadge=b.cleaned==='yes'
-    ?'<span class="badge badge-green">Cleaned</span>'
-    :(isCurrent?'<span class="badge badge-yellow">Guest in house</span>'
-      :(isFuture?'<span class="badge badge-grey">Upcoming</span>'
-        :'<span class="badge badge-red">Needs cleaning</span>'));
-  var payBadge=cleanerPaid
-    ?'<span class="badge badge-green">Cleaner paid</span>'
-    :'<span class="badge badge-red">Unpaid</span>';
+  var b2bTag=isBackToBack?'<span class="ctable-b2b" title="Check-out 12:00 → Check-in 15:00">⚡ B2B</span>':'';
 
-  card.innerHTML=
-    '<div class="ccard-top">'+
-      '<div class="ccard-prop">'+
-        '<div class="ccard-dot" style="background:'+apt.color+'"></div>'+
-        '<div style="min-width:0">'+
-          '<div class="ccard-propname">'+esc(apt.name||b.apt)+'</div>'+
-          '<div class="ccard-guest">'+esc(guestName)+' · '+nights+' night'+(nights===1?'':'s')+'</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="ccard-badges">'+cleanBadge+payBadge+'</div>'+
-    '</div>'+
-    '<div class="ccard-dates">'+
-      '<div><div class="ccard-date-lbl">'+CT('checkin')+'</div><div class="ccard-date-val">'+fmtShort(b.checkin)+'</div></div>'+
-      '<div class="ccard-arrow">→</div>'+
-      '<div style="text-align:right"><div class="ccard-date-lbl">'+CT('checkout')+'</div><div class="ccard-date-val'+(isToday?' ccard-date-today':'')+'">'+fmtShort(b.checkout)+(isToday?' · TODAY':'')+'</div></div>'+
-      b2bBadge+
-    '</div>'+
-    '<div class="ccard-meta">'+
-      '<div class="ccard-cleaner">Cleaner: <strong>'+esc(cleanerLabel)+'</strong></div>'+
-      (cleanerPaid?'<span class="ccard-fee settled">€'+feeAmount+' settled</span>':'<span class="ccard-fee owed">€'+feeAmount+' owed</span>')+
-    '</div>';
-  // ── Action row ────────────────────────────────────────────────────────────────
-  var actionDiv=document.createElement('div');
-  actionDiv.className='ccard-actions';
-  // Cleaning toggle
+  tr.innerHTML=
+    '<td class="ctable-bar" style="background:'+barColor+'"></td>'+
+    '<td><div class="ctable-propname"><span class="ctable-propdot" style="background:'+apt.color+'"></span>'+esc(apt.name||b.apt)+'</div>'+
+      '<div class="ctable-guest">'+esc(guestName)+' · '+nights+'n</div></td>'+
+    '<td class="ctable-dates"><strong'+(isToday?' style="color:#d97706"':'')+'>'+fmtShort(b.checkin)+' → '+fmtShort(b.checkout)+'</strong>'+(isToday?' <span class="badge badge-yellow">TODAY</span>':'')+' '+b2bTag+'</td>'+
+    '<td class="ctable-status-cell"></td>'+
+    '<td><div class="cleaner-cell"><div class="cleaner-avatar" style="background:'+colorFromName(cleanerLabel)+'">'+esc(initials(cleanerLabel))+'</div><span class="cleaner-name-sm">'+esc(cleanerLabel)+'</span></div></td>'+
+    '<td class="ctable-pay-cell"></td>'+
+    '<td class="ctable-actions"></td>';
+
+  // ── Status cell (clean toggle) ───────────────────────────────────────────────
+  var statusCell=tr.querySelector('.ctable-status-cell');
   var cleanBtn=document.createElement('button');
   cleanBtn.setAttribute('data-id',b.id);
-  if(isFuture){cleanBtn.textContent='Upcoming';cleanBtn.className='ccard-btn flex clean-mark-btn ccard-btn-grey';}
-  else if(isCurrent){cleanBtn.textContent='Guest in house — clean on '+fmtShort(b.checkout);cleanBtn.className='ccard-btn flex clean-mark-btn ccard-btn-grey';}
-  else if(b.cleaned==='yes'){cleanBtn.textContent='Cleaned';cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-green';}
-  else{cleanBtn.textContent='Mark as cleaned';cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-red';}
-  // Cleaner payment toggle
+  cleanBtn.className='ctable-pill-btn';
+  if(isFuture){cleanBtn.textContent='Upcoming';cleanBtn.className+=' badge-grey';cleanBtn.style.cursor='default';}
+  else if(isCurrent){cleanBtn.textContent='Guest in house';cleanBtn.className+=' badge-grey';cleanBtn.style.cursor='default';cleanBtn.title='Clean on '+fmtShort(b.checkout);}
+  else if(b.cleaned==='yes'){cleanBtn.textContent='Cleaned';cleanBtn.className+=' badge-green';}
+  else{cleanBtn.textContent='Needs cleaning';cleanBtn.className+=' badge-red';}
+  statusCell.appendChild(cleanBtn);
+
+  // ── Payment cell (pay toggle) ─────────────────────────────────────────────────
+  var payCell=tr.querySelector('.ctable-pay-cell');
   var payBtn=document.createElement('button');
   payBtn.setAttribute('data-id',b.id);
-  if(cleanerPaid){payBtn.textContent='Cleaner paid';payBtn.className='ccard-btn clean-pay-btn ccard-btn-green';}
-  else{payBtn.textContent='Mark as paid — €'+feeAmount;payBtn.className='ccard-btn clean-pay-btn ccard-btn-red';}
-  // WhatsApp
+  payBtn.className='ctable-pill-btn';
+  if(cleanerPaid){payBtn.textContent='Cleaner paid';payBtn.className+=' badge-green';}
+  else{payBtn.textContent='€'+feeAmount+' owed';payBtn.className+=' badge-red';}
+  payCell.appendChild(payBtn);
+
+  // ── Actions cell (WhatsApp + reminder) ────────────────────────────────────────
+  var actionsCell=tr.querySelector('.ctable-actions');
   var waBtn=document.createElement('button');
-  waBtn.className='clean-wa-btn ccard-icon-btn';waBtn.setAttribute('data-id',b.id);waBtn.title='Send WhatsApp to cleaner';
+  waBtn.className='clean-wa-btn ctable-icon-btn';waBtn.setAttribute('data-id',b.id);waBtn.title='Send WhatsApp to cleaner';
   waBtn.style.background='#25D366';
-  waBtn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
-  // Reminder button — sends a follow-up WhatsApp
+  waBtn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
   var remBtn=document.createElement('button');
   remBtn.title='Send reminder to cleaner';
-  remBtn.className='ccard-icon-btn';
+  remBtn.className='ctable-icon-btn';
   remBtn.style.background='#f59e0b';
-  remBtn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+  remBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
   remBtn.addEventListener('click',function(){sendCleaningReminder(b);});
-  actionDiv.appendChild(cleanBtn);actionDiv.appendChild(payBtn);actionDiv.appendChild(waBtn);actionDiv.appendChild(remBtn);
-  card.appendChild(actionDiv);
+  actionsCell.appendChild(waBtn);actionsCell.appendChild(remBtn);
+
   // Wire cleaning toggle (not for future bookings, and not while the guest is still in house)
   if(!isFuture&&!isCurrent){
     cleanBtn.addEventListener('click',function(){
       var isCleaned=cleanBtn.textContent.indexOf('Cleaned')!==-1;
       if(isCleaned){
-        cleanBtn.textContent='Mark as cleaned';
-        cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-red';
+        cleanBtn.textContent='Needs cleaning';
+        cleanBtn.className='ctable-pill-btn badge-red';
       } else {
         cleanBtn.textContent='Cleaned';
-        cleanBtn.className='ccard-btn clean-mark-btn ccard-btn-green';
+        cleanBtn.className='ctable-pill-btn badge-green';
       }
       var id=cleanBtn.getAttribute('data-id');
       var nc=isCleaned?'no':'yes';
@@ -5043,16 +5066,16 @@ function mkCleanCard(b,tod){
   }
     // Wire cleaner payment toggle
   payBtn.addEventListener('click',function(){
-    var isPaid=payBtn.textContent.indexOf('Cleaner paid')!==-1;
-    if(isPaid){
-      payBtn.textContent='Mark as paid — €'+feeAmount;
-      payBtn.className='ccard-btn clean-pay-btn ccard-btn-red';
+    var isPaidNow=payBtn.textContent.indexOf('Cleaner paid')!==-1;
+    if(isPaidNow){
+      payBtn.textContent='€'+feeAmount+' owed';
+      payBtn.className='ctable-pill-btn badge-red';
     } else {
       payBtn.textContent='Cleaner paid';
-      payBtn.className='ccard-btn clean-pay-btn ccard-btn-green';
+      payBtn.className='ctable-pill-btn badge-green';
     }
     var id=payBtn.getAttribute('data-id');
-    var newPaid=!isPaid;
+    var newPaid=!isPaidNow;
     var bk=allBookings.find(function(x){return x.id===id;});
     var rk=(requests||[]).find(function(x){return x.id===id;});
     var tok2=session?session.access_token:SB_KEY;
@@ -5072,7 +5095,7 @@ function mkCleanCard(b,tod){
   });
     // Wire WhatsApp
   waBtn.addEventListener('click',function(){sendCleaningWhatsApp(b);});
-  return card;
+  return tr;
 }
 
 // ── IMPORT BOOKINGS ──────────────────────────────────────────────────────────
