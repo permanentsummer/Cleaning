@@ -401,7 +401,8 @@ body.dark .ccard-btn-yellow{color:#fbbf24}
 body.dark .clean-stat-val.yellow{color:#fbbf24}
 .clean-stat-val.green{color:var(--green-dark)}
 .clean-stat-lbl{font-size:11.5px;font-weight:600;color:var(--muted);margin-top:5px}
-.clean-payouts-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--red);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.clean-payouts-card{background:var(--card-bg);border-radius:12px;border:1px solid var(--red);box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;transition:box-shadow .15s}
+.clean-payouts-card:hover{box-shadow:0 6px 20px rgba(213,64,71,.18)}
 .clean-payouts-head{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);background:var(--red-bg)}
 .clean-payouts-title{font-size:12.5px;font-weight:800;color:var(--red);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.4px}
 .clean-payouts-total{font-size:18px;font-weight:800;color:var(--red)}
@@ -441,12 +442,39 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 .ctable-dates{white-space:nowrap;font-size:12px;color:var(--text)}
 .ctable-b2b{font-size:10px;font-weight:700;color:#92400e;background:var(--yellow-bg);border:1px solid var(--yellow);border-radius:6px;padding:2px 6px;margin-left:4px}
 body.dark .ctable-b2b{color:#fbbf24}
-.ctable-pill-btn{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:6px 12px;border-radius:20px;white-space:nowrap;border:none;cursor:pointer;font-family:inherit}
+.ctable-pill-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10.5px;font-weight:700;padding:6px 12px;border-radius:20px;white-space:nowrap;border:none;cursor:pointer;font-family:inherit;min-width:118px;box-sizing:border-box}
 .cleaner-cell{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .cleaner-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0}
 .cleaner-name-sm{font-size:12px;font-weight:600;color:var(--text)}
 .ctable-actions{display:flex;gap:6px}
 .ctable-icon-btn{border:none;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ctable tr.ctable-row{border-left:0 solid var(--bar-color,transparent)}
+
+/* ── CLEANING TABLE — MOBILE: stacked cards instead of a horizontally-scrolling table ── */
+@media(max-width:900px){
+  .ctable-wrap{overflow-x:visible;background:transparent;border:none;box-shadow:none}
+  .ctable{min-width:0;width:100%;display:block;border-collapse:collapse}
+  .ctable thead{display:none}
+  .ctable tbody{display:block}
+  .ctable tr.ctable-section{display:block;border-radius:8px;overflow:hidden}
+  .ctable tr.ctable-section td{display:block}
+  .ctable tr.ctable-row{
+    display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;row-gap:6px;
+    padding:13px 14px;margin-bottom:10px;
+    background:var(--card-bg);border:1px solid var(--border);border-radius:12px;
+    border-left-width:4px;
+  }
+  .ctable tr.ctable-row td{display:block;padding:0;border:none}
+  .ctable-bar{display:none}
+  .ctable td:nth-child(2){order:1;flex:1 1 auto;min-width:0}
+  .ctable td:nth-child(4){order:2;flex:0 0 auto;margin-left:auto}
+  .ctable td:nth-child(3){order:3;flex:1 1 100%}
+  .ctable td:nth-child(5){order:4;flex:1 1 auto}
+  .ctable td:nth-child(6){order:5;flex:0 0 auto;margin-left:auto}
+  .ctable td:nth-child(7){order:6;flex:1 1 100%}
+  .ctable-actions{justify-content:flex-end;margin-top:2px}
+  .ctable-pill-btn{min-width:0}
+}
 
 /* ── WIDGET ────────────────────────────────────────────────────────────────── */
 .widget-flow{display:flex;flex-direction:column;gap:16px}
@@ -1685,7 +1713,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div class="clean-stats-grid" id="cleanStatsGrid"></div>
 
     <!-- Cleaner payouts -->
-    <div class="clean-payouts-card" id="cleanPayoutsCard" style="display:none">
+    <div class="clean-payouts-card" id="cleanPayoutsCard" style="display:none;cursor:pointer" onclick="goToUnpaidFilter()" title="Click to see all unpaid jobs">
       <div class="clean-payouts-head">
         <div class="clean-payouts-title">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -4835,6 +4863,13 @@ function renderCleaningStats(){
   }
 }
 
+function goToUnpaidFilter(){
+  cleanFilter='unpaid';
+  buildCleanFilters();
+  renderCleaningList();
+  var list=document.getElementById('cleanList');
+  if(list)list.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function buildCleanFilters(){
   var row=document.getElementById('cleanFilterRow');
   if(!row)return;
@@ -4985,6 +5020,7 @@ function mkCleanCard(b,tod){
   var barColor=isToday?'var(--yellow)':(b.cleaned==='yes'?'var(--green)':(isFuture?'var(--border)':'var(--red)'));
   var tr=document.createElement('tr');
   tr.className='ctable-row';
+  tr.style.setProperty('--bar-color',barColor);
 
   var b2bTag=isBackToBack?'<span class="ctable-b2b" title="Check-out 12:00 → Check-in 15:00">⚡ B2B</span>':'';
 
