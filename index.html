@@ -430,7 +430,6 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 .ctable{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
 .ctable thead th{background:var(--bg);color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
 .ctable td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
-.ctable tr.ctable-row{cursor:pointer}
 .ctable tr.ctable-row:hover td{background:var(--bg)}
 .ctable tbody tr:last-child td{border-bottom:none}
 .ctable-bar{width:4px;padding:0!important}
@@ -449,7 +448,6 @@ body.dark .ctable-b2b{color:#fbbf24}
 .cleaner-name-sm{font-size:12px;font-weight:600;color:var(--text)}
 .ctable-actions{display:flex;gap:6px}
 .ctable-icon-btn{border:none;color:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ctable-actions,.ctable td:nth-child(7){display:none}
 .ctable tr.ctable-row{border-left:0 solid var(--bar-color,transparent)}
 
 /* ── CLEANING TABLE — MOBILE: stacked cards instead of a horizontally-scrolling table ── */
@@ -473,6 +471,7 @@ body.dark .ctable-b2b{color:#fbbf24}
   .ctable td:nth-child(3){order:3;flex:1 1 100%}
   .ctable td:nth-child(5){order:4;flex:1 1 auto}
   .ctable td:nth-child(6){order:5;flex:0 0 auto;margin-left:auto}
+  .ctable td:nth-child(7){display:none} /* actions moved into the tap-to-open modal on mobile */
   .ctable-pill-btn{min-width:0;pointer-events:none} /* status/payment become read-only display — tapping the card opens the action modal */
 }
 
@@ -5004,7 +5003,7 @@ function renderCleaningList(){
 
   container.innerHTML=
     '<div class="ctable-wrap"><table class="ctable">'+
-      '<thead><tr><th style="width:4px;padding:0"></th><th>Property &amp; Guest</th><th>Dates</th><th>Status</th><th>Cleaner</th><th>Payment</th></tr></thead>'+
+      '<thead><tr><th style="width:4px;padding:0"></th><th>Property &amp; Guest</th><th>Dates</th><th>Status</th><th>Cleaner</th><th>Payment</th><th>Actions</th></tr></thead>'+
     '</table></div>';
   container.querySelector('table').appendChild(tbody);
 }
@@ -5166,8 +5165,9 @@ function mkCleanCard(b,tod){
   });
     // Wire WhatsApp
   waBtn.addEventListener('click',function(){sendCleaningWhatsApp(b);});
-  // Wire whole-row tap — opens the quick-action modal (WhatsApp/Reminder now live only here)
+  // Wire whole-row tap on mobile — opens the quick-action modal instead of toggling pills in place
   tr.addEventListener('click',function(){
+    if(window.innerWidth>900)return;
     openCleanTaskModal(b);
   });
   return tr;
