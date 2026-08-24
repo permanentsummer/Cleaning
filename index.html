@@ -139,7 +139,7 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(-
 #appWrap{display:none;min-height:100vh}
 #appWrap.show{display:flex}
 .sidebar{
-  width:var(--sidebar-w);background:var(--primary);color:#fff;
+  width:var(--sidebar-w);background:var(--card-bg);color:var(--text);border-right:1px solid var(--border);
   display:flex;flex-direction:column;flex-shrink:0;
   position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto;overflow-x:hidden;
   transition:width .25s cubic-bezier(.4,0,.2,1);
@@ -154,54 +154,60 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(-
 .sidebar.collapsed #sbCollapseBtn{margin-left:0!important}
 .sidebar.collapsed .sb-item,.sidebar.collapsed .sb-action{justify-content:center;padding:8px}
 .sidebar.collapsed .sb-nav{padding:8px}
-.sb-collapse-btn{margin-left:auto;background:rgba(255,255,255,.1);border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .25s}
-.sb-collapse-btn:hover{background:rgba(255,255,255,.2)}
+.sb-collapse-btn{margin-left:auto;background:var(--bg);border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);transition:background .15s,transform .25s}
+.sb-collapse-btn:hover{background:var(--border);color:var(--text)}
+.theme-toggle{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:12px;padding:10px 14px;margin-bottom:8px}
+.theme-toggle .lbl{font-size:12px;font-weight:600;color:var(--text)}
+.theme-switch{width:38px;height:22px;background:var(--border);border-radius:20px;position:relative;cursor:pointer;border:none;flex-shrink:0;padding:0}
+.theme-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .18s}
+body.dark .theme-switch{background:var(--accent)}
+body.dark .theme-switch::after{left:18px}
 .sidebar.collapsed .sb-collapse-btn svg{transform:rotate(180deg)}
 @media(max-width:600px){.sb-collapse-btn{display:none!important}}
 .sb-logo{
   display:flex;align-items:center;gap:10px;
-  padding:24px 18px 20px;border-bottom:1px solid rgba(255,255,255,.07);
+  padding:24px 18px 20px;border-bottom:1px solid var(--border);
 }
 .sb-logo-ico{
-  width:40px;height:40px;background:var(--accent);
+  width:40px;height:40px;background:linear-gradient(135deg,var(--accent),#DE8A5E);
   border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.sb-logo-name{font-size:14px;font-weight:700;line-height:1.3;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sb-logo-sub{font-size:11px;color:#94a3b8;font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.sb-logo-name{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:16px;line-height:1.3;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-logo-sub{font-size:11px;color:var(--muted);font-weight:400;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
 
 /* Nav section label */
-.sb-section{font-size:10px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.8px;padding:20px 20px 8px}
+.sb-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:20px 20px 8px}
 
 .sb-nav{flex:1;padding:8px 12px}
 .sb-item{
   display:flex;align-items:center;gap:12px;
-  padding:8px 12px;border-radius:10px;
-  font-size:13px;font-weight:600;color:#94a3b8;
+  padding:8px 12px;border-radius:12px;
+  font-size:13px;font-weight:600;color:var(--muted);
   cursor:pointer;margin-bottom:4px;transition:all .15s;user-select:none;
 }
-.sb-item:hover{background:rgba(255,255,255,.08);color:#e2e8f0}
-.sb-item.on{background:rgba(249,195,50,.18);color:#fff}
+.sb-item:hover{background:var(--bg);color:var(--text)}
+.sb-item.on{background:var(--accent);color:#fff}
 .sb-icon-wrap{
-  width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.08);
+  width:36px;height:36px;border-radius:10px;background:transparent;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;
 }
-.sb-item:hover .sb-icon-wrap{background:rgba(255,255,255,.14)}
-.sb-item.on .sb-icon-wrap{background:var(--honey)!important}
-.sb-icon-wrap svg{width:18px;height:18px;stroke:#94a3b8;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
-.sb-item:hover .sb-icon-wrap svg{stroke:#fff}
-.sb-item.on .sb-icon-wrap svg{stroke:var(--primary)}
+.sb-item:hover .sb-icon-wrap{background:var(--card-bg)}
+.sb-item.on .sb-icon-wrap{background:transparent!important}
+.sb-icon-wrap svg{width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.sb-item:hover .sb-icon-wrap svg{stroke:var(--text)}
+.sb-item.on .sb-icon-wrap svg{stroke:#fff}
 .sb-item .badge{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:auto;letter-spacing:.2px}
 .sb-item span:not(.sb-icon-wrap):not(.badge){flex:1}
 
-.sb-bottom{padding:12px 12px 24px;border-top:1px solid rgba(255,255,255,.07);margin-top:8px}
+.sb-bottom{padding:12px 12px 24px;border-top:1px solid var(--border);margin-top:8px}
 .sb-action{
   display:flex;align-items:center;gap:10px;width:100%;padding:9px 12px;
   background:transparent;border:none;border-radius:9px;
-  color:#64748b;font-family:'Manrope',sans-serif;font-size:12px;font-weight:500;
+  color:var(--muted);font-family:'Manrope',sans-serif;font-size:12px;font-weight:500;
   cursor:pointer;text-align:left;margin-bottom:4px;transition:all .15s;
 }
-.sb-action:hover{background:rgba(255,255,255,.06);color:#94a3b8}
-.sb-action svg{width:15px;height:15px;stroke:#64748b;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.sb-action:hover{background:var(--bg);color:var(--text)}
+.sb-action svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
 /* ── PAGE ──────────────────────────────────────────────────────────────────── */
 .page{display:none;padding:28px 32px;flex:1;min-height:100vh}
@@ -236,13 +242,13 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(-
 .section-head p{font-size:12px;color:var(--muted);margin-top:2px}
 .card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;margin-bottom:14px;border:1px solid var(--border)}
 
-.btn-primary{background:var(--dark-blue);color:#fff;border:none;border-radius:9px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;letter-spacing:.1px}
+.btn-primary{background:var(--dark-blue);color:#fff;border:none;border-radius:12px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all .15s;letter-spacing:.1px}
 .btn-primary:hover{background:#1a5278}
-.btn-accent{background:var(--honey);color:var(--dark-blue);border:none;border-radius:9px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;cursor:pointer;transition:all .15s}
+.btn-accent{background:var(--honey);color:var(--dark-blue);border:none;border-radius:12px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;cursor:pointer;transition:all .15s}
 .btn-accent:hover{background:var(--dijon);color:#fff}
-.btn-accent{background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;transition:background .15s}
+.btn-accent{background:var(--accent);color:#fff;border:none;border-radius:12px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;transition:background .15s}
 .btn-accent:hover{background:#1d4ed8}
-.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border);border-radius:9px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;transition:all .15s}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border);border-radius:12px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 16px;cursor:pointer;transition:all .15s}
 .btn-outline:hover{border-color:#9ca3af;background:#f9fafb}
 .btn-green{background:var(--green-bg);color:var(--green-dark);border:none;border-radius:9px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;cursor:pointer}
 .btn-red{background:var(--red-bg);color:var(--red);border:none;border-radius:9px;font-family:'Manrope',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;cursor:pointer}
@@ -1184,13 +1190,13 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <button class="fbtn" id="dLang-pt" onclick="setDashLang('pt')" style="flex:1;font-size:11px;padding:5px 0">PT</button>
         <button class="fbtn" id="dLang-fr" onclick="setDashLang('fr')" style="flex:1;font-size:11px;padding:5px 0">FR</button>
       </div>
+      <div class="theme-toggle">
+        <div class="lbl" id="darkModeLabel">Light mode</div>
+        <button class="theme-switch" id="darkModeBtn" onclick="toggleDarkMode()" aria-label="Toggle dark mode"></button>
+      </div>
       <button class="sb-action" id="notifBtn" onclick="sfToggleNotifications()" style="margin-bottom:4px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <span id="notifLabel">Notifications</span>
-      </button>
-      <button class="sb-action" id="darkModeBtn" onclick="toggleDarkMode()" style="margin-bottom:4px">
-        <svg id="darkModeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <span id="darkModeLabel">Dark mode</span>
       </button>
       <button class="sb-action" id="signOutBtn">
         <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -4728,15 +4734,8 @@ function toggleSidebarCollapse(){
 function toggleDarkMode(){
   var dark=document.body.classList.toggle('dark');
   localStorage.setItem('sf_dark',dark?'1':'0');
-  var icon=document.getElementById('darkModeIcon');
   var lbl=document.getElementById('darkModeLabel');
-  if(dark){
-    icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
-    if(lbl)lbl.textContent='Light mode';
-  } else {
-    icon.innerHTML='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    if(lbl)lbl.textContent='Dark mode';
-  }
+  if(lbl)lbl.textContent=dark?'Dark mode':'Light mode';
   applyDarkStyles();
   // Re-render active tab so newly rendered elements also get patched
   var activeTab=document.querySelector('.page:not([style*="display:none"])');
@@ -4746,10 +4745,8 @@ function toggleDarkMode(){
   if(localStorage.getItem('sf_dark')==='1'){
     document.body.classList.add('dark');
     document.addEventListener('DOMContentLoaded',function(){
-      var icon=document.getElementById('darkModeIcon');
       var lbl=document.getElementById('darkModeLabel');
-      if(icon)icon.innerHTML='<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
-      if(lbl)lbl.textContent='Light mode';
+      if(lbl)lbl.textContent='Dark mode';
       setTimeout(applyDarkStyles,300);
     });
   }
