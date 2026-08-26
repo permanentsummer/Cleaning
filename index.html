@@ -860,6 +860,23 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 .ov-stay-badge.out{background:var(--red-bg);color:var(--red)}
 .ov-stay-badge.stay{background:var(--yellow-bg);color:var(--honey)}
 
+.ov-inout-grid{display:grid;grid-template-columns:1fr 1fr}
+.ov-inout-col{padding:16px 18px}
+.ov-inout-col:first-child{border-right:1px solid var(--border)}
+.ov-inout-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:4px}
+.ov-inout-lbl.in{color:var(--green)}
+.ov-inout-lbl.out{color:var(--red)}
+.ov-inout-row{display:flex;align-items:center;gap:10px;padding:9px 0}
+.ov-inout-empty{font-size:12px;color:var(--muted);padding:8px 0}
+@media(max-width:700px){.ov-inout-grid{grid-template-columns:1fr}.ov-inout-col:first-child{border-right:none;border-bottom:1px solid var(--border)}}
+
+.ov-clean-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.ov-clean-row:last-child{border-bottom:none;padding-bottom:0}
+.ov-clean-lbl{font-size:13px;font-weight:600;color:var(--text)}
+.ov-clean-val{font-family:'Fraunces',serif;font-size:17px;font-weight:600}
+.ov-clean-val.red{color:var(--red)}
+.ov-clean-val.green{color:var(--green)}
+
 /* Occupancy bars */
 .occ-row{padding:12px 14px;margin:0 12px 10px;border-radius:14px;background:var(--bg);display:block}
 .occ-row:last-child{margin-bottom:12px}
@@ -1222,6 +1239,15 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       </div>
     </div>
 
+    <!-- Pending requests — only shows when there's something to act on -->
+    <div id="ovPendingBanner" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--yellow-bg);border:1px solid var(--honey);border-radius:14px;padding:14px 18px;margin-bottom:20px;cursor:pointer" onclick="switchTab('requests');filterReqs('pending',null)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--honey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="ovPendingText" style="font-size:13.5px;font-weight:700;color:var(--primary)"></span>
+      </div>
+      <span style="font-size:12px;font-weight:700;color:var(--honey)">Review →</span>
+    </div>
+
     <!-- Getting Started checklist (new accounts only) -->
     <div id="gettingStartedPanel" class="card" style="display:none;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(249,195,50,.1),rgba(249,195,50,.02));margin-bottom:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
@@ -1235,43 +1261,61 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div id="gsChecklist" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
-    <!-- KPI row -->
+    <!-- KPI row: the 4 things you actually want to know -->
     <div class="kpi-row" id="ovKpi">
-      <div class="kpi-card kpi-yellow" onclick="switchTab('requests');filterReqs('pending',null)">
-        <div class="kpi-lbl" id="ov-pending-lbl">Awaiting response</div>
-        <div class="kpi-val" id="ov-pending">—</div>
-        <div class="kpi-action">Review →</div>
-      </div>
-      <div class="kpi-card kpi-blue" onclick="switchTab('calendar');setResView('list')">
-        <div class="kpi-lbl" id="ov-checkins-lbl">Check-ins today</div>
-        <div class="kpi-val" id="ov-checkins">—</div>
-        <div class="kpi-action">See guests →</div>
-      </div>
       <div class="kpi-card kpi-green" onclick="switchTab('calendar')">
-        <div class="kpi-lbl" id="ov-occupied-lbl">Units occupied now</div>
+        <div class="kpi-lbl">Who's in</div>
         <div class="kpi-val" id="ov-occupied">—</div>
         <div class="kpi-action">View calendar →</div>
       </div>
+      <div class="kpi-card kpi-blue" onclick="switchTab('calendar');setResView('list')">
+        <div class="kpi-lbl">Who's out today</div>
+        <div class="kpi-val" id="ov-checkouts">—</div>
+        <div class="kpi-action">See guests →</div>
+      </div>
       <div class="kpi-card kpi-purple" onclick="switchTab('payments')">
-        <div class="kpi-lbl" id="ov-revenue-lbl">Revenue this month</div>
+        <div class="kpi-lbl">How much I earn — this month</div>
         <div class="kpi-val" id="ov-revenue">—</div>
         <div class="kpi-action">See payments →</div>
       </div>
+      <div class="kpi-card kpi-yellow" onclick="switchTab('cleaning')">
+        <div class="kpi-lbl">How much I owe cleaners</div>
+        <div class="kpi-val" id="ov-owed">—</div>
+        <div class="kpi-action">See cleaning →</div>
+      </div>
     </div>
 
-    <!-- Two columns: Upcoming + Quick actions -->
+    <!-- Two columns: Arrivals/Departures + Cleaning/Occupancy/Quick actions -->
     <div class="ov-cols">
-      <!-- Upcoming check-ins/outs -->
+      <!-- Arrivals & Departures, clearly separated -->
       <div class="ov-panel">
         <div class="ov-panel-head">
-          <div class="ov-panel-title">Upcoming stays</div>
+          <div class="ov-panel-title">Arrivals &amp; departures</div>
           <button class="ov-panel-link" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)">View all</button>
         </div>
-        <div id="ovUpcoming"><div class="spinner" style="margin:24px auto"></div></div>
+        <div class="ov-inout-grid">
+          <div class="ov-inout-col">
+            <div class="ov-inout-lbl in">Arriving</div>
+            <div id="ovArriving"><div class="spinner" style="margin:20px auto"></div></div>
+          </div>
+          <div class="ov-inout-col">
+            <div class="ov-inout-lbl out">Departing</div>
+            <div id="ovDeparting"><div class="spinner" style="margin:20px auto"></div></div>
+          </div>
+        </div>
       </div>
 
       <!-- Right column -->
       <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Cleaning at a glance -->
+        <div class="ov-panel">
+          <div class="ov-panel-head">
+            <div class="ov-panel-title">Cleaning</div>
+            <button class="ov-panel-link" onclick="switchTab('cleaning')">Open →</button>
+          </div>
+          <div id="ovCleaning" style="padding:16px 20px"></div>
+        </div>
+
         <!-- Occupancy by property -->
         <div class="ov-panel">
           <div class="ov-panel-head">
@@ -1283,7 +1327,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <!-- Quick actions -->
         <div class="ov-panel">
           <div class="ov-panel-head">
-            <div class="ov-panel-title">Quick actions</div>
+            <div class="ov-panel-title" id="ovQuickActionsTitle">Quick actions</div>
           </div>
           <div class="qa-grid">
             <button class="qa-btn" onclick="switchTab('calendar');setTimeout(function(){openNewBooking();},100)">
@@ -4774,14 +4818,11 @@ function applyTranslations(){
     if(h2&&pageHeaders[pgId][0])h2.textContent=pageHeaders[pgId][0];
     if(p&&pageHeaders[pgId][1])p.textContent=pageHeaders[pgId][1];
   });
-  // Overview static labels
-  var lblMap={'ov-pending-lbl':'pendingRequests','ov-checkins-lbl':'checkinsToday','ov-occupied-lbl':'occupiedUnits','ov-revenue-lbl':'revenueMonth'};
-  Object.keys(lblMap).forEach(function(id){st(id,lblMap[id]);});
-  // Overview panel titles
-  document.querySelectorAll('.ov-panel-title').forEach(function(el,i){
-    if(i===0)el.textContent=CT('upcomingStays');
-    if(i===1)el.textContent=CT('quickActions');
-  });
+  // Overview panel titles — targeted by explicit ID (previously matched by array
+  // position, which mistranslated the Occupancy panel's title once Arrivals/Cleaning
+  // panels were added — now each panel's title is addressed directly, no ambiguity)
+  var qaTitle=document.getElementById('ovQuickActionsTitle');
+  if(qaTitle)qaTitle.textContent=CT('quickActions');
   // Account tab
   st('acctSecProfileLbl','acctSecProfile');st('acctBizNameLbl','acctBizName');
   st('acctPrefLangLbl','acctPrefLang');st('acctContactEmailLbl','acctContactEmail');
@@ -7240,7 +7281,21 @@ function renderOverview(){
   renderKPIs();
   renderUpcoming();
   renderOccupancy();
+  renderOvCleaning();
   renderGettingStarted();
+}
+function renderOvCleaning(){
+  var container=document.getElementById('ovCleaning');
+  if(!container)return;
+  var tod=today0();
+  var cleanAll=(typeof buildCleanAllList==='function')?buildCleanAllList():[];
+  var needsCleaning=cleanAll.filter(function(b){return b.checkout<=tod&&b.cleaned!=='yes';}).length;
+  var cleanedToday=cleanAll.filter(function(b){return b.checkout===tod&&b.cleaned==='yes';}).length;
+  var owed=computeCleanerPayoutTotal();
+  container.innerHTML=
+    '<div class="ov-clean-row"><div class="ov-clean-lbl">Needs cleaning</div><div class="ov-clean-val'+(needsCleaning>0?' red':' green')+'">'+needsCleaning+'</div></div>'+
+    '<div class="ov-clean-row"><div class="ov-clean-lbl">Cleaned today</div><div class="ov-clean-val green">'+cleanedToday+'</div></div>'+
+    '<div class="ov-clean-row"><div class="ov-clean-lbl">Owed to cleaners</div><div class="ov-clean-val'+(owed>0?' red':' green')+'">€'+Math.round(owed).toLocaleString()+'</div></div>';
 }
 
 // ── GETTING STARTED (onboarding checklist, step 2) ────────────────────────────
@@ -7308,91 +7363,151 @@ function renderTodayDate(){
 function renderKPIs(){
   var today=new Date().toISOString().slice(0,10);
   var thisMonthStart=today.slice(0,7)+'-01';
+  var thisMonthEnd=today.slice(0,7)+'-31';
 
-  // Pending requests
+  // Pending requests — surfaced as a banner instead of a KPI slot (see renderPendingBanner)
   var pending=(requests||[]).filter(function(r){return r.status==='pending';}).length;
-  var el=document.getElementById('ov-pending');
-  if(el)el.textContent=pending||'0';
 
-  // Check-ins today
-  var checkins=(allBookings||[]).filter(function(b){return b.checkin===today;}).length;
-  var el2=document.getElementById('ov-checkins');
-  if(el2)el2.textContent=checkins||'0';
+  // ── Canonical de-dup: a confirmed direct_request may ALSO exist as a row in
+  // allBookings (written there via insert_bookings). Same match rule the Finance
+  // tab uses, so Overview never disagrees with Finance/Cleaning on these numbers.
+  var allBks=allBookings||[];
+  var confirmedDirect=(requests||[]).filter(function(r){return r.status==='confirmed';});
+  function reqMatchesBooking(r,b){
+    return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;
+  }
+  var coveredIds={};
+  confirmedDirect.forEach(function(r){
+    allBks.forEach(function(b){if(reqMatchesBooking(r,b))coveredIds[b.id]=true;});
+  });
 
-  // Currently occupied
-  var occupied=(allBookings||[]).filter(function(b){return b.checkin<=today&&b.checkout>today;}).length;
+  // Who's in — distinct properties with an active stay right now (was counting
+  // allBookings rows only, so a direct-only booking not yet mirrored got missed —
+  // that's exactly the 2/3-instead-of-3/3 bug)
+  var occupiedProps={};
+  allBks.forEach(function(b){if(b.checkin<=today&&b.checkout>today)occupiedProps[b.apt]=true;});
+  confirmedDirect.forEach(function(r){
+    if(r.checkin<=today&&r.checkout>today&&!allBks.some(function(b){return reqMatchesBooking(r,b);})){
+      occupiedProps[r.apt_id||r.apt_name]=true;
+    }
+  });
+  var occupied=Math.min(Object.keys(occupiedProps).length,properties.length||Object.keys(occupiedProps).length);
   var el3=document.getElementById('ov-occupied');
-  if(el3)el3.textContent=occupied+' / '+properties.length;
+  if(el3)el3.textContent=occupied+' / '+(properties.length||occupied);
 
-  // Revenue this month (from direct_requests only - have price data)
-  var rev=(requests||[]).filter(function(r){
-    return r.status==='confirmed'&&r.checkin&&r.checkin>=thisMonthStart;
-  }).reduce(function(a,r){return a+(r.total_amount||0);},0);
+  // Who's out — distinct check-outs today, same merge
+  var outProps={};
+  allBks.forEach(function(b){if(b.checkout===today)outProps[b.apt+'|'+b.checkin]=true;});
+  confirmedDirect.forEach(function(r){
+    if(r.checkout===today&&!allBks.some(function(b){return reqMatchesBooking(r,b);})){
+      outProps[(r.apt_id||r.apt_name)+'|'+r.checkin]=true;
+    }
+  });
+  var checkouts=Object.keys(outProps).length;
+  var el2=document.getElementById('ov-checkouts');
+  if(el2)el2.textContent=checkouts||'0';
+
+  // How much I earn — gross revenue this month, matching the Finance tab's own
+  // calculation exactly (direct_requests total_amount + parseFin(b).gross for every
+  // non-duplicate booking, regardless of source). The old version only summed
+  // confirmed direct_requests and silently ignored all Airbnb/Booking.com revenue.
+  var grossRev=0;
+  confirmedDirect.forEach(function(r){
+    if(r.checkin&&r.checkin>=thisMonthStart&&r.checkin<=thisMonthEnd)grossRev+=parseFloat(r.total_amount)||0;
+  });
+  allBks.forEach(function(b){
+    if(coveredIds[b.id])return;
+    if(!(b.checkin&&b.checkin>=thisMonthStart&&b.checkin<=thisMonthEnd))return;
+    var fin=parseFin(b);
+    grossRev+=fin.gross||0;
+  });
   var el4=document.getElementById('ov-revenue');
-  if(el4)el4.textContent=rev?'€'+rev.toLocaleString():'—';
+  if(el4)el4.textContent='€'+Math.round(grossRev).toLocaleString();
+
+  // How much I have to pay — unpaid cleaner fees, same definition as the Cleaning tab
+  var el5=document.getElementById('ov-owed');
+  if(el5)el5.textContent='€'+Math.round(computeCleanerPayoutTotal()).toLocaleString();
+
+  renderPendingBanner(pending);
+}
+
+// Shared with the Cleaning tab's payout total so Overview and Cleaning can never disagree
+function computeCleanerPayoutTotal(){
+  var tod=today0();
+  var cleanAll=(typeof buildCleanAllList==='function')?buildCleanAllList():[];
+  var total=0;
+  cleanAll.forEach(function(b){
+    if(!(b.checkout<=tod&&b.cleaned==='yes'))return;
+    if((b.notes||'').indexOf('\n__CLEANERPAID__')!==-1)return;
+    var fin=parseFin(b);
+    total+=fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt);
+  });
+  return total;
+}
+function today0(){return new Date().toISOString().slice(0,10);}
+
+function renderPendingBanner(pending){
+  var el=document.getElementById('ovPendingBanner');
+  if(!el)return;
+  if(pending>0){
+    el.style.display='flex';
+    document.getElementById('ovPendingText').textContent=
+      pending+' request'+(pending===1?'':'s')+' awaiting your response';
+  } else {
+    el.style.display='none';
+  }
 }
 
 function renderUpcoming(){
-  var container=document.getElementById('ovUpcoming');
-  if(!container)return;
+  var arriveEl=document.getElementById('ovArriving');
+  var departEl=document.getElementById('ovDeparting');
+  if(!arriveEl||!departEl)return;
   var today=new Date().toISOString().slice(0,10);
-
-  // Merge bookings: check-ins and check-outs in next 14 days
-  var items=[];
-  var cutoff=new Date();cutoff.setDate(cutoff.getDate()+14);
+  var cutoff=new Date();cutoff.setDate(cutoff.getDate()+7);
   var cutoffStr=cutoff.toISOString().slice(0,10);
 
-  (allBookings||[]).forEach(function(b){
-    if(b.checkin>=today&&b.checkin<=cutoffStr){
-      var apt=aptById(b.apt);
-      var gName=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
-      items.push({type:'in',date:b.checkin,name:gName,apt:apt.name||b.apt,color:apt.color});
-    }
-    if(b.checkout>=today&&b.checkout<=cutoffStr){
-      var apt2=aptById(b.apt);
-      var gName2=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
-      items.push({type:'out',date:b.checkout,name:gName2,apt:apt2.name||b.apt,color:apt2.color});
-    }
-  });
-
-  // Add currently staying
-  (allBookings||[]).forEach(function(b){
-    if(b.checkin<today&&b.checkout>today){
-      var apt=aptById(b.apt);
-      var gName3=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
-      items.push({type:'stay',date:b.checkout,name:gName3,apt:apt.name||b.apt,color:apt.color,checkout:b.checkout});
-    }
-  });
-
-  items.sort(function(a,b){return a.date.localeCompare(b.date);});
-  items=items.slice(0,8);
-
-  if(!items.length){
-    container.innerHTML='<div style="padding:28px;text-align:center;color:var(--muted);font-size:13px">No upcoming stays in the next 14 days</div>';
-    return;
+  // Same canonical merge as renderKPIs — a confirmed direct_request already mirrored
+  // into allBookings must not be listed twice.
+  var allBks=allBookings||[];
+  var confirmedDirect=(requests||[]).filter(function(r){return r.status==='confirmed';});
+  function reqMatchesBooking(r,b){
+    return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;
   }
 
-  container.innerHTML='';
-  items.forEach(function(item){
-    var dt=new Date(item.date+'T12:00:00');
-    var isToday=item.date===today;
-    var isTomorrow=item.date===new Date(Date.now()+86400000).toISOString().slice(0,10);
-    var rel=isToday?'Today':isTomorrow?'Tomorrow':fmtShort(item.date);
-    var typeLabel=item.type==='in'?'Check-in':item.type==='out'?'Check-out':'Staying';
-    var badgeClass=item.type==='in'?'in':item.type==='out'?'out':'stay';
-    var row=document.createElement('div');row.className='ov-stay';
-    row.innerHTML=
+  var arrivals=[],departures=[];
+  allBks.forEach(function(b){
+    var apt=aptById(b.apt);
+    var gName=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
+    if(b.checkin>=today&&b.checkin<=cutoffStr)arrivals.push({date:b.checkin,name:gName,apt:apt.name||b.apt,color:apt.color});
+    if(b.checkout>=today&&b.checkout<=cutoffStr)departures.push({date:b.checkout,name:gName,apt:apt.name||b.apt,color:apt.color});
+  });
+  confirmedDirect.forEach(function(r){
+    if(allBks.some(function(b){return reqMatchesBooking(r,b);}))return;
+    var apt=aptById(r.apt_id||r.apt_name);
+    var gName=(r.guest_name||'Guest').trim();
+    if(r.checkin>=today&&r.checkin<=cutoffStr)arrivals.push({date:r.checkin,name:gName,apt:apt.name||r.apt_id,color:apt.color});
+    if(r.checkout>=today&&r.checkout<=cutoffStr)departures.push({date:r.checkout,name:gName,apt:apt.name||r.apt_id,color:apt.color});
+  });
+  arrivals.sort(function(a,b){return a.date.localeCompare(b.date);});
+  departures.sort(function(a,b){return a.date.localeCompare(b.date);});
+  arrivals=arrivals.slice(0,5);departures=departures.slice(0,5);
+
+  function relDate(d){
+    var tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+    return d===today?'Today':d===tomorrow?'Tomorrow':fmtShort(d);
+  }
+  function mkRow(item){
+    return '<div class="ov-inout-row">'+
       '<div class="ov-stay-dot" style="background:'+item.color+'"></div>'+
       '<div style="flex:1;min-width:0">'+
-        '<div class="ov-stay-name">'+esc(item.name.split('–')[1]||item.name)+'</div>'+
+        '<div class="ov-stay-name">'+esc(item.name)+'</div>'+
         '<div class="ov-stay-meta">'+esc(item.apt)+'</div>'+
       '</div>'+
-      '<div class="ov-stay-date">'+
-        '<div class="ov-stay-day">'+rel+'</div>'+
-        '<div style="margin-top:3px"><span class="ov-stay-badge '+badgeClass+'">'+typeLabel+'</span></div>'+
-      '</div>';
-    container.appendChild(row);
-  });
+      '<div class="ov-stay-day">'+relDate(item.date)+'</div>'+
+    '</div>';
+  }
+  arriveEl.innerHTML=arrivals.length?arrivals.map(mkRow).join(''):'<div class="ov-inout-empty">No arrivals in the next 7 days</div>';
+  departEl.innerHTML=departures.length?departures.map(mkRow).join(''):'<div class="ov-inout-empty">No departures in the next 7 days</div>';
 }
 
 function renderOccupancy(){
