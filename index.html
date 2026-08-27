@@ -4075,7 +4075,7 @@ function renderExpensesList(){
       html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
         '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
           'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:140px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px"><select class="exp-apt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
         '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
         yearInputs+
         '<td style="padding:6px 4px;text-align:center">'+
@@ -4110,7 +4110,7 @@ function renderExpensesList(){
       html+='<tr class="exp-row exp-row-once" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
         '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. New mattress" '+
           'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:160px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px"><select class="exp-apt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
         '<td style="padding:6px 4px;text-align:center"><input class="exp-once-date" type="date" value="'+(dateVal?(dateVal.length===7?dateVal+'-01':dateVal):'')+'" '+
           'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:130px;box-sizing:border-box"></td>'+
         '<td style="padding:6px 4px;text-align:center"><input class="exp-once-amt" type="number" min="0" value="'+(ex.amount||'')+'" placeholder="€" '+
@@ -4180,9 +4180,12 @@ function saveExpenses(){
     // Replace everything — all rows are visible
     allExpenses=[];
   } else {
-    // Keep expenses NOT belonging to filtered apt, replace the ones that are
+    // Keep only expenses NOT currently visible under this filter. Visible rows are
+    // apt===filterApt OR apt==='all' (same condition renderExpensesList uses) — excluding
+    // only exact matches here would leave 'all'-assigned expenses both preserved AND
+    // re-added below, duplicating them on every save.
     allExpenses=allExpenses.filter(function(e){
-      return e.apt!==filterApt;
+      return !(e.apt===filterApt||e.apt==='all');
     });
   }
   // Add the rows currently visible
