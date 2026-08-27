@@ -3721,6 +3721,10 @@ function renderRevenueAnalytics(){
         } else if(e.freq==='weekly'){
           var days=Math.round((new Date(yEnd+'T12:00:00')-new Date(yEffStart+'T12:00:00'))/86400000);
           totalExpenses+=amt*(days/7);
+        } else if(e.freq==='once'){
+          // Count exactly once, in the single year the expense's own date falls in —
+          // NOT once per year like a genuinely recurring yearly expense would be.
+          if(String(y)===expStart.slice(0,4))totalExpenses+=(e.amount||0);
         } else {
           totalExpenses+=amt;
         }
@@ -3735,11 +3739,16 @@ function renderRevenueAnalytics(){
     } else if(e.freq==='weekly'){
       var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
       totalExpenses+=yearAmt*(days/7);
+    } else if(e.freq==='once'){
+      // Only counts in the specific year it actually happened, using the expense's own
+      // date directly (not the period-clamped effStart, which would wrongly make a past
+      // one-time expense look "active" in every later year selected).
+      if(expStart>=pStart&&expStart<=periodEnd)totalExpenses+=(e.amount||0);
     } else {
       totalExpenses+=yearAmt;
     }
   });
-  var pnl=netRev-commTotal-cleanFeeTotal-totalExpenses;
+  var pnl=netRev-cleanFeeTotal-totalExpenses;
 
   // ── Monthly / Yearly chart ────────────────────────────────────────────────
   var chartPeriods=[];
@@ -3870,7 +3879,7 @@ function renderRevenueAnalytics(){
       kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
       kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),totalBks+' stays (from import or default €50)','#7c3aed')+
       kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+'','#f59e0b')+
-      kpiCard(CT('pandl'),fmt(pnl),'Net − commissions − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
+      kpiCard(CT('pandl'),fmt(pnl),'Net revenue − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
     // ── Charts ──
     '<div class="fin-chart-row" style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
@@ -3896,19 +3905,19 @@ function renderRevenueAnalytics(){
     '<div id="expensesManagerPanel" style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
         '<div>'+
-          '<div style="font-size:14px;font-weight:700;color:var(--primary)">Recurring Expenses</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Set a start month if expense began mid-period.</div>'+
+          '<div style="font-size:14px;font-weight:700;color:var(--primary)">Expenses</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Colored left edge shows which property an expense is allocated to.</div>'+
         '</div>'+
-        '<div style="display:flex;gap:8px">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
           '<select id="expFilterApt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+expAptOptsForPanel+
           '</select>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow()">+ Add</button>'+
+        '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;recurring&apos;)">+ Recurring</button>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;once&apos;)">+ One-time</button>'+
         '</div>'+
       '</div>'+
       '<div id="expensesList"></div>'+
-      '<div style="margin-top:14px;display:flex;gap:10px">'+
+      '<div style="margin-top:14px">'+
         '<button class="btn-primary" style="font-size:13px" onclick="saveExpenses()">Save expenses</button>'+
-        '<button class="btn-outline" style="font-size:13px" onclick="closeExpensesManager()">Cancel</button>'+
       '</div>'+
     '</div>';
 
@@ -4024,7 +4033,14 @@ function renderExpensesList(){
   var filterApt=filterAptEl?filterAptEl.value:'all';
   var filtered=filterApt==='all'?expenses.map(function(e,i){return{e:e,i:i};}):
     expenses.map(function(e,i){return{e:e,i:i};}).filter(function(x){return x.e.apt===filterApt||x.e.apt==='all';});
+  var recurring=filtered.filter(function(x){return x.e.freq!=='once';});
+  var oneTime=filtered.filter(function(x){return x.e.freq==='once';});
 
+  function aptColor(aptId){
+    if(aptId==='all'||!aptId)return'var(--border)';
+    var p=(properties||[]).find(function(x){return x.id===aptId;});
+    return p?p.color:'var(--border)';
+  }
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
   // Build year columns from all booking years + 2 future years
@@ -4034,15 +4050,10 @@ function renderExpensesList(){
   allYears.sort(function(a,b){return a-b;});
   var uniqueYears=allYears.filter(function(v,i,a){return a.indexOf(v)===i;});
 
-  var html='';
-  if(!expenses.length){
-    html='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No expenses yet. Click <strong>+ Add</strong> to start.</div>';
-  } else if(!filtered.length){
-    html='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No expenses for this property filter.</div>';
-  } else {
-    // Column headers: Name | Apt | Freq | [year columns] | actions
+  function recurringTable(items){
+    if(!items.length)return'<div style="text-align:center;padding:16px;color:var(--muted);font-size:12.5px">No recurring expenses'+(filterApt!=='all'?' for this property':'')+'.</div>';
     var yearCols=uniqueYears.map(function(y){return'<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">'+y+'</th>';}).join('');
-    html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+    var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
       '<thead><tr style="border-bottom:2px solid var(--border)">'+
         '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
         '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
@@ -4051,8 +4062,7 @@ function renderExpensesList(){
         '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:60px">Starts</th>'+
         '<th style="padding:7px 4px;min-width:56px"></th>'+
       '</tr></thead><tbody>';
-
-    filtered.forEach(function(item){
+    items.forEach(function(item){
       var ex=item.e, ri=item.i;
       var yearInputs=uniqueYears.map(function(y){
         var val=(ex.amounts&&ex.amounts[y]!=null)?ex.amounts[y]:(ex.amount||'');
@@ -4062,11 +4072,10 @@ function renderExpensesList(){
         '</td>';
       }).join('');
       var startVal=ex.startDate||'';
-      var startDisplay=startVal?startVal.replace('-','/'):'—';
-      html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid #f1f5f9">'+
+      html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
         '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
           'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:140px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
         '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
         yearInputs+
         '<td style="padding:6px 4px;text-align:center">'+
@@ -4082,16 +4091,66 @@ function renderExpensesList(){
       '</tr>';
     });
     html+='</tbody></table></div>';
+    return html;
+  }
+
+  function oneTimeTable(items){
+    if(!items.length)return'<div style="text-align:center;padding:16px;color:var(--muted);font-size:12.5px">No one-time expenses'+(filterApt!=='all'?' for this property':'')+'.</div>';
+    var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+      '<thead><tr style="border-bottom:2px solid var(--border)">'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:110px">Date</th>'+
+        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:90px">Amount</th>'+
+        '<th style="padding:7px 4px;min-width:56px"></th>'+
+      '</tr></thead><tbody>';
+    items.forEach(function(item){
+      var ex=item.e, ri=item.i;
+      var dateVal=ex.startDate||'';
+      html+='<tr class="exp-row exp-row-once" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
+        '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. New mattress" '+
+          'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:160px;box-sizing:border-box"></td>'+
+        '<td style="padding:6px 4px"><select class="exp-apt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:6px 4px;text-align:center"><input class="exp-once-date" type="date" value="'+(dateVal?(dateVal.length===7?dateVal+'-01':dateVal):'')+'" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:130px;box-sizing:border-box"></td>'+
+        '<td style="padding:6px 4px;text-align:center"><input class="exp-once-amt" type="number" min="0" value="'+(ex.amount||'')+'" placeholder="€" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:80px;text-align:right;box-sizing:border-box"></td>'+
+        '<td style="padding:6px 4px;text-align:center">'+
+          '<div style="display:flex;gap:3px;justify-content:center">'+
+            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:13px">⎘</button>'+
+            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:15px">×</button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
+    });
+    html+='</tbody></table></div>';
+    return html;
+  }
+
+  var html='';
+  if(!expenses.length){
+    html='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No expenses yet. Click <strong>+ Recurring</strong> or <strong>+ One-time</strong> to start.</div>';
+  } else {
+    html+='<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Recurring — rent, utilities, subscriptions</div>'+
+      recurringTable(recurring)+
+      '<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 8px">One-time — repairs, one-off purchases</div>'+
+      oneTimeTable(oneTime);
   }
   document.getElementById('expensesList').innerHTML=html;
 }
 
-function addExpenseRow(){
+
+function addExpenseRow(type){
   var expenses=getFinExpenses();
-  expenses.push({name:'',amount:0,apt:'all',freq:'monthly',startDate:''});
+  if(type==='once'){
+    expenses.push({name:'',amount:0,apt:'all',freq:'once',startDate:''});
+  } else {
+    expenses.push({name:'',amount:0,apt:'all',freq:'monthly',startDate:''});
+  }
   if(workspace.settings)workspace.settings.expenses=expenses;
   renderExpensesList();
-  var rows=document.querySelectorAll('.exp-row');
+  var selector=type==='once'?'.exp-row-once':'.exp-row:not(.exp-row-once)';
+  var rows=document.querySelectorAll(selector);
   if(rows.length){var inp=rows[rows.length-1].querySelector('.exp-name');if(inp){inp.focus();inp.scrollIntoView({block:'nearest'});}}
 }
 function duplicateExpense(idx){
@@ -4116,7 +4175,7 @@ function saveExpenses(){
   var filterAptEl=document.getElementById('expFilterApt');
   var filterApt=filterAptEl?filterAptEl.value:'all';
   // Start from the full existing expenses list
-  var allExpenses=getExpenses().slice();
+  var allExpenses=getFinExpenses().slice();
   if(filterApt==='all'){
     // Replace everything — all rows are visible
     allExpenses=[];
@@ -4131,6 +4190,12 @@ function saveExpenses(){
     var name=row.querySelector('.exp-name').value.trim();
     if(!name)return;
     var apt=row.querySelector('.exp-apt').value;
+    if(row.classList.contains('exp-row-once')){
+      var dateVal=row.querySelector('.exp-once-date')?row.querySelector('.exp-once-date').value.trim():'';
+      var amt=row.querySelector('.exp-once-amt')?parseFloat(row.querySelector('.exp-once-amt').value)||0:0;
+      allExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:dateVal});
+      return;
+    }
     var freq=row.querySelector('.exp-freq').value;
     var startDate=row.querySelector('.exp-start')?row.querySelector('.exp-start').value.trim():'';
     var amounts={};
@@ -4141,13 +4206,11 @@ function saveExpenses(){
       if(y)amounts[y]=v;
       if(v>defaultAmt)defaultAmt=v;
     });
-    var amtEl=row.querySelector('.exp-amount');
-    if(amtEl&&!defaultAmt)defaultAmt=parseFloat(amtEl.value)||0;
     allExpenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
   });
   saveFinExpenses(allExpenses).then(function(){
-    closeExpensesManager();
     renderRevenueAnalytics();
+    toast('Expenses saved','ok');
   }).catch(function(e){alert('Save failed: '+e.message);});
 }
 
@@ -7516,6 +7579,7 @@ function renderOccupancy(){
   var today=new Date().toISOString().slice(0,10);
   var future=new Date();future.setDate(future.getDate()+30);
   var futureStr=future.toISOString().slice(0,10);
+  var mergedBookings=(typeof buildCleanAllList==='function')?buildCleanAllList():(allBookings||[]);
 
   // Count booked nights per property in next 30 days
   container.innerHTML='';
@@ -7527,7 +7591,7 @@ function renderOccupancy(){
     while(d<end){
       var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       total++;
-      var isBooked=(allBookings||[]).some(function(b){
+      var isBooked=mergedBookings.some(function(b){
         return (b.apt===p.id||b.apt===p.short||b.apt===p.name)&&b.checkin<=ds&&b.checkout>ds;
       });
       if(isBooked)booked++;
