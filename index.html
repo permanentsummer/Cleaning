@@ -426,9 +426,13 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 
 /* ── CLEANER SETTINGS (multi-property assignment) ─────────────────────────── */
 .cleaner-row{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--card-bg)}
-.cleaner-row-top{display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin-bottom:10px}
+.cleaner-row-top{display:grid;grid-template-columns:36px 1fr 1fr 36px;gap:8px;margin-bottom:10px;align-items:center}
 .cleaner-row-top input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box;background:var(--bg);color:var(--text)}
 .cleaner-remove-btn{border:none;background:var(--red-bg);color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1}
+.cleaner-avatar-preview{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.cl-color-row{display:flex;gap:8px;margin-bottom:12px}
+.cl-color-swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-sizing:border-box}
+.cl-color-swatch.on{border-color:var(--text);box-shadow:0 0 0 2px var(--card-bg)}
 .cleaner-row-apts-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
 .cleaner-row-apts{display:flex;flex-wrap:wrap;gap:6px}
 .cl-apt-pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;user-select:none}
@@ -494,6 +498,7 @@ body.dark .ctable-b2b{color:#fbbf24}
 .ctask-big-btn.bell{background:#f59e0b}
 .ctask-big-btn.green{background:var(--green)}
 .ctask-big-btn.red{background:var(--red)}
+.ctask-big-btn.indigo{background:#4338ca}
 .ctask-big-btn.grey{background:var(--bg);color:var(--muted);cursor:default}
 
 
@@ -780,8 +785,6 @@ body.dark [style*="border-bottom:1px solid #f1f5f9"]{border-bottom-color:#2A2F38
 body.dark #mcal-style ~ * .mcal td,
 body.dark .mcal td{background:#14171C!important;border-color:#2A2F38!important;color:#EDEBE6!important}
 body.dark .mcal th{color:#8B8F98!important;border-color:#2A2F38!important;background:#14171C!important}
-body.dark .mcal td.mtoday{background:#2a2308!important}
-body.dark .mcal td.mwknd{background:#131f2d!important}
 body.dark .mcal{border-color:#2A2F38!important}
 body.dark .mday-num{color:#EDEBE6!important}
 body.dark .mcal td.mtoday .mday-num{background:#ea580c!important;color:#fff!important}
@@ -5158,7 +5161,7 @@ function mkCleanCard(b,tod){
       '<div class="ctable-guest">'+esc(guestName)+' · '+nights+'n</div></td>'+
     '<td class="ctable-dates"><strong'+(isToday?' style="color:#d97706"':'')+'>'+fmtShort(b.checkin)+' → '+fmtShort(b.checkout)+'</strong>'+(isToday?' <span class="badge badge-yellow">TODAY</span>':'')+' '+b2bTag+'</td>'+
     '<td class="ctable-status-cell"></td>'+
-    '<td><div class="cleaner-cell"><div class="cleaner-avatar" style="background:'+colorFromName(cleanerLabel)+'">'+esc(initials(cleanerLabel))+'</div><span class="cleaner-name-sm">'+esc(cleanerLabel)+'</span></div></td>'+
+    '<td><div class="cleaner-cell"><div class="cleaner-avatar" style="background:'+((cleaner&&cleaner.color)||colorFromName(cleanerLabel))+'">'+esc(initials(cleanerLabel))+'</div><span class="cleaner-name-sm">'+esc(cleanerLabel)+'</span></div></td>'+
     '<td class="ctable-pay-cell"></td>'+
     '<td class="ctable-actions"></td>';
 
@@ -6362,7 +6365,6 @@ function drawCal(){
     '.mcal{width:100%;border-collapse:collapse;table-layout:fixed}'+
     '.mcal th{padding:10px 4px;font-size:11px;font-weight:700;color:var(--muted,#64748b);text-align:center;border-bottom:2px solid var(--border,#e2e8f0);text-transform:uppercase;letter-spacing:.5px}'+
     '.mcal td{vertical-align:top;border:1px solid var(--border,#f1f5f9);padding:6px 4px 4px;height:90px;width:14.28%;position:relative;cursor:default;overflow:hidden;background:var(--bg,#fff)}'+
-    '.mcal td.mtoday{background:var(--mcal-today,#fff7ed)}.mcal td.mwknd{background:var(--mcal-wknd,#fafbfc)}'+
     '.mday-num{font-size:13px;font-weight:700;color:var(--text,#334155);margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%}'+
     '.mcal td.mtoday .mday-num{background:#ea580c;color:#fff}'+
     '.mbar{display:block;height:24px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;line-height:24px;padding:0 8px;margin-bottom:3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;transition:filter .12s,transform .1s;box-shadow:0 1px 4px rgba(0,0,0,.15)}'+
@@ -6378,8 +6380,6 @@ function drawCal(){
     styleEl.textContent+=
       '.mcal td{background:#14171C!important;border-color:#2A2F38!important}'+
       '.mcal th{background:#14171C!important;color:#8B8F98!important;border-color:#2A2F38!important}'+
-      '.mcal td.mtoday{background:#2a2308!important}'+
-      '.mcal td.mwknd{background:#131f2d!important}'+
       '.mday-num{color:#EDEBE6!important}';
   }
 
@@ -6387,6 +6387,17 @@ function drawCal(){
   var html='<table class="mcal"><thead><tr>';
   DAYS.forEach(function(d){html+='<th>'+d+'</th>';});
   html+='</tr></thead><tbody>';
+
+  // Fixed lane per property — computed ONCE for the whole calendar (not per week),
+  // so a property's row position never shifts depending on which other properties
+  // happen to have bookings in a given week. When filtered to one property, it's
+  // the only lane; otherwise lane index = the property's position in the properties list.
+  var laneProps=calAptFilter==='all'?properties:properties.filter(function(p){return p.id===calAptFilter;});
+  var nLanes=Math.max(1,laneProps.length);
+  function laneForApt(aptId){
+    var idx=laneProps.findIndex(function(p){return p.id===aptId||p.name===aptId||p.short===aptId;});
+    return idx===-1?0:idx;
+  }
 
   weeks.forEach(function(wk){
     var dates=wk.map(function(d){
@@ -6396,30 +6407,11 @@ function drawCal(){
     var wkStart=dates.find(function(x){return x;});
     var wkEnd=dates.filter(function(x){return x;}).slice(-1)[0];
 
-    // Bookings active this week — sorted by property order first, then checkin date
-    // This ensures Property 1 always renders above Property 2 regardless of which starts first
+    // Bookings active this week, each assigned to its property's fixed lane
     var wkBks=filtered.filter(function(b){
       return b.checkin&&b.checkout&&b.checkin<=(wkEnd||'')&&b.checkout>(wkStart||'');
-    }).sort(function(a,b){
-      var ai=properties.findIndex(function(p){return p.id===a.apt||p.name===a.apt||p.short===a.apt;});
-      var bi=properties.findIndex(function(p){return p.id===b.apt||p.name===b.apt||p.short===b.apt;});
-      if(ai===-1)ai=999;if(bi===-1)bi=999;
-      if(ai!==bi)return ai-bi;
-      return a.checkin.localeCompare(b.checkin);
     });
-
-    // Lane assignment (avoid overlap)
-    var lanes=[];
-    wkBks.forEach(function(b){
-      var placed=false;
-      for(var li=0;li<lanes.length;li++){
-        if(!lanes[li].some(function(x){return x.checkin<b.checkout&&x.checkout>b.checkin;})){
-          lanes[li].push(b);b._lane=li;placed=true;break;
-        }
-      }
-      if(!placed){b._lane=lanes.length;lanes.push([b]);}
-    });
-    var nLanes=lanes.length;
+    wkBks.forEach(function(b){b._lane=laneForApt(b.apt);});
 
     html+='<tr>';
     wk.forEach(function(d,di){
@@ -7026,12 +7018,20 @@ function renderCleanersList(){
         esc(p.short||p.name)+
       '</label>';
     }).join('');
+    var swatchPalette=['#F9A800','#4338ca','#059669','#D54047','#0369a1','#7c3aed','#db2777','#0d9488'];
+    var curColor=c.color||colorFromName(c.name||'');
+    var swatches=swatchPalette.map(function(sw){
+      return '<button type="button" class="cl-color-swatch'+(sw.toLowerCase()===curColor.toLowerCase()?' on':'')+'" style="background:'+sw+'" data-color="'+sw+'" onclick="pickCleanerColor(this)" title="'+sw+'"></button>';
+    }).join('');
     return '<div class="cleaner-row" data-idx="'+i+'">'+
       '<div class="cleaner-row-top">'+
-        '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Cleaner name">'+
+        '<div class="cleaner-avatar-preview" id="clAvatarPreview'+i+'" style="background:'+curColor+'">'+esc(initials(c.name||'?'))+'</div>'+
+        '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Cleaner name" oninput="document.getElementById(\'clAvatarPreview'+i+'\').textContent=initials(this.value||\'?\')">'+
         '<input class="cl-phone" type="tel" value="'+esc(c.phone||'')+'" placeholder="+351 912 345 678">'+
         '<button class="cleaner-remove-btn" onclick="removeCleanerRow('+i+')" title="Remove cleaner">×</button>'+
       '</div>'+
+      '<div class="cleaner-row-apts-lbl">Avatar color:</div>'+
+      '<div class="cl-color-row"><input type="hidden" class="cl-color-val" value="'+curColor+'">'+swatches+'</div>'+
       '<div class="cleaner-row-apts-lbl">Cleans:</div>'+
       '<div class="cleaner-row-apts">'+
         '<label class="cl-apt-pill all'+(c.allProps?' on':'')+'">'+
@@ -7042,6 +7042,13 @@ function renderCleanersList(){
       '</div>'+
     '</div>';
   }).join('');
+}
+function pickCleanerColor(btn){
+  var row=btn.closest('.cleaner-row');
+  row.querySelectorAll('.cl-color-swatch').forEach(function(s){s.classList.toggle('on',s===btn);});
+  row.querySelector('.cl-color-val').value=btn.getAttribute('data-color');
+  var preview=row.querySelector('.cleaner-avatar-preview');
+  if(preview)preview.style.background=btn.getAttribute('data-color');
 }
 function toggleCleanerAllProps(cb){
   var row=cb.closest('.cleaner-row');
@@ -7071,10 +7078,12 @@ function saveCleaningSettings(){
   rows.forEach(function(row){
     var name=row.querySelector('.cl-name').value.trim();
     var phone=row.querySelector('.cl-phone').value.trim();
+    var colorEl=row.querySelector('.cl-color-val');
+    var color=colorEl?colorEl.value:'';
     var allCb=row.querySelector('.cl-apt-all');
     var allProps=!!(allCb&&allCb.checked);
     var apts=Array.prototype.slice.call(row.querySelectorAll('.cl-apt-cb:checked')).map(function(cb){return cb.value;});
-    if(name||phone)cleaners.push({name:name,phone:phone,allProps:allProps,apts:allProps?[]:apts});
+    if(name||phone)cleaners.push({name:name,phone:phone,color:color,allProps:allProps,apts:allProps?[]:apts});
   });
   sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
     var fresh=(rows&&rows[0]&&rows[0].settings)||{};
@@ -7125,7 +7134,7 @@ function renderCtaskButtons(){
   else{cleanBtn.className='ctask-big-btn red';cleanBtn.innerHTML=checkSvg+'Mark cleaned';cleanBtn.disabled=false;}
 
   if(cleanerPaid){payBtn.className='ctask-big-btn green';payBtn.innerHTML=euroSvg+'Cleaner paid';}
-  else{payBtn.className='ctask-big-btn red';payBtn.innerHTML=euroSvg+'Pay — €'+feeAmount;}
+  else{payBtn.className='ctask-big-btn indigo';payBtn.innerHTML=euroSvg+'Pay — €'+feeAmount;}
 }
 function toggleCleanedFromModal(){
   var b=_ctaskBooking;if(!b)return;
