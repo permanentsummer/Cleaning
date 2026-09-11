@@ -429,8 +429,10 @@ body.dark .clean-stat-val.yellow{color:#fbbf24}
 .cleaner-row-top{display:grid;grid-template-columns:36px 1fr 1fr 36px;gap:8px;margin-bottom:10px;align-items:center}
 .cleaner-row-top input{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box;background:var(--bg);color:var(--text)}
 .cleaner-remove-btn{border:none;background:var(--red-bg);color:var(--red);border-radius:6px;width:36px;height:36px;cursor:pointer;font-size:18px;line-height:1}
-.cleaner-avatar-preview{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
-.cl-color-row{display:flex;gap:8px;margin-bottom:12px}
+.cleaner-avatar-wrap{position:relative}
+.cleaner-avatar-preview{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;border:none;cursor:pointer;padding:0}
+.cl-color-dropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-md);padding:10px;grid-template-columns:repeat(4,1fr);gap:8px;width:132px}
+.cl-color-dropdown.show{display:grid}
 .cl-color-swatch{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;box-sizing:border-box}
 .cl-color-swatch.on{border-color:var(--text);box-shadow:0 0 0 2px var(--card-bg)}
 .cleaner-row-apts-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
@@ -7025,13 +7027,16 @@ function renderCleanersList(){
     }).join('');
     return '<div class="cleaner-row" data-idx="'+i+'">'+
       '<div class="cleaner-row-top">'+
-        '<div class="cleaner-avatar-preview" id="clAvatarPreview'+i+'" style="background:'+curColor+'">'+esc(initials(c.name||'?'))+'</div>'+
+        '<div class="cleaner-avatar-wrap">'+
+          '<button type="button" class="cleaner-avatar-preview" id="clAvatarPreview'+i+'" style="background:'+curColor+'" onclick="toggleColorPicker('+i+')" title="Change avatar color">'+esc(initials(c.name||'?'))+'</button>'+
+          '<div class="cl-color-dropdown" id="clColorDropdown'+i+'">'+
+            '<input type="hidden" class="cl-color-val" value="'+curColor+'">'+swatches+
+          '</div>'+
+        '</div>'+
         '<input class="cl-name" value="'+esc(c.name||'')+'" placeholder="Cleaner name" oninput="document.getElementById(\'clAvatarPreview'+i+'\').textContent=initials(this.value||\'?\')">'+
         '<input class="cl-phone" type="tel" value="'+esc(c.phone||'')+'" placeholder="+351 912 345 678">'+
         '<button class="cleaner-remove-btn" onclick="removeCleanerRow('+i+')" title="Remove cleaner">×</button>'+
       '</div>'+
-      '<div class="cleaner-row-apts-lbl">Avatar color:</div>'+
-      '<div class="cl-color-row"><input type="hidden" class="cl-color-val" value="'+curColor+'">'+swatches+'</div>'+
       '<div class="cleaner-row-apts-lbl">Cleans:</div>'+
       '<div class="cleaner-row-apts">'+
         '<label class="cl-apt-pill all'+(c.allProps?' on':'')+'">'+
@@ -7043,12 +7048,24 @@ function renderCleanersList(){
     '</div>';
   }).join('');
 }
+function toggleColorPicker(idx){
+  var target=document.getElementById('clColorDropdown'+idx);
+  var isOpen=target&&target.classList.contains('show');
+  document.querySelectorAll('.cl-color-dropdown').forEach(function(d){d.classList.remove('show');});
+  if(target&&!isOpen)target.classList.add('show');
+}
+document.addEventListener('click',function(e){
+  if(e.target.closest('.cleaner-avatar-wrap'))return;
+  document.querySelectorAll('.cl-color-dropdown').forEach(function(d){d.classList.remove('show');});
+});
 function pickCleanerColor(btn){
   var row=btn.closest('.cleaner-row');
   row.querySelectorAll('.cl-color-swatch').forEach(function(s){s.classList.toggle('on',s===btn);});
   row.querySelector('.cl-color-val').value=btn.getAttribute('data-color');
   var preview=row.querySelector('.cleaner-avatar-preview');
   if(preview)preview.style.background=btn.getAttribute('data-color');
+  var dropdown=btn.closest('.cl-color-dropdown');
+  if(dropdown)dropdown.classList.remove('show');
 }
 function toggleCleanerAllProps(cb){
   var row=cb.closest('.cleaner-row');
