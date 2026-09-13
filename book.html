@@ -253,7 +253,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 var SB_URL='https://qdldvqnvowyiwhfpdobs.supabase.co';
 var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbGR2cW52b3d5aXdoZnBkb2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDg4MzIsImV4cCI6MjA5MDk4NDgzMn0.Jcabgnm4HpHFhO3yqZh2-D_DevKdHc-OuHJitxuiV_Q';
-var RESEND_KEY='re_HyweKdd2_7xEvXF3UcTNadZfrByWnQxWt';
 var FROM_EMAIL='Permanent Summer <bookings@mail.permanentsummer.co>';
 var HOST_WA='351924477353';
 var HOST_EMAIL='chris@permanentsummer.co';
@@ -410,13 +409,27 @@ window.addEventListener('load',function(){
     fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(wsId),
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j),
     fetch(SB_URL+'/rest/v1/bookings?select=apt,checkin,checkout&workspace_id=eq.'+encodeURIComponent(wsId),
+      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){if(!r.ok)return[];return r.json();}),
+    fetch(SB_URL+'/rest/v1/direct_requests?select=apt_id,apt_name,checkin,checkout,status&workspace_id=eq.'+encodeURIComponent(wsId),
       {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){if(!r.ok)return[];return r.json();})
   ]).then(function(res){
-    var wsRows=res[0]||[],bkRows=res[1]||[];
+    var wsRows=res[0]||[],bkRows=res[1]||[],reqRows=res[2]||[];
     if(!wsRows.length){showRLSErr();return;}
     var cfg=wsRows[0].settings||{};
     properties=(cfg.apts||[]).filter(function(p){return !p.hiddenFromGuests;});
-    existingBookings=bkRows;
+    // Merge in confirmed direct requests not already mirrored into bookings — without this,
+    // the booking page can't see its own recent direct bookings and will let guests
+    // double-book the same dates.
+    var covered={};
+    bkRows.forEach(function(b){covered[b.apt+'|'+b.checkin+'|'+b.checkout]=true;});
+    var merged=bkRows.slice();
+    reqRows.filter(function(r){return r.status==='confirmed';}).forEach(function(r){
+      var apt=r.apt_id||r.apt_name;
+      if(!covered[apt+'|'+r.checkin+'|'+r.checkout]){
+        merged.push({apt:apt,checkin:r.checkin,checkout:r.checkout});
+      }
+    });
+    existingBookings=merged;
     buildBlockedMap();
     document.getElementById('loadingScreen').classList.add('hidden');
     document.getElementById('langBar').style.display='flex';
