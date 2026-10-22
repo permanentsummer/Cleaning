@@ -436,10 +436,40 @@ window.addEventListener('load',function(){
     document.getElementById('stepsBar').style.display='flex';
     applyLang();
     drawCal();
+    applyUrlPrefill();
   }).catch(function(e){showRLSErr(e.message);});
 });
 
 function r2j(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+
+
+// ── PREFILL FROM URL (website search bar) ─────────────────────────────────────
+// Accepts ?checkin=YYYY-MM-DD&checkout=YYYY-MM-DD&guests=N&apt=ocean|beach|all
+// so guests who already chose dates / apartment / guests on the website skip those steps.
+function applyUrlPrefill(){
+  try{
+    var q=new URLSearchParams(window.location.search);
+    var ci=q.get('checkin'),co=q.get('checkout'),apt=(q.get('apt')||'').toLowerCase();
+    var g=parseInt(q.get('guests'),10);
+    if(g>0){guests=Math.min(g,20);var gn=document.getElementById('gNum');if(gn)gn.textContent=guests;}
+    var re=/^\d{4}-\d{2}-\d{2}$/;
+    if(!re.test(ci||'')||!re.test(co||'')||co<=ci)return;
+    var today=new Date();today.setHours(0,0,0,0);
+    if(new Date(ci+'T12:00:00')<today)return;
+    checkIn=ci;checkOut=co;
+    updateSelBar();
+    drawCal();
+    var idx=-1;
+    if(apt&&apt!=='all'){
+      for(var i=0;i<properties.length;i++){
+        var p=properties[i];
+        if(String(p.name||'').toLowerCase().indexOf(apt)>-1||String(p.id||'').toLowerCase().indexOf(apt)>-1){idx=i;break;}
+      }
+    }
+    goStep2();
+    if(idx>-1&&isAvail(properties[idx],ci,co))goStep3(idx);
+  }catch(e){console.warn('prefill skipped',e);}
+}
 
 function aptById(id){
   return properties.find(function(p){return p.id===id||p.name===id;})||{id:id,name:id};
