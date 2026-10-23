@@ -2915,6 +2915,7 @@ function sendReply(){
   var msg=document.getElementById('replyMsg').value.trim();
   var btn=document.querySelector('#respondOverlay .btn-primary');
   btn.disabled=true;btn.textContent='Sending...';
+  var wasConfirmed=activeRequest.status==='confirmed';
 
   // Update status in DB
   sbF('PATCH','direct_requests?id=eq.'+activeRequest.id,{
@@ -2923,6 +2924,12 @@ function sendReply(){
     // If confirmed → write to bookings table for SummerFlow
     if(action==='confirmed'){
       return confirmToBookings(activeRequest);
+    }
+    // If it WAS confirmed and is now switching to something else (declined,
+    // pending, cancelled) → remove the booking row confirmToBookings created,
+    // so the reservation doesn't linger on the calendar after being declined.
+    if(wasConfirmed){
+      return removeRequestBooking(activeRequest);
     }
   }).then(function(){
     // Send email to guest
@@ -2957,6 +2964,16 @@ function confirmToBookings(req){
   }).then(function(r){
     if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
   });
+}
+
+function removeRequestBooking(req){
+  // Delete the bookings-table row that confirmToBookings created for this
+  // request, matched the same way the Finance tab de-dupes requests vs bookings
+  // (apt + checkin + checkout), scoped to source=direct so it can't touch an
+  // unrelated OTA/imported booking that happens to share the same dates.
+  var apt=req.apt_id||req.apt_name;
+  if(!apt||!req.checkin||!req.checkout)return Promise.resolve();
+  return sbF('DELETE','bookings?apt=eq.'+encodeURIComponent(apt)+'&checkin=eq.'+req.checkin+'&checkout=eq.'+req.checkout+'&source=eq.direct');
 }
 
 function sendGuestEmail(email,name,message,action){
