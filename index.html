@@ -1577,6 +1577,29 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
   </div>
 </div>
+<!-- MODAL: Customize dashboard — which KPI cards show, their order, colour, and chart type -->
+<div class="overlay" id="dashCustomizeOverlay">
+  <div class="modal" style="max-height:88vh;overflow-y:auto;max-width:460px">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">⚙ Customize dashboard</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">Drag <strong>⠿</strong> to reorder, toggle to show/hide, click a swatch to recolour. Saved to your account — same on every device.</p>
+    <div class="sep" style="margin-top:0">Chart type</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <label style="flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12.5px">
+        <input type="radio" name="dashChartType" id="dashChartTypeBar" value="bar"> Bars
+      </label>
+      <label style="flex:1;display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:12.5px">
+        <input type="radio" name="dashChartType" id="dashChartTypeLine" value="line"> Line
+      </label>
+    </div>
+    <div class="sep">KPI cards</div>
+    <div id="dashKpiList" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-outline" style="flex:1" onclick="resetDashCustomize()">Reset to default</button>
+      <button class="btn-primary" style="flex:1" onclick="saveDashCustomize()">Save</button>
+    </div>
+  </div>
+</div>
 <!-- MODAL: Import recurring or one-time expenses from Excel/CSV -->
 <div class="overlay" id="expImportOverlay">
   <div class="modal" style="max-height:90vh;overflow-y:auto">
@@ -2111,6 +2134,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div id="seasonRates"></div>
     <button class="btn-outline" style="width:100%;margin-bottom:14px;font-size:12px" onclick="addSeasonRate()">+ Add seasonal rate</button>
     <div class="fg" style="margin-bottom:14px"><label>IBAN (for payment emails)</label><input type="text" id="pIban" placeholder="PT50 0000 0000 0000 0000 0000 0" style="font-family:monospace"></div>
+    <div class="fg" style="margin-bottom:14px"><label>Listing start date <span style="color:var(--muted);font-weight:400">(for occupancy calculations — auto-detected from the earliest booking, override only if that's wrong)</span></label><input type="date" id="pListingStart"></div>
     <div class="sep">Deposit & Payment</div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:12px">
       <div>
@@ -3233,6 +3257,7 @@ function openAddProp(){
   document.getElementById('pMaxGuests').value='6';
   document.getElementById('pCleanFee').value='';
   document.getElementById('pIban').value='';
+  document.getElementById('pListingStart').value='';
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   document.getElementById('photoUrlInput').style.display='none';
@@ -3256,6 +3281,7 @@ function editProp(i){
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
   document.getElementById('pCleanFee').value=p.cleanFee||'';
   document.getElementById('pIban').value=p.iban||'';
+  document.getElementById('pListingStart').value=p.listingStartOverride||'';
   var _dep=p.requireDeposit!==false;
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
@@ -3434,6 +3460,7 @@ function saveProp(){
     cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
     requireDeposit:document.getElementById('pDeposit').value==='1',
     iban:document.getElementById('pIban').value.trim(),
+    listingStartOverride:document.getElementById('pListingStart').value||'',
     seasonRates:seasonRates,
     photos:photos,
     bedrooms:bedrooms,bathrooms:bathrooms,beds:beds,sofaBeds:sofaBeds,size:size,amenities:amenities,
@@ -3647,8 +3674,10 @@ var _finExpenses=null; // cached expenses from workspace.settings
 var _finYear=new Date().getFullYear();
 var _finApt='all';
 var _finChartView='revenue'; // 'revenue' | 'occupancy' | 'adr' | 'profit'
+var _finPnlMode='net'; // 'net' (all expenses) | 'operating' (recurring only) — chart's 'profit' view
 function setFinYear(v){_finYear=(v==='all'?'all':parseInt(v));renderRevenueAnalytics();}
 function setFinChartView(v){_finChartView=v;renderRevenueAnalytics();}
+function setFinPnlMode(v){_finPnlMode=v;renderRevenueAnalytics();}
 
 function getFinExpenses(){
   if(!workspace||!workspace.settings)return[];
@@ -3665,6 +3694,107 @@ function saveFinExpenses(expenses){
     else workspace.settings={expenses:expenses};
   });
 }
+// ── Customizable dashboard: which KPI cards show, in what order, what
+// colour, and whether the chart is bars or a line — synced to the account
+// (workspace.settings.dashCfg) so it's the same on every device. ──────────────
+var DASH_KPI_DEFS=[
+  {id:'occRate',label:'Occupancy rate',defColor:'var(--blue)'},
+  {id:'adr',label:'ADR (avg. daily rate)',defColor:'var(--blue)'},
+  {id:'grossRev',label:'Gross revenue',defColor:'var(--primary)'},
+  {id:'netRev',label:'Net revenue',defColor:'var(--green)'},
+  {id:'platformComm',label:'Platform commission',defColor:'#dc2626'},
+  {id:'cleaningFees',label:'Cleaning fees',defColor:'#7c3aed'},
+  {id:'otherExp',label:'Total expenses',defColor:'#f59e0b'},
+  {id:'pandl',label:'Net P&L (all expenses)',defColor:'var(--green)'},
+  {id:'recurringCosts',label:'Recurring costs',defColor:'var(--primary)'},
+  {id:'onceCosts',label:'One-time costs',defColor:'var(--primary)'},
+  {id:'opPnl',label:'Operating P&L (recurring only)',defColor:'#059669'}
+];
+function getDashCfg(){
+  var c=(workspace&&workspace.settings&&workspace.settings.dashCfg)||{};
+  return{
+    order:c.order||DASH_KPI_DEFS.map(function(d){return d.id;}),
+    hidden:c.hidden||[],
+    colors:c.colors||{},
+    chartType:c.chartType||'bar'
+  };
+}
+function saveDashCfg(cfg){
+  if(!workspace)return Promise.resolve();
+  return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
+    var fresh=(rows&&rows[0]&&rows[0].settings)||{};
+    fresh.dashCfg=cfg;
+    return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:fresh});
+  }).then(function(){
+    if(workspace.settings)workspace.settings.dashCfg=cfg;
+    else workspace.settings={dashCfg:cfg};
+  });
+}
+
+// ── Customize-dashboard modal ────────────────────────────────────────────
+function openDashCustomize(){
+  var cfg=getDashCfg();
+  document.getElementById('dashChartTypeBar').checked=cfg.chartType!=='line';
+  document.getElementById('dashChartTypeLine').checked=cfg.chartType==='line';
+  renderDashKpiList(cfg);
+  document.getElementById('dashCustomizeOverlay').classList.add('show');
+}
+function renderDashKpiList(cfg){
+  var order=cfg.order.filter(function(id){return DASH_KPI_DEFS.some(function(d){return d.id===id;});});
+  DASH_KPI_DEFS.forEach(function(d){if(order.indexOf(d.id)===-1)order.push(d.id);});
+  var list=document.getElementById('dashKpiList');
+  list.innerHTML=order.map(function(id){
+    var def=DASH_KPI_DEFS.find(function(d){return d.id===id;});
+    var hidden=cfg.hidden.indexOf(id)!==-1;
+    var color=cfg.colors[id]||(/^#/.test(def.defColor)?def.defColor:'#C1633B');
+    return '<div class="dash-kpi-row" draggable="true" data-id="'+id+'" '+
+      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);'+(hidden?'opacity:.45':'')+'">'+
+      '<span style="cursor:grab;color:var(--muted);font-size:14px;line-height:1" title="Drag to reorder">⠿</span>'+
+      '<input type="checkbox" class="dash-kpi-visible" '+(hidden?'':'checked')+' title="Show on dashboard">'+
+      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text)">'+def.label+'</span>'+
+      '<input type="color" class="dash-kpi-color" value="'+color+'" style="width:28px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" title="Card colour">'+
+    '</div>';
+  }).join('');
+  // Native HTML5 drag-and-drop reorder — simplest dependency-free way to let
+  // the rows be rearranged; dragover reorders the DOM live, drop just ends it.
+  var dragEl=null;
+  list.querySelectorAll('.dash-kpi-row').forEach(function(row){
+    row.addEventListener('dragstart',function(){dragEl=row;row.style.opacity='.35';});
+    row.addEventListener('dragend',function(){row.style.opacity=cfg.hidden.indexOf(row.getAttribute('data-id'))!==-1?'.45':'';dragEl=null;});
+    row.addEventListener('dragover',function(ev){
+      ev.preventDefault();
+      if(!dragEl||dragEl===row)return;
+      var rect=row.getBoundingClientRect();
+      var before=(ev.clientY-rect.top)<rect.height/2;
+      row.parentNode.insertBefore(dragEl,before?row:row.nextSibling);
+    });
+  });
+}
+function resetDashCustomize(){
+  renderDashKpiList({order:DASH_KPI_DEFS.map(function(d){return d.id;}),hidden:[],colors:{}});
+  document.getElementById('dashChartTypeBar').checked=true;
+  document.getElementById('dashChartTypeLine').checked=false;
+}
+function saveDashCustomize(){
+  var rows=document.querySelectorAll('#dashKpiList .dash-kpi-row');
+  var order=[],hidden=[],colors={};
+  rows.forEach(function(row){
+    var id=row.getAttribute('data-id');
+    order.push(id);
+    var visible=row.querySelector('.dash-kpi-visible').checked;
+    if(!visible)hidden.push(id);
+    var col=row.querySelector('.dash-kpi-color').value;
+    if(col)colors[id]=col;
+  });
+  var chartType=document.getElementById('dashChartTypeLine').checked?'line':'bar';
+  var cfg={order:order,hidden:hidden,colors:colors,chartType:chartType};
+  saveDashCfg(cfg).then(function(){
+    toast('Dashboard layout saved','ok');
+    closeModal('dashCustomizeOverlay');
+    renderRevenueAnalytics();
+  }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+
 function getFinCleanFee(aptId){
   if(!workspace||!workspace.settings)return 0;
   var apts=workspace.settings.apts||[];
@@ -3704,6 +3834,70 @@ function expenseAmountForYear(e,year){
   }
   // 'yearly' (or any other/unknown freq) — full amount once per active year
   return yearAmt;
+}
+
+// Same proration logic as expenseAmountForYear, but for an arbitrary period
+// [pStart, pEndExcl) rather than a full calendar year — used by the monthly
+// chart bars so "Net Profit"/"Operating P&L" per month actually deducts
+// expenses (previously it deducted none at all, see financeChartSVG).
+function expenseAmountForPeriod(e,pStart,pEndExcl){
+  var year=pStart.slice(0,4);
+  var yearAmt=(e.amounts&&e.amounts[year]!=null)?(parseFloat(e.amounts[year])||0):(e.amount||0);
+  var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
+  var effStart=expStart>pStart?expStart:pStart;
+  if(effStart>=pEndExcl)return 0;
+  if(e.freq==='once'){
+    return(expStart>=pStart&&expStart<pEndExcl)?(e.amount||0):0;
+  }
+  if(e.freq==='monthly'){
+    var s=new Date(effStart+'T12:00:00'),en=new Date(pEndExcl+'T12:00:00');
+    var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
+    return yearAmt*Math.max(0,months);
+  }
+  if(e.freq==='weekly'){
+    var days=Math.round((new Date(pEndExcl+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
+    return yearAmt*(days/7);
+  }
+  // 'yearly' (or unknown) — one full charge per active year. When the period
+  // itself is a single month (not a full year) smooth it evenly across the
+  // 12 months so they sum back to the yearly total.
+  var periodDays=Math.round((new Date(pEndExcl+'T12:00:00')-new Date(pStart+'T12:00:00'))/86400000);
+  return periodDays>300?yearAmt:yearAmt/12;
+}
+
+// ── Listing start date, per property ────────────────────────────────────────
+// "All time" occupancy needs to know, per property, how far back it was
+// actually available — otherwise a property added in 2026 gets charged
+// available-nights all the way back to the portfolio's earliest year, which
+// deflates its occupancy %. Auto-detects the earliest checkin ever recorded
+// for that property (booking or request, whichever is earliest) and lets the
+// user override it manually (property edit form) for the rare case the data
+// is incomplete (e.g. paper bookings before this system was used).
+var _listingStartCache=null,_listingStartCacheKey=null;
+function getListingStart(aptId){
+  // Cache key includes manual overrides (not just array lengths) so editing
+  // an existing property's override — without adding/removing anything —
+  // still busts the cache instead of silently serving a stale map.
+  var key=(allBookings||[]).length+'|'+(requests||[]).length+'|'+
+    (properties||[]).map(function(p){return p.id+':'+(p.listingStartOverride||'');}).join(',');
+  if(_listingStartCache&&_listingStartCacheKey===key)return _listingStartCache[aptId]||null;
+  var map={}; // auto-detected earliest checkin, per property
+  (allBookings||[]).forEach(function(b){
+    if(!b.checkin||!b.apt)return;
+    if(!map[b.apt]||b.checkin<map[b.apt])map[b.apt]=b.checkin;
+  });
+  (requests||[]).forEach(function(r){
+    var apt=r.apt_id||r.apt_name||r.apt;
+    if(!r.checkin||!apt)return;
+    if(!map[apt]||r.checkin<map[apt])map[apt]=r.checkin;
+  });
+  // Manual overrides always win over the auto-detected date.
+  (properties||[]).forEach(function(p){
+    if(p.listingStartOverride)map[p.id]=p.listingStartOverride;
+  });
+  _listingStartCache=map;
+  _listingStartCacheKey=key;
+  return map[aptId]||null;
 }
 
 function renderRevenueAnalytics(){
@@ -3784,7 +3978,20 @@ function renderRevenueAnalytics(){
   var periodStart=yStart;
   var dStart=new Date(periodStart+'T12:00:00'),dEnd=new Date(periodEnd+'T12:00:00');
   var numDays=Math.max(1,Math.round((dEnd-dStart)/86400000));
-  var totalAvailableNights=numDays*numProps;
+  // Available nights, per property, clamped to that property's own listing
+  // start date — not the portfolio's earliest year. Otherwise a property
+  // added in 2026 gets charged available-nights back to whenever the FIRST
+  // property in the whole portfolio started, deflating its occupancy %.
+  var scopedProps=_finApt==='all'?(properties||[]):(properties||[]).filter(function(p){return p.id===_finApt;});
+  if(!scopedProps.length)scopedProps=[{id:_finApt}]; // fallback if property list is empty/stale
+  var totalAvailableNights=0;
+  scopedProps.forEach(function(p){
+    var ls=getListingStart(p.id);
+    var pStart=(ls&&ls>periodStart)?ls:periodStart;
+    var days=Math.max(0,Math.round((new Date(periodEnd+'T12:00:00')-new Date(pStart+'T12:00:00'))/86400000));
+    totalAvailableNights+=days;
+  });
+  if(totalAvailableNights===0)totalAvailableNights=numDays*numProps; // no listing-start data at all — fall back to old behavior rather than divide by zero
 
   var totalOccNights=0;
   yBks.forEach(function(b){
@@ -3887,7 +4094,16 @@ function renderRevenueAnalytics(){
   var months12=chartPeriods.map(function(period){
     var pg=0,pc=0,pcf=0,pocc=0;
     var mDays=Math.round((new Date(period.end+'T00:00:00')-new Date(period.start+'T00:00:00'))/86400000);
-    var mAvail=mDays*numProps;
+    // Same per-property listing-start clamp as the headline occupancy figure,
+    // so the chart's occupancy bars agree with the KPI card above them.
+    var mAvail=0;
+    scopedProps.forEach(function(p){
+      var ls=getListingStart(p.id);
+      var pStart=(ls&&ls>period.start)?ls:period.start;
+      if(pStart>=period.end)return;
+      mAvail+=Math.max(0,Math.round((new Date(period.end+'T00:00:00')-new Date(pStart+'T00:00:00'))/86400000));
+    });
+    if(mAvail===0&&!scopedProps.some(function(p){return getListingStart(p.id);}))mAvail=mDays*numProps;
 
     yDirect.forEach(function(r){
       if(!r.checkin||r.checkin<period.start||r.checkin>=period.end)return;
@@ -3910,8 +4126,21 @@ function renderRevenueAnalytics(){
     });
     var mOcc=mAvail>0?Math.min(100,Math.round(pocc/mAvail*100)):0;
     var pNet=pg-pc;
+    // Per-period expenses (recurring vs one-time), prorated the same way as
+    // the P&L KPI above — so the chart's P&L actually deducts expenses,
+    // which the old "netAfterClean" field never did.
+    var pOnceExp=0,pRecExp=0;
+    expenses.forEach(function(e){
+      var amt=expenseAmountForPeriod(e,period.start,period.end);
+      if(!amt)return;
+      if(e.freq==='once')pOnceExp+=amt;else pRecExp+=amt;
+    });
+    var netAfterClean=pNet-pcf; // revenue after commission & cleaning fee, before any expenses
     return{label:period.label,occ:mOcc,gross:pg,net:pNet,commission:pc,cleanFee:pcf,
-           netAfterClean:pNet-pcf,adr:pocc>0?pg/pocc:0,nights:pocc,avail:mAvail};
+           netAfterClean:netAfterClean,
+           netPnl:netAfterClean-pOnceExp-pRecExp,       // Net P&L: all expenses deducted
+           opPnl:netAfterClean-pRecExp,                 // Operating P&L: recurring only
+           adr:pocc>0?pg/pocc:0,nights:pocc,avail:mAvail};
   });
   // ── Platform breakdown ────────────────────────────────────────────────────
   var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
@@ -3934,6 +4163,39 @@ function renderRevenueAnalytics(){
       (sub?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+sub+'</div>':'')+
     '</div>';
   }
+
+  // ── Customizable KPI values ──────────────────────────────────────────────
+  // One map keyed by DASH_KPI_DEFS id, built from the same already-verified
+  // figures used everywhere else on this tab. The customize panel only
+  // controls which of these show, in what order, and their colour — never
+  // the numbers themselves.
+  var recCount=expenses.filter(function(e){return e.freq!=='once';}).length;
+  var onceCount=expenses.filter(function(e){return e.freq==='once';}).length;
+  var dashCfg=getDashCfg();
+  function kColor(id,fallback){return dashCfg.colors[id]||fallback;}
+  var KPI_VALUES={
+    occRate:{val:fmtPct(occRate),sub:totalOccNights+' occ. nights / '+totalAvailableNights+' avail.',color:kColor('occRate','var(--blue)')},
+    adr:{val:fmt(adr),sub:'RevPAR: '+fmt(revPAR),color:kColor('adr','var(--blue)')},
+    grossRev:{val:fmt(grossRev),sub:CT('beforeComm'),color:kColor('grossRev','var(--primary)')},
+    netRev:{val:fmt(netRev),sub:CT('afterComm'),color:kColor('netRev','var(--green)')},
+    platformComm:{val:fmt(commTotal),sub:commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb',color:kColor('platformComm','#dc2626')},
+    cleaningFees:{val:fmt(cleanFeeTotal),sub:totalBks+' stays (from import or default €50)',color:kColor('cleaningFees','#7c3aed')},
+    otherExp:{val:fmt(totalExpenses),sub:expenses.length+' expense item'+(expenses.length!==1?'s':'')+' (recurring + one-time)',color:kColor('otherExp','#f59e0b')},
+    pandl:{val:fmt(pnl),sub:'Net revenue − cleaning − ALL expenses',color:kColor('pandl',pnl>=0?'var(--green)':'#dc2626')},
+    recurringCosts:{val:fmt(totalRecurringExpenses),sub:recCount+' expense'+(recCount!==1?'s':'')+' · monthly/yearly/weekly',color:kColor('recurringCosts','var(--primary)')},
+    onceCosts:{val:fmt(totalOnceExpenses),sub:onceCount+' expense'+(onceCount!==1?'s':'')+' · repairs, one-off purchases',color:kColor('onceCosts','var(--primary)')},
+    opPnl:{val:fmt(opPnl),sub:'Excl. one-time costs',color:kColor('opPnl',opPnl>=0?'#059669':'#dc2626')}
+  };
+  var dashOrder=dashCfg.order.filter(function(id){return KPI_VALUES[id];});
+  // Any KPI id not in the saved order (e.g. added in a later update) still shows, appended.
+  DASH_KPI_DEFS.forEach(function(d){if(dashOrder.indexOf(d.id)===-1)dashOrder.push(d.id);});
+  var visibleKpis=dashOrder.filter(function(id){return dashCfg.hidden.indexOf(id)===-1;});
+  function kpiDefLabel(id){var d=DASH_KPI_DEFS.find(function(x){return x.id===id;});return d?d.label:id;}
+  var kpiGridHtml=visibleKpis.length?
+    '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
+      visibleKpis.map(function(id){var v=KPI_VALUES[id];return kpiCard(kpiDefLabel(id),v.val,v.sub,v.color);}).join('')+
+    '</div>':
+    '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12.5px;margin-bottom:20px">All KPI cards are hidden — click "⚙ Customize" to show some.</div>';
 
   // ── Data quality warning ──────────────────────────────────────────────────
   // Bookings missing financial data (OTA imported before revenue tracking)
@@ -3980,59 +4242,24 @@ function renderRevenueAnalytics(){
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'+
       '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+yearOpts+'</select>'+
       '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+aptOpts+'</select>'+
+      '<button class="btn-outline" style="font-size:12px;padding:7px 12px" onclick="openDashCustomize()">⚙ Customize</button>'+
       '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied · '+numDays+' available days × '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
     '</div>'+
     qualityWarning+
-    // ── Revenue KPIs ──
-    '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
-      kpiCard(CT('occRate'),fmtPct(occRate),totalOccNights+' occ. nights / '+totalAvailableNights+' avail.','var(--blue)')+
-      kpiCard(CT('adr'),fmt(adr),'RevPAR: '+fmt(revPAR),'var(--blue)')+
-      kpiCard(CT('grossRev'),fmt(grossRev),CT('beforeComm'),'')+
-      kpiCard(CT('netRev'),fmt(netRev),CT('afterComm'),'var(--green)')+
-    '</div>'+
-    // ── Cost KPIs ──
-    '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
-      kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
-      kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),totalBks+' stays (from import or default €50)','#7c3aed')+
-      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' (recurring + one-time)','#f59e0b')+
-      kpiCard(CT('pandl'),fmt(pnl),'Net revenue − cleaning − ALL expenses',pnl>=0?'var(--green)':'#dc2626')+
-    '</div>'+
-    // ── Cost breakdown: recurring vs one-time, and P&L with/without one-time ──
-    // An accountant wouldn't let a one-off furniture purchase make a month look
-    // unprofitable, so both figures are shown: the full P&L above (everything,
-    // useful for cash-flow and taxes) and Operating P&L here (recurring costs
-    // only, excluding one-off capex-style spend — the number that reflects
-    // ongoing business performance, e.g. for paying people based on margin).
-    (function(){
-      var recCount=expenses.filter(function(e){return e.freq!=='once';}).length;
-      var onceCount=expenses.filter(function(e){return e.freq==='once';}).length;
-      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">'+
-        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
-          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">Recurring costs</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+recCount+' expense'+(recCount!==1?'s':'')+' · monthly/yearly/weekly</div></div>'+
-          '<div style="font-size:19px;font-weight:800;color:var(--primary)">'+fmt(totalRecurringExpenses)+'</div>'+
-        '</div>'+
-        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
-          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">One-time costs</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+onceCount+' expense'+(onceCount!==1?'s':'')+' · repairs, one-off purchases</div></div>'+
-          '<div style="font-size:19px;font-weight:800;color:var(--primary)">'+fmt(totalOnceExpenses)+'</div>'+
-        '</div>'+
-        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:2px solid '+(opPnl>=0?'#059669':'#dc2626')+';padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
-          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">Operating P&L</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Excl. one-time costs</div></div>'+
-          '<div style="font-size:19px;font-weight:800;color:'+(opPnl>=0?'#059669':'#dc2626')+'">'+fmt(opPnl)+'</div>'+
-        '</div>'+
-      '</div>';
-    })()+
+    // ── KPI cards — fully customizable: which show, in what order, what colour ──
+    kpiGridHtml+
     // ── Charts ──
     '<div class="fin-chart-row" style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
       '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);min-width:0">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">'+
           '<div><div style="font-size:13px;font-weight:700;color:var(--primary)">'+(isAllTime?'All time':_finYear)+'</div>'+
-          '<div style="font-size:11px;color:var(--muted)">'+finChartSubtitle(_finChartView)+'</div></div>'+
-          finChartTabs()+
+          '<div style="font-size:11px;color:var(--muted)">'+finChartSubtitle(_finChartView,_finPnlMode)+'</div></div>'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+            (_finChartView==='profit'?finPnlModeToggle():'')+
+            finChartTabs()+
+          '</div>'+
         '</div>'+
-        financeChartSVG(_finChartView,months12)+
+        financeChartSVG(_finChartView,months12,_finPnlMode,dashCfg.chartType)+
       '</div>'+
       '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
         '<div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:14px">Platform Breakdown</div>'+
@@ -4086,15 +4313,27 @@ var FIN_CHART_VIEWS=[
   {id:'revenue',label:'Revenue'},
   {id:'occupancy',label:'Occupancy'},
   {id:'adr',label:'ADR'},
-  {id:'profit',label:'Net Profit'}
+  {id:'profit',label:'P&L'}
 ];
-function finChartSubtitle(view){
+function finChartSubtitle(view,pnlMode){
   if(view==='revenue')return'Gross (grey) vs net after commissions (coloured by occupancy)';
   if(view==='occupancy')return'Occupied nights ÷ available nights, per period';
   if(view==='adr')return'Average Daily Rate — gross revenue ÷ occupied nights';
-  return'Net after commissions & cleaning fees (excludes recurring expenses)';
+  return pnlMode==='operating'?
+    'Operating P&L — after commissions, cleaning & recurring costs (excludes one-time costs)':
+    'Net P&L — after commissions, cleaning & ALL expenses (recurring + one-time)';
 }
-function financeChartSVG(view,months12){
+function finPnlModeToggle(){
+  return'<div style="display:flex;gap:4px;background:var(--bg);border-radius:9px;padding:3px">'+
+    ['net','operating'].map(function(m){
+      var active=m===_finPnlMode;
+      return'<button onclick="setFinPnlMode(\''+m+'\')" style="border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;'+
+        (active?'background:var(--card-bg,#fff);color:var(--primary);box-shadow:var(--shadow)':'background:transparent;color:var(--muted)')+'">'+(m==='net'?'Net':'Operating')+'</button>';
+    }).join('')+
+  '</div>';
+}
+function financeChartSVG(view,months12,pnlMode,chartType){
+  chartType=chartType==='line'?'line':'bar'; // only two supported — anything else falls back to bar
   var W=800,H=190,padT=20,padB=26,padL=4,padR=4;
   var innerW=W-padL-padR,innerH=H-padT-padB;
   var n=Math.max(1,months12.length);
@@ -4106,39 +4345,83 @@ function financeChartSVG(view,months12){
   if(view==='revenue')maxVal=Math.max.apply(null,months12.map(function(m){return m.gross;}))||1;
   else if(view==='occupancy')maxVal=100;
   else if(view==='adr')maxVal=Math.max.apply(null,months12.map(function(m){return m.adr;}))||1;
-  else if(view==='profit')maxVal=Math.max.apply(null,months12.map(function(m){return Math.abs(m.netAfterClean);}))||1;
+  else if(view==='profit')maxVal=Math.max.apply(null,months12.map(function(m){return Math.abs(pnlMode==='operating'?m.opPnl:m.netPnl);}))||1;
 
   var zeroY=padT+innerH/2;
   if(view==='profit')extras+='<line x1="'+padL+'" y1="'+zeroY+'" x2="'+(W-padR)+'" y2="'+zeroY+'" stroke="var(--border)" stroke-width="1"/>';
 
+  // Primary-series points (x = bar center, y = plotted value's screen position).
+  // Always collected — cheap — so line mode can draw a path through the exact
+  // same positions the bars above would occupy; the underlying numbers never
+  // change between the two modes, only how they're drawn.
+  var pts=[],pts2=[]; // pts2: secondary series (gross, for the Revenue view only)
+
   months12.forEach(function(m,i){
     var x=padL+i*(barW+gap);
+    var cx=x+barW/2;
     var occCol=m.occ>=80?'#059669':m.occ>=50?'var(--blue)':'#f59e0b';
     if(view==='revenue'){
       var hG=Math.max(2,Math.round((m.gross/maxVal)*innerH));
       var hN=Math.max(1,Math.round((m.net/maxVal)*innerH));
       var yG=padT+innerH-hG,yN=padT+innerH-hN;
-      bars+='<rect x="'+x+'" y="'+yG+'" width="'+barW+'" height="'+hG+'" rx="3" fill="var(--border)"/>';
-      bars+='<rect x="'+(x+barW*0.16)+'" y="'+yN+'" width="'+(barW*0.68)+'" height="'+hN+'" rx="3" fill="'+occCol+'" opacity="0.92"/>';
-      if(m.gross>0)vals+='<text x="'+(x+barW/2)+'" y="'+(yG-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+(m.gross>=1000?'€'+(Math.round(m.gross/100)/10)+'k':'€'+Math.round(m.gross))+'</text>';
+      if(chartType==='bar'){
+        bars+='<rect x="'+x+'" y="'+yG+'" width="'+barW+'" height="'+hG+'" rx="3" fill="var(--border)"/>';
+        bars+='<rect x="'+(x+barW*0.16)+'" y="'+yN+'" width="'+(barW*0.68)+'" height="'+hN+'" rx="3" fill="'+occCol+'" opacity="0.92"/>';
+        if(m.gross>0)vals+='<text x="'+(x+barW/2)+'" y="'+(yG-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+(m.gross>=1000?'€'+(Math.round(m.gross/100)/10)+'k':'€'+Math.round(m.gross))+'</text>';
+      }
+      pts.push({x:cx,y:yN});pts2.push({x:cx,y:yG});
     } else if(view==='occupancy'){
       var h=Math.max(2,Math.round((m.occ/maxVal)*innerH));
       var y=padT+innerH-h;
-      bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="'+occCol+'"/>';
-      vals+='<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+m.occ+'%</text>';
+      if(chartType==='bar'){
+        bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="'+occCol+'"/>';
+        vals+='<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+m.occ+'%</text>';
+      }
+      pts.push({x:cx,y:y});
     } else if(view==='adr'){
       var h=Math.max(2,Math.round((m.adr/maxVal)*innerH));
       var y=padT+innerH-h;
-      bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="var(--blue)"/>';
-      if(m.adr>0)vals+='<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">€'+Math.round(m.adr)+'</text>';
+      if(chartType==='bar'){
+        bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="var(--blue)"/>';
+        if(m.adr>0)vals+='<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">€'+Math.round(m.adr)+'</text>';
+      }
+      pts.push({x:cx,y:y});
     } else if(view==='profit'){
-      var h=Math.max(1,Math.round((Math.abs(m.netAfterClean)/maxVal)*(innerH/2-4)));
-      var col=m.netAfterClean>=0?'#059669':'#dc2626';
-      var y=m.netAfterClean>=0?zeroY-h:zeroY;
-      bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="'+col+'"/>';
+      var pv=pnlMode==='operating'?m.opPnl:m.netPnl;
+      var h=Math.max(1,Math.round((Math.abs(pv)/maxVal)*(innerH/2-4)));
+      var col=pv>=0?'#059669':'#dc2626';
+      var y=pv>=0?zeroY-h:zeroY;
+      if(chartType==='bar'){
+        bars+='<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="3" fill="'+col+'"/>';
+        vals+='<text x="'+(x+barW/2)+'" y="'+(pv>=0?y-5:zeroY+h+11)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+(Math.abs(pv)>=1000?(pv<0?'-':'')+'€'+(Math.round(Math.abs(pv)/100)/10)+'k':(pv<0?'-':'')+'€'+Math.round(Math.abs(pv)))+'</text>';
+      }
+      pts.push({x:cx,y:pv>=0?y:y+h,positive:pv>=0});
     }
     labels+='<text x="'+(x+barW/2)+'" y="'+(H-9)+'" text-anchor="middle" font-size="9" font-weight="600" fill="var(--muted)">'+m.label+'</text>';
   });
+
+  if(chartType==='line'&&pts.length){
+    var baselineY=view==='profit'?zeroY:(padT+innerH);
+    var lineColor=view==='revenue'?'var(--green)':view==='occupancy'?'var(--blue)':view==='adr'?'var(--blue)':'#059669';
+    function pathD(arr){return'M'+arr.map(function(p){return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' L');}
+    if(pts.length>1){
+      var areaD=pathD(pts)+' L'+pts[pts.length-1].x.toFixed(1)+','+baselineY+' L'+pts[0].x.toFixed(1)+','+baselineY+' Z';
+      bars+='<path d="'+areaD+'" fill="'+lineColor+'" opacity="0.12"/>';
+      bars+='<path d="'+pathD(pts)+'" fill="none" stroke="'+lineColor+'" stroke-width="2.5" stroke-linejoin="round"/>';
+    }
+    if(view==='revenue'&&pts2.length>1)bars+='<path d="'+pathD(pts2)+'" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4,3"/>';
+    pts.forEach(function(p,i){
+      var m=months12[i];
+      var col=view==='profit'?(p.positive?'#059669':'#dc2626'):lineColor;
+      bars+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3" fill="'+col+'"/>';
+      var txt='';
+      if(view==='revenue')txt=m.net>=1000||m.net<=-1000?'€'+(Math.round(m.net/100)/10)+'k':'€'+Math.round(m.net);
+      else if(view==='occupancy')txt=m.occ+'%';
+      else if(view==='adr')txt=m.adr>0?'€'+Math.round(m.adr):'';
+      else if(view==='profit'){var pv2=pnlMode==='operating'?m.opPnl:m.netPnl;txt=(Math.abs(pv2)>=1000?(pv2<0?'-':'')+'€'+(Math.round(Math.abs(pv2)/100)/10)+'k':(pv2<0?'-':'')+'€'+Math.round(Math.abs(pv2)));}
+      if(txt)vals+='<text x="'+p.x.toFixed(1)+'" y="'+(p.y-8)+'" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--muted)">'+txt+'</text>';
+    });
+  }
 
   return'<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:170px;display:block" preserveAspectRatio="none">'+extras+bars+vals+labels+'</svg>';
 }
