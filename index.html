@@ -963,6 +963,14 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
   #mobileOverlay{display:none!important}
 }
 @media(max-width:600px){#sbCloseBtn{display:flex!important}}
+/* Expenses panel: grouped "Add" / "Import" split-button dropdowns */
+.exp-menu{position:relative}
+.exp-menu summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.exp-menu summary::-webkit-details-marker{display:none}
+.exp-menu[open] summary{border-color:var(--accent,#C1633B)}
+.exp-menu .exp-menu-list{position:absolute;right:0;top:calc(100% + 6px);background:var(--card-bg,#fff);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:6px;min-width:160px;z-index:20;display:flex;flex-direction:column;gap:2px}
+.exp-menu .exp-menu-list button{display:block;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 10px;font-size:12.5px;font-family:inherit;color:var(--primary,#2B2420);cursor:pointer}
+.exp-menu .exp-menu-list button:hover{background:var(--card2,var(--bg))}
 </style>
 
 </head>
@@ -3664,6 +3672,40 @@ function getFinCleanFee(aptId){
   return(a&&a.cleanFee)?parseFloat(a.cleanFee)||0:0;
 }
 
+// ── Single source of truth for "what does expense `e` cost in calendar year
+// `year`" ──────────────────────────────────────────────────────────────────
+// Used by the Finance P&L, the recurring/one-time KPI breakdown, AND the
+// Expenses-manager table totals rows, so all three always agree exactly.
+// Always computes a FULL calendar year (Jan 1 → Dec 31) — never clamped to
+// "today" — because a recurring cost (rent, insurance, a loan) is a known
+// commitment for the whole year, not an uncertain future event like a
+// booking. Clamping it to "today" would make the same year's total silently
+// change depending on which filter you picked (confirmed bug — selecting a
+// specific year vs "All time" used to disagree by hundreds of euros for the
+// exact same year).
+function expenseAmountForYear(e,year){
+  var yearAmt=(e.amounts&&e.amounts[String(year)]!=null)?(parseFloat(e.amounts[String(year)])||0):(e.amount||0);
+  var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
+  var yStart=String(year)+'-01-01',yEndExcl=String(year+1)+'-01-01';
+  var effStart=expStart>yStart?expStart:yStart;
+  if(effStart>=yEndExcl)return 0; // not started yet, or started after this year ended
+  if(e.freq==='once'){
+    // Counts exactly once, in the single year its own date falls in.
+    return expStart.slice(0,4)===String(year)?(e.amount||0):0;
+  }
+  if(e.freq==='monthly'){
+    var s=new Date(effStart+'T12:00:00'),en=new Date(yEndExcl+'T12:00:00');
+    var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
+    return yearAmt*Math.max(0,months);
+  }
+  if(e.freq==='weekly'){
+    var days=Math.round((new Date(yEndExcl+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
+    return yearAmt*(days/7);
+  }
+  // 'yearly' (or any other/unknown freq) — full amount once per active year
+  return yearAmt;
+}
+
 function renderRevenueAnalytics(){
   var container=document.getElementById('revenueAnalytics');
   if(!container)return;
@@ -3695,7 +3737,12 @@ function renderRevenueAnalytics(){
     (properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
 
   var isAllTime=(_finYear==='all');
-  var yStart=isAllTime?'2000-01-01':String(_finYear)+'-01-01';
+  // "All time" starts at the earliest year with any real activity (years[0]),
+  // not a hardcoded year-2000 floor. Fixed bug: the occupancy denominator used
+  // to count every day since 2000 as "available", even for a property with its
+  // first booking in 2024 — deflating All-time occupancy by roughly 9-10x.
+  // Booking filtering is unaffected: nothing exists before years[0] anyway.
+  var yStart=isAllTime?(years.length?years[0]+'-01-01':'2000-01-01'):String(_finYear)+'-01-01';
   var yEnd  =isAllTime?'2099-12-31':String(_finYear)+'-12-31';
 
   // ── Filter bookings ────────────────────────────────────────────────────────
@@ -3795,68 +3842,29 @@ function renderRevenueAnalytics(){
   });
   var totalExpenses=0;
   // Breakdown by frequency — 'once' (one-time: repairs, one-off purchases) vs
-  // everything else (recurring: monthly/yearly/weekly). Same accumulation as
-  // totalExpenses below, just routed into one of these two buckets too, so the
-  // Finance KPIs and the expense-table totals rows can show the split.
+  // everything else (recurring: monthly/yearly/weekly) — so the Finance KPIs
+  // and the expense-table totals rows can show the split, and so the P&L can
+  // be shown both with and without one-time/capex-style costs.
   var totalOnceExpenses=0,totalRecurringExpenses=0;
-  function _bumpExp(e,amt){
-    totalExpenses+=amt;
-    if(e.freq==='once')totalOnceExpenses+=amt;else totalRecurringExpenses+=amt;
-  }
+  // Always full calendar year(s) via expenseAmountForYear — see its comment
+  // for why this must NOT be clamped to "today": doing so used to make the
+  // same year's expense total disagree depending on whether "All time" or
+  // that specific year was selected in the filter.
+  var expenseYears=isAllTime?years:[parseInt(_finYear)];
   expenses.forEach(function(e){
-    // Get the amount for the selected year (or default)
-    var yearAmt=e.amount||0;
-    if(!isAllTime&&e.amounts&&e.amounts[String(_finYear)]!=null){
-      yearAmt=parseFloat(e.amounts[String(_finYear)])||0;
-    }
-    // Determine effective period for this expense
-    var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
-    var pStart=isAllTime?'2000-01-01':(String(_finYear)+'-01-01');
-    var effStart=expStart>pStart?expStart:pStart;
-    if(effStart>periodEnd)return; // not started yet
-    if(isAllTime){
-      // Sum across all years
-      years.forEach(function(y){
-        var amt=e.amounts&&e.amounts[String(y)]!=null?parseFloat(e.amounts[String(y)])||0:e.amount||0;
-        var yStart=String(y)+'-01-01';
-        var yEnd=String(y+1)+'-01-01';
-        var yEffStart=expStart>yStart?expStart:yStart;
-        if(yEffStart>=yEnd)return;
-        if(e.freq==='monthly'){
-          var s=new Date(yEffStart+'T12:00:00'),en=new Date(yEnd+'T12:00:00');
-          var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
-          _bumpExp(e,amt*Math.max(0,months));
-        } else if(e.freq==='weekly'){
-          var days=Math.round((new Date(yEnd+'T12:00:00')-new Date(yEffStart+'T12:00:00'))/86400000);
-          _bumpExp(e,amt*(days/7));
-        } else if(e.freq==='once'){
-          // Count exactly once, in the single year the expense's own date falls in —
-          // NOT once per year like a genuinely recurring yearly expense would be.
-          if(String(y)===expStart.slice(0,4))_bumpExp(e,e.amount||0);
-        } else {
-          _bumpExp(e,amt);
-        }
-      });
-    } else if(e.freq==='monthly'){
-      var s=new Date(effStart+'T12:00:00');
-      // Use first day of NEXT month after periodEnd for correct inclusive counting
-      var pEndD=new Date(periodEnd+'T12:00:00');
-      var enExcl=new Date(pEndD.getFullYear(),pEndD.getMonth()+1,1);
-      var months=(enExcl.getFullYear()-s.getFullYear())*12+(enExcl.getMonth()-s.getMonth());
-      _bumpExp(e,yearAmt*Math.max(0,months));
-    } else if(e.freq==='weekly'){
-      var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
-      _bumpExp(e,yearAmt*(days/7));
-    } else if(e.freq==='once'){
-      // Only counts in the specific year it actually happened, using the expense's own
-      // date directly (not the period-clamped effStart, which would wrongly make a past
-      // one-time expense look "active" in every later year selected).
-      if(expStart>=pStart&&expStart<=periodEnd)_bumpExp(e,e.amount||0);
-    } else {
-      _bumpExp(e,yearAmt);
-    }
+    expenseYears.forEach(function(y){
+      var amt=expenseAmountForYear(e,y);
+      if(!amt)return;
+      totalExpenses+=amt;
+      if(e.freq==='once')totalOnceExpenses+=amt;else totalRecurringExpenses+=amt;
+    });
   });
   var pnl=netRev-cleanFeeTotal-totalExpenses;
+  // Operating P&L — excludes one-time/capex-style costs (furniture, repairs,
+  // renovations), matching how an accountant would separate recurring
+  // operating costs from one-off capital expenditure so a big one-off
+  // purchase doesn't make one month/year look like the business lost money.
+  var opPnl=netRev-cleanFeeTotal-totalRecurringExpenses;
 
   // ── Monthly / Yearly chart ────────────────────────────────────────────────
   var chartPeriods=[];
@@ -3986,14 +3994,19 @@ function renderRevenueAnalytics(){
     '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
       kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
       kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),totalBks+' stays (from import or default €50)','#7c3aed')+
-      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+'','#f59e0b')+
-      kpiCard(CT('pandl'),fmt(pnl),'Net revenue − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
+      kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+' (recurring + one-time)','#f59e0b')+
+      kpiCard(CT('pandl'),fmt(pnl),'Net revenue − cleaning − ALL expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
-    // ── Expense breakdown: recurring vs one-time ──
+    // ── Cost breakdown: recurring vs one-time, and P&L with/without one-time ──
+    // An accountant wouldn't let a one-off furniture purchase make a month look
+    // unprofitable, so both figures are shown: the full P&L above (everything,
+    // useful for cash-flow and taxes) and Operating P&L here (recurring costs
+    // only, excluding one-off capex-style spend — the number that reflects
+    // ongoing business performance, e.g. for paying people based on margin).
     (function(){
       var recCount=expenses.filter(function(e){return e.freq!=='once';}).length;
       var onceCount=expenses.filter(function(e){return e.freq==='once';}).length;
-      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'+
+      return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">'+
         '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
           '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">Recurring costs</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+recCount+' expense'+(recCount!==1?'s':'')+' · monthly/yearly/weekly</div></div>'+
@@ -4003,6 +4016,11 @@ function renderRevenueAnalytics(){
           '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">One-time costs</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+onceCount+' expense'+(onceCount!==1?'s':'')+' · repairs, one-off purchases</div></div>'+
           '<div style="font-size:19px;font-weight:800;color:var(--primary)">'+fmt(totalOnceExpenses)+'</div>'+
+        '</div>'+
+        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:2px solid '+(opPnl>=0?'#059669':'#dc2626')+';padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">Operating P&L</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Excl. one-time costs</div></div>'+
+          '<div style="font-size:19px;font-weight:800;color:'+(opPnl>=0?'#059669':'#dc2626')+'">'+fmt(opPnl)+'</div>'+
         '</div>'+
       '</div>';
     })()+
@@ -4033,13 +4051,22 @@ function renderRevenueAnalytics(){
           '<div style="font-size:14px;font-weight:700;color:var(--primary)">Expenses</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:2px">Colored left edge shows which property an expense is allocated to.</div>'+
         '</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
           '<select id="expFilterApt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+expAptOptsForPanel+
           '</select>'+
-        '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;recurring&apos;)">+ Recurring</button>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;once&apos;)">+ One-time</button>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport(&apos;recurring&apos;)">📥 Import recurring</button>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport(&apos;once&apos;)">📥 Import one-time</button>'+
+          '<div style="width:1px;height:22px;background:var(--border)"></div>'+
+          '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px">+ Add ▾</summary>'+
+            '<div class="exp-menu-list">'+
+              '<button onclick="closeExpMenus();addExpenseRow(&apos;recurring&apos;)">Recurring expense</button>'+
+              '<button onclick="closeExpMenus();addExpenseRow(&apos;once&apos;)">One-time expense</button>'+
+            '</div>'+
+          '</details>'+
+          '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px">📥 Import ▾</summary>'+
+            '<div class="exp-menu-list">'+
+              '<button onclick="closeExpMenus();openExpImport(&apos;recurring&apos;)">Recurring, from file</button>'+
+              '<button onclick="closeExpMenus();openExpImport(&apos;once&apos;)">One-time, from file</button>'+
+            '</div>'+
+          '</details>'+
         '</div>'+
       '</div>'+
       '<div id="expensesList"></div>'+
@@ -4154,6 +4181,19 @@ function openExpensesManager(e){
 function closeExpensesManager(){
   document.getElementById('expensesManagerPanel').style.display='none';
 }
+function closeExpMenus(){
+  document.querySelectorAll('.exp-menu[open]').forEach(function(d){d.removeAttribute('open');});
+}
+// Only one "+ Add" / "📥 Import" dropdown open at a time, and click-outside closes them.
+document.addEventListener('click',function(ev){
+  if(!ev.target.closest('.exp-menu'))closeExpMenus();
+});
+document.addEventListener('toggle',function(ev){
+  if(!ev.target.classList||!ev.target.classList.contains('exp-menu'))return;
+  if(ev.target.hasAttribute('open')){
+    document.querySelectorAll('.exp-menu[open]').forEach(function(d){if(d!==ev.target)d.removeAttribute('open');});
+  }
+},true);
 function renderExpensesList(){
   var expenses=getFinExpenses();
   var filterAptEl=document.getElementById('expFilterApt');
@@ -4180,50 +4220,52 @@ function renderExpensesList(){
 
   function recurringTable(items){
     if(!items.length)return'<div style="text-align:center;padding:16px;color:var(--muted);font-size:12.5px">No recurring expenses'+(filterApt!=='all'?' for this property':'')+'.</div>';
-    var yearCols=uniqueYears.map(function(y){return'<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:70px">'+y+'</th>';}).join('');
-    var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
+    var yearCols=uniqueYears.map(function(y){return'<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;min-width:76px">'+y+'</th>';}).join('');
+    var html='<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Year columns are the <strong>rate</strong> (per month for Monthly, per year for Yearly/Weekly aggregate) — see the <strong>Total</strong> row below for the actual cost in that year, already prorated from the start date.</div>'+
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
       '<thead><tr style="border-bottom:2px solid var(--border)">'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Freq.</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Freq.</th>'+
         yearCols+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:60px">Starts</th>'+
-        '<th style="padding:7px 4px;min-width:56px"></th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;min-width:64px">Starts</th>'+
+        '<th style="padding:9px 4px;min-width:56px"></th>'+
       '</tr></thead><tbody>';
     items.forEach(function(item){
       var ex=item.e, ri=item.i;
       var yearInputs=uniqueYears.map(function(y){
         var val=(ex.amounts&&ex.amounts[y]!=null)?ex.amounts[y]:(ex.amount||'');
-        return'<td style="padding:5px 4px;text-align:center">'+
+        return'<td style="padding:7px 4px;text-align:center">'+
           '<input class="exp-yr-amt" data-year="'+y+'" type="number" value="'+val+'" placeholder="€" min="0" '+
-          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:64px;text-align:right;box-sizing:border-box">'+
+          'style="border:1px solid var(--border);border-radius:6px;padding:7px 5px;font-size:12.5px;width:70px;text-align:right;box-sizing:border-box">'+
         '</td>';
       }).join('');
       var startVal=ex.startDate||'';
       html+='<tr class="exp-row" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
-        '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
-          'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:140px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
-        '<td style="padding:6px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
+        '<td style="padding:8px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. Insurance" '+
+          'style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13.5px;width:150px;box-sizing:border-box"></td>'+
+        '<td style="padding:8px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12.5px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:8px 4px"><select class="exp-freq" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12.5px">'+freqOpts.replace('value="'+(ex.freq||'monthly')+'"','value="'+(ex.freq||'monthly')+'" selected')+'</select></td>'+
         yearInputs+
-        '<td style="padding:6px 4px;text-align:center">'+
+        '<td style="padding:8px 4px;text-align:center">'+
           '<input class="exp-start" type="date" value="'+(startVal?(startVal.length===7?startVal+'-01':startVal):'')+'" title="Start date for this expense" '+
-          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:11px;width:100px;box-sizing:border-box">'+
+          'style="border:1px solid var(--border);border-radius:6px;padding:6px 4px;font-size:11.5px;width:106px;box-sizing:border-box">'+
         '</td>'+
-        '<td style="padding:6px 4px;text-align:center">'+
-          '<div style="display:flex;gap:3px;justify-content:center">'+
-            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:13px">⎘</button>'+
-            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:15px">×</button>'+
+        '<td style="padding:8px 4px;text-align:center">'+
+          '<div style="display:flex;gap:4px;justify-content:center">'+
+            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:28px;height:32px;cursor:pointer;font-size:13px">⎘</button>'+
+            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:28px;height:32px;cursor:pointer;font-size:15px">×</button>'+
           '</div>'+
         '</td>'+
       '</tr>';
     });
+    // Totals use expenseAmountForYear — the per-year RATE shown in each cell above
+    // (e.g. "€475.53/month") is not the year's total cost, so the footer can't just
+    // sum those cells; it has to apply the same start-date/month proration as the
+    // Finance P&L, via the one shared helper, so the two always agree.
     var totalYearCols=uniqueYears.map(function(y){
       var sum=0;
-      items.forEach(function(item){
-        var ex=item.e;
-        sum+=(ex.amounts&&ex.amounts[y]!=null)?(parseFloat(ex.amounts[y])||0):(ex.amount||0);
-      });
+      items.forEach(function(item){sum+=expenseAmountForYear(item.e,y);});
       return '<td style="padding:8px 4px;text-align:center">'+fmtE(sum)+'</td>';
     }).join('');
     html+='</tbody><tfoot><tr style="border-top:2px solid var(--border);background:var(--bg);font-weight:700;color:var(--primary)">'+
@@ -4238,27 +4280,27 @@ function renderExpensesList(){
     if(!items.length)return'<div style="text-align:center;padding:16px;color:var(--muted);font-size:12.5px">No one-time expenses'+(filterApt!=='all'?' for this property':'')+'.</div>';
     var html='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
       '<thead><tr style="border-bottom:2px solid var(--border)">'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:110px">Date</th>'+
-        '<th style="padding:7px 8px;font-size:11px;font-weight:700;color:var(--muted);text-align:center;min-width:90px">Amount</th>'+
-        '<th style="padding:7px 4px;min-width:56px"></th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Property</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;min-width:116px">Date</th>'+
+        '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;min-width:96px">Amount</th>'+
+        '<th style="padding:9px 4px;min-width:56px"></th>'+
       '</tr></thead><tbody>';
     items.forEach(function(item){
       var ex=item.e, ri=item.i;
       var dateVal=ex.startDate||'';
       html+='<tr class="exp-row exp-row-once" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
-        '<td style="padding:6px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. New mattress" '+
-          'style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:13px;width:160px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:6px 6px;font-size:12px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
-        '<td style="padding:6px 4px;text-align:center"><input class="exp-once-date" type="date" value="'+(dateVal?(dateVal.length===7?dateVal+'-01':dateVal):'')+'" '+
-          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:130px;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px;text-align:center"><input class="exp-once-amt" type="number" min="0" value="'+(ex.amount||'')+'" placeholder="€" '+
-          'style="border:1px solid var(--border);border-radius:6px;padding:5px 4px;font-size:12px;width:80px;text-align:right;box-sizing:border-box"></td>'+
-        '<td style="padding:6px 4px;text-align:center">'+
-          '<div style="display:flex;gap:3px;justify-content:center">'+
-            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:13px">⎘</button>'+
-            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:26px;height:30px;cursor:pointer;font-size:15px">×</button>'+
+        '<td style="padding:8px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. New mattress" '+
+          'style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13.5px;width:170px;box-sizing:border-box"></td>'+
+        '<td style="padding:8px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12.5px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
+        '<td style="padding:8px 4px;text-align:center"><input class="exp-once-date" type="date" value="'+(dateVal?(dateVal.length===7?dateVal+'-01':dateVal):'')+'" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:6px 4px;font-size:12.5px;width:136px;box-sizing:border-box"></td>'+
+        '<td style="padding:8px 4px;text-align:center"><input class="exp-once-amt" type="number" min="0" value="'+(ex.amount||'')+'" placeholder="€" '+
+          'style="border:1px solid var(--border);border-radius:6px;padding:6px 4px;font-size:12.5px;width:86px;text-align:right;box-sizing:border-box"></td>'+
+        '<td style="padding:8px 4px;text-align:center">'+
+          '<div style="display:flex;gap:4px;justify-content:center">'+
+            '<button onclick="duplicateExpense('+ri+')" title="Duplicate" style="border:none;background:#e0f2fe;color:#0369a1;border-radius:6px;width:28px;height:32px;cursor:pointer;font-size:13px">⎘</button>'+
+            '<button onclick="removeExpense('+ri+')" title="Delete" style="border:none;background:#fee2e2;color:#dc2626;border-radius:6px;width:28px;height:32px;cursor:pointer;font-size:15px">×</button>'+
           '</div>'+
         '</td>'+
       '</tr>';
