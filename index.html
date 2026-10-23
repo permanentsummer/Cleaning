@@ -1569,30 +1569,59 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
   </div>
 </div>
-<!-- MODAL: Import one-time expenses from Excel/CSV -->
+<!-- MODAL: Import recurring or one-time expenses from Excel/CSV -->
 <div class="overlay" id="expImportOverlay">
   <div class="modal" style="max-height:90vh;overflow-y:auto">
     <div class="modal-handle"></div>
 
-    <!-- Step 1: Property + batch date + file -->
+    <!-- Step 1: Property + frequency/date + file -->
     <div id="eiStep1">
-      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import One-Time Expenses</h3>
+      <h3 id="eiTitle" style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Expenses</h3>
       <div class="fg"><label>Property</label>
         <select id="eiApt"></select>
       </div>
-      <div class="fg"><label>Date for these expenses</label>
-        <input type="date" id="eiDate">
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">Applied to every row — a one-time expense is only counted in the year it's dated, so pick the purchase/move-in date these costs belong to.</div>
+      <div id="eiOnceFields">
+        <div class="fg"><label>Date for these expenses</label>
+          <input type="date" id="eiDate">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Applied to every row — a one-time expense is only counted in the year it's dated, so pick the purchase/move-in date these costs belong to.</div>
+        </div>
+      </div>
+      <div id="eiRecurFields" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg"><label>Frequency</label>
+            <select id="eiFreq"><option value="monthly">Monthly</option><option value="yearly">Yearly</option><option value="weekly">Weekly</option></select>
+          </div>
+          <div class="fg"><label>Start date</label>
+            <input type="date" id="eiStartDate">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin:-6px 0 12px">Applied to every row — all imported items share this frequency and start date.</div>
       </div>
       <div class="fg"><label>File (CSV or XLS/XLSX)</label>
         <input type="file" id="eiFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box">
       </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-bottom:12px;cursor:pointer">
+        <input type="checkbox" id="eiHasHeader" checked style="width:auto">
+        File's first row is a header (uncheck if the first row is already data)
+      </label>
       <div style="padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
-        Your file needs one column with an item/vendor name and one column with the amount (€). You'll map the exact columns next.
+        Your file needs one column with an item/vendor name and one column with the amount (€). You'll map the exact columns next. For an .xlsx/.xls file with several tabs, you'll be asked which one to use.
       </div>
       <div id="eiStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doExpImport()">Next — Map Columns →</button>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doExpImport()">Next →</button>
       <button class="btn-outline" style="width:100%" onclick="closeModal('expImportOverlay')">Cancel</button>
+    </div>
+
+    <!-- Step 1b: Sheet picker (xls/xlsx with multiple tabs only) -->
+    <div id="eiStepSheet" style="display:none">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📑 Choose Sheet</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">This file has several tabs. Pick the one with your expense data.</p>
+      <div class="fg"><label>Sheet / tab</label>
+        <select id="eiSheet"></select>
+      </div>
+      <div id="eiStatusSheet" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="chooseEiSheet()">Next — Map Columns →</button>
+      <button class="btn-outline" style="width:100%" onclick="eiBackToStep1()">← Back</button>
     </div>
 
     <!-- Step 2: Field mapping -->
@@ -1600,13 +1629,14 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Map Columns</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Tell us which column in your file is the item name and which is the amount. Fields marked * are required.</p>
       <div id="eiMappingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
+      <div id="eiPreview" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
       <div id="eiStatus2" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
       <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedExpImport()">📥 Import Now</button>
       <button class="btn-outline" style="width:100%" onclick="eiBackToStep1()">← Back</button>
     </div>
   </div>
 </div>
-<!-- MODAL: Import one-time expenses -->
+<!-- MODAL: Import expenses -->
 
 <!-- MODAL: Edit Booking -->
 <div class="overlay" id="editBookingOverlay">
@@ -3764,6 +3794,15 @@ function renderRevenueAnalytics(){
     return _finApt==='all'||(e.apt===_finApt||e.apt==='all');
   });
   var totalExpenses=0;
+  // Breakdown by frequency — 'once' (one-time: repairs, one-off purchases) vs
+  // everything else (recurring: monthly/yearly/weekly). Same accumulation as
+  // totalExpenses below, just routed into one of these two buckets too, so the
+  // Finance KPIs and the expense-table totals rows can show the split.
+  var totalOnceExpenses=0,totalRecurringExpenses=0;
+  function _bumpExp(e,amt){
+    totalExpenses+=amt;
+    if(e.freq==='once')totalOnceExpenses+=amt;else totalRecurringExpenses+=amt;
+  }
   expenses.forEach(function(e){
     // Get the amount for the selected year (or default)
     var yearAmt=e.amount||0;
@@ -3786,16 +3825,16 @@ function renderRevenueAnalytics(){
         if(e.freq==='monthly'){
           var s=new Date(yEffStart+'T12:00:00'),en=new Date(yEnd+'T12:00:00');
           var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
-          totalExpenses+=amt*Math.max(0,months);
+          _bumpExp(e,amt*Math.max(0,months));
         } else if(e.freq==='weekly'){
           var days=Math.round((new Date(yEnd+'T12:00:00')-new Date(yEffStart+'T12:00:00'))/86400000);
-          totalExpenses+=amt*(days/7);
+          _bumpExp(e,amt*(days/7));
         } else if(e.freq==='once'){
           // Count exactly once, in the single year the expense's own date falls in —
           // NOT once per year like a genuinely recurring yearly expense would be.
-          if(String(y)===expStart.slice(0,4))totalExpenses+=(e.amount||0);
+          if(String(y)===expStart.slice(0,4))_bumpExp(e,e.amount||0);
         } else {
-          totalExpenses+=amt;
+          _bumpExp(e,amt);
         }
       });
     } else if(e.freq==='monthly'){
@@ -3804,17 +3843,17 @@ function renderRevenueAnalytics(){
       var pEndD=new Date(periodEnd+'T12:00:00');
       var enExcl=new Date(pEndD.getFullYear(),pEndD.getMonth()+1,1);
       var months=(enExcl.getFullYear()-s.getFullYear())*12+(enExcl.getMonth()-s.getMonth());
-      totalExpenses+=yearAmt*Math.max(0,months);
+      _bumpExp(e,yearAmt*Math.max(0,months));
     } else if(e.freq==='weekly'){
       var days=Math.round((new Date(periodEnd+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
-      totalExpenses+=yearAmt*(days/7);
+      _bumpExp(e,yearAmt*(days/7));
     } else if(e.freq==='once'){
       // Only counts in the specific year it actually happened, using the expense's own
       // date directly (not the period-clamped effStart, which would wrongly make a past
       // one-time expense look "active" in every later year selected).
-      if(expStart>=pStart&&expStart<=periodEnd)totalExpenses+=(e.amount||0);
+      if(expStart>=pStart&&expStart<=periodEnd)_bumpExp(e,e.amount||0);
     } else {
-      totalExpenses+=yearAmt;
+      _bumpExp(e,yearAmt);
     }
   });
   var pnl=netRev-cleanFeeTotal-totalExpenses;
@@ -3944,12 +3983,29 @@ function renderRevenueAnalytics(){
       kpiCard(CT('netRev'),fmt(netRev),CT('afterComm'),'var(--green)')+
     '</div>'+
     // ── Cost KPIs ──
-    '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
+    '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">'+
       kpiCard(CT('platformComm'),fmt(commTotal),commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb','#dc2626')+
       kpiCard(CT('cleaningFees'),fmt(cleanFeeTotal),totalBks+' stays (from import or default €50)','#7c3aed')+
       kpiCard(CT('otherExp'),fmt(totalExpenses),expenses.length+' expense item'+(expenses.length!==1?'s':'')+'','#f59e0b')+
       kpiCard(CT('pandl'),fmt(pnl),'Net revenue − cleaning − expenses',pnl>=0?'var(--green)':'#dc2626')+
     '</div>'+
+    // ── Expense breakdown: recurring vs one-time ──
+    (function(){
+      var recCount=expenses.filter(function(e){return e.freq!=='once';}).length;
+      var onceCount=expenses.filter(function(e){return e.freq==='once';}).length;
+      return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">'+
+        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">Recurring costs</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+recCount+' expense'+(recCount!==1?'s':'')+' · monthly/yearly/weekly</div></div>'+
+          '<div style="font-size:19px;font-weight:800;color:var(--primary)">'+fmt(totalRecurringExpenses)+'</div>'+
+        '</div>'+
+        '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
+          '<div><div style="font-size:11px;font-weight:600;color:var(--muted)">One-time costs</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+onceCount+' expense'+(onceCount!==1?'s':'')+' · repairs, one-off purchases</div></div>'+
+          '<div style="font-size:19px;font-weight:800;color:var(--primary)">'+fmt(totalOnceExpenses)+'</div>'+
+        '</div>'+
+      '</div>';
+    })()+
     // ── Charts ──
     '<div class="fin-chart-row" style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
       '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);min-width:0">'+
@@ -3982,7 +4038,8 @@ function renderRevenueAnalytics(){
           '</select>'+
         '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;recurring&apos;)">+ Recurring</button>'+
           '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;once&apos;)">+ One-time</button>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport()">📥 Import</button>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport(&apos;recurring&apos;)">📥 Import recurring</button>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport(&apos;once&apos;)">📥 Import one-time</button>'+
         '</div>'+
       '</div>'+
       '<div id="expensesList"></div>'+
@@ -4113,6 +4170,7 @@ function renderExpensesList(){
   }
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
+  function fmtE(n){return'€'+Math.round(n||0).toLocaleString('en-GB');}
   // Build year columns from all booking years + 2 future years
   var currentYear=new Date().getFullYear();
   var allYears=(allBookings||[]).map(function(b){return b.checkin?parseInt(b.checkin.slice(0,4)):0;}).filter(function(y){return y>2020&&y<2050;});
@@ -4160,7 +4218,19 @@ function renderExpensesList(){
         '</td>'+
       '</tr>';
     });
-    html+='</tbody></table></div>';
+    var totalYearCols=uniqueYears.map(function(y){
+      var sum=0;
+      items.forEach(function(item){
+        var ex=item.e;
+        sum+=(ex.amounts&&ex.amounts[y]!=null)?(parseFloat(ex.amounts[y])||0):(ex.amount||0);
+      });
+      return '<td style="padding:8px 4px;text-align:center">'+fmtE(sum)+'</td>';
+    }).join('');
+    html+='</tbody><tfoot><tr style="border-top:2px solid var(--border);background:var(--bg);font-weight:700;color:var(--primary)">'+
+        '<td style="padding:8px 8px" colspan="3">Total recurring</td>'+
+        totalYearCols+
+        '<td colspan="2"></td>'+
+      '</tr></tfoot></table></div>';
     return html;
   }
 
@@ -4193,7 +4263,13 @@ function renderExpensesList(){
         '</td>'+
       '</tr>';
     });
-    html+='</tbody></table></div>';
+    var onceTotal=0;
+    items.forEach(function(item){onceTotal+=item.e.amount||0;});
+    html+='</tbody><tfoot><tr style="border-top:2px solid var(--border);background:var(--bg);font-weight:700;color:var(--primary)">'+
+        '<td style="padding:8px 8px" colspan="3">Total one-time</td>'+
+        '<td style="padding:8px 4px;text-align:center">'+fmtE(onceTotal)+'</td>'+
+        '<td></td>'+
+      '</tr></tfoot></table></div>';
     return html;
   }
 
@@ -4287,16 +4363,29 @@ function saveExpenses(){
   }).catch(function(e){alert('Save failed: '+e.message);});
 }
 
-// ── Import one-time expenses from Excel/CSV ──────────────────────────────────
+// ── Import recurring or one-time expenses from Excel/CSV ─────────────────────
 // Reuses the same CSV/XLS parsing + field-mapping pattern as the bookings
 // importer (_dpCSV, _parseAmt, _dfc, lazy-loaded XLSX) so behavior stays
-// consistent across the app.
-var _eiParsedRows=null,_eiHeaders=[];
-function openExpImport(){
+// consistent across the app. Supports multi-sheet XLS/XLSX files (sheet picker
+// step) and files whose first row is already data, not a header.
+var _eiType='once';          // 'once' | 'recurring' — which button opened the modal
+var _eiParsedRows=null;      // data rows only (header already stripped if present)
+var _eiHeaders=[];           // column headers (real, or synthetic "Column N")
+var _eiWorkbook=null;        // parsed XLSX workbook, kept around for the sheet picker
+
+function openExpImport(type){
+  _eiType=type==='recurring'?'recurring':'once';
   document.getElementById('eiFile').value='';
+  document.getElementById('eiHasHeader').checked=true;
   document.getElementById('eiDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('eiStartDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('eiFreq').value='monthly';
+  document.getElementById('eiOnceFields').style.display=_eiType==='once'?'':'none';
+  document.getElementById('eiRecurFields').style.display=_eiType==='recurring'?'':'none';
+  document.getElementById('eiTitle').textContent=_eiType==='recurring'?'📥 Import Recurring Expenses':'📥 Import One-Time Expenses';
   setEIS('','');
   setEIS2('','');
+  setEISS('','');
   eiBackToStep1();
   var sel=document.getElementById('eiApt');
   sel.innerHTML='';
@@ -4311,44 +4400,90 @@ function openExpImport(){
 }
 function eiBackToStep1(){
   document.getElementById('eiStep1').style.display='';
+  document.getElementById('eiStepSheet').style.display='none';
   document.getElementById('eiStep2').style.display='none';
-  _eiParsedRows=null;_eiHeaders=[];
+  _eiParsedRows=null;_eiHeaders=[];_eiWorkbook=null;
 }
 function setEIS(m,t){var el=document.getElementById('eiStatus');if(!el)return;if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
 function setEIS2(m,t){var el=document.getElementById('eiStatus2');if(!el)return;if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
+function setEISS(m,t){var el=document.getElementById('eiStatusSheet');if(!el)return;if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
 
 function doExpImport(){
   var fi=document.getElementById('eiFile');
   if(!fi.files||!fi.files[0]){setEIS('Please select a file.','warn');return;}
   var apt=document.getElementById('eiApt').value;
   if(!apt){setEIS('No property selected — add a property first.','err');return;}
-  var batchDate=document.getElementById('eiDate').value;
-  if(!batchDate){setEIS('Please pick a date for these expenses.','warn');return;}
+  if(_eiType==='once'){
+    if(!document.getElementById('eiDate').value){setEIS('Please pick a date for these expenses.','warn');return;}
+  } else {
+    if(!document.getElementById('eiStartDate').value){setEIS('Please pick a start date for these expenses.','warn');return;}
+  }
   var file=fi.files[0],fname=file.name.toLowerCase();
   setEIS('Reading file…','warn');
   var isXLS=fname.endsWith('.xls')||fname.endsWith('.xlsx');
-  function onText(text){
-    try{
-      var rows=_dpCSV(text);
-      if(rows.length<2){setEIS('File appears empty.','err');return;}
-      _eiParsedRows=rows;
-      _eiHeaders=rows[0];
-      setEIS('','');
-      showExpFieldMappingStep();
-    }catch(err){setEIS('Error: '+err.message,'err');}
-  }
   if(isXLS){
     if(typeof XLSX==='undefined'){setEIS('XLS reader loading — wait 3 s then try again.','warn');return;}
     var r=new FileReader();
-    r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});onText(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));}catch(err){setEIS('XLS error: '+err.message,'err');}};
+    r.onload=function(e){
+      try{
+        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        if(wb.SheetNames.length>1){
+          // Multiple tabs — ask which one to use before parsing
+          _eiWorkbook=wb;
+          setEIS('','');
+          showEiSheetPicker(wb.SheetNames);
+        } else {
+          _eiFinalizeRows(_dpCSV(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]])));
+        }
+      }catch(err){setEIS('XLS error: '+err.message,'err');}
+    };
     r.onerror=function(){setEIS('Cannot read file.','err');};
     r.readAsArrayBuffer(file);
   } else {
     var r2=new FileReader();
-    r2.onload=function(e){onText(e.target.result);};
+    r2.onload=function(e){
+      try{ _eiFinalizeRows(_dpCSV(e.target.result)); }catch(err){setEIS('Error: '+err.message,'err');}
+    };
     r2.onerror=function(){setEIS('Cannot read.','err');};
     r2.readAsText(file,'UTF-8');
   }
+}
+
+function showEiSheetPicker(names){
+  document.getElementById('eiStep1').style.display='none';
+  document.getElementById('eiStepSheet').style.display='';
+  document.getElementById('eiStep2').style.display='none';
+  var sel=document.getElementById('eiSheet');
+  sel.innerHTML=names.map(function(n){return'<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');
+}
+function chooseEiSheet(){
+  if(!_eiWorkbook){setEISS('Lost the file — go back and re-select it.','err');return;}
+  var name=document.getElementById('eiSheet').value;
+  var sheet=_eiWorkbook.Sheets[name];
+  if(!sheet){setEISS('Could not read that sheet.','err');return;}
+  _eiFinalizeRows(_dpCSV(XLSX.utils.sheet_to_csv(sheet)));
+}
+
+// Splits parsed rows into headers + data according to the "has header row"
+// checkbox, then moves to the mapping step. This is the single place that
+// decides whether row 0 is a header (skipped) or already data (kept) — fixing
+// the earlier bug where a file with no header row silently lost its first item.
+function _eiFinalizeRows(rows){
+  if(!rows||!rows.length){setEIS('File appears empty.','err');setEISS('File appears empty.','err');return;}
+  var hasHeader=document.getElementById('eiHasHeader').checked;
+  if(hasHeader){
+    if(rows.length<2){
+      var msg='File appears empty (only a header row found). If the first row is actually data, uncheck "File\'s first row is a header".';
+      setEIS(msg,'err');setEISS(msg,'err');return;
+    }
+    _eiHeaders=rows[0];
+    _eiParsedRows=rows.slice(1);
+  } else {
+    _eiHeaders=rows[0].map(function(_,i){return'Column '+(i+1);});
+    _eiParsedRows=rows.slice();
+  }
+  setEIS('','');setEISS('','');
+  showExpFieldMappingStep();
 }
 
 var EI_FIELDS=[
@@ -4358,6 +4493,7 @@ var EI_FIELDS=[
 
 function showExpFieldMappingStep(){
   document.getElementById('eiStep1').style.display='none';
+  document.getElementById('eiStepSheet').style.display='none';
   document.getElementById('eiStep2').style.display='';
   var grid=document.getElementById('eiMappingGrid');
   if(!grid)return;
@@ -4382,26 +4518,32 @@ function showExpFieldMappingStep(){
       '<span style="font-size:10px;color:var(--muted)">'+f.hint+'</span>'+
     '</div>';
   }).join('');
+  var preview=document.getElementById('eiPreview');
+  if(preview){
+    var first=(_eiParsedRows[0]||[]).join(' | ');
+    preview.textContent=_eiParsedRows.length+' data row'+(_eiParsedRows.length!==1?'s':'')+' found. First row: '+first;
+  }
   setEIS2('Auto-detected '+Object.values(autoMap).filter(function(v){return v>=0;}).length+' of '+EI_FIELDS.length+' columns. Adjust if needed, then click Import.','warn');
 }
 
 function doMappedExpImport(){
   if(!_eiParsedRows||!_eiParsedRows.length){setEIS2('No file data.','err');return;}
   var apt=document.getElementById('eiApt').value;
-  var batchDate=document.getElementById('eiDate').value;
   var iName=parseInt(document.getElementById('eiMap_name').value);
   var iAmt=parseInt(document.getElementById('eiMap_amount').value);
   if(iName<0){setEIS2('Please map the item/vendor name column.','err');return;}
   if(iAmt<0){setEIS2('Please map the amount column.','err');return;}
 
-  var rows=_eiParsedRows.slice(1); // skip header row
+  var freq=_eiType==='recurring'?document.getElementById('eiFreq').value:'once';
+  var startDate=_eiType==='recurring'?document.getElementById('eiStartDate').value:document.getElementById('eiDate').value;
+
   var newExpenses=[],skipped=0;
-  rows.forEach(function(r){
+  _eiParsedRows.forEach(function(r){
     if(!r||r.join('').trim()==='')return;
     var name=(r[iName]||'').trim();
     var amt=_parseAmt(r[iAmt]);
     if(!name||!amt){skipped++;return;}
-    newExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:batchDate});
+    newExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:freq,startDate:startDate});
   });
 
   if(!newExpenses.length){setEIS2('No valid rows found ('+skipped+' skipped — missing name or amount).','err');return;}
