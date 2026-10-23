@@ -1569,7 +1569,44 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
   </div>
 </div>
-<!-- MODAL: Import Log -->
+<!-- MODAL: Import one-time expenses from Excel/CSV -->
+<div class="overlay" id="expImportOverlay">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+
+    <!-- Step 1: Property + batch date + file -->
+    <div id="eiStep1">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import One-Time Expenses</h3>
+      <div class="fg"><label>Property</label>
+        <select id="eiApt"></select>
+      </div>
+      <div class="fg"><label>Date for these expenses</label>
+        <input type="date" id="eiDate">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Applied to every row — a one-time expense is only counted in the year it's dated, so pick the purchase/move-in date these costs belong to.</div>
+      </div>
+      <div class="fg"><label>File (CSV or XLS/XLSX)</label>
+        <input type="file" id="eiFile" accept=".csv,.xls,.xlsx" style="padding:9px 11px;font-size:14px;border:1px solid var(--border);border-radius:8px;width:100%;box-sizing:border-box">
+      </div>
+      <div style="padding:10px 12px;background:#f0f9ff;border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+        Your file needs one column with an item/vendor name and one column with the amount (€). You'll map the exact columns next.
+      </div>
+      <div id="eiStatus" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doExpImport()">Next — Map Columns →</button>
+      <button class="btn-outline" style="width:100%" onclick="closeModal('expImportOverlay')">Cancel</button>
+    </div>
+
+    <!-- Step 2: Field mapping -->
+    <div id="eiStep2" style="display:none">
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Map Columns</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Tell us which column in your file is the item name and which is the amount. Fields marked * are required.</p>
+      <div id="eiMappingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
+      <div id="eiStatus2" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedExpImport()">📥 Import Now</button>
+      <button class="btn-outline" style="width:100%" onclick="eiBackToStep1()">← Back</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: Import one-time expenses -->
 
 <!-- MODAL: Edit Booking -->
 <div class="overlay" id="editBookingOverlay">
@@ -3945,6 +3982,7 @@ function renderRevenueAnalytics(){
           '</select>'+
         '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;recurring&apos;)">+ Recurring</button>'+
           '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="addExpenseRow(&apos;once&apos;)">+ One-time</button>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openExpImport()">📥 Import</button>'+
         '</div>'+
       '</div>'+
       '<div id="expensesList"></div>'+
@@ -4247,6 +4285,137 @@ function saveExpenses(){
     renderRevenueAnalytics();
     toast('Expenses saved','ok');
   }).catch(function(e){alert('Save failed: '+e.message);});
+}
+
+// ── Import one-time expenses from Excel/CSV ──────────────────────────────────
+// Reuses the same CSV/XLS parsing + field-mapping pattern as the bookings
+// importer (_dpCSV, _parseAmt, _dfc, lazy-loaded XLSX) so behavior stays
+// consistent across the app.
+var _eiParsedRows=null,_eiHeaders=[];
+function openExpImport(){
+  document.getElementById('eiFile').value='';
+  document.getElementById('eiDate').value=new Date().toISOString().slice(0,10);
+  setEIS('','');
+  setEIS2('','');
+  eiBackToStep1();
+  var sel=document.getElementById('eiApt');
+  sel.innerHTML='';
+  (properties||[]).forEach(function(a){
+    var o=document.createElement('option');o.value=a.id;o.textContent=a.name||a.short||a.id;sel.appendChild(o);
+  });
+  if(!sel.options.length){
+    var o=document.createElement('option');o.value='';o.textContent='(no properties configured)';sel.appendChild(o);
+  }
+  document.getElementById('expImportOverlay').classList.add('show');
+  if(typeof XLSX==='undefined'){var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);}
+}
+function eiBackToStep1(){
+  document.getElementById('eiStep1').style.display='';
+  document.getElementById('eiStep2').style.display='none';
+  _eiParsedRows=null;_eiHeaders=[];
+}
+function setEIS(m,t){var el=document.getElementById('eiStatus');if(!el)return;if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
+function setEIS2(m,t){var el=document.getElementById('eiStatus2');if(!el)return;if(!m){el.style.display='none';return;}el.style.display='block';el.textContent=m;el.style.background=t==='ok'?'#dcfce7':t==='err'?'#fee2e2':'#fef3c7';el.style.color=t==='ok'?'#15803d':t==='err'?'#dc2626':'#92400e';}
+
+function doExpImport(){
+  var fi=document.getElementById('eiFile');
+  if(!fi.files||!fi.files[0]){setEIS('Please select a file.','warn');return;}
+  var apt=document.getElementById('eiApt').value;
+  if(!apt){setEIS('No property selected — add a property first.','err');return;}
+  var batchDate=document.getElementById('eiDate').value;
+  if(!batchDate){setEIS('Please pick a date for these expenses.','warn');return;}
+  var file=fi.files[0],fname=file.name.toLowerCase();
+  setEIS('Reading file…','warn');
+  var isXLS=fname.endsWith('.xls')||fname.endsWith('.xlsx');
+  function onText(text){
+    try{
+      var rows=_dpCSV(text);
+      if(rows.length<2){setEIS('File appears empty.','err');return;}
+      _eiParsedRows=rows;
+      _eiHeaders=rows[0];
+      setEIS('','');
+      showExpFieldMappingStep();
+    }catch(err){setEIS('Error: '+err.message,'err');}
+  }
+  if(isXLS){
+    if(typeof XLSX==='undefined'){setEIS('XLS reader loading — wait 3 s then try again.','warn');return;}
+    var r=new FileReader();
+    r.onload=function(e){try{var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});onText(XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]]));}catch(err){setEIS('XLS error: '+err.message,'err');}};
+    r.onerror=function(){setEIS('Cannot read file.','err');};
+    r.readAsArrayBuffer(file);
+  } else {
+    var r2=new FileReader();
+    r2.onload=function(e){onText(e.target.result);};
+    r2.onerror=function(){setEIS('Cannot read.','err');};
+    r2.readAsText(file,'UTF-8');
+  }
+}
+
+var EI_FIELDS=[
+  {id:'name',  label:'Item / vendor name *', req:true, hint:'e.g. Item, Description, Vendor, Store'},
+  {id:'amount',label:'Amount (€) *',          req:true, hint:'e.g. Amount, Price, Cost, Total'}
+];
+
+function showExpFieldMappingStep(){
+  document.getElementById('eiStep1').style.display='none';
+  document.getElementById('eiStep2').style.display='';
+  var grid=document.getElementById('eiMappingGrid');
+  if(!grid)return;
+  var h=_eiHeaders;
+  function makeOpts(autoIdx){
+    var opts='<option value="-1">— not in file —</option>';
+    h.forEach(function(col,i){
+      opts+='<option value="'+i+'"'+(i===autoIdx?' selected':'')+'>Col '+(i+1)+': '+esc(col)+'</option>';
+    });
+    return opts;
+  }
+  var autoMap={
+    name:   _dfc(h,'name','item','vendor','store','description','product','supplier'),
+    amount: _dfc(h,'amount','price','cost','total','value','montant','prix')
+  };
+  grid.innerHTML=EI_FIELDS.map(function(f){
+    return '<div style="display:flex;flex-direction:column;gap:4px">'+
+      '<label style="font-size:11px;font-weight:700;color:var(--muted)">'+f.label+'</label>'+
+      '<select id="eiMap_'+f.id+'" style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:12px">'+
+        makeOpts(autoMap[f.id])+
+      '</select>'+
+      '<span style="font-size:10px;color:var(--muted)">'+f.hint+'</span>'+
+    '</div>';
+  }).join('');
+  setEIS2('Auto-detected '+Object.values(autoMap).filter(function(v){return v>=0;}).length+' of '+EI_FIELDS.length+' columns. Adjust if needed, then click Import.','warn');
+}
+
+function doMappedExpImport(){
+  if(!_eiParsedRows||!_eiParsedRows.length){setEIS2('No file data.','err');return;}
+  var apt=document.getElementById('eiApt').value;
+  var batchDate=document.getElementById('eiDate').value;
+  var iName=parseInt(document.getElementById('eiMap_name').value);
+  var iAmt=parseInt(document.getElementById('eiMap_amount').value);
+  if(iName<0){setEIS2('Please map the item/vendor name column.','err');return;}
+  if(iAmt<0){setEIS2('Please map the amount column.','err');return;}
+
+  var rows=_eiParsedRows.slice(1); // skip header row
+  var newExpenses=[],skipped=0;
+  rows.forEach(function(r){
+    if(!r||r.join('').trim()==='')return;
+    var name=(r[iName]||'').trim();
+    var amt=_parseAmt(r[iAmt]);
+    if(!name||!amt){skipped++;return;}
+    newExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:batchDate});
+  });
+
+  if(!newExpenses.length){setEIS2('No valid rows found ('+skipped+' skipped — missing name or amount).','err');return;}
+
+  setEIS2('Importing '+newExpenses.length+' expenses…','warn');
+  var allExpenses=getFinExpenses().slice().concat(newExpenses);
+  saveFinExpenses(allExpenses).then(function(){
+    closeModal('expImportOverlay');
+    renderExpensesList();
+    renderRevenueAnalytics();
+    toast('Imported '+newExpenses.length+' expense'+(newExpenses.length!==1?'s':'')+(skipped?' ('+skipped+' skipped)':''),'ok');
+  }).catch(function(e){
+    setEIS2('Save failed: '+e.message,'err');
+  });
 }
 
 
