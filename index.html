@@ -1851,7 +1851,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div id="stab-panel-email">
       <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
         <div class="sep" style="margin-top:0">📧 Email Templates</div>
-        <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">Variables: <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{deposit}</code></p>
+        <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">Variables: <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{deposit}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{iban}</code></p>
         <div style="margin-bottom:18px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span></div>
           <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed! 🎉"></div>
@@ -2035,6 +2035,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div class="sep">Seasonal rates (optional)</div>
     <div id="seasonRates"></div>
     <button class="btn-outline" style="width:100%;margin-bottom:14px;font-size:12px" onclick="addSeasonRate()">+ Add seasonal rate</button>
+    <div class="fg" style="margin-bottom:14px"><label>IBAN (for payment emails)</label><input type="text" id="pIban" placeholder="PT50 0000 0000 0000 0000 0000 0" style="font-family:monospace"></div>
     <div class="sep">Deposit & Payment</div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:12px">
       <div>
@@ -2882,7 +2883,13 @@ function setReplyTemplate(action){
   var savedBody=tmpl[bodyKey];
   var msg=savedBody?applyTemplateVars(savedBody,activeRequest):(
     action==='confirmed'?
-      'Hi '+name+',\n\nGreat news — your booking is confirmed! 🎉\n\n📍 '+apt+'\n📅 '+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n🌙 '+nights+' nights\n\nDeposit (50%): €'+Math.round((activeRequest.total_amount||0)/2)+'\nTotal: €'+(activeRequest.total_amount||'TBD')+'\n\nPayment: [YOUR IBAN / WISE / REVOLUT]\n\nBest,\nChristopher\nPermanent Summer':
+      (function(){
+        var prop2=aptById(activeRequest.apt_id||activeRequest.apt_name);
+        var reqDep=prop2&&prop2.requireDeposit!==false;
+        var dep=Math.round((activeRequest.total_amount||0)/2);
+        var iban=prop2&&prop2.iban?prop2.iban:'[YOUR IBAN / WISE / REVOLUT]';
+        return 'Hi '+name+',\n\nGreat news — your booking is confirmed! 🎉\n\n📍 '+apt+'\n📅 '+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n🌙 '+nights+' nights\n\n'+(reqDep?'Deposit (50%): €'+dep+'\n':'')+'Total: €'+(activeRequest.total_amount||'TBD')+'\n\nPayment: '+iban+'\n\nBest,\nChristopher\nPermanent Summer';
+      })():
     action==='declined'?
       'Hi '+name+',\n\nThank you for your interest in '+apt+'.\n\nUnfortunately those dates are not available.\n\nBest,\nChristopher\nPermanent Summer':
       'Hi '+name+',\n\nThank you for your request for '+apt+'. I will confirm within 24 hours.\n\nBest,\nChristopher\nPermanent Summer'
@@ -2962,8 +2969,8 @@ function sendGuestEmail(email,name,message,action){
     '<p style="font-size:22px;font-family:Georgia,serif;font-weight:300;margin:0 0 20px">'+
     (action==='confirmed'?'Your booking is confirmed 🎉':action==='declined'?'Booking update':'Update on your request')+
     '</p>'+
-    '<div style="background:#fff;border-radius:8px;padding:20px;white-space:pre-wrap;font-size:13px;line-height:1.8;border:1px solid #e2e8f0">'+
-    esc(message)+'</div>'+
+    '<div style="background:#fff;border-radius:8px;padding:20px;font-size:13px;line-height:1.8;border:1px solid #e2e8f0">'+
+    esc(message).replace(/\n/g,'<br>')+'</div>'+
     '<p style="margin-top:20px;font-size:11px;color:#64748b">Permanent Summer · Algarve, Portugal · <a href="https://wa.me/351924477353" style="color:#6366f1">WhatsApp</a></p>'+
     '</div>';
   return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
@@ -3133,6 +3140,7 @@ function openAddProp(){
   document.getElementById('pMinNights').value='3';
   document.getElementById('pMaxGuests').value='6';
   document.getElementById('pCleanFee').value='';
+  document.getElementById('pIban').value='';
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
   document.getElementById('photoUrlInput').style.display='none';
@@ -3155,6 +3163,7 @@ function editProp(i){
   document.getElementById('pMinNights').value=p.minNights||'3';
   document.getElementById('pMaxGuests').value=p.maxGuests||'6';
   document.getElementById('pCleanFee').value=p.cleanFee||'';
+  document.getElementById('pIban').value=p.iban||'';
   var _dep=p.requireDeposit!==false;
   document.getElementById('seasonRates').innerHTML='';
   document.getElementById('photoInputs').innerHTML='';
@@ -3332,6 +3341,7 @@ function saveProp(){
     maxGuests:parseInt(document.getElementById('pMaxGuests').value)||6,
     cleanFee:parseInt(document.getElementById('pCleanFee').value)||0,
     requireDeposit:document.getElementById('pDeposit').value==='1',
+    iban:document.getElementById('pIban').value.trim(),
     seasonRates:seasonRates,
     photos:photos,
     bedrooms:bedrooms,bathrooms:bathrooms,beds:beds,sofaBeds:sofaBeds,size:size,amenities:amenities,
@@ -7726,19 +7736,27 @@ function saveEmailTemplates(){
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
-function applyTemplateVars(template,req){
+function applyTemplateVars(template,req,propObj){
   if(!template)return'';
   var nights=0;
   if(req.checkin&&req.checkout)nights=Math.round((new Date(req.checkout+'T12:00:00')-new Date(req.checkin+'T12:00:00'))/86400000);
   var total=req.total_amount||0;
+  var prop=propObj||aptById(req.apt_id||req.apt_name);
+  var requireDeposit=prop&&prop.requireDeposit!==false;
+  var ibanVal=(prop&&prop.iban)||'';
+  if(!requireDeposit){
+    // Strip any line containing {deposit} before substituting
+    template=template.split('\n').filter(function(line){return line.indexOf('{deposit}')===-1;}).join('\n');
+  }
   return template
     .replace(/\{guest_name\}/g,(req.guest_name||'Guest').split(' ')[0])
-    .replace(/\{property\}/g,req.apt_name||'—')
+    .replace(/\{property\}/g,req.apt_name||prop&&prop.name||'—')
     .replace(/\{checkin\}/g,fmtFull(req.checkin))
     .replace(/\{checkout\}/g,fmtFull(req.checkout))
     .replace(/\{nights\}/g,String(nights))
     .replace(/\{total\}/g,String(total))
-    .replace(/\{deposit\}/g,String(Math.round(total/2)))
+    .replace(/\{deposit\}/g,requireDeposit?String(Math.round(total/2)):'')
+    .replace(/\{iban\}/g,ibanVal)
     .replace(/\{guests\}/g,String(req.guests||''));
 }
 
