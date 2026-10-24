@@ -971,6 +971,9 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 .exp-menu .exp-menu-list{position:absolute;right:0;top:calc(100% + 6px);background:var(--card-bg,#fff);border:1px solid var(--border);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:6px;min-width:160px;z-index:20;display:flex;flex-direction:column;gap:2px}
 .exp-menu .exp-menu-list button{display:block;width:100%;text-align:left;background:none;border:none;border-radius:7px;padding:8px 10px;font-size:12.5px;font-family:inherit;color:var(--primary,#2B2420);cursor:pointer}
 .exp-menu .exp-menu-list button:hover{background:var(--card2,var(--bg))}
+/* Customize-dashboard drag list: prevent the browser's native text-selection
+   highlight from sticking on a row after it's dragged. */
+.dash-kpi-row,.dash-kpi-row *{user-select:none;-webkit-user-select:none;-moz-user-select:none}
 </style>
 
 </head>
@@ -1597,6 +1600,41 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div style="display:flex;gap:8px">
       <button class="btn-outline" style="flex:1" onclick="resetDashCustomize()">Reset to default</button>
       <button class="btn-primary" style="flex:1" onclick="saveDashCustomize()">Save</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: Scan a receipt photo and extract a one-time expense -->
+<div class="overlay" id="receiptScanOverlay">
+  <div class="modal" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📷 Scan receipt</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">Take a photo (or upload one) of a receipt. Text is read entirely in your browser — nothing is uploaded anywhere. Always double-check the extracted amount before saving: receipt photos are not always read perfectly.</p>
+
+    <div id="rsStep1">
+      <div class="fg" style="margin-bottom:12px"><label>Property</label>
+        <select id="rsApt"></select>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label>Receipt photo</label>
+        <input type="file" id="rsFile" accept="image/*" capture="environment" onchange="rsPreviewFile()">
+      </div>
+      <img id="rsPreviewImg" style="display:none;max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px;object-fit:contain">
+      <div id="rsStatus" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
+      <button class="btn-primary" style="width:100%" id="rsScanBtn" onclick="scanReceipt()" disabled>Scan receipt</button>
+    </div>
+
+    <div id="rsStep2" style="display:none">
+      <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11.5px;color:#92400e">⚠️ Auto-read from the photo — please check these are correct before saving.</div>
+      <div class="fg" style="margin-bottom:12px"><label>Name / vendor</label><input type="text" id="rsName" placeholder="e.g. Ikea"></div>
+      <div class="fg" style="margin-bottom:12px"><label>Amount (€)</label><input type="number" step="0.01" min="0" id="rsAmount" placeholder="0.00"></div>
+      <div class="fg" style="margin-bottom:12px"><label>Date</label><input type="date" id="rsDate"></div>
+      <details style="margin-bottom:14px">
+        <summary style="font-size:11.5px;color:var(--muted);cursor:pointer">Show raw extracted text</summary>
+        <pre id="rsRawText" style="font-size:10.5px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:8px"></pre>
+      </details>
+      <div style="display:flex;gap:8px">
+        <button class="btn-outline" style="flex:1" onclick="rsBackToStep1()">← Rescan</button>
+        <button class="btn-primary" style="flex:1" onclick="addScannedExpense()">Add as one-time expense</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3748,10 +3786,10 @@ function renderDashKpiList(cfg){
     var hidden=cfg.hidden.indexOf(id)!==-1;
     var color=cfg.colors[id]||(/^#/.test(def.defColor)?def.defColor:'#C1633B');
     return '<div class="dash-kpi-row" draggable="true" data-id="'+id+'" '+
-      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);'+(hidden?'opacity:.45':'')+'">'+
+      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);user-select:none;-webkit-user-select:none;-webkit-user-drag:element;'+(hidden?'opacity:.45':'')+'">'+
       '<span style="cursor:grab;color:var(--muted);font-size:14px;line-height:1" title="Drag to reorder">⠿</span>'+
       '<input type="checkbox" class="dash-kpi-visible" '+(hidden?'':'checked')+' title="Show on dashboard">'+
-      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text)">'+def.label+'</span>'+
+      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text);user-select:none;-webkit-user-select:none">'+def.label+'</span>'+
       '<input type="color" class="dash-kpi-color" value="'+color+'" style="width:28px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" title="Card colour">'+
     '</div>';
   }).join('');
@@ -4274,14 +4312,18 @@ function renderRevenueAnalytics(){
     '</div>'+
     '<div id="expensesManagerPanel" style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
-        '<div>'+
-          '<div style="font-size:14px;font-weight:700;color:var(--primary)">Expenses</div>'+
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">Colored left edge shows which property an expense is allocated to.</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleExpPanelCollapse()">'+
+          '<span id="expPanelCollapseIcon" style="font-size:12px;color:var(--muted);transition:transform .15s;display:inline-block;transform:rotate('+(_expPanelCollapsed?'-90deg':'0deg')+')">▾</span>'+
+          '<div>'+
+            '<div style="font-size:14px;font-weight:700;color:var(--primary)">Expenses</div>'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px">Colored left edge shows which property an expense is allocated to.</div>'+
+          '</div>'+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
           '<select id="expFilterApt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+expAptOptsForPanel+
           '</select>'+
           '<div style="width:1px;height:22px;background:var(--border)"></div>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openReceiptScan()">📷 Scan receipt</button>'+
           '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px">+ Add ▾</summary>'+
             '<div class="exp-menu-list">'+
               '<button onclick="closeExpMenus();addExpenseRow(&apos;recurring&apos;)">Recurring expense</button>'+
@@ -4296,9 +4338,11 @@ function renderRevenueAnalytics(){
           '</details>'+
         '</div>'+
       '</div>'+
-      '<div id="expensesList"></div>'+
-      '<div style="margin-top:14px">'+
-        '<button class="btn-primary" style="font-size:13px" onclick="saveExpenses()">Save expenses</button>'+
+      '<div id="expensesBody" style="display:'+(_expPanelCollapsed?'none':'')+'">'+
+        '<div id="expensesList"></div>'+
+        '<div style="margin-top:14px">'+
+          '<button class="btn-primary" style="font-size:13px" onclick="saveExpenses()">Save expenses</button>'+
+        '</div>'+
       '</div>'+
     '</div>';
 
@@ -4454,6 +4498,18 @@ function finPlatCard(name,data,total,color){
 }
 
 // ── Expenses manager ─────────────────────────────────────────────────────────
+// Collapse state for the (often long) recurring/one-time tables — remembered
+// per-browser so it doesn't reset every time you revisit the Finance tab.
+var _expPanelCollapsed=(function(){try{return localStorage.getItem('sf_expCollapsed')==='1';}catch(e){return false;}})();
+function toggleExpPanelCollapse(){
+  _expPanelCollapsed=!_expPanelCollapsed;
+  try{localStorage.setItem('sf_expCollapsed',_expPanelCollapsed?'1':'0');}catch(e){}
+  var body=document.getElementById('expensesBody');
+  var icon=document.getElementById('expPanelCollapseIcon');
+  if(body)body.style.display=_expPanelCollapsed?'none':'';
+  if(icon)icon.style.transform=_expPanelCollapsed?'rotate(-90deg)':'rotate(0deg)';
+  if(!_expPanelCollapsed)renderExpensesList();
+}
 function openExpensesManager(e){
   if(e)e.preventDefault();
   var panel=document.getElementById('expensesManagerPanel');
@@ -4686,6 +4742,163 @@ function saveExpenses(){
     renderRevenueAnalytics();
     toast('Expenses saved','ok');
   }).catch(function(e){alert('Save failed: '+e.message);});
+}
+
+// ── Scan a receipt photo → one-time expense ──────────────────────────────────
+// Entirely client-side (Tesseract.js, lazy-loaded like the XLSX library below):
+// the photo never leaves the browser. OCR text is then parsed with simple
+// heuristics (amount, date, vendor) — same "best effort, human reviews before
+// saving" pattern as the CSV/XLS importer, because receipt OCR is never 100%
+// reliable and this data feeds payroll, so nothing is auto-saved without the
+// user seeing and confirming the extracted fields first.
+var _rsFile=null,_rsRawText='';
+function openReceiptScan(){
+  var sel=document.getElementById('rsApt');
+  sel.innerHTML='<option value="all">No specific property</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  document.getElementById('rsFile').value='';
+  document.getElementById('rsPreviewImg').style.display='none';
+  document.getElementById('rsStatus').textContent='';
+  document.getElementById('rsScanBtn').disabled=true;
+  document.getElementById('rsStep1').style.display='';
+  document.getElementById('rsStep2').style.display='none';
+  _rsFile=null;_rsRawText='';
+  document.getElementById('receiptScanOverlay').classList.add('show');
+}
+function rsBackToStep1(){
+  document.getElementById('rsStep1').style.display='';
+  document.getElementById('rsStep2').style.display='none';
+}
+function rsPreviewFile(){
+  var f=document.getElementById('rsFile').files[0];
+  _rsFile=f||null;
+  var img=document.getElementById('rsPreviewImg');
+  document.getElementById('rsScanBtn').disabled=!f;
+  if(!f){img.style.display='none';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){img.src=e.target.result;img.style.display='block';};
+  reader.readAsDataURL(f);
+}
+var _tesseractLoaded=false;
+function _loadTesseract(){
+  if(_tesseractLoaded&&window.Tesseract)return Promise.resolve();
+  return new Promise(function(resolve,reject){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js';
+    s.onload=function(){_tesseractLoaded=true;resolve();};
+    s.onerror=function(){reject(new Error('Could not load the text-recognition library — check your internet connection and try again.'));};
+    document.head.appendChild(s);
+  });
+}
+function scanReceipt(){
+  if(!_rsFile)return;
+  var status=document.getElementById('rsStatus');
+  document.getElementById('rsScanBtn').disabled=true;
+  status.textContent='Loading text recognition…';
+  _loadTesseract().then(function(){
+    status.textContent='Reading receipt… (this can take 10–30s)';
+    return Tesseract.recognize(_rsFile,'eng',{
+      logger:function(m){
+        if(m.status==='recognizing text'&&m.progress!=null){
+          status.textContent='Reading receipt… '+Math.round(m.progress*100)+'%';
+        }
+      }
+    });
+  }).then(function(result){
+    var text=(result&&result.data&&result.data.text)||'';
+    _rsRawText=text;
+    var parsed=parseReceiptText(text);
+    document.getElementById('rsName').value=parsed.name;
+    document.getElementById('rsAmount').value=parsed.amount||'';
+    document.getElementById('rsDate').value=parsed.date;
+    document.getElementById('rsRawText').textContent=text.trim()||'(no text detected — the photo may be too blurry or dark)';
+    document.getElementById('rsStep1').style.display='none';
+    document.getElementById('rsStep2').style.display='';
+  }).catch(function(e){
+    status.textContent='Error: '+e.message;
+    document.getElementById('rsScanBtn').disabled=false;
+  });
+}
+// Heuristic extraction from raw OCR text — same spirit as the booking-import
+// field auto-detection elsewhere in this file: best guess, always shown to
+// the user to correct before anything is saved.
+function parseReceiptText(text){
+  var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
+
+  // ── Amount: prefer a line explicitly labelled total/amount due, else the
+  // largest currency-looking number on the receipt (sub-totals are smaller
+  // than the final total in the overwhelming majority of receipts).
+  var amount=0;
+  var totalLineRe=/\b(total|amount due|total due|montant|importe|valor a pagar|grand total|balance due)\b/i;
+  var moneyRe=/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})|\d+[.,]\d{2})/g;
+  var bestFromTotalLine=0;
+  lines.forEach(function(l){
+    if(totalLineRe.test(l)){
+      var m=l.match(moneyRe);
+      if(m){
+        var v=_parseAmt(m[m.length-1]);
+        if(v>bestFromTotalLine)bestFromTotalLine=v;
+      }
+    }
+  });
+  if(bestFromTotalLine>0){
+    amount=bestFromTotalLine;
+  }else{
+    // Fallback: largest money-looking number anywhere on the receipt.
+    var all=text.match(moneyRe)||[];
+    all.forEach(function(m){var v=_parseAmt(m);if(v>amount)amount=v;});
+  }
+
+  // ── Date: try several common receipt formats, normalize to YYYY-MM-DD.
+  var date='';
+  var datePatterns=[
+    {re:/\b(\d{4})-(\d{2})-(\d{2})\b/,order:[1,2,3]},                    // 2026-04-15
+    {re:/\b(\d{2})[.\/-](\d{2})[.\/-](\d{4})\b/,order:[3,2,1]},          // 15/04/2026 or 15.04.2026 (day-month-year, EU default)
+    {re:/\b(\d{2})[.\/-](\d{2})[.\/-](\d{2})\b/,order:[3,2,1],y2:true}   // 15/04/26
+  ];
+  for(var i=0;i<datePatterns.length&&!date;i++){
+    var dp=datePatterns[i],m2=text.match(dp.re);
+    if(m2){
+      var y=m2[dp.order[0]],mo=m2[dp.order[1]],d=m2[dp.order[2]];
+      if(dp.y2)y='20'+y;
+      var mn=parseInt(mo,10),dn=parseInt(d,10);
+      if(mn>=1&&mn<=12&&dn>=1&&dn<=31){
+        date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      }
+    }
+  }
+  if(!date)date=new Date().toISOString().slice(0,10); // fallback: today — user can correct
+
+  // ── Vendor name: first line that looks like a business name — not empty,
+  // not pure numbers/symbols, not itself a total/date/tax line.
+  var skipRe=/\b(total|date|time|hora|nif|vat|tax|iva|receipt|invoice|fatura|rua|street|tel|phone|www\.|\.com)\b/i;
+  var name='';
+  for(var j=0;j<Math.min(lines.length,6);j++){
+    var l=lines[j];
+    if(l.length<2)continue;
+    if(/^[\d\s.,€$£\-\/:]+$/.test(l))continue; // mostly digits/punctuation
+    if(skipRe.test(l))continue;
+    name=l;
+    break;
+  }
+  if(name.length>40)name=name.slice(0,40);
+
+  return{name:name,amount:amount,date:date};
+}
+function addScannedExpense(){
+  var name=document.getElementById('rsName').value.trim();
+  var amount=parseFloat(document.getElementById('rsAmount').value)||0;
+  var date=document.getElementById('rsDate').value;
+  if(!name){toast('Name is required','err');return;}
+  if(!amount){toast('Amount must be greater than 0','err');return;}
+  if(!date){toast('Date is required','err');return;}
+  var apt=document.getElementById('rsApt').value;
+  var expenses=getFinExpenses();
+  expenses.push({name:name,amount:amount,amounts:{},apt:apt,freq:'once',startDate:date});
+  saveFinExpenses(expenses).then(function(){
+    toast('Expense added from receipt ✓','ok');
+    closeModal('receiptScanOverlay');
+    renderRevenueAnalytics();
+  }).catch(function(e){toast('Save failed: '+e.message,'err');});
 }
 
 // ── Import recurring or one-time expenses from Excel/CSV ─────────────────────
