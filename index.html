@@ -3540,75 +3540,159 @@ function savePropsToWorkspace(){
   });
 }
 
-// ── WIDGET PAGE ──────────────────────────────────────────────────────────────
+// ── WIDGET PAGE (Direct booking) ────────────────────────────────────────────────
+var BP_PRESETS={
+  classic:{label:'Classic',accent:'#2563eb',bg:'#f8fafc',font:'nunito'},
+  ocean:{label:'Ocean',accent:'#0e7490',bg:'#ecfeff',font:'poppins'},
+  sunset:{label:'Sunset',accent:'#c2410c',bg:'#fff7ed',font:'montserrat'},
+  forest:{label:'Forest',accent:'#15803d',bg:'#f0fdf4',font:'inter'},
+  rose:{label:'Rose',accent:'#be123c',bg:'#fff1f2',font:'playfair'},
+  minimal:{label:'Minimal',accent:'#111827',bg:'#ffffff',font:'inter'}
+};
+var BP_FONTS={nunito:'Nunito',inter:'Inter',poppins:'Poppins',montserrat:'Montserrat',playfair:'Playfair Display'};
+var _bp=null;
+function bpLoad(){
+  var s=(workspace&&workspace.settings)||{},p=s.profile||{},saved=s.bookingPage||{};
+  _bp=Object.assign({theme:'classic',accent:'#2563eb',bg:'#f8fafc',font:'nunito',width:'wide',corners:'round',propLayout:'list',
+    cover:'',headline:'',subtitle:'',
+    hostName:p.businessName||s.workspaceName||'',whatsapp:p.phone||'',email:p.email||(session&&session.user&&session.user.email)||''},saved);
+}
+function bpDigits(){return String(_bp.whatsapp||'').replace(/[^0-9]/g,'');}
+function bpPush(){
+  var f=document.getElementById('bpPreview');
+  if(f&&f.contentWindow)try{f.contentWindow.postMessage({sf:'theme',bp:_bp,host:_bp.hostName},'*');}catch(e){}
+}
+function bpInput(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value:'';};
+  _bp.hostName=g('bpHost').trim();_bp.whatsapp=g('bpWa').trim();_bp.email=g('bpEmail').trim();
+  _bp.accent=g('bpAccent');_bp.bg=g('bpBg');_bp.font=g('bpFont');
+  _bp.cover=g('bpCover').trim();_bp.headline=g('bpHead').trim();_bp.subtitle=g('bpSub').trim();
+  var pr=BP_PRESETS[_bp.theme];
+  if(!pr||pr.accent.toLowerCase()!==String(_bp.accent).toLowerCase()||pr.bg.toLowerCase()!==String(_bp.bg).toLowerCase()||pr.font!==_bp.font)_bp.theme='custom';
+  document.querySelectorAll('.bp-preset').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-k')===_bp.theme);});
+  bpPush();bpRefreshShare();
+}
+function bpPreset(k){
+  var p=BP_PRESETS[k];if(!p)return;
+  _bp.theme=k;_bp.accent=p.accent;_bp.bg=p.bg;_bp.font=p.font;
+  document.getElementById('bpAccent').value=p.accent;document.getElementById('bpBg').value=p.bg;document.getElementById('bpFont').value=p.font;
+  document.querySelectorAll('.bp-preset').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-k')===k);});
+  bpPush();bpRefreshShare();
+}
+function bpSet(k,v,btn){
+  _bp[k]=v;
+  document.querySelectorAll('.bp-seg[data-k="'+k+'"] button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-v')===v);});
+  bpPush();
+}
+function bpDevice(d){
+  var w=document.getElementById('bpFrameWrap');if(w)w.style.maxWidth=d==='phone'?'380px':'100%';
+  document.querySelectorAll('.bp-seg[data-k="_dev"] button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-v')===d);});
+}
+function saveBookingPage(){
+  bpInput();
+  if(_bp.email&&_bp.email.indexOf('@')<1){toast('Please enter a valid email','err');return;}
+  if(_bp.whatsapp&&bpDigits().length<8){toast('WhatsApp number looks too short — include the country code, e.g. +351…','err');return;}
+  patchWorkspaceSettings({bookingPage:_bp}).then(function(){toast('Booking page saved ✓','ok');bpRefreshShare();})
+    .catch(function(e){toast('Save failed: '+e.message,'err');});
+}
+function bpRefreshShare(){
+  var wa=document.getElementById('bpWaLink');
+  if(wa){
+    var d=bpDigits();
+    var url=d?'https://wa.me/'+d+'?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.':'';
+    wa.innerHTML=d?'<div class="link-box" onclick="copyText(\''+url+'\',this)">'+url+'</div><button class="copy-btn" onclick="copyText(\''+url+'\',this)">📋 Copy WhatsApp link</button>':
+      '<div style="font-size:12.5px;color:var(--muted)">Add your WhatsApp number in step 1 to get a quick link.</div>';
+  }
+  var ec=document.getElementById('embedCode');
+  if(ec){var code=bpEmbedCode();window._embedCode=code;ec.textContent=code;}
+}
+function bpEmbedCode(){
+  return '<!-- SummerFlow Direct Booking Widget -->\n<script src="https://permanentsummer.github.io/direct-booking/widget.js"\n  data-workspace="'+workspace.id+'"\n  data-color="'+(_bp.accent||'#2563eb')+'"\n  data-label="Book Direct">\n<\/script>';
+}
 function renderWidget(){
   if(!workspace)return;
   var wsId=workspace.id;
+  bpLoad();
   var bookingUrl=BOOKING_PAGE_URL+'?ws='+wsId;
-  var embedCode='<!-- Permanent Summer Direct Booking Widget -->\n'+
-    '<script src="https://permanentsummer.github.io/direct-booking/widget.js"\n'+
-    '  data-workspace="'+wsId+'"\n'+
-    '  data-color="#6366f1"\n'+
-    '  data-label="Book Direct">\n'+
-    '<\/script>';
-
+  var embedCode=bpEmbedCode();
   var flow=document.getElementById('widgetFlow');
-  flow.innerHTML=
-    // Step 1: Hosted link
-    '<div class="widget-step">'+
-      '<div class="widget-step-head">'+
-        '<div class="step-num">1</div>'+
-        '<div><h3>Your booking link</h3><p>Share this URL directly with guests</p></div>'+
-      '</div>'+
+  function seg(k,opts,cur){
+    return'<div class="bp-seg" data-k="'+k+'">'+opts.map(function(o){return'<button type="button" data-v="'+o[0]+'" class="'+(cur===o[0]?'on':'')+'" onclick="'+(k==='_dev'?'bpDevice':'bpSet(\''+k+'\',')+(k==='_dev'?'(\''+o[0]+'\')':'\''+o[0]+'\',this)')+'">'+o[1]+'</button>';}).join('')+'</div>';
+  }
+  function field(label,id,val,ph,type,hint){
+    return'<label class="bp-f"><span>'+label+'</span><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" oninput="bpInput()">'+(hint?'<small>'+hint+'</small>':'')+'</label>';
+  }
+  var css='<style>'+
+    '.bp-f{display:block;margin-bottom:12px}.bp-f span{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}'+
+    '.bp-f input,.bp-f select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:var(--card-bg,#fff);color:var(--text);box-sizing:border-box;font-family:inherit}'+
+    '.bp-f small{display:block;font-size:11px;color:var(--muted);margin-top:4px}'+
+    '.bp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:560px){.bp-row{grid-template-columns:1fr}}'+
+    '.bp-seg{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:3px;margin-bottom:12px}'+
+    '.bp-seg button{border:none;background:transparent;border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit}'+
+    '.bp-seg button.on{background:var(--card-bg,#fff);color:var(--primary);box-shadow:var(--shadow)}'+
+    '.bp-lab{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:2px 0 6px}'+
+    '.bp-presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-bottom:16px}'+
+    '.bp-preset{border:2px solid var(--border);background:var(--card-bg,#fff);border-radius:11px;padding:9px;cursor:pointer;text-align:left;font-family:inherit}'+
+    '.bp-preset.on{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.15)}'+
+    '.bp-preset i{display:flex;height:22px;border-radius:6px;overflow:hidden;margin-bottom:6px}.bp-preset i b{flex:1}'+
+    '.bp-preset span{font-size:12px;font-weight:800;color:var(--text)}'+
+    '.bp-colors{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bp-colors input[type=color]{height:42px;padding:3px;cursor:pointer}'+
+    '.bp-frame{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:0 auto;transition:max-width .2s;background:#fff}'+
+    '.bp-frame iframe{width:100%;height:600px;border:0;display:block}'+
+    '.bp-save{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}'+
+    '.bp-note{font-size:12px;color:var(--muted);line-height:1.5;background:var(--bg);border-radius:9px;padding:10px 12px;margin-top:10px}'+
+  '</style>';
+  var presets=Object.keys(BP_PRESETS).map(function(k){var p=BP_PRESETS[k];
+    return'<button type="button" class="bp-preset'+(_bp.theme===k?' on':'')+'" data-k="'+k+'" onclick="bpPreset(\''+k+'\')"><i><b style="background:'+p.accent+'"></b><b style="background:'+p.bg+';border:1px solid var(--border)"></b></i><span>'+p.label+'</span></button>';}).join('');
+  flow.innerHTML=css+
+    // Step 1: contact
+    '<div class="widget-step"><div class="widget-step-head"><div class="step-num">1</div><div><h3>Where should requests go?</h3><p>Guests see your name and can contact you. Booking requests are emailed to you.</p></div></div>'+
       '<div class="widget-step-body">'+
+        field('Your name or business','bpHost',_bp.hostName,'e.g. Casa Sol Algarve')+
+        '<div class="bp-row">'+field('WhatsApp number','bpWa',_bp.whatsapp,'+351 912 345 678','tel','With country code')+field('Email for requests','bpEmail',_bp.email,'you@example.com','email')+'</div>'+
+        '<div class="bp-save"><button class="btn-primary" style="font-size:13px" onclick="saveBookingPage()">Save</button></div>'+
+      '</div></div>'+
+    // Step 2: properties
+    '<div class="widget-step"><div class="widget-step-head"><div class="step-num">2</div><div><h3>Which properties can guests book?</h3><p>Price, photos and minimum nights come from the Properties tab.</p></div></div>'+
+      '<div class="widget-step-body" id="widgetPropList"></div></div>'+
+    // Step 3: design + preview
+    '<div class="widget-step"><div class="widget-step-head"><div class="step-num">3</div><div><h3>Make it yours</h3><p>Pick a look, tweak it, and watch the preview. Click Save when you like it.</p></div></div>'+
+      '<div class="widget-step-body">'+
+        '<div class="bp-lab">Style</div><div class="bp-presets">'+presets+'</div>'+
+        '<div class="bp-colors">'+
+          '<label class="bp-f"><span>Main colour</span><input id="bpAccent" type="color" value="'+esc(_bp.accent)+'" oninput="bpInput()"></label>'+
+          '<label class="bp-f"><span>Background</span><input id="bpBg" type="color" value="'+esc(_bp.bg)+'" oninput="bpInput()"></label>'+
+        '</div>'+
+        '<label class="bp-f"><span>Font</span><select id="bpFont" onchange="bpInput()">'+Object.keys(BP_FONTS).map(function(k){return'<option value="'+k+'"'+(_bp.font===k?' selected':'')+'>'+BP_FONTS[k]+'</option>';}).join('')+'</select></label>'+
+        '<div class="bp-lab">Page width</div>'+seg('width',[['wide','Wide'],['compact','Compact']],_bp.width)+
+        '<div class="bp-lab">Corners</div>'+seg('corners',[['round','Rounded'],['sharp','Sharp']],_bp.corners)+
+        '<div class="bp-lab">Properties shown as</div>'+seg('propLayout',[['list','List'],['grid','Grid']],_bp.propLayout)+
+        '<div class="bp-row">'+field('Cover image link (optional)','bpCover',_bp.cover,'https://…/photo.jpg','url','Paste a photo link — Google Drive share links work')+
+          '<div>'+field('Headline (optional)','bpHead',_bp.headline,'Book direct & save')+field('Subtitle (optional)','bpSub',_bp.subtitle,'Best price, no fees')+'</div></div>'+
+        '<div class="bp-save"><button class="btn-primary" style="font-size:13px" onclick="saveBookingPage()">Save booking page</button>'+
+          '<button class="copy-btn" onclick="bpPreset(\'classic\')">Reset style</button></div>'+
+        '<div class="bp-lab" style="margin-top:18px">Live preview</div>'+seg('_dev',[['desktop','🖥 Desktop'],['phone','📱 Phone']],'desktop')+
+        '<div class="bp-frame" id="bpFrameWrap"><iframe id="bpPreview" src="'+bookingUrl+'&preview=1" onload="bpPush()"></iframe></div>'+
+        '<div class="bp-note">The preview shows your real properties and prices. Nothing you do there is sent. A small “Powered by SummerFlow” line always appears at the bottom of the page.</div>'+
+      '</div></div>'+
+    // Step 4: share
+    '<div class="widget-step"><div class="widget-step-head"><div class="step-num">4</div><div><h3>Share it</h3><p>Send the link, show the QR code, or add a button to your website.</p></div></div>'+
+      '<div class="widget-step-body">'+
+        '<div class="bp-lab">Your booking link</div>'+
         '<div class="link-box" onclick="copyText(\''+bookingUrl+'\',this)">'+bookingUrl+'</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">'+
           '<button class="copy-btn" onclick="copyText(\''+bookingUrl+'\',this)">📋 Copy link</button>'+
           '<button class="copy-btn" onclick="window.open(\''+bookingUrl+'\',\'_blank\')">🔗 Open</button>'+
           '<button class="copy-btn" onclick="genQR(\''+bookingUrl+'\')">📱 QR Code</button>'+
-        '</div>'+
-        '<div id="qrArea" class="qr-wrap"></div>'+
-      '</div>'+
-    '</div>'+
-    // Step 2: Embed
-    '<div class="widget-step">'+
-      '<div class="widget-step-head">'+
-        '<div class="step-num">2</div>'+
-        '<div><h3>Embed on your website</h3><p>Paste this snippet — it adds a "Book Direct" button</p></div>'+
-      '</div>'+
-      '<div class="widget-step-body">'+
+        '</div><div id="qrArea" class="qr-wrap"></div>'+
+        '<div class="bp-lab" style="margin-top:16px">Add a “Book Direct” button to your website</div>'+
         '<div class="code-box" id="embedCode">'+esc(embedCode)+'</div>'+
-        '<button class="copy-btn" onclick="copyText(embedCode,this)">📋 Copy embed code</button>'+
-      '</div>'+
-    '</div>'+
-    // Step 3: WhatsApp
-    '<div class="widget-step">'+
-      '<div class="widget-step-head">'+
-        '<div class="step-num">3</div>'+
-        '<div><h3>WhatsApp quick link</h3><p>Guests can message you instantly</p></div>'+
-      '</div>'+
-      '<div class="widget-step-body">'+
-        '<div class="link-box" onclick="copyText(\'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.\',this)">'+
-          'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.'+
-        '</div>'+
-        '<button class="copy-btn" onclick="copyText(\'https://wa.me/351924477353?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.\',this)">📋 Copy WhatsApp link</button>'+
-      '</div>'+
-    '</div>'+
-    // Step 4: Preview your properties
-    '<div class="widget-step">'+
-      '<div class="widget-step-head">'+
-        '<div class="step-num">4</div>'+
-        '<div><h3>Properties shown to guests</h3><p>Toggle visibility on the public booking page</p></div>'+
-      '</div>'+
-      '<div class="widget-step-body" id="widgetPropList">'+
-      '</div>'+
-    '</div>';
-
-  // Store embed code for copy
+        '<button class="copy-btn" onclick="copyText(window._embedCode,this)">📋 Copy embed code</button>'+
+        '<div class="bp-lab" style="margin-top:16px">WhatsApp quick link</div><div id="bpWaLink"></div>'+
+      '</div></div>';
   window._embedCode=embedCode;
-
-  // Render the interactive property visibility toggles
   renderWidgetPropList();
+  bpRefreshShare();
 }
 
 function renderWidgetPropList(){
