@@ -973,7 +973,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 .exp-menu .exp-menu-list button:hover{background:var(--card2,var(--bg))}
 /* Customize-dashboard drag list: prevent the browser's native text-selection
    highlight from sticking on a row after it's dragged. */
-.dash-kpi-row,.dash-kpi-row *{user-select:none;-webkit-user-select:none;-moz-user-select:none}
+.dash-kpi-row,.dash-kpi-row *{user-select:none;-webkit-user-select:none;-moz-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 </style>
 
 </head>
@@ -3785,26 +3785,51 @@ function renderDashKpiList(cfg){
     var def=DASH_KPI_DEFS.find(function(d){return d.id===id;});
     var hidden=cfg.hidden.indexOf(id)!==-1;
     var color=cfg.colors[id]||(/^#/.test(def.defColor)?def.defColor:'#C1633B');
-    return '<div class="dash-kpi-row" draggable="true" data-id="'+id+'" '+
-      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);user-select:none;-webkit-user-select:none;-webkit-user-drag:element;'+(hidden?'opacity:.45':'')+'">'+
-      '<span style="cursor:grab;color:var(--muted);font-size:14px;line-height:1" title="Drag to reorder">⠿</span>'+
+    return '<div class="dash-kpi-row" data-id="'+id+'" '+
+      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);'+(hidden?'opacity:.45':'')+'">'+
+      '<span class="dash-kpi-handle" style="cursor:grab;color:var(--muted);font-size:19px;line-height:1;touch-action:none;padding:6px 8px 6px 2px" title="Drag to reorder">⠿</span>'+
       '<input type="checkbox" class="dash-kpi-visible" '+(hidden?'':'checked')+' title="Show on dashboard">'+
-      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text);user-select:none;-webkit-user-select:none">'+def.label+'</span>'+
+      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text)">'+def.label+'</span>'+
       '<input type="color" class="dash-kpi-color" value="'+color+'" style="width:28px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" title="Card colour">'+
     '</div>';
   }).join('');
-  // Native HTML5 drag-and-drop reorder — simplest dependency-free way to let
-  // the rows be rearranged; dragover reorders the DOM live, drop just ends it.
-  var dragEl=null;
+  // Pointer Events reorder — NOT native HTML5 drag-and-drop. Mobile Safari
+  // (and most mobile browsers) don't support HTML5 DnD for touch at all, so
+  // touching a draggable row there started a text-selection gesture instead
+  // of a drag — that's the persistent highlighted-block artifact this
+  // replaces. Pointer Events behave the same for mouse and touch, and the
+  // drag only ever starts from the ⠿ handle (never from the label text),
+  // so there's nothing to accidentally select in the first place.
   list.querySelectorAll('.dash-kpi-row').forEach(function(row){
-    row.addEventListener('dragstart',function(){dragEl=row;row.style.opacity='.35';});
-    row.addEventListener('dragend',function(){row.style.opacity=cfg.hidden.indexOf(row.getAttribute('data-id'))!==-1?'.45':'';dragEl=null;});
-    row.addEventListener('dragover',function(ev){
+    var handle=row.querySelector('.dash-kpi-handle');
+    handle.addEventListener('pointerdown',function(ev){
       ev.preventDefault();
-      if(!dragEl||dragEl===row)return;
-      var rect=row.getBoundingClientRect();
-      var before=(ev.clientY-rect.top)<rect.height/2;
-      row.parentNode.insertBefore(dragEl,before?row:row.nextSibling);
+      try{handle.setPointerCapture(ev.pointerId);}catch(e){}
+      row.style.opacity='.4';
+      row.style.boxShadow='0 2px 10px rgba(0,0,0,.15)';
+      function onMove(mv){
+        var rows=list.querySelectorAll('.dash-kpi-row');
+        for(var i=0;i<rows.length;i++){
+          var r=rows[i];
+          if(r===row)continue;
+          var rect=r.getBoundingClientRect();
+          if(mv.clientY>rect.top&&mv.clientY<rect.bottom){
+            var before=(mv.clientY-rect.top)<rect.height/2;
+            list.insertBefore(row,before?r:r.nextSibling);
+            break;
+          }
+        }
+      }
+      function onUp(){
+        row.style.opacity=cfg.hidden.indexOf(row.getAttribute('data-id'))!==-1?'.45':'';
+        row.style.boxShadow='';
+        handle.removeEventListener('pointermove',onMove);
+        handle.removeEventListener('pointerup',onUp);
+        handle.removeEventListener('pointercancel',onUp);
+      }
+      handle.addEventListener('pointermove',onMove);
+      handle.addEventListener('pointerup',onUp);
+      handle.addEventListener('pointercancel',onUp);
     });
   });
 }
@@ -4313,7 +4338,7 @@ function renderRevenueAnalytics(){
     '<div id="expensesManagerPanel" style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">'+
         '<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleExpPanelCollapse()">'+
-          '<span id="expPanelCollapseIcon" style="font-size:12px;color:var(--muted);transition:transform .15s;display:inline-block;transform:rotate('+(_expPanelCollapsed?'-90deg':'0deg')+')">▾</span>'+
+          '<span id="expPanelCollapseIcon" style="font-size:22px;font-weight:700;color:var(--primary);transition:transform .15s;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:var(--bg);transform:rotate('+(_expPanelCollapsed?'-90deg':'0deg')+')">▾</span>'+
           '<div>'+
             '<div style="font-size:14px;font-weight:700;color:var(--primary)">Expenses</div>'+
             '<div style="font-size:11px;color:var(--muted);margin-top:2px">Colored left edge shows which property an expense is allocated to.</div>'+
@@ -4868,17 +4893,53 @@ function parseReceiptText(text){
   }
   if(!date)date=new Date().toISOString().slice(0,10); // fallback: today — user can correct
 
-  // ── Vendor name: first line that looks like a business name — not empty,
-  // not pure numbers/symbols, not itself a total/date/tax line.
-  var skipRe=/\b(total|date|time|hora|nif|vat|tax|iva|receipt|invoice|fatura|rua|street|tel|phone|www\.|\.com)\b/i;
+  // ── Vendor name — three signals, strongest first. A store's actual logo
+  // (the clearest signal) is a graphic, not text, so OCR usually can't read
+  // it directly — "IKEA" printed as a stylised logo often doesn't come
+  // through as the word "IKEA" at all. The website domain and an ALL-CAPS
+  // header line both survive OCR far more reliably than the logo does.
+  var skipRe=/\b(total|date|time|hora|nif|vat|tax|iva|receipt|invoice|fatura|rua|street|av\.|avenida|tel|phone|www\.|\.com|\.pt|obrigado|thank you|troco|change|cash|card|visa|mastercard|mbway)\b/i;
   var name='';
-  for(var j=0;j<Math.min(lines.length,6);j++){
-    var l=lines[j];
-    if(l.length<2)continue;
-    if(/^[\d\s.,€$£\-\/:]+$/.test(l))continue; // mostly digits/punctuation
-    if(skipRe.test(l))continue;
-    name=l;
-    break;
+
+  // 1) A website domain anywhere in the text (header or footer) — e.g.
+  // "www.IKEA.com", "ikea.pt" — the brand is almost always the domain's
+  // main word, and this survives OCR even when the logo graphic doesn't.
+  var domainM=text.match(/\b(?:www\.)?([a-z0-9][a-z0-9-]{1,24})\.(com|pt|net|store|shop|eu|es|fr|co)\b/i);
+  if(domainM&&domainM[1].toLowerCase()!=='www'){
+    name=domainM[1].charAt(0).toUpperCase()+domainM[1].slice(1).toLowerCase();
+  }
+
+  // 2) An ALL-CAPS (or mostly-caps) short line near the top — store names
+  // are almost always printed in capitals in a larger font just below the
+  // logo, so they OCR as a distinct caps line even when the logo itself
+  // isn't readable as text.
+  if(!name){
+    for(var k=0;k<Math.min(lines.length,10);k++){
+      var lc=lines[k];
+      if(lc.length<2||lc.length>30)continue;
+      if(skipRe.test(lc))continue;
+      if(/^[\d\s.,€$£\-\/:]+$/.test(lc))continue; // mostly digits/punctuation
+      var letters=lc.replace(/[^a-zA-ZÀ-ÿ]/g,'');
+      if(letters.length<2)continue;
+      var upper=letters.replace(/[^A-ZÀ-Þ]/g,'');
+      if(upper.length/letters.length>=0.8){ // mostly uppercase letters
+        name=lc;
+        break;
+      }
+    }
+  }
+
+  // 3) Fallback: first substantial line that isn't obviously a total/date/
+  // address/tax/payment line.
+  if(!name){
+    for(var j=0;j<Math.min(lines.length,6);j++){
+      var l=lines[j];
+      if(l.length<2)continue;
+      if(/^[\d\s.,€$£\-\/:]+$/.test(l))continue; // mostly digits/punctuation
+      if(skipRe.test(l))continue;
+      name=l;
+      break;
+    }
   }
   if(name.length>40)name=name.slice(0,40);
 
