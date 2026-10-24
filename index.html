@@ -3794,7 +3794,14 @@ function renderDashKpiList(cfg){
       'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);touch-action:none;'+(hidden?'opacity:.45':'')+'">'+
       '<span class="dash-kpi-handle" style="cursor:grab;color:var(--muted);font-size:19px;line-height:1;pointer-events:none;padding:6px 8px 6px 2px" title="Drag to reorder">⠿</span>'+
       '<input type="checkbox" class="dash-kpi-visible" '+(hidden?'':'checked')+' title="Show on dashboard">'+
-      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text);pointer-events:none">'+def.label+'</span>'+
+      // A plain <label> here, not <span> — a global rule elsewhere in this file
+      // (input[type=checkbox]:checked + span{background:var(--green)!important})
+      // exists for toggle-switch controls and was matching THIS span too,
+      // since it happens to sit right after a checked checkbox. That rule is
+      // what was painting a solid green block behind every visible KPI's
+      // label — not a touch/selection issue at all. Using a different tag
+      // sidesteps that selector entirely.
+      '<label style="flex:1;font-size:12.5px;font-weight:600;color:var(--text);pointer-events:none;background:none!important">'+def.label+'</label>'+
       '<input type="color" class="dash-kpi-color" value="'+color+'" style="width:28px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" title="Card colour">'+
     '</div>';
   }).join('');
