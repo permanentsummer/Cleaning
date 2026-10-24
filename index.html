@@ -1614,12 +1614,17 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div class="fg" style="margin-bottom:12px"><label>Property</label>
         <select id="rsApt"></select>
       </div>
-      <div class="fg" style="margin-bottom:12px"><label>Receipt photo</label>
-        <input type="file" id="rsFile" accept="image/*" capture="environment" onchange="rsPreviewFile()">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn-primary" style="flex:1" onclick="document.getElementById('rsCameraInput').click()">📷 Scan receipt</button>
+        <button class="btn-outline" style="flex:1" onclick="document.getElementById('rsGalleryInput').click()">🖼️ Upload a photo</button>
       </div>
+      <!-- capture="environment" opens the camera directly (no gallery option) on
+           mobile — this input is never shown; the buttons above trigger it. -->
+      <input type="file" id="rsCameraInput" accept="image/*" capture="environment" style="display:none" onchange="rsFileChosen(this)">
+      <!-- No capture attribute here, so this always opens the photo gallery / file browser. -->
+      <input type="file" id="rsGalleryInput" accept="image/*" style="display:none" onchange="rsFileChosen(this)">
       <img id="rsPreviewImg" style="display:none;max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px;object-fit:contain">
       <div id="rsStatus" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
-      <button class="btn-primary" style="width:100%" id="rsScanBtn" onclick="scanReceipt()" disabled>Scan receipt</button>
     </div>
 
     <div id="rsStep2" style="display:none">
@@ -3786,25 +3791,28 @@ function renderDashKpiList(cfg){
     var hidden=cfg.hidden.indexOf(id)!==-1;
     var color=cfg.colors[id]||(/^#/.test(def.defColor)?def.defColor:'#C1633B');
     return '<div class="dash-kpi-row" data-id="'+id+'" '+
-      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);'+(hidden?'opacity:.45':'')+'">'+
-      '<span class="dash-kpi-handle" style="cursor:grab;color:var(--muted);font-size:19px;line-height:1;touch-action:none;padding:6px 8px 6px 2px" title="Drag to reorder">⠿</span>'+
+      'style="display:flex;align-items:center;gap:8px;padding:8px 6px;border-bottom:1px solid var(--border);touch-action:none;'+(hidden?'opacity:.45':'')+'">'+
+      '<span class="dash-kpi-handle" style="cursor:grab;color:var(--muted);font-size:19px;line-height:1;pointer-events:none;padding:6px 8px 6px 2px" title="Drag to reorder">⠿</span>'+
       '<input type="checkbox" class="dash-kpi-visible" '+(hidden?'':'checked')+' title="Show on dashboard">'+
-      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text)">'+def.label+'</span>'+
+      '<span style="flex:1;font-size:12.5px;font-weight:600;color:var(--text);pointer-events:none">'+def.label+'</span>'+
       '<input type="color" class="dash-kpi-color" value="'+color+'" style="width:28px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" title="Card colour">'+
     '</div>';
   }).join('');
   // Pointer Events reorder — NOT native HTML5 drag-and-drop. Mobile Safari
   // (and most mobile browsers) don't support HTML5 DnD for touch at all, so
-  // touching a draggable row there started a text-selection gesture instead
-  // of a drag — that's the persistent highlighted-block artifact this
-  // replaces. Pointer Events behave the same for mouse and touch, and the
-  // drag only ever starts from the ⠿ handle (never from the label text),
-  // so there's nothing to accidentally select in the first place.
+  // touching a draggable row there fell back to a text-selection gesture
+  // instead of a drag — that's the persistent highlighted-block artifact
+  // this replaces. The whole row (not just the ⠿ icon) starts the drag, so
+  // there's a generous target, but the checkbox and colour swatch are
+  // excluded so they still work normally. touch-action:none on the row stops
+  // the browser's own touch handling (selection, scroll, zoom) from ever
+  // engaging on it in the first place — belt-and-braces alongside
+  // preventDefault() and the user-select:none CSS below.
   list.querySelectorAll('.dash-kpi-row').forEach(function(row){
-    var handle=row.querySelector('.dash-kpi-handle');
-    handle.addEventListener('pointerdown',function(ev){
+    row.addEventListener('pointerdown',function(ev){
+      if(ev.target.closest('.dash-kpi-visible,.dash-kpi-color'))return; // let these work normally
       ev.preventDefault();
-      try{handle.setPointerCapture(ev.pointerId);}catch(e){}
+      try{row.setPointerCapture(ev.pointerId);}catch(e){}
       row.style.opacity='.4';
       row.style.boxShadow='0 2px 10px rgba(0,0,0,.15)';
       function onMove(mv){
@@ -3823,13 +3831,13 @@ function renderDashKpiList(cfg){
       function onUp(){
         row.style.opacity=cfg.hidden.indexOf(row.getAttribute('data-id'))!==-1?'.45':'';
         row.style.boxShadow='';
-        handle.removeEventListener('pointermove',onMove);
-        handle.removeEventListener('pointerup',onUp);
-        handle.removeEventListener('pointercancel',onUp);
+        row.removeEventListener('pointermove',onMove);
+        row.removeEventListener('pointerup',onUp);
+        row.removeEventListener('pointercancel',onUp);
       }
-      handle.addEventListener('pointermove',onMove);
-      handle.addEventListener('pointerup',onUp);
-      handle.addEventListener('pointercancel',onUp);
+      row.addEventListener('pointermove',onMove);
+      row.addEventListener('pointerup',onUp);
+      row.addEventListener('pointercancel',onUp);
     });
   });
 }
@@ -4780,10 +4788,10 @@ var _rsFile=null,_rsRawText='';
 function openReceiptScan(){
   var sel=document.getElementById('rsApt');
   sel.innerHTML='<option value="all">No specific property</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
-  document.getElementById('rsFile').value='';
+  document.getElementById('rsCameraInput').value='';
+  document.getElementById('rsGalleryInput').value='';
   document.getElementById('rsPreviewImg').style.display='none';
   document.getElementById('rsStatus').textContent='';
-  document.getElementById('rsScanBtn').disabled=true;
   document.getElementById('rsStep1').style.display='';
   document.getElementById('rsStep2').style.display='none';
   _rsFile=null;_rsRawText='';
@@ -4793,15 +4801,18 @@ function rsBackToStep1(){
   document.getElementById('rsStep1').style.display='';
   document.getElementById('rsStep2').style.display='none';
 }
-function rsPreviewFile(){
-  var f=document.getElementById('rsFile').files[0];
-  _rsFile=f||null;
+// Fired by either the camera input or the gallery input — whichever the user
+// used, a file was picked, so preview it and start OCR right away (no extra
+// "confirm" click; the review step before saving is the confirmation).
+function rsFileChosen(inputEl){
+  var f=inputEl.files[0];
+  if(!f)return;
+  _rsFile=f;
   var img=document.getElementById('rsPreviewImg');
-  document.getElementById('rsScanBtn').disabled=!f;
-  if(!f){img.style.display='none';return;}
   var reader=new FileReader();
   reader.onload=function(e){img.src=e.target.result;img.style.display='block';};
   reader.readAsDataURL(f);
+  scanReceipt();
 }
 var _tesseractLoaded=false;
 function _loadTesseract(){
@@ -4817,7 +4828,6 @@ function _loadTesseract(){
 function scanReceipt(){
   if(!_rsFile)return;
   var status=document.getElementById('rsStatus');
-  document.getElementById('rsScanBtn').disabled=true;
   status.textContent='Loading text recognition…';
   _loadTesseract().then(function(){
     status.textContent='Reading receipt… (this can take 10–30s)';
@@ -4840,7 +4850,6 @@ function scanReceipt(){
     document.getElementById('rsStep2').style.display='';
   }).catch(function(e){
     status.textContent='Error: '+e.message;
-    document.getElementById('rsScanBtn').disabled=false;
   });
 }
 // Heuristic extraction from raw OCR text — same spirit as the booking-import
