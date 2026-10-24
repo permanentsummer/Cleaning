@@ -3880,52 +3880,46 @@ function getFinCleanFee(aptId){
   return(a&&a.cleanFee)?parseFloat(a.cleanFee)||0:0;
 }
 
-// ── Single source of truth for "what does expense `e` cost in calendar year
-// `year`" ──────────────────────────────────────────────────────────────────
-// Used by the Finance P&L, the recurring/one-time KPI breakdown, AND the
-// Expenses-manager table totals rows, so all three always agree exactly.
-// Always computes a FULL calendar year (Jan 1 → Dec 31) — never clamped to
-// "today" — because a recurring cost (rent, insurance, a loan) is a known
-// commitment for the whole year, not an uncertain future event like a
-// booking. Clamping it to "today" would make the same year's total silently
-// change depending on which filter you picked (confirmed bug — selecting a
-// specific year vs "All time" used to disagree by hundreds of euros for the
-// exact same year).
-function expenseAmountForYear(e,year){
-  var yearAmt=(e.amounts&&e.amounts[String(year)]!=null)?(parseFloat(e.amounts[String(year)])||0):(e.amount||0);
-  var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
-  var yStart=String(year)+'-01-01',yEndExcl=String(year+1)+'-01-01';
-  var effStart=expStart>yStart?expStart:yStart;
-  if(effStart>=yEndExcl)return 0; // not started yet, or started after this year ended
-  if(e.freq==='once'){
-    // Counts exactly once, in the single year its own date falls in.
-    return expStart.slice(0,4)===String(year)?(e.amount||0):0;
-  }
-  if(e.freq==='monthly'){
-    var s=new Date(effStart+'T12:00:00'),en=new Date(yEndExcl+'T12:00:00');
-    var months=(en.getFullYear()-s.getFullYear())*12+(en.getMonth()-s.getMonth());
-    return yearAmt*Math.max(0,months);
-  }
-  if(e.freq==='weekly'){
-    var days=Math.round((new Date(yEndExcl+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
-    return yearAmt*(days/7);
-  }
-  // 'yearly' (or any other/unknown freq) — full amount once per active year
-  return yearAmt;
+// FIN-ENGINE-START
+// ═════════════════════════════════════════════════════════════════════════════
+// FINANCE ENGINE — pure functions (no DOM, no globals). Every number on the
+// Finance tab comes from computeFinance(); the tab only formats it. Because it
+// takes all its inputs as arguments it can be (and is) tested against
+// hand-computed figures.
+//
+// Accounting conventions (also stated on the tab):
+//  • Revenue, commission, cleaning cost → counted in the period of CHECK-IN.
+//  • Occupancy → counts NIGHTS actually inside the period (a stay crossing New
+//    Year is split correctly between the two years).
+//  • ADR / RevPAR → revenue prorated by nights inside the period ÷ nights /
+//    available nights, so numerator and denominator always cover the same days.
+//  • Available nights → per property, from its listing start (first reservation,
+//    or manual override) up to today (current period) or period end (past/future).
+//  • Expenses → full calendar years / months, prorated from their start date.
+//    "All properties" expenses are split equally across properties when a single
+//    property is selected, so property views always add up to the total.
+// ═════════════════════════════════════════════════════════════════════════════
+function finDayDiff(a,b){ // whole days from ISO date a to b (UTC-safe, no DST drift)
+  return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/86400000);
+}
+function finOverlap(s1,e1,s2,e2){ // nights shared by [s1,e1) and [s2,e2)
+  var s=s1>s2?s1:s2, e=e1<e2?e1:e2;
+  return s<e?finDayDiff(s,e):0;
 }
 
-// Same proration logic as expenseAmountForYear, but for an arbitrary period
-// [pStart, pEndExcl) rather than a full calendar year — used by the monthly
-// chart bars so "Net Profit"/"Operating P&L" per month actually deducts
-// expenses (previously it deducted none at all, see financeChartSVG).
+// Cost of expense `e` inside the period [pStart, pEndExcl) (ISO dates).
+//   monthly → rate × calendar months touched from the start month on (start month counts in full)
+//   weekly  → rate × days/7
+//   yearly  → one full charge per active year, booked in the start month's anniversary
+//   once    → full amount in the period containing its date
 function expenseAmountForPeriod(e,pStart,pEndExcl){
   var year=pStart.slice(0,4);
-  var yearAmt=(e.amounts&&e.amounts[year]!=null)?(parseFloat(e.amounts[year])||0):(e.amount||0);
-  var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate):'2000-01-01';
+  var yearAmt=(e.amounts&&e.amounts[year]!=null)?(parseFloat(e.amounts[year])||0):(parseFloat(e.amount)||0);
+  var expStart=e.startDate?(e.startDate.length===7?e.startDate+'-01':e.startDate.slice(0,10)):'2000-01-01';
   var effStart=expStart>pStart?expStart:pStart;
-  if(effStart>=pEndExcl)return 0;
+  if(effStart>=pEndExcl)return 0; // not started yet
   if(e.freq==='once'){
-    return(expStart>=pStart&&expStart<pEndExcl)?(e.amount||0):0;
+    return(expStart>=pStart&&expStart<pEndExcl)?(parseFloat(e.amount)||0):0;
   }
   if(e.freq==='monthly'){
     var s=new Date(effStart+'T12:00:00'),en=new Date(pEndExcl+'T12:00:00');
@@ -3933,306 +3927,253 @@ function expenseAmountForPeriod(e,pStart,pEndExcl){
     return yearAmt*Math.max(0,months);
   }
   if(e.freq==='weekly'){
-    var days=Math.round((new Date(pEndExcl+'T12:00:00')-new Date(effStart+'T12:00:00'))/86400000);
-    return yearAmt*(days/7);
+    return yearAmt*(finDayDiff(effStart,pEndExcl)/7);
   }
-  // 'yearly' (or unknown) — one full charge per active year. When the period
-  // itself is a single month (not a full year) smooth it evenly across the
-  // 12 months so they sum back to the yearly total.
-  var periodDays=Math.round((new Date(pEndExcl+'T12:00:00')-new Date(pStart+'T12:00:00'))/86400000);
-  return periodDays>300?yearAmt:yearAmt/12;
+  // yearly (or unknown): a single charge per active year, in its anniversary month
+  var periodDays=finDayDiff(pStart,pEndExcl);
+  if(periodDays>300)return yearAmt; // period is a whole year
+  var chargeMonth=e.startDate?parseInt(expStart.slice(5,7),10):1;
+  var pMonth=parseInt(pStart.slice(5,7),10);
+  return pMonth===chargeMonth?yearAmt:0;
+}
+// Whole calendar year — same function, so year totals and month bars can never disagree.
+function expenseAmountForYear(e,year){
+  return expenseAmountForPeriod(e,String(year)+'-01-01',String(year+1)+'-01-01');
 }
 
-// ── Listing start date, per property ────────────────────────────────────────
-// "All time" occupancy needs to know, per property, how far back it was
-// actually available — otherwise a property added in 2026 gets charged
-// available-nights all the way back to the portfolio's earliest year, which
-// deflates its occupancy %. Auto-detects the earliest checkin ever recorded
-// for that property (booking or request, whichever is earliest) and lets the
-// user override it manually (property edit form) for the rare case the data
-// is incomplete (e.g. paper bookings before this system was used).
-var _listingStartCache=null,_listingStartCacheKey=null;
-function getListingStart(aptId){
-  // Cache key includes manual overrides (not just array lengths) so editing
-  // an existing property's override — without adding/removing anything —
-  // still busts the cache instead of silently serving a stale map.
-  var key=(allBookings||[]).length+'|'+(requests||[]).length+'|'+
-    (properties||[]).map(function(p){return p.id+':'+(p.listingStartOverride||'');}).join(',');
-  if(_listingStartCache&&_listingStartCacheKey===key)return _listingStartCache[aptId]||null;
-  var map={}; // auto-detected earliest checkin, per property
-  (allBookings||[]).forEach(function(b){
-    if(!b.checkin||!b.apt)return;
-    if(!map[b.apt]||b.checkin<map[b.apt])map[b.apt]=b.checkin;
-  });
-  (requests||[]).forEach(function(r){
-    var apt=r.apt_id||r.apt_name||r.apt;
-    if(!r.checkin||!apt)return;
-    if(!map[apt]||r.checkin<map[apt])map[apt]=r.checkin;
-  });
-  // Manual overrides always win over the auto-detected date.
-  (properties||[]).forEach(function(p){
-    if(p.listingStartOverride)map[p.id]=p.listingStartOverride;
-  });
-  _listingStartCache=map;
-  _listingStartCacheKey=key;
-  return map[aptId]||null;
-}
+function computeFinance(o){
+  var today=o.today, finYear=o.finYear, finApt=o.finApt||'all';
+  var props=o.properties||[];
+  var curYear=parseInt(today.slice(0,4),10);
+  function norm(d){return d?String(d).slice(0,10):'';}
+  function resolveApt(x){
+    if(x==null||x==='')return '';
+    for(var i=0;i<props.length;i++){var p=props[i];if(p.id===x||p.short===x||p.name===x)return p.id;}
+    return x;
+  }
+  function cleanCost(apt,override){return override>0?override:(o.cleanFee(apt)||0);}
 
+  // ── 1. Build one list of "stays" from bookings + confirmed direct requests ──
+  var bks=(o.bookings||[]).filter(function(b){return b&&b.checkin;});
+  var reqs=(o.requests||[]).filter(function(r){return r&&r.status==='confirmed'&&r.checkin;});
+  var covered={}; // booking index → true when a confirmed request describes the same stay
+  var stays=[];
+  reqs.forEach(function(r){
+    var apt=resolveApt(r.apt_id||r.apt_name||r.apt);
+    var ci=norm(r.checkin),co=norm(r.checkout)||ci;
+    var match=null;
+    bks.forEach(function(b,bi){
+      if(resolveApt(b.apt)===apt&&norm(b.checkin)===ci&&norm(b.checkout)===co){covered[bi]=true;if(!match)match=b;}
+    });
+    // The booking row holds the exact figures (cents, commission, cleaning override,
+    // complimentary flag); direct_requests.total_amount is a rounded integer. Prefer the
+    // booking's own financials when it has any, otherwise fall back to the request total.
+    var fin=match?o.parseFin(match):null;
+    var gross,commission=0,override=0,isComp=false;
+    if(fin&&(fin.gross>0||fin.isComp)){gross=fin.gross;commission=fin.commission;override=fin.cleanfee>0?fin.cleanfee:0;isComp=!!fin.isComp;}
+    else{gross=parseFloat(r.total_amount)||0;}
+    stays.push({kind:'request',ref:r,apt:apt,ci:ci,co:co,source:'direct',gross:gross,commission:commission,cleaning:cleanCost(apt,override),isComp:isComp});
+  });
+  bks.forEach(function(b,bi){
+    if(covered[bi])return;
+    var fin=o.parseFin(b),apt=resolveApt(b.apt);
+    stays.push({kind:'booking',ref:b,apt:apt,ci:norm(b.checkin),co:norm(b.checkout)||norm(b.checkin),source:b.source||'direct',
+      gross:fin.gross,commission:fin.commission,cleaning:cleanCost(apt,fin.cleanfee>0?fin.cleanfee:0),isComp:!!fin.isComp});
+  });
+  stays.forEach(function(s){s.nights=Math.max(0,finDayDiff(s.ci,s.co));s.net=s.gross-s.commission;});
+
+  // ── 2. Listing start per property = first reservation (or manual override) ──
+  var listing={};
+  stays.forEach(function(s){if(!listing[s.apt]||s.ci<listing[s.apt])listing[s.apt]=s.ci;});
+  props.forEach(function(p){if(p.listingStartOverride)listing[p.id]=norm(p.listingStartOverride);});
+
+  // ── 3. Financial years (data + expense years, through the current year) ──
+  var yrs={};
+  function addYear(d){var y=parseInt(String(d).slice(0,4),10);if(y>2018&&y<2040)yrs[y]=true;}
+  stays.forEach(function(s){addYear(s.ci);});
+  var expenses=o.expenses||[];
+  expenses.forEach(function(e){if(e.startDate)addYear(e.startDate);});
+  var yl=Object.keys(yrs).map(Number).sort(function(a,b){return a-b;});
+  var firstY=yl.length?yl[0]:curYear, lastY=Math.max(curYear,yl.length?yl[yl.length-1]:curYear);
+  var fyears=[];for(var y0=firstY;y0<=lastY;y0++)fyears.push(y0);
+  var isAll=(finYear==='all');
+  var Y=isAll?null:parseInt(finYear,10);
+
+  // ── 4. Windows ──
+  var revStart=isAll?(firstY+'-01-01'):(Y+'-01-01');
+  var revEnd  =isAll?((lastY+1)+'-01-01'):((Y+1)+'-01-01'); // exclusive
+  var occEnd=(!isAll&&Y!==curYear)?revEnd:(today<revEnd?today:revEnd); // current period = nights elapsed so far
+
+  var scopedApts;
+  if(finApt==='all'){
+    var seen={};scopedApts=[];
+    props.forEach(function(p){if(!seen[p.id]){seen[p.id]=1;scopedApts.push(p.id);}});
+    stays.forEach(function(s){if(!seen[s.apt]){seen[s.apt]=1;scopedApts.push(s.apt);}});
+  } else scopedApts=[finApt];
+  var scopedStays=finApt==='all'?stays:stays.filter(function(s){return s.apt===finApt;});
+
+  // Occupancy / availability / night-prorated revenue for any window [ws, we)
+  function occupancy(ws,we){
+    var avail=0,occ=0,rev=0;
+    scopedApts.forEach(function(a){
+      var ls=listing[a];if(!ls)return;
+      var st=ls>ws?ls:ws;
+      if(st<we)avail+=finDayDiff(st,we);
+    });
+    scopedStays.forEach(function(s){
+      var ls=listing[s.apt];if(!ls)return;
+      var st=ls>ws?ls:ws;
+      var k=finOverlap(s.ci,s.co,st,we);
+      if(!k)return;
+      occ+=k;
+      if(s.nights>0)rev+=s.gross*k/s.nights;
+    });
+    return{avail:avail,occ:occ,rev:rev};
+  }
+  function revenueIn(ws,we){
+    var r={gross:0,commission:0,cleaning:0,count:0};
+    scopedStays.forEach(function(s){
+      if(s.ci>=ws&&s.ci<we){r.gross+=s.gross;r.commission+=s.commission;r.cleaning+=s.cleaning;r.count++;}
+    });
+    r.net=r.gross-r.commission;
+    return r;
+  }
+  // Share of an expense that belongs to the current view
+  function share(e){
+    if(finApt==='all')return 1;
+    if(e.apt===finApt)return 1;
+    if(!e.apt||e.apt==='all')return props.length>0?1/props.length:1;
+    return 0;
+  }
+  var scopedExp=expenses.filter(function(e){return share(e)>0;});
+
+  // ── 5. Headline KPIs ──
+  var rev=revenueIn(revStart,revEnd);
+  var oc=occupancy(revStart,occEnd);
+  var expYears=isAll?fyears:[Y];
+  var totalOnce=0,totalRecurring=0;
+  scopedExp.forEach(function(e){
+    var sh=share(e);
+    expYears.forEach(function(yy){
+      var a=expenseAmountForYear(e,yy)*sh;
+      if(!a)return;
+      if(e.freq==='once')totalOnce+=a;else totalRecurring+=a;
+    });
+  });
+  var totalExpenses=totalOnce+totalRecurring;
+  var netAfterClean=rev.net-rev.cleaning;
+  var occRaw=oc.avail>0?oc.occ/oc.avail*100:0;
+
+  // ── 6. Chart periods (months of the year, or years for All time) ──
+  var periods=[];
+  if(isAll){fyears.forEach(function(yy){periods.push({label:String(yy),start:yy+'-01-01',end:(yy+1)+'-01-01'});});}
+  else{
+    for(var m=0;m<12;m++){
+      var ms=Y+'-'+String(m+1).padStart(2,'0')+'-01';
+      var me=(m===11?(Y+1)+'-01-01':Y+'-'+String(m+2).padStart(2,'0')+'-01');
+      periods.push({label:new Date(Date.UTC(Y,m,1)).toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'}),start:ms,end:me});
+    }
+  }
+  var series=periods.map(function(p){
+    var r=revenueIn(p.start,p.end);
+    // past period → whole period; period containing today → nights elapsed; future → nights booked
+    var pe=(p.end<=today)?p.end:(p.start<today?today:p.end);
+    var q=occupancy(p.start,pe);
+    var once=0,rec=0;
+    scopedExp.forEach(function(e){
+      var a=expenseAmountForPeriod(e,p.start,p.end)*share(e);
+      if(!a)return;
+      if(e.freq==='once')once+=a;else rec+=a;
+    });
+    var nac=r.net-r.cleaning;
+    return{label:p.label,start:p.start,end:p.end,gross:r.gross,commission:r.commission,net:r.net,cleaning:r.cleaning,count:r.count,
+      occNights:q.occ,avail:q.avail,occ:q.avail>0?Math.round(Math.min(100,q.occ/q.avail*100)):0,
+      adr:q.occ>0?q.rev/q.occ:0,
+      expOnce:once,expRec:rec,netAfterClean:nac,netPnl:nac-once-rec,opPnl:nac-rec};
+  });
+
+  // ── 7. Platform breakdown + data-quality lists ──
+  var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
+  var missingFin=[],missingDirect=[];
+  scopedStays.forEach(function(s){
+    if(!(s.ci>=revStart&&s.ci<revEnd))return;
+    var k=s.source||'direct';if(!byPlat[k])byPlat[k]={count:0,gross:0,commission:0};
+    byPlat[k].count++;byPlat[k].gross+=s.gross;byPlat[k].commission+=s.commission;
+    if(s.gross===0&&!s.isComp){
+      if(s.kind==='booking'&&(s.source==='airbnb'||s.source==='booking'))missingFin.push(s);
+      else missingDirect.push(s);
+    }
+  });
+  // Overlapping stays on the same property (double-bookings or duplicate imports)
+  var overlaps=[];
+  var byApt={};scopedStays.forEach(function(s){if(s.ci>=revStart&&s.ci<revEnd&&s.nights>0)(byApt[s.apt]=byApt[s.apt]||[]).push(s);});
+  Object.keys(byApt).forEach(function(a){
+    var l=byApt[a].slice().sort(function(x,y){return x.ci<y.ci?-1:x.ci>y.ci?1:(x.co<y.co?-1:1);});
+    for(var i=1;i<l.length;i++){
+      if(l[i].ci<l[i-1].co&&overlaps.length<20)overlaps.push({apt:a,a:l[i-1],b:l[i]});
+    }
+  });
+  var undatedOnce=scopedExp.filter(function(e){return e.freq==='once'&&!e.startDate;});
+
+  return{
+    fyears:fyears,isAll:isAll,year:Y,
+    revStart:revStart,revEnd:revEnd,occEnd:occEnd,
+    gross:rev.gross,commission:rev.commission,net:rev.net,cleaning:rev.cleaning,bookingCount:rev.count,
+    occNights:oc.occ,availNights:oc.avail,occRaw:occRaw,occRate:Math.round(Math.min(100,occRaw)*10)/10,
+    adr:oc.occ>0?oc.rev/oc.occ:0,revPar:oc.avail>0?oc.rev/oc.avail:0,
+    totalOnce:totalOnce,totalRecurring:totalRecurring,totalExpenses:totalExpenses,
+    expCount:scopedExp.length,recCount:scopedExp.filter(function(e){return e.freq!=='once';}).length,
+    onceCount:scopedExp.filter(function(e){return e.freq==='once';}).length,
+    netAfterClean:netAfterClean,pnl:netAfterClean-totalExpenses,opPnl:netAfterClean-totalRecurring,
+    series:series,byPlat:byPlat,missingFin:missingFin,missingDirect:missingDirect,overlaps:overlaps,undatedOnce:undatedOnce,
+    listing:listing,numProps:scopedApts.length,stays:stays
+  };
+}
+// FIN-ENGINE-END
+
+function finMethodNote(){
+  return'<details style="margin:-8px 0 18px;font-size:11.5px;color:var(--muted)"><summary style="cursor:pointer;font-weight:600">How these numbers are calculated</summary>'+
+  '<ul style="margin:8px 0 0 18px;line-height:1.7">'+
+  '<li><b>Revenue, commission and cleaning</b> are counted in the period of the <b>check-in</b> date.</li>'+
+  '<li><b>Airbnb</b> amounts are the payout you receive (Airbnb fee already deducted, commission shown as 0). <b>Booking.com</b> shows price and commission separately.</li>'+
+  '<li><b>Occupancy</b> = nights actually stayed inside the period ÷ nights available. A stay crossing New Year is split between both years. Available nights start at each property\'s listing start date (first reservation, or your manual override) and run to today for the current year.</li>'+
+  '<li><b>ADR</b> = revenue (prorated by nights inside the period) ÷ nights stayed. <b>RevPAR</b> = same revenue ÷ available nights.</li>'+
+  '<li><b>Expenses</b>: monthly = rate × months from the start month (start month in full); weekly = rate × days/7; yearly = full amount once per year, in the anniversary month; one-time = in the year of its date. Costs for <i>All properties</i> are split equally when you filter on one property.</li>'+
+  '<li>Amounts are shown as entered, before VAT/IVA and income tax. Net P&amp;L = net revenue − cleaning − all expenses; Operating P&amp;L excludes one-time costs.</li>'+
+  '</ul></details>';
+}
 function renderRevenueAnalytics(){
   var container=document.getElementById('revenueAnalytics');
   if(!container)return;
 
-  var allBks=allBookings||[];
-
-  // ── Build year list from ALL data ──────────────────────────────────────────
-  var years=[];
-  allBks.forEach(function(b){
-    var y=b.checkin?parseInt(b.checkin.slice(0,4)):0;
-    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
-  });
-  (requests||[]).forEach(function(r){
-    var y=r.checkin?parseInt(r.checkin.slice(0,4)):0;
-    if(y>2018&&y<2035&&years.indexOf(y)===-1)years.push(y);
-  });
-  years.sort(function(a,b){return a-b;});
-
-  // Only auto-correct _finYear if it's completely unknown (not 'all', not a year in our data)
-  // Do NOT override 'all' — that's a valid user choice
-  if(_finYear!=='all'&&years.length&&years.indexOf(parseInt(_finYear))===-1){
-    _finYear=years[years.length-1];
+  // ── Every number below comes from computeFinance() (pure, unit-tested) ─────
+  var _d=new Date();
+  var todayStr=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
+  function runFin(){
+    return computeFinance({today:todayStr,finYear:_finYear,finApt:_finApt,properties:properties||[],
+      bookings:allBookings||[],requests:requests||[],expenses:getFinExpenses(),
+      parseFin:parseFin,cleanFee:getFinCleanFee});
   }
-
-  // ── Year selector ──────────────────────────────────────────────────────────
+  var F=runFin();
+  if(_finYear!=='all'&&F.fyears.indexOf(parseInt(_finYear))===-1){_finYear=F.fyears[F.fyears.length-1];F=runFin();}
+  var years=F.fyears;
+  var isAllTime=F.isAll;
   var yearOpts='<option value="all"'+(_finYear==='all'?' selected':'')+'>All time</option>'+
     years.map(function(y){return'<option value="'+y+'"'+(String(y)===String(_finYear)?' selected':'')+'>'+y+'</option>';}).join('');
   var aptOpts='<option value="all"'+(_finApt==='all'?' selected':'')+'>All properties</option>'+
     (properties||[]).map(function(p){return'<option value="'+p.id+'"'+(_finApt===p.id?' selected':'')+'>'+esc(p.name||p.short)+'</option>';}).join('');
 
-  var isAllTime=(_finYear==='all');
-  // "All time" starts at the earliest year with any real activity (years[0]),
-  // not a hardcoded year-2000 floor. Fixed bug: the occupancy denominator used
-  // to count every day since 2000 as "available", even for a property with its
-  // first booking in 2024 — deflating All-time occupancy by roughly 9-10x.
-  // Booking filtering is unaffected: nothing exists before years[0] anyway.
-  var yStart=isAllTime?(years.length?years[0]+'-01-01':'2000-01-01'):String(_finYear)+'-01-01';
-  var yEnd  =isAllTime?'2099-12-31':String(_finYear)+'-12-31';
-
-  // ── Filter bookings ────────────────────────────────────────────────────────
-  // OTA + imported direct bookings (from bookings table)
-  var yBks=allBks.filter(function(b){
-    return b.checkin&&b.checkin>=yStart&&b.checkin<=yEnd&&
-           (_finApt==='all'||b.apt===_finApt);
-  });
-
-  // Dashboard-created direct bookings (from direct_requests, confirmed)
-  var yDirect=(requests||[]).filter(function(r){
-    if(r.status!=='confirmed')return false;
-    if(!r.checkin||r.checkin<yStart||r.checkin>yEnd)return false;
-    if(_finApt==='all')return true;
-    return r.apt_id===_finApt||r.apt_name===_finApt||(r.apt&&r.apt===_finApt);
-  });
-
-  // ── Canonical booking/request de-duplication ─────────────────────────────────
-  // direct_requests confirmed bookings are ALSO written into allBookings (via the
-  // insert_bookings RPC). This ONE match function + coveredIds map is now reused by
-  // occupancy, revenue, the platform breakdown and the chart, so every metric on this
-  // tab agrees with the others.
-  function reqMatchesBooking(r,b){
-    return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;
-  }
-  var coveredIds={}; // allBookings.id -> true when that row duplicates a yDirect request
-  yDirect.forEach(function(r){
-    allBks.forEach(function(b){if(reqMatchesBooking(r,b))coveredIds[b.id]=true;});
-  });
-
-  // ── Occupancy ──────────────────────────────────────────────────────────────
-  // Use actual property count for selected filter
-  var numProps=_finApt==='all'?(properties&&properties.length||1):1;
-  // Available nights = calendar days in selected period × numProps (clamped to today for current year)
-  var todayStr=new Date().toISOString().slice(0,10);
-  var yearEndStr=isAllTime?todayStr:String(_finYear)+'-12-31';
-  var periodEnd=yearEndStr<todayStr?yearEndStr:todayStr;
-  if(!isAllTime&&String(_finYear)>todayStr.slice(0,4))periodEnd=String(_finYear)+'-12-31';
-  var periodStart=yStart;
-  var dStart=new Date(periodStart+'T12:00:00'),dEnd=new Date(periodEnd+'T12:00:00');
-  var numDays=Math.max(1,Math.round((dEnd-dStart)/86400000));
-  // Available nights, per property, clamped to that property's own listing
-  // start date — not the portfolio's earliest year. Otherwise a property
-  // added in 2026 gets charged available-nights back to whenever the FIRST
-  // property in the whole portfolio started, deflating its occupancy %.
-  var scopedProps=_finApt==='all'?(properties||[]):(properties||[]).filter(function(p){return p.id===_finApt;});
-  if(!scopedProps.length)scopedProps=[{id:_finApt}]; // fallback if property list is empty/stale
-  var totalAvailableNights=0;
-  scopedProps.forEach(function(p){
-    var ls=getListingStart(p.id);
-    var pStart=(ls&&ls>periodStart)?ls:periodStart;
-    var days=Math.max(0,Math.round((new Date(periodEnd+'T12:00:00')-new Date(pStart+'T12:00:00'))/86400000));
-    totalAvailableNights+=days;
-  });
-  if(totalAvailableNights===0)totalAvailableNights=numDays*numProps; // no listing-start data at all — fall back to old behavior rather than divide by zero
-
-  var totalOccNights=0;
-  yBks.forEach(function(b){
-    // Clip to selected period
-    var ci=b.checkin>periodStart?b.checkin:periodStart;
-    var co=b.checkout<periodEnd?b.checkout:periodEnd;
-    if(ci>=co)return;
-    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
-  });
-  yDirect.forEach(function(r){
-    // Only count if not already represented in allBookings (same canonical check as revenue)
-    if(allBks.some(function(b){return reqMatchesBooking(r,b);}))return;
-    var ci=r.checkin>periodStart?r.checkin:periodStart;
-    var co=(r.checkout||r.checkin)<periodEnd?(r.checkout||r.checkin):periodEnd;
-    if(ci>=co)return;
-    totalOccNights+=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
-  });
-  var occRate=totalAvailableNights>0?Math.min(100,Math.round(totalOccNights/totalAvailableNights*100)):0;
-
-  // ── Revenue ────────────────────────────────────────────────────────────────
-  var grossRev=0,commTotal=0,netRev=0,cleanFeeTotal=0;
-
-  // Direct requests (have real total_amount, commission=0)
-  yDirect.forEach(function(r){
-    var amt=parseFloat(r.total_amount)||0;
-    grossRev+=amt;
-    netRev+=amt;
-    cleanFeeTotal+=getFinCleanFee(r.apt_id||r.apt_name||r.apt||'');
-  });
-
-  // Imported bookings (allBookings): OTA (have __€__ marker) + imported direct
-  yBks.forEach(function(b){
-    if(coveredIds[b.id])return; // already counted via a matching direct_request above
-    var fin=parseFin(b);
-    var isOTA=(b.source==='airbnb'||b.source==='booking');
-    if(isOTA){
-      grossRev+=fin.gross;
-      commTotal+=fin.commission;
-      netRev+=(fin.gross-fin.commission);
-      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
-    } else {
-      // imported direct (not a dashboard request)
-      grossRev+=fin.gross;
-      netRev+=fin.gross; // 0 commission
-      cleanFeeTotal+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
-    }
-  });
-
-  var adr=totalOccNights>0?grossRev/totalOccNights:0;
-  var revPAR=totalAvailableNights>0?grossRev/totalAvailableNights:0;
-
-  // ── Expenses ──────────────────────────────────────────────────────────────
-  var expenses=getFinExpenses().filter(function(e){
-    return _finApt==='all'||(e.apt===_finApt||e.apt==='all');
-  });
-  var totalExpenses=0;
-  // Breakdown by frequency — 'once' (one-time: repairs, one-off purchases) vs
-  // everything else (recurring: monthly/yearly/weekly) — so the Finance KPIs
-  // and the expense-table totals rows can show the split, and so the P&L can
-  // be shown both with and without one-time/capex-style costs.
-  var totalOnceExpenses=0,totalRecurringExpenses=0;
-  // Always full calendar year(s) via expenseAmountForYear — see its comment
-  // for why this must NOT be clamped to "today": doing so used to make the
-  // same year's expense total disagree depending on whether "All time" or
-  // that specific year was selected in the filter.
-  var expenseYears=isAllTime?years:[parseInt(_finYear)];
-  expenses.forEach(function(e){
-    expenseYears.forEach(function(y){
-      var amt=expenseAmountForYear(e,y);
-      if(!amt)return;
-      totalExpenses+=amt;
-      if(e.freq==='once')totalOnceExpenses+=amt;else totalRecurringExpenses+=amt;
-    });
-  });
-  var pnl=netRev-cleanFeeTotal-totalExpenses;
-  // Operating P&L — excludes one-time/capex-style costs (furniture, repairs,
-  // renovations), matching how an accountant would separate recurring
-  // operating costs from one-off capital expenditure so a big one-off
-  // purchase doesn't make one month/year look like the business lost money.
-  var opPnl=netRev-cleanFeeTotal-totalRecurringExpenses;
-
-  // ── Monthly / Yearly chart ────────────────────────────────────────────────
-  var chartPeriods=[];
-  if(isAllTime){
-    years.forEach(function(y){
-      chartPeriods.push({label:String(y),start:y+'-01-01',end:(y+1)+'-01-01'});
-    });
-  } else {
-    for(var m=0;m<12;m++){
-      var md=new Date(parseInt(_finYear),m,1);
-      var mEnd=new Date(parseInt(_finYear),m+1,1);
-      chartPeriods.push({
-        label:md.toLocaleDateString('en-GB',{month:'short'}),
-        start:md.getFullYear()+'-'+String(md.getMonth()+1).padStart(2,'0')+'-01',
-        end:mEnd.getFullYear()+'-'+String(mEnd.getMonth()+1).padStart(2,'0')+'-01'
-      });
-    }
-  }
-
-  var months12=chartPeriods.map(function(period){
-    var pg=0,pc=0,pcf=0,pocc=0;
-    var mDays=Math.round((new Date(period.end+'T00:00:00')-new Date(period.start+'T00:00:00'))/86400000);
-    // Same per-property listing-start clamp as the headline occupancy figure,
-    // so the chart's occupancy bars agree with the KPI card above them.
-    var mAvail=0;
-    scopedProps.forEach(function(p){
-      var ls=getListingStart(p.id);
-      var pStart=(ls&&ls>period.start)?ls:period.start;
-      if(pStart>=period.end)return;
-      mAvail+=Math.max(0,Math.round((new Date(period.end+'T00:00:00')-new Date(pStart+'T00:00:00'))/86400000));
-    });
-    if(mAvail===0&&!scopedProps.some(function(p){return getListingStart(p.id);}))mAvail=mDays*numProps;
-
-    yDirect.forEach(function(r){
-      if(!r.checkin||r.checkin<period.start||r.checkin>=period.end)return;
-      var amt=parseFloat(r.total_amount)||0;
-      pg+=amt;
-      pcf+=getFinCleanFee(r.apt_id||r.apt_name||r.apt||'');
-      if(allBks.some(function(b){return reqMatchesBooking(r,b);}))return;
-      var nights=r.checkin&&r.checkout?Math.round((new Date(r.checkout+'T12:00:00')-new Date(r.checkin+'T12:00:00'))/86400000):0;
-      pocc+=nights;
-    });
-    yBks.forEach(function(b){
-      if(!b.checkin||b.checkin<period.start||b.checkin>=period.end)return;
-      if(coveredIds[b.id])return;
-      var fin=parseFin(b);
-      pg+=fin.gross;
-      pc+=fin.commission;
-      pcf+=(fin.cleanfee>0?fin.cleanfee:getFinCleanFee(b.apt));
-      var nights=b.checkin&&b.checkout?Math.round((new Date(b.checkout+'T12:00:00')-new Date(b.checkin+'T12:00:00'))/86400000):0;
-      pocc+=nights;
-    });
-    var mOcc=mAvail>0?Math.min(100,Math.round(pocc/mAvail*100)):0;
-    var pNet=pg-pc;
-    // Per-period expenses (recurring vs one-time), prorated the same way as
-    // the P&L KPI above — so the chart's P&L actually deducts expenses,
-    // which the old "netAfterClean" field never did.
-    var pOnceExp=0,pRecExp=0;
-    expenses.forEach(function(e){
-      var amt=expenseAmountForPeriod(e,period.start,period.end);
-      if(!amt)return;
-      if(e.freq==='once')pOnceExp+=amt;else pRecExp+=amt;
-    });
-    var netAfterClean=pNet-pcf; // revenue after commission & cleaning fee, before any expenses
-    return{label:period.label,occ:mOcc,gross:pg,net:pNet,commission:pc,cleanFee:pcf,
-           netAfterClean:netAfterClean,
-           netPnl:netAfterClean-pOnceExp-pRecExp,       // Net P&L: all expenses deducted
-           opPnl:netAfterClean-pRecExp,                 // Operating P&L: recurring only
-           adr:pocc>0?pg/pocc:0,nights:pocc,avail:mAvail};
-  });
-  // ── Platform breakdown ────────────────────────────────────────────────────
-  var byPlat={airbnb:{count:0,gross:0,commission:0},booking:{count:0,gross:0,commission:0},direct:{count:0,gross:0,commission:0}};
-  yDirect.forEach(function(r){byPlat.direct.count++;byPlat.direct.gross+=parseFloat(r.total_amount)||0;});
-  yBks.forEach(function(b){
-    if(coveredIds[b.id])return;
-    var s=b.source||'direct';if(!byPlat[s])byPlat[s]={count:0,gross:0,commission:0};
-    var fin=parseFin(b);
-    byPlat[s].count++;byPlat[s].gross+=fin.gross;byPlat[s].commission+=fin.commission;
-  });
-  var totalBks=Object.values(byPlat).reduce(function(a,p){return a+p.count;},0);
+  var grossRev=F.gross,commTotal=F.commission,netRev=F.net,cleanFeeTotal=F.cleaning;
+  var totalOccNights=F.occNights,totalAvailableNights=F.availNights,occRate=F.occRate;
+  var adr=F.adr,revPAR=F.revPar;
+  var totalExpenses=F.totalExpenses,totalOnceExpenses=F.totalOnce,totalRecurringExpenses=F.totalRecurring;
+  var pnl=F.pnl,opPnl=F.opPnl;
+  var months12=F.series;
+  var byPlat=F.byPlat,totalBks=F.bookingCount;
+  var numProps=F.numProps;
 
   var expAptOptsForPanel='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
-  function fmt(n){return'€'+Math.round(n).toLocaleString('en-GB');}
+  function fmt(n){return(n<0?'-':'')+'€'+Math.abs(Math.round(n*100)/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});}
   function fmtPct(n){return n.toFixed(1)+'%';}
   function kpiCard(label,val,sub,color){
     return'<div class="fin-kpi-card" style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:16px 18px;box-shadow:var(--shadow);min-width:0">'+
@@ -4247,18 +4188,18 @@ function renderRevenueAnalytics(){
   // figures used everywhere else on this tab. The customize panel only
   // controls which of these show, in what order, and their colour — never
   // the numbers themselves.
-  var recCount=expenses.filter(function(e){return e.freq!=='once';}).length;
-  var onceCount=expenses.filter(function(e){return e.freq==='once';}).length;
+  var recCount=F.recCount;
+  var onceCount=F.onceCount;
   var dashCfg=getDashCfg();
   function kColor(id,fallback){return dashCfg.colors[id]||fallback;}
   var KPI_VALUES={
-    occRate:{val:fmtPct(occRate),sub:totalOccNights+' occ. nights / '+totalAvailableNights+' avail.',color:kColor('occRate','var(--blue)')},
-    adr:{val:fmt(adr),sub:'RevPAR: '+fmt(revPAR),color:kColor('adr','var(--blue)')},
+    occRate:{val:fmtPct(occRate),sub:totalOccNights+' nights stayed / '+totalAvailableNights+' available',color:kColor('occRate','var(--blue)')},
+    adr:{val:fmt(adr),sub:'per night stayed · RevPAR: '+fmt(revPAR),color:kColor('adr','var(--blue)')},
     grossRev:{val:fmt(grossRev),sub:CT('beforeComm'),color:kColor('grossRev','var(--primary)')},
     netRev:{val:fmt(netRev),sub:CT('afterComm'),color:kColor('netRev','var(--green)')},
     platformComm:{val:fmt(commTotal),sub:commTotal>0?fmtPct(grossRev>0?commTotal/grossRev*100:0)+' of gross':'Booking.com + Airbnb',color:kColor('platformComm','#dc2626')},
-    cleaningFees:{val:fmt(cleanFeeTotal),sub:totalBks+' stays (from import or default €50)',color:kColor('cleaningFees','#7c3aed')},
-    otherExp:{val:fmt(totalExpenses),sub:expenses.length+' expense item'+(expenses.length!==1?'s':'')+' (recurring + one-time)',color:kColor('otherExp','#f59e0b')},
+    cleaningFees:{val:fmt(cleanFeeTotal),sub:totalBks+' stays · per-booking amount or property default',color:kColor('cleaningFees','#7c3aed')},
+    otherExp:{val:fmt(totalExpenses),sub:F.expCount+' expense item'+(F.expCount!==1?'s':'')+' (recurring + one-time)',color:kColor('otherExp','#f59e0b')},
     pandl:{val:fmt(pnl),sub:'Net revenue − cleaning − ALL expenses',color:kColor('pandl',pnl>=0?'var(--green)':'#dc2626')},
     recurringCosts:{val:fmt(totalRecurringExpenses),sub:recCount+' expense'+(recCount!==1?'s':'')+' · monthly/yearly/weekly',color:kColor('recurringCosts','var(--primary)')},
     onceCosts:{val:fmt(totalOnceExpenses),sub:onceCount+' expense'+(onceCount!==1?'s':'')+' · repairs, one-off purchases',color:kColor('onceCosts','var(--primary)')},
@@ -4276,44 +4217,40 @@ function renderRevenueAnalytics(){
     '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12.5px;margin-bottom:20px">All KPI cards are hidden — click "⚙ Customize" to show some.</div>';
 
   // ── Data quality warning ──────────────────────────────────────────────────
-  // Bookings missing financial data (OTA imported before revenue tracking)
-  var missingFinBks=yBks.filter(function(b){
-    if(coveredIds[b.id])return false;
-    var fin=parseFin(b);
-    return fin.gross===0&&!fin.isComp&&(b.source==='airbnb'||b.source==='booking');
-  });
-  // Direct bookings with gross=0 — but NOT complimentary ones
-  var missingDirectBks=yBks.filter(function(b){
-    if(coveredIds[b.id])return false;
-    var fin=parseFin(b);
-    return fin.gross===0&&!fin.isComp&&b.source==='direct';
-  });
+  function stayLine(s){
+    var b=s.ref||{};
+    var name=(s.kind==='request'?(b.guest_name||''):cleanNotesDisplay(b.notes))||b.guests||'Unknown guest';
+    var apt=(properties||[]).reduce(function(x,p){return p.id===s.apt?p.name||p.short:x;},'');
+    return'• '+esc(name)+' ('+s.ci+' → '+s.co+')'+(apt?' @ '+esc(apt):'');
+  }
   var qualityWarning='';
-  if(missingFinBks.length){
-    var details=missingFinBks.map(function(b){
-      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
-      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
-      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
-    }).join('<br>');
+  if(F.missingFin.length){
     qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
-      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+missingFinBks.length+' Booking.com/Airbnb booking'+(missingFinBks.length>1?'s':'')+' have no revenue data (imported before revenue tracking)</div>'+
-      '<div style="margin-bottom:8px;line-height:1.8">'+details+'</div>'+
-      '<div>→ Re-import your Booking.com/Airbnb file to fix this. Revenue totals below are understated.</div>'+
-    '</div>';
+      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.missingFin.length+' Booking.com/Airbnb booking'+(F.missingFin.length>1?'s':'')+' have no revenue data</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+F.missingFin.map(stayLine).join('<br>')+'</div>'+
+      '<div>→ Re-import your Booking.com/Airbnb file to fix this. Revenue totals below are understated.</div></div>';
   }
-  if(missingDirectBks.length){
-    var dDetails=missingDirectBks.map(function(b){
-      var name=cleanNotesDisplay(b.notes)||b.guests||'Unknown guest';
-      var apt=(properties||[]).reduce(function(a,p){return p.id===b.apt?p.name||p.short:a;},'');
-      return'• '+name+' ('+b.checkin+' → '+b.checkout+')'+(apt?' @ '+apt:'');
-    }).join('<br>');
+  if(F.missingDirect.length){
     qualityWarning+='<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#991b1b">'+
-      '<div style="font-weight:700;margin-bottom:6px">🔴 '+missingDirectBks.length+' direct booking'+(missingDirectBks.length>1?'s':'')+' have €0 gross revenue in your file</div>'+
-      '<div style="margin-bottom:8px;line-height:1.8">'+dDetails+'</div>'+
-      '<div>→ Update the price in your source file and re-import, or edit the booking manually in the Reservations tab.</div>'+
-    '</div>';
+      '<div style="font-weight:700;margin-bottom:6px">🔴 '+F.missingDirect.length+' direct booking'+(F.missingDirect.length>1?'s':'')+' have €0 gross revenue</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+F.missingDirect.map(stayLine).join('<br>')+'</div>'+
+      '<div>→ Set the price in the Reservations tab (or mark it complimentary if it was free).</div></div>';
   }
-
+  if(F.overlaps.length){
+    qualityWarning+='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#9a3412">'+
+      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.overlaps.length+' overlapping stay'+(F.overlaps.length>1?'s':'')+' on the same property (double booking or duplicate import)</div>'+
+      '<div style="margin-bottom:8px;line-height:1.8">'+F.overlaps.map(function(o){return stayLine(o.a)+'  ⟷  '+stayLine(o.b).slice(2);}).join('<br>')+'</div>'+
+      '<div>→ Revenue is counted for both, and occupancy may exceed 100%. Delete the duplicate in Reservations if it is an import duplicate.</div></div>';
+  }
+  if(F.undatedOnce.length){
+    qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
+      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.undatedOnce.length+' one-time expense'+(F.undatedOnce.length>1?'s have':' has')+' no date and is NOT counted in any year</div>'+
+      '<div>'+F.undatedOnce.map(function(e){return'• '+esc(e.name||'(unnamed)')+' — €'+(e.amount||0);}).join('<br>')+'</div>'+
+      '<div style="margin-top:6px">→ Open the Expenses panel below and give each a date.</div></div>';
+  }
+  if(F.occRaw>100){
+    qualityWarning+='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#9a3412">⚠️ Occupied nights exceed available nights ('+F.occNights+' vs '+F.availNights+'). Occupancy is capped at 100% — check overlapping bookings or the listing start date.</div>';
+  }
 
   container.innerHTML=
     // ── Controls ──
@@ -4321,11 +4258,12 @@ function renderRevenueAnalytics(){
       '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+yearOpts+'</select>'+
       '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+aptOpts+'</select>'+
       '<button class="btn-outline" style="font-size:12px;padding:7px 12px" onclick="openDashCustomize()">⚙ Customize</button>'+
-      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied · '+numDays+' available days × '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
+      '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied of '+totalAvailableNights+' available · '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
     '</div>'+
     qualityWarning+
     // ── KPI cards — fully customizable: which show, in what order, what colour ──
     kpiGridHtml+
+    finMethodNote()+
     // ── Charts ──
     '<div class="fin-chart-row" style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:20px">'+
       '<div style="background:var(--card-bg,#fff);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);min-width:0">'+
@@ -4531,8 +4469,8 @@ function finPlatCard(name,data,total,color){
       '<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:999px"></div>'+
     '</div>'+
     '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">'+
-      '<span>Gross: '+(data.gross>0?'€'+Math.round(data.gross).toLocaleString('en-GB'):'—')+'</span>'+
-      (data.commission>0?'<span style="color:#dc2626">Comm: €'+Math.round(data.commission).toLocaleString('en-GB')+'</span>':'')+
+      '<span>'+(name==='Airbnb'?'Payout: ':'Gross: ')+(data.gross>0?'€'+data.gross.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}):'—')+'</span>'+
+      (data.commission>0?'<span style="color:#dc2626">Comm: €'+data.commission.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span>':'')+
     '</div>'+
   '</div>';
 }
@@ -4589,10 +4527,19 @@ function renderExpensesList(){
   }
   var aptOpts='<option value="all">All properties</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   var freqOpts=['monthly','yearly','weekly'].map(function(f){return'<option value="'+f+'">'+f.charAt(0).toUpperCase()+f.slice(1)+'</option>';}).join('');
-  function fmtE(n){return'€'+Math.round(n||0).toLocaleString('en-GB');}
+  function fmtE(n){return'€'+(n||0).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  // Same rule as the Finance engine: with a property filter, costs for "All properties" are split equally
+  function expShare(e){
+    if(filterApt==='all'||e.apt===filterApt)return 1;
+    if(!e.apt||e.apt==='all')return (properties&&properties.length)?1/properties.length:1;
+    return 0;
+  }
+  var hasShared=filterApt!=='all'&&filtered.some(function(x){return !x.e.apt||x.e.apt==='all';});
   // Build year columns from all booking years + 2 future years
   var currentYear=new Date().getFullYear();
   var allYears=(allBookings||[]).map(function(b){return b.checkin?parseInt(b.checkin.slice(0,4)):0;}).filter(function(y){return y>2020&&y<2050;});
+  (requests||[]).forEach(function(r){var y=r.checkin?parseInt(r.checkin.slice(0,4)):0;if(y>2020&&y<2050)allYears.push(y);});
+  expenses.forEach(function(e){var y=e.startDate?parseInt(e.startDate.slice(0,4)):0;if(y>2020&&y<2050)allYears.push(y);});
   [currentYear,currentYear+1].forEach(function(y){if(allYears.indexOf(y)===-1)allYears.push(y);});
   allYears.sort(function(a,b){return a-b;});
   var uniqueYears=allYears.filter(function(v,i,a){return a.indexOf(v)===i;});
@@ -4600,7 +4547,7 @@ function renderExpensesList(){
   function recurringTable(items){
     if(!items.length)return'<div style="text-align:center;padding:16px;color:var(--muted);font-size:12.5px">No recurring expenses'+(filterApt!=='all'?' for this property':'')+'.</div>';
     var yearCols=uniqueYears.map(function(y){return'<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:center;min-width:76px">'+y+'</th>';}).join('');
-    var html='<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Year columns are the <strong>rate</strong> (per month for Monthly, per year for Yearly/Weekly aggregate) — see the <strong>Total</strong> row below for the actual cost in that year, already prorated from the start date.</div>'+
+    var html='<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Year columns are the <strong>rate</strong> (per month for Monthly, per week for Weekly, per year for Yearly) — see the <strong>Total</strong> row below for the actual cost in that year, already prorated from the start date.</div>'+
       '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+
       '<thead><tr style="border-bottom:2px solid var(--border)">'+
         '<th style="padding:9px 8px;font-size:11.5px;font-weight:700;color:var(--muted);text-align:left">Name</th>'+
@@ -4644,11 +4591,11 @@ function renderExpensesList(){
     // Finance P&L, via the one shared helper, so the two always agree.
     var totalYearCols=uniqueYears.map(function(y){
       var sum=0;
-      items.forEach(function(item){sum+=expenseAmountForYear(item.e,y);});
+      items.forEach(function(item){sum+=expenseAmountForYear(item.e,y)*expShare(item.e);});
       return '<td style="padding:8px 4px;text-align:center">'+fmtE(sum)+'</td>';
     }).join('');
     html+='</tbody><tfoot><tr style="border-top:2px solid var(--border);background:var(--bg);font-weight:700;color:var(--primary)">'+
-        '<td style="padding:8px 8px" colspan="3">Total recurring</td>'+
+        '<td style="padding:8px 8px" colspan="3">Total recurring'+(hasShared?' <span style="font-weight:500;font-size:10.5px;color:var(--muted)">("All properties" costs split equally)</span>':'')+'</td>'+
         totalYearCols+
         '<td colspan="2"></td>'+
       '</tr></tfoot></table></div>';
@@ -4684,10 +4631,10 @@ function renderExpensesList(){
         '</td>'+
       '</tr>';
     });
-    var onceTotal=0;
-    items.forEach(function(item){onceTotal+=item.e.amount||0;});
+    var onceTotal=0,undated=0;
+    items.forEach(function(item){if(item.e.startDate)onceTotal+=(item.e.amount||0)*expShare(item.e);else undated++;});
     html+='</tbody><tfoot><tr style="border-top:2px solid var(--border);background:var(--bg);font-weight:700;color:var(--primary)">'+
-        '<td style="padding:8px 8px" colspan="3">Total one-time</td>'+
+        '<td style="padding:8px 8px" colspan="3">Total one-time'+(undated?' <span style="font-weight:600;font-size:10.5px;color:#dc2626">('+undated+' without a date not counted)</span>':'')+(hasShared?' <span style="font-weight:500;font-size:10.5px;color:var(--muted)">("All properties" costs split equally)</span>':'')+'</td>'+
         '<td style="padding:8px 4px;text-align:center">'+fmtE(onceTotal)+'</td>'+
         '<td></td>'+
       '</tr></tfoot></table></div>';
@@ -4707,12 +4654,13 @@ function renderExpensesList(){
 }
 
 
+function finTodayISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function addExpenseRow(type){
   var expenses=getFinExpenses();
   if(type==='once'){
-    expenses.push({name:'',amount:0,apt:'all',freq:'once',startDate:''});
+    expenses.push({name:'',amount:0,apt:'all',freq:'once',startDate:finTodayISO()});
   } else {
-    expenses.push({name:'',amount:0,apt:'all',freq:'monthly',startDate:''});
+    expenses.push({name:'',amount:0,apt:'all',freq:'monthly',startDate:finTodayISO()});
   }
   if(workspace.settings)workspace.settings.expenses=expenses;
   renderExpensesList();
@@ -4755,6 +4703,7 @@ function saveExpenses(){
       return !(e.apt===filterApt||e.apt==='all');
     });
   }
+  var badRows=[];
   // Add the rows currently visible
   rows.forEach(function(row){
     var name=row.querySelector('.exp-name').value.trim();
@@ -4763,6 +4712,7 @@ function saveExpenses(){
     if(row.classList.contains('exp-row-once')){
       var dateVal=row.querySelector('.exp-once-date')?row.querySelector('.exp-once-date').value.trim():'';
       var amt=row.querySelector('.exp-once-amt')?parseFloat(row.querySelector('.exp-once-amt').value)||0:0;
+      if(!dateVal)badRows.push(name);
       allExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:dateVal});
       return;
     }
@@ -4774,10 +4724,11 @@ function saveExpenses(){
       var y=inp.getAttribute('data-year');
       var v=parseFloat(inp.value)||0;
       if(y)amounts[y]=v;
-      if(v>defaultAmt)defaultAmt=v;
+      defaultAmt=v; // latest year's rate carries forward to years without a column
     });
     allExpenses.push({name:name,amount:defaultAmt,amounts:amounts,apt:apt,freq:freq,startDate:startDate});
   });
+  if(badRows.length){toast('Give a date to: '+badRows.join(', ')+' — undated one-time expenses are not counted','err');return;}
   saveFinExpenses(allExpenses).then(function(){
     renderRevenueAnalytics();
     toast('Expenses saved','ok');
@@ -6554,17 +6505,26 @@ function _doMappedConflict(parsed,skipped,apt,source){
 }
 function _dsa(s){try{return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}catch(e){return s;}}
 function _parseAmt(raw){
-  if(!raw)return 0;
-  var s=String(raw).trim();
-  // Remove currency symbols and whitespace
-  s=s.replace(/[€$£\s]/g,'');
-  // Thousands-separator comma: comma followed by exactly 3 digits (e.g. "1,100" "1,400")
-  // Strip those commas before treating remaining comma/dot as decimal
-  s=s.replace(/,(\d{3})(?=[,.\d]|$)/g,'$1');
-  // Now s may be "1100", "311.76", "1.5" (decimal comma) or "46.764" (3-decimal = fine)
-  // Replace any remaining comma with dot for decimal
-  s=s.replace(',','.');
-  return parseFloat(s)||0;
+  if(raw==null||raw==='')return 0;
+  var s=String(raw).replace(/[^0-9,.\-]/g,''); // drop €, spaces (incl. non-breaking), letters
+  if(!s)return 0;
+  var neg=s.charAt(0)==='-'||/-$/.test(s);
+  s=s.replace(/-/g,'');
+  var lc=s.lastIndexOf(','),ld=s.lastIndexOf('.');
+  if(lc>-1&&ld>-1){
+    // both present: the LAST one is the decimal separator, the other is thousands
+    if(lc>ld){s=s.replace(/\./g,'').replace(',','.');}else{s=s.replace(/,/g,'');}
+  } else if(lc>-1){
+    var parts=s.split(',');
+    if(parts.length>2||(parts.length===2&&parts[1].length===3))s=parts.join('');   // 1,100 · 1,234,567 → thousands
+    else s=parts.join('.');                                                         // 12,5 · 108,81 → decimal
+  } else if(ld>-1){
+    var p2=s.split('.');
+    if(p2.length>2)s=p2.slice(0,-1).join('')+'.'+p2[p2.length-1];                  // 1.234.567 → thousands
+  }
+  var n=parseFloat(s);
+  if(isNaN(n))return 0;
+  return neg?-n:n;
 }
 function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
 function _dpCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
@@ -6591,7 +6551,7 @@ function dashProcessImport(text,source,apt){
       // Airbnb Earnings column → net payout (already deducted host service fee ~3%)
       var iEarn=_dfc(h,'earnings','payout','montant','amount','gain');
       var earnRaw=iEarn>=0?r[iEarn].trim():'';
-      var earnNum=parseFloat(earnRaw.replace(/[^0-9.]/g,''))||0;
+      var earnNum=_parseAmt(earnRaw);
       // Airbnb doesn't export commission separately; earnNum IS the net payout
       // Store as __€__gross|commission where commission=0 (already netted)
       var finSuffix=earnNum>0?'\n__€__'+earnNum.toFixed(2)+'|0':'';
