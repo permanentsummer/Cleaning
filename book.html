@@ -527,16 +527,26 @@ function ensureBadge(force){
     b.href='https://summerflow.permanentsummer.co/?ref=booking-page';b.target='_blank';b.rel='noopener';
     b.innerHTML='<span id="sfBadgeTxt"></span><strong style="color:#0f172a">SummerFlow</strong>';
     document.body.appendChild(b);
+    if(window._sfWatch)window._sfWatch(b);
   }
   var t=document.getElementById('sfBadgeTxt');if(t&&t.textContent!==T('poweredBy'))t.textContent=T('poweredBy');
   var cs=window.getComputedStyle(b);
-  if(force||cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)<0.9||b.offsetHeight<10||b.getAttribute('style')!==BADGE_STYLE){
+  if(force&&b.getAttribute('style')!==BADGE_STYLE||cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)<0.9||b.getAttribute('style')!==BADGE_STYLE){
     b.setAttribute('style',BADGE_STYLE);
   }
 }
 (function(){
-  try{new MutationObserver(function(){ensureBadge(false);}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','hidden']});}catch(e){}
-  setInterval(function(){ensureBadge(false);},1500);
+  // Throttled + narrow: watch only <body>'s direct children and the badge's own attributes,
+  // and never rewrite the style when it is already correct (avoids any mutation feedback loop).
+  var pending=false;
+  function soon(){if(pending)return;pending=true;setTimeout(function(){pending=false;ensureBadge(false);},250);}
+  try{
+    var mo=new MutationObserver(soon);
+    mo.observe(document.body,{childList:true});
+    window._sfWatch=function(b){if(b)mo.observe(b,{attributes:true,attributeFilter:['style','class','hidden']});};
+    window._sfWatch(document.getElementById('sfBadge'));
+  }catch(e){}
+  setInterval(function(){ensureBadge(false);},2000);
 })();
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
