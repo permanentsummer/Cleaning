@@ -3160,7 +3160,7 @@ function sendGuestEmail(email,name,message,action){
     '</div>';
   return fetch('https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email',{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session&&session.access_token?session.access_token:SB_KEY)},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[email],
@@ -8814,7 +8814,7 @@ function testEmail(){
   var edgeUrl='https://qdldvqnvowyiwhfpdobs.supabase.co/functions/v1/send-email';
   fetch(edgeUrl,{
     method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(session&&session.access_token?session.access_token:SB_KEY)},
     body:JSON.stringify({
       from:FROM_EMAIL,
       to:[session.user.email],
