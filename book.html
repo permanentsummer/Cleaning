@@ -164,7 +164,7 @@ body{font-family:var(--font,'Nunito'),sans-serif;background:var(--bg);color:var(
 
 /* Success */
 #successSection{display:none;padding:40px 20px;text-align:center;max-width:440px;margin:0 auto}
-.sico{font-size:60px;margin-bottom:20px}
+.sico{margin-bottom:20px;display:flex;justify-content:center}.sico img{max-width:140px;max-height:100px;border-radius:var(--rs);object-fit:cover}.sico .chk{width:64px;height:64px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center}.sico .chk svg{width:32px;height:32px;stroke:var(--accent);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .stitle{font-size:26px;font-weight:900;margin-bottom:10px}
 .ssub{font-size:13px;color:var(--muted);font-weight:600;line-height:1.7;margin-bottom:28px}
 .sbox{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:20px;text-align:left;margin-bottom:20px}
@@ -274,11 +274,13 @@ body{font-family:var(--font,'Nunito'),sans-serif;background:var(--bg);color:var(
 
 <!-- SUCCESS -->
 <div id="successSection">
-  <div class="sico">&#127749;</div>
+  <div class="sico" id="sIco"></div>
   <div class="stitle" id="successTitle">Request sent!</div>
   <div class="ssub" id="successSub2">Your host will confirm within 24 hours and reach out with payment details.</div>
   <div class="sbox" id="sBox"></div>
   <a id="waLink" href="#" class="wa-btn-big" target="_blank"><span id="waLinkTxt">Message host on WhatsApp</span></a>
+  <a id="siteLink" href="#" class="wa-btn-big" style="display:none;background:var(--accent);margin-top:10px"><span id="siteLinkTxt"></span></a>
+  <div id="redirNote" style="display:none;margin-top:12px;font-size:13px;opacity:.7"></div>
 </div>
 
 <script>
@@ -512,7 +514,8 @@ function applyBranding(bp){
 }
 // Live preview from the SummerFlow Direct Booking tab
 if(PREVIEW){window.addEventListener('message',function(ev){
-  var d=ev.data;if(!d||d.sf!=='theme'||!d.bp)return;
+  var d=ev.data;if(d&&d.sf==='success'){BP=d.bp||BP;['step1','step2','step3'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});var sb=document.getElementById('stepsBar');if(sb)sb.style.display='none';document.getElementById('sBox').innerHTML='';document.getElementById('successSection').style.display='block';applyThanks();return;}
+  if(!d||d.sf!=='theme'||!d.bp)return;
   BP=d.bp;if(d.host){HOST_NAME=d.host;}
   applyBranding(BP);
   if(document.getElementById('propList').children.length&&document.getElementById('step2').classList.contains('active'))renderProps();
@@ -1022,7 +1025,31 @@ function showSuccess(name,n,total){
   else if(HOST_EMAIL){wl.href='mailto:'+HOST_EMAIL+'?subject='+encodeURIComponent(selProp.name)+'&body='+encodeURIComponent(msg);wl.style.display='flex';document.getElementById('waLinkTxt').textContent=HOST_EMAIL;}
   else wl.style.display='none';
   document.getElementById('successSection').style.display='block';
+  applyThanks();
   window.scrollTo(0,0);
+}
+function safeUrl(u){u=String(u||'').trim();if(!u)return '';if(!/^https?:\/\//i.test(u))u='https://'+u;try{var x=new URL(u);return (x.protocol==='http:'||x.protocol==='https:')?x.href:'';}catch(e){return '';}}
+function applyThanks(){
+  var bp=BP||{};
+  var ico=document.getElementById('sIco');
+  var img=bp.thanksImage?fixPhotoUrl(String(bp.thanksImage)):'';
+  if(img){ico.innerHTML='';var im=document.createElement('img');im.alt='';im.src=img;ico.appendChild(im);}
+  else ico.innerHTML='<div class="chk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>';
+  var tt=(bp.thanksTitle||'').trim(),tx=(bp.thanksText||'').trim();
+  if(tt)document.getElementById('successTitle').textContent=tt;
+  if(tx)document.getElementById('successSub2').textContent=tx;
+  var url=safeUrl(bp.thanksUrl),sl=document.getElementById('siteLink'),wl=document.getElementById('waLink');
+  var rn=document.getElementById('redirNote');
+  if(url){
+    sl.href=url;sl.style.display='flex';
+    document.getElementById('siteLinkTxt').textContent=(bp.thanksBtn||'').trim()||'Back to website';
+    if(bp.thanksOnlyBtn){wl.style.display='none';}
+    if(bp.thanksAuto&&!PREVIEW){
+      var s=6;rn.style.display='block';
+      var t=setInterval(function(){s--;rn.textContent=(lang==='fr'?'Redirection dans ':lang==='pt'?'A redirecionar em ':'Redirecting in ')+s+'s…';if(s<=0){clearInterval(t);location.href=url;}},1000);
+      rn.textContent=(lang==='fr'?'Redirection dans ':lang==='pt'?'A redirecionar em ':'Redirecting in ')+s+'s…';
+    }
+  }else{sl.style.display='none';rn.style.display='none';}
 }
 
 // ── EMAILS ────────────────────────────────────────────────────────────────────
