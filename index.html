@@ -1721,7 +1721,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <input type="hidden" id="ebOrigin">
     <div class="fg"><label>Guest name</label><input type="text" id="ebGuest" placeholder="Guest name"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="fg"><label>Check-in</label><input type="date" id="ebCheckin"></div>
+      <div class="fg"><label>Check-in</label><input type="date" id="ebCheckin" onchange="autoNextDay('ebCheckin','ebCheckout')"></div>
       <div class="fg"><label>Check-out</label><input type="date" id="ebCheckout"></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -1874,7 +1874,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div class="sep">Property & Dates</div>
       <div class="fg"><label>Property *</label><select id="nbBlockApt"></select></div>
       <div class="fr">
-        <div class="fg"><label>From *</label><input type="date" id="nbBlockFrom"></div>
+        <div class="fg"><label>From *</label><input type="date" id="nbBlockFrom" onchange="autoNextDay('nbBlockFrom','nbBlockTo')"></div>
         <div class="fg"><label>To *</label><input type="date" id="nbBlockTo"></div>
       </div>
       <div class="fg"><label>Reason</label>
@@ -4079,8 +4079,11 @@ function computeFinance(o){
     // complimentary flag); direct_requests.total_amount is a rounded integer. Prefer the
     // booking's own financials when it has any, otherwise fall back to the request total.
     var fin=match?o.parseFin(match):null;
+    var rfin=o.parseFin({notes:r.notes||''}); // the request itself can carry the complimentary / financial markers
     var gross,commission=0,override=0,isComp=false;
     if(fin&&(fin.gross>0||fin.isComp)){gross=fin.gross;commission=fin.commission;override=fin.cleanfee>0?fin.cleanfee:0;isComp=!!fin.isComp;}
+    else if(rfin.isComp){gross=0;isComp=true;}
+    else if(rfin.gross>0){gross=rfin.gross;commission=rfin.commission;override=rfin.cleanfee>0?rfin.cleanfee:0;}
     else{gross=parseFloat(r.total_amount)||0;}
     stays.push({kind:'request',ref:r,apt:apt,ci:ci,co:co,source:'direct',gross:gross,commission:commission,cleaning:cleanCost(apt,override),isComp:isComp});
   });
@@ -7188,6 +7191,15 @@ function setNbTab(tab){
   document.getElementById('nbSaveBtn').setAttribute('data-tab',tab);
 }
 
+// When a start date is picked, put the end date one day later (unless an already valid later end date is set)
+function autoNextDay(fromId,toId){
+  var f=document.getElementById(fromId),t=document.getElementById(toId);
+  if(!f||!t||!f.value)return;
+  var d=new Date(f.value+'T12:00:00');d.setDate(d.getDate()+1);
+  var next=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  t.min=next;
+  if(!t.value||t.value<=f.value)t.value=next;
+}
 function updateNbCheckout(){
   var ci=document.getElementById('nbIn').value;
   if(!ci)return;
