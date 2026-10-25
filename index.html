@@ -2457,7 +2457,8 @@ function doSignUp(){
     }
     session=data;sl('sb_session',data);
     // New account: provision a starter workspace, then walk them through the profile step.
-    sbF('POST','workspaces',{user_id:data.user.id,settings:{apts:[],workspaceName:name||email}})
+    sbF('GET','workspaces?select=*&user_id=eq.'+data.user.id)
+      .then(function(ex){return (ex&&ex.length)?ex:sbF('POST','workspaces',{user_id:data.user.id,settings:{apts:[],workspaceName:name||email}});})
       .then(function(rows){
         workspace=(rows&&rows[0])||null;
         btn.disabled=false;btn.textContent='Next →';
