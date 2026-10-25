@@ -2202,7 +2202,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='#f0f9ff'"
       ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
       ondrop="handlePhotoDrop(event)">
-      <input type="file" id="photoFileInput" multiple accept="image/*" style="display:none" onchange="handlePhotoFiles(this.files)">
+      <input type="file" id="photoFileInput" multiple accept="image/*,.heic,.heif" style="display:none" onchange="handlePhotoFiles(this.files)">
       <div style="font-size:28px;margin-bottom:6px">📸</div>
       <div style="font-size:13px;font-weight:800;color:var(--text)">Drag photos here or tap to select</div>
       <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:3px">JPG, PNG, WEBP · Max 5 photos · 5MB each</div>
@@ -3417,11 +3417,55 @@ function handlePhotoFiles(files){
   if(!files||!files.length)return;
   var allowed=5-document.getElementById('photoInputs').querySelectorAll('.purl').length;
   if(allowed<=0){toast('Maximum 5 photos','warn');return;}
-  var toUpload=Array.from(files).filter(function(f){return f.type.startsWith('image/');}).slice(0,allowed);
+  var isImg=function(f){return (f.type||'').indexOf('image/')===0||/\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name||'');};
+  var toUpload=Array.from(files).filter(isImg).slice(0,allowed);
   if(!toUpload.length)return;
   if(!workspace){toast('Save your account first','err');return;}
   var propId=document.getElementById('pEditId').value||'new_'+Date.now();
-  uploadPhotosToSupabase(toUpload,propId);
+  var prog=document.getElementById('photoUploadProgress'),lbl=document.getElementById('photoProgressLabel');
+  if(prog){prog.style.display='block';}if(lbl)lbl.textContent='Preparing photos…';
+  Promise.all(toUpload.map(photoToJpeg)).then(function(list){
+    var ok=list.filter(Boolean);
+    if(ok.length<list.length)toast((list.length-ok.length)+' photo(s) could not be read','err');
+    if(!ok.length){if(prog)prog.style.display='none';return;}
+    uploadPhotosToSupabase(ok,propId);
+  });
+}
+// Convert any photo (incl. iPhone HEIC) to a web-friendly JPEG, max 2400px
+var _heicLib=null;
+function loadHeicLib(){
+  if(window.heic2any)return Promise.resolve(window.heic2any);
+  if(_heicLib)return _heicLib;
+  _heicLib=new Promise(function(res,rej){
+    var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    sc.onload=function(){res(window.heic2any);};sc.onerror=function(){_heicLib=null;rej(new Error('heic lib'));};
+    document.head.appendChild(sc);
+  });
+  return _heicLib;
+}
+function photoToJpeg(file){
+  var heic=/image\/hei[cf]/i.test(file.type||'')||/\.(heic|heif)$/i.test(file.name||'');
+  var base=(file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg';
+  var step=heic?loadHeicLib().then(function(h){return h({blob:file,toType:'image/jpeg',quality:0.88});}).then(function(r){return Array.isArray(r)?r[0]:r;})
+               :Promise.resolve(file);
+  return step.then(function(blob){
+    return new Promise(function(res){
+      var url=URL.createObjectURL(blob),img=new Image();
+      img.onload=function(){
+        var M=2400,w=img.naturalWidth,h=img.naturalHeight,k=Math.min(1,M/Math.max(w,h));
+        var c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(b){
+          if(!b){res(heic?null:file);return;}
+          var f=new File([b],base,{type:'image/jpeg'});res(f);
+        },'image/jpeg',0.88);
+      };
+      img.onerror=function(){URL.revokeObjectURL(url);res(heic?null:(file.type==='image/gif'||/jpe?g|png|webp/i.test(file.type)?file:null));};
+      img.src=url;
+    });
+  }).catch(function(){return heic?null:file;});
 }
 
 function uploadPhotosToSupabase(files,propId){
