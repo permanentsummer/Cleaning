@@ -336,7 +336,8 @@ var I={
     i3:'Almost done',i3s:'Tell us who is staying. Nothing is charged now.',
     trust1:'Best price when booking direct',trust2:'No payment now',trust3:'Reply within 24h',
     bookThis:'Book this',poweredBy:'Powered by',accom:'Accommodation',cleanFee:'Cleaning fee',total:'Total',
-    noHostContact:'Please contact your host directly.'
+    noHostContact:'Please contact your host directly.',
+    errTaken:'Sorry, those dates were just taken. Please choose other dates.',errRate:'Too many requests. Please try again later.',errGeneric:'Something went wrong. Please try again.'
   },
   pt:{
     when:'Quando vai ficar?',
@@ -374,7 +375,8 @@ var I={
     i3:'Quase pronto',i3s:'Diga-nos quem vai ficar. Nada e cobrado agora.',
     trust1:'Melhor preco na reserva direta',trust2:'Sem pagamento agora',trust3:'Resposta em 24h',
     bookThis:'Reservar',poweredBy:'Desenvolvido por',accom:'Alojamento',cleanFee:'Taxa de limpeza',total:'Total',
-    noHostContact:'Por favor contacte diretamente o anfitriao.'
+    noHostContact:'Por favor contacte diretamente o anfitriao.',
+    errTaken:'Pedimos desculpa, essas datas acabaram de ser reservadas. Escolha outras datas.',errRate:'Demasiados pedidos. Tente mais tarde.',errGeneric:'Algo correu mal. Tente novamente.'
   },
   fr:{
     when:'Quand sejournez-vous ?',
@@ -412,7 +414,8 @@ var I={
     i3:'Presque termine',i3s:"Dites-nous qui sejourne. Rien n'est debite maintenant.",
     trust1:'Meilleur prix en direct',trust2:'Aucun paiement maintenant',trust3:'Reponse sous 24h',
     bookThis:'Reserver',poweredBy:'Propulse par',accom:'Hebergement',cleanFee:'Frais de menage',total:'Total',
-    noHostContact:"Veuillez contacter directement l'hote."
+    noHostContact:"Veuillez contacter directement l'hote.",
+    errTaken:'Desole, ces dates viennent d\'etre reservees. Choisissez d\'autres dates.',errRate:'Trop de demandes. Reessayez plus tard.',errGeneric:'Une erreur est survenue. Reessayez.'
   }
 };
 function T(k){return (I[lang]&&I[lang][k])||I.en[k]||k;}
@@ -557,16 +560,15 @@ window.addEventListener('load',function(){
 
   if(!wsId){showErr('No workspace ID in URL. Check your booking link.');return;}
 
-  Promise.all([
-    fetch(SB_URL+'/rest/v1/workspaces?select=id,settings&id=eq.'+encodeURIComponent(wsId),
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(r2j),
-    fetch(SB_URL+'/rest/v1/bookings?select=apt,checkin,checkout&workspace_id=eq.'+encodeURIComponent(wsId),
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){if(!r.ok)return[];return r.json();}),
-    fetch(SB_URL+'/rest/v1/direct_requests?select=apt_id,apt_name,checkin,checkout,status&workspace_id=eq.'+encodeURIComponent(wsId),
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}).then(function(r){if(!r.ok)return[];return r.json();})
-  ]).then(function(res){
-    var wsRows=res[0]||[],bkRows=res[1]||[],reqRows=res[2]||[];
-    if(!wsRows.length){showRLSErr();return;}
+  // One locked-down function returns only what a guest may see: public property details, the host's
+  // public contact/branding, and blocked dates (no guest names or contact details).
+  fetch(SB_URL+'/rest/v1/rpc/public_booking_info',{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_ws:wsId})
+  }).then(r2j).then(function(info){
+    if(!info||!info.settings){showErr('This booking link is not valid. Please check the link with your host.');return;}
+    var wsRows=[{settings:info.settings}],bkRows=info.blocked||[],reqRows=[];
     var cfg=wsRows[0].settings||{};
     var prof=cfg.profile||{};
     BP=cfg.bookingPage||{};
@@ -598,7 +600,7 @@ window.addEventListener('load',function(){
     applyLang();
     drawCal();
     applyUrlPrefill();
-  }).catch(function(e){showRLSErr(e.message);});
+  }).catch(function(e){showErr('Could not load this booking page. '+(e&&e.message?e.message:''));});
 });
 
 function r2j(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
@@ -979,13 +981,22 @@ function doSubmit(){
     rate_per_night:getSeasonalRate(selProp,checkIn)||selProp.ratePerNight||null,
     total_amount:total||null,status:'pending',deposit_paid:false,balance_paid:false
   };
-  fetch(SB_URL+'/rest/v1/direct_requests',{
+  fetch(SB_URL+'/rest/v1/rpc/submit_direct_request',{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body:JSON.stringify(record)
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_ws:wsId,p_record:record})
   }).then(function(r){
-    if(!r.ok&&r.status!==201)return r.text().then(function(t){throw new Error(t);});
-    return Promise.all([emailHost(name,email,phone,n,total,notes),emailGuest(name,email,n,total)]);
+    return r.text().then(function(t){
+      var j=null;try{j=JSON.parse(t);}catch(e){}
+      if(!r.ok){
+        var m=(j&&(j.message||j.hint))||t||'';
+        if(m.indexOf('dates_unavailable')>-1)throw new Error(T('errTaken'));
+        if(m.indexOf('rate_limited')>-1)throw new Error(T('errRate'));
+        throw new Error(T('errGeneric'));
+      }
+      if(j&&typeof j.total==='number'&&j.total>0)total=j.total;   // server-calculated price is the one that counts
+      return Promise.all([emailHost(name,email,phone,n,total,notes),emailGuest(name,email,n,total)]);
+    });
   }).then(function(){showSuccess(name,n,total);})
   .catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent=T('submit');});
 }
