@@ -2353,6 +2353,20 @@ function doPasswordReset(){
   }
 })();
 
+// Email-confirmation link: Supabase redirects with #access_token=...&type=signup. Use THAT account (replace any other session in this browser).
+(function handleSignupConfirm(){
+  var hash=window.location.hash;
+  if(!hash||hash.indexOf('access_token=')===-1||hash.indexOf('type=signup')===-1)return;
+  try{
+    var p={};hash.slice(1).split('&').forEach(function(x){var kv=x.split('=');p[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');});
+    var pl=JSON.parse(atob(p.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+    var sess={access_token:p.access_token,refresh_token:p.refresh_token||'',token_type:'bearer',expires_in:parseInt(p.expires_in||'3600',10),expires_at:parseInt(p.expires_at||'0',10)||undefined,
+      user:{id:pl.sub,email:pl.email,user_metadata:pl.user_metadata||{}}};
+    localStorage.setItem('sb_session',JSON.stringify(sess));
+    history.replaceState(null,'',window.location.pathname+window.location.search);
+  }catch(e){}
+})();
+
 // Toggles between the centered card (sign in / forgot / reset) and the split-screen layout (sign up / profile setup)
 function setAuthMode(mode,subMode){
   var wrap=document.getElementById('authWrap');
@@ -2592,6 +2606,7 @@ window.addEventListener('load',function(){
       body:JSON.stringify({refresh_token:stored.refresh_token})
     }).then(function(r){return r.json();}).then(function(data){
       if(data.access_token){session=data;sl('sb_session',data);}
+      else if(data.error||data.error_code||data.msg){try{localStorage.removeItem('sb_session');}catch(e){}session=null;return;}
       else session=stored;
       loadWorkspace();
     }).catch(function(){session=stored;loadWorkspace();});
@@ -2614,7 +2629,8 @@ function loadWorkspace(){
       // First sign-in after email confirmation (or a signup that was interrupted): create this host's own workspace now.
       var meta=(session.user&&session.user.user_metadata)||{};
       return sbF('POST','workspaces',{user_id:uid,settings:{apts:[],workspaceName:meta.full_name||session.user.email}})
-        .then(function(created){if(!created||!created.length)throw new Error('Could not create your workspace');return created;});
+        .then(function(created){if(!created||!created.length)throw new Error('Could not create your workspace');return created;})
+        .catch(function(e){if(/23503|foreign key/i.test(e.message||'')){try{localStorage.removeItem('sb_session');}catch(x){}session=null;throw new Error('This account no longer exists. Please create a new account.');}throw e;});
     }
     return rows;
   }).then(function(rows){
