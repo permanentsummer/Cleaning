@@ -290,6 +290,7 @@ var MAIL_DOMAIN='bookings@mail.permanentsummer.co';
 var HOST_NAME='',HOST_WA='',HOST_EMAIL='',FROM_EMAIL='SummerFlow <'+MAIL_DOMAIN+'>';
 var PREVIEW=new URLSearchParams(window.location.search).get('preview')==='1';
 var BP={};
+var SF_SITE='https://summerflows.permanentsummer.co/'; // where "Powered by SummerFlow" links to
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 var wsId=new URLSearchParams(window.location.search).get('ws');
@@ -527,7 +528,7 @@ function ensureBadge(force){
   if(!b||b.parentNode!==document.body){
     if(b&&b.parentNode)b.parentNode.removeChild(b);
     b=document.createElement('a');b.id='sfBadge';
-    b.href='https://summerflow.permanentsummer.co/?ref=booking-page';b.target='_blank';b.rel='noopener';
+    b.href=SF_SITE+'?ref=booking-page';b.target='_blank';b.rel='noopener';
     b.innerHTML='<span id="sfBadgeTxt"></span><strong style="color:#0f172a">SummerFlow</strong>';
     document.body.appendChild(b);
     if(window._sfWatch)window._sfWatch(b);
@@ -1055,7 +1056,7 @@ function emailGuest(name,email,n,total){
     (total?tr2('Total','\u20ac'+total+(showDep?'  (50% deposit to confirm)':'')):'')+
     '</table>'+
     (HOST_WA?'<p style="margin-top:16px;font-size:12px;color:#64748b">Questions? WhatsApp: <a href="https://wa.me/'+HOST_WA+'" style="color:#2563eb">+'+HOST_WA+'</a></p>':(HOST_EMAIL?'<p style="margin-top:16px;font-size:12px;color:#64748b">Questions? '+esc(HOST_EMAIL)+'</p>':''))+
-    '<p style="margin-top:22px;font-size:11px;color:#94a3b8">Powered by <a href="https://summerflow.permanentsummer.co/?ref=booking-email" style="color:#64748b">SummerFlow</a></p>'+
+    '<p style="margin-top:22px;font-size:11px;color:#94a3b8">Powered by <a href="'+SF_SITE+'?ref=booking-email" style="color:#64748b">SummerFlow</a></p>'+
     '</div>';
   return sendMail(email,HOST_EMAIL||null,'Booking request - '+selProp.name+' | '+fmtS(checkIn)+' - '+fmtS(checkOut),h);
 }
