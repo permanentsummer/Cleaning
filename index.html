@@ -3661,6 +3661,46 @@ function bpInput(){
   document.querySelectorAll('.bp-preset').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-k')===_bp.theme);});
   bpPush();bpRefreshShare();
 }
+function bpUpBtn(id,kind){
+  return '<div style="margin:-4px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+    '<button type="button" class="copy-btn" onclick="bpUpload(\''+id+'\',\''+kind+'\')">📷 Upload from my device</button>'+
+    '<button type="button" class="copy-btn" style="opacity:.8" onclick="document.getElementById(\''+id+'\').value=\'\';bpInput()">Remove</button>'+
+    '<em id="'+id+'St" style="font-style:normal;font-size:12px;color:var(--muted)"></em></div>';
+}
+function bpPrepImage(file,kind){
+  var heic=/image\/hei[cf]/i.test(file.type||'')||/\.(heic|heif)$/i.test(file.name||'');
+  var max=kind==='logo'?800:2400;
+  var step=heic?loadHeicLib().then(function(h){return h({blob:file,toType:'image/jpeg',quality:0.9});}).then(function(r){return Array.isArray(r)?r[0]:r;}):Promise.resolve(file);
+  return step.then(function(blob){return new Promise(function(res,rej){
+    var url=URL.createObjectURL(blob),img=new Image();
+    img.onload=function(){
+      var k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+      c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+      var png=kind==='logo'&&/png|webp|gif/i.test(blob.type||'');   // keep transparency for logos
+      c.toBlob(function(b){b?res({blob:b,ext:png?'png':'jpg',type:png?'image/png':'image/jpeg'}):rej(new Error('convert'));},png?'image/png':'image/jpeg',0.88);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('Could not read this image'));};
+    img.src=url;
+  });});
+}
+function bpUpload(id,kind){
+  if(!workspace){toast('Save your account first','err');return;}
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/*,.heic,.heif';
+  inp.onchange=function(){
+    var f=inp.files&&inp.files[0];if(!f)return;
+    var st=document.getElementById(id+'St');if(st){st.style.color='var(--muted)';st.textContent='Uploading…';}
+    bpPrepImage(f,kind).then(function(o){
+      var path=workspace.id+'/branding/'+kind+'_'+Date.now()+'.'+o.ext;
+      return fetch(SB_URL+'/storage/v1/object/property-photos/'+path,{method:'POST',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(session?session.access_token:SB_KEY),'Content-Type':o.type,'x-upsert':'true'},body:o.blob})
+        .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t.slice(0,120));});
+          document.getElementById(id).value=SB_URL+'/storage/v1/object/public/property-photos/'+path;
+          bpInput();if(st){st.style.color='var(--green)';st.textContent='Uploaded ✓ — click Save';}});
+    }).catch(function(e){if(st){st.style.color='var(--red)';st.textContent='Failed: '+e.message;}});
+  };
+  inp.click();
+}
 function bpShowThanks(){bpInput();var f=document.getElementById('bpPreview');if(f&&f.contentWindow)try{f.contentWindow.postMessage({sf:'success',bp:_bp,host:_bp.hostName},'*');}catch(e){}if(f)f.scrollIntoView({behavior:'smooth',block:'center'});}
 function bpPreset(k){
   var p=BP_PRESETS[k];if(!p)return;
@@ -3758,11 +3798,11 @@ function renderWidget(){
         '<div class="bp-lab">Page width</div>'+seg('width',[['wide','Wide'],['compact','Compact']],_bp.width)+
         '<div class="bp-lab">Corners</div>'+seg('corners',[['round','Rounded'],['sharp','Sharp']],_bp.corners)+
         '<div class="bp-lab">Properties shown as</div>'+seg('propLayout',[['list','List'],['grid','Grid']],_bp.propLayout)+
-        '<div class="bp-row">'+field('Cover image link (optional)','bpCover',_bp.cover,'https://…/photo.jpg','url','Paste a photo link — Google Drive share links work')+
+        '<div class="bp-row">'+field('Cover image (optional)','bpCover',_bp.cover,'https://…/photo.jpg','url','Upload a photo, or paste a link (Google Drive share links work)')+bpUpBtn('bpCover','cover')+
           '<div>'+field('Headline (optional)','bpHead',_bp.headline,'Book direct & save')+field('Subtitle (optional)','bpSub',_bp.subtitle,'Best price, no fees')+'</div></div>'+
         '<div class="bp-lab" style="margin-top:18px">Confirmation page (after the guest sends a request)</div>'+
         '<div class="bp-row">'+field('Title','bpTT',_bp.thanksTitle,'Request sent!')+field('Message','bpTX',_bp.thanksText,'Your host will confirm within 24 hours.')+'</div>'+
-        '<div class="bp-row">'+field('Picture instead of the icon (optional)','bpTI',_bp.thanksImage,'https://…/logo.png','url','Your logo or a photo. Leave empty for a simple tick.')+
+        '<div class="bp-row">'+field('Picture instead of the tick (optional)','bpTI',_bp.thanksImage,'https://…/logo.png','url','Your logo or a photo. Leave empty for a simple tick.')+bpUpBtn('bpTI','logo')+
           '<div>'+field('Send guests to my website (optional)','bpTU',_bp.thanksUrl,'https://www.mysite.com','url','A button on the confirmation page')+field('Button text','bpTB',_bp.thanksBtn,'Back to my website')+'</div></div>'+
         '<div class="bp-chk" style="display:flex;align-items:center;gap:10px;margin:6px 0;user-select:none"><input type="checkbox" id="bpTA" style="width:18px;height:18px;margin:0;flex:none;cursor:pointer" '+(_bp.thanksAuto?'checked':'')+' onchange="bpInput()"><em style="font-style:normal;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;background:none;text-transform:none" onclick="document.getElementById(\'bpTA\').click()">Redirect automatically after 6 seconds</em></div>'+
         '<div class="bp-chk" style="display:flex;align-items:center;gap:10px;margin:6px 0;user-select:none"><input type="checkbox" id="bpTO" style="width:18px;height:18px;margin:0;flex:none;cursor:pointer" '+(_bp.thanksOnlyBtn?'checked':'')+' onchange="bpInput()"><em style="font-style:normal;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;background:none;text-transform:none" onclick="document.getElementById(\'bpTO\').click()">Hide the WhatsApp button (show only my website button)</em></div>'+
