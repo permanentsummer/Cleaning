@@ -268,6 +268,7 @@ body{font-family:var(--font,'Nunito'),sans-serif;background:var(--bg);color:var(
   </div>
   <div class="ferr" id="fErr"></div>
   <button class="submit-btn" id="subBtn" onclick="doSubmit()">Request Booking</button>
+  <p class="fnote" id="fPrivacy" style="margin-top:6px;font-size:11.5px;opacity:.85"></p>
   <p class="fnote" id="fNoteBottom">No payment required now. Host will confirm within 24 hours.</p>
 </div>
 
@@ -320,6 +321,7 @@ var I={
     requests:'Special requests',requestsPh:'Early check-in, baby cot, allergies...',
     submit:'Request Booking',sending:'Sending...',
     noPayNow:'No payment required now. Host will confirm within 24 hours.',
+    privNote:'By sending this request you agree that {host} uses your details to handle it. See the',privLink:'privacy policy',
     noProps:'No properties available',
     noPropsSub:'All properties are booked for those dates. Try different dates or contact the host.',
     contactHost:'Contact host on WhatsApp',
@@ -359,6 +361,7 @@ var I={
     requests:'Pedidos especiais',requestsPh:'Check-in antecipado, berce, alergias...',
     submit:'Solicitar Reserva',sending:'A enviar...',
     noPayNow:'Nenhum pagamento necessario agora. O anfitriao confirma em 24 horas.',
+    privNote:'Ao enviar este pedido, aceita que {host} use os seus dados para o tratar. Consulte a',privLink:'politica de privacidade',
     noProps:'Sem propriedades disponiveis',
     noPropsSub:'Todas as propriedades estao reservadas para essas datas.',
     contactHost:'Contactar anfitriao no WhatsApp',
@@ -398,6 +401,7 @@ var I={
     requests:'Demandes speciales',requestsPh:"Arrivee anticipee, lit bebe, allergies...",
     submit:'Demander une reservation',sending:'Envoi en cours...',
     noPayNow:"Aucun paiement requis. L'hote confirmera sous 24h.",
+    privNote:"En envoyant cette demande, vous acceptez que {host} utilise vos donnees pour la traiter. Voir la",privLink:'politique de confidentialite',
     noProps:'Aucun logement disponible',
     noPropsSub:'Tous les logements sont reserves pour ces dates.',
     contactHost:"Contacter l'hote sur WhatsApp",
@@ -451,6 +455,7 @@ function applyLang(){
   s('fNotesLbl',T('requests'));p('fNotes',T('requestsPh'));
   var sb=document.getElementById('subBtn');if(sb&&!sb.disabled)sb.textContent=T('submit');
   s('fNoteBottom',T('noPayNow'));
+  var pv=document.getElementById('fPrivacy');if(pv)pv.innerHTML=esc(T('privNote').replace('{host}',HOST_NAME||'the host'))+' <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">'+esc(T('privLink'))+'</a>.';
   s('waLinkTxt',T('waBtn'));
   s('successTitle',T('requestSent'));s('successSub2',T('successSub'));
   // Update sel bar text
