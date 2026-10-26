@@ -200,7 +200,6 @@ body{font-family:var(--font,'Nunito'),sans-serif;background:var(--bg);color:var(
   <div class="step" id="s3ind"><div class="step-num">3</div><span id="step3Lbl">Details</span></div>
 </div>
 
-<div class="trust" id="trustBar" style="display:none"><span id="trust1"></span><span id="trust2"></span><span id="trust3"></span></div>
 
 <!-- STEP 1: Dates -->
 <div class="section active" id="step1">
@@ -443,7 +442,6 @@ function applyLang(){
   s('backBtn1Txt','\u2039 '+T('changeDates'));s('backBtn2Txt','\u2039 '+T('changeProp'));
   s('availHdTitle',T('available'));
   [1,2,3].forEach(function(n){s('kick'+n,T('kick').replace('{n}',n));s('intro'+n,T('i'+n));s('introSub'+n,T('i'+n+'s'));});
-  s('trust1',T('trust1'));s('trust2',T('trust2'));s('trust3',T('trust3'));
   if(window.ensureBadge)ensureBadge(true);
   s('step1Lbl',T('step1'));s('step2Lbl',T('step2'));s('step3Lbl',T('step3'));
   s('detailsTitle',T('yourDetails'));
@@ -514,7 +512,7 @@ function applyBranding(bp){
 }
 // Live preview from the SummerFlow Direct Booking tab
 if(PREVIEW){window.addEventListener('message',function(ev){
-  var d=ev.data;if(d&&d.sf==='success'){BP=d.bp||BP;['step1','step2','step3'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});var sb=document.getElementById('stepsBar');if(sb)sb.style.display='none';document.getElementById('sBox').innerHTML='';document.getElementById('successSection').style.display='block';applyThanks();return;}
+  var d=ev.data;if(d&&d.sf==='success'){BP=d.bp||BP;['step1','step2','step3'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});var sb=document.getElementById('stepsBar');if(sb)sb.style.display='none';document.getElementById('sBox').innerHTML=sr(T('checkin'),'Fri, 12 June 2027')+sr(T('checkout'),'Mon, 15 June 2027')+sr('3 '+T('nightsp'),'Your property')+sr(T('guests'),'2')+sr('Total','\u20ac450');document.getElementById('successSection').style.display='block';applyThanks();return;}
   if(!d||d.sf!=='theme'||!d.bp)return;
   BP=d.bp;if(d.host){HOST_NAME=d.host;}
   applyBranding(BP);
@@ -600,7 +598,6 @@ window.addEventListener('load',function(){
     document.getElementById('loadingScreen').classList.add('hidden');
     document.getElementById('langBar').style.display='flex';
     document.getElementById('stepsBar').style.display='flex';
-    document.getElementById('trustBar').style.display='flex';
     applyLang();
     drawCal();
     applyUrlPrefill();
