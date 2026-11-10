@@ -4944,7 +4944,7 @@ function renderExpensesList(){
     items.forEach(function(item){
       var ex=item.e, ri=item.i;
       var dateVal=ex.startDate||'';
-      html+='<tr class="exp-row exp-row-once" data-idx="'+ri+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
+      html+='<tr class="exp-row exp-row-once" data-idx="'+ri+'" data-nif="'+esc(ex.nif||'')+'" data-atcud="'+esc(ex.atcud||'')+'" style="border-bottom:1px solid var(--border);border-left:3px solid '+aptColor(ex.apt)+'">'+
         '<td style="padding:8px 8px"><input class="exp-name" value="'+esc(ex.name||'')+'" placeholder="e.g. New mattress" '+
           'style="border:1px solid var(--border);border-radius:7px;padding:7px 9px;font-size:13.5px;width:170px;box-sizing:border-box"></td>'+
         '<td style="padding:8px 4px"><select class="exp-apt" style="border:1px solid var(--border);border-radius:7px;padding:7px 6px;font-size:12.5px">'+aptOpts.replace('value="'+(ex.apt||'all')+'"','value="'+(ex.apt||'all')+'" selected')+'</select></td>'+
@@ -5033,6 +5033,7 @@ function saveExpenses(){
     });
   }
   var badRows=[];
+  var renamed={};   // NIF -> name as the host has corrected it in the list
   // Add the rows currently visible
   rows.forEach(function(row){
     var name=row.querySelector('.exp-name').value.trim();
@@ -5042,7 +5043,11 @@ function saveExpenses(){
       var dateVal=row.querySelector('.exp-once-date')?row.querySelector('.exp-once-date').value.trim():'';
       var amt=row.querySelector('.exp-once-amt')?parseFloat(row.querySelector('.exp-once-amt').value)||0:0;
       if(!dateVal)badRows.push(name);
-      allExpenses.push({name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:dateVal});
+      var rec={name:name,amount:amt,amounts:{},apt:apt,freq:'once',startDate:dateVal};
+      var rn=row.getAttribute('data-nif'),ra=row.getAttribute('data-atcud');
+      if(rn){rec.nif=rn;renamed[rn]=name;}
+      if(ra)rec.atcud=ra;
+      allExpenses.push(rec);
       return;
     }
     var freq=row.querySelector('.exp-freq').value;
@@ -5059,6 +5064,10 @@ function saveExpenses(){
   });
   if(badRows.length){toast('Give a date to: '+badRows.join(', ')+' — undated one-time expenses are not counted','err');return;}
   saveFinExpenses(allExpenses).then(function(){
+    // a name corrected here becomes the name used for the next receipt from that shop
+    var vv=Object.assign({},(workspace.settings&&workspace.settings.vendors)||{}),ch=false;
+    Object.keys(renamed).forEach(function(n){if(vv[n]!==renamed[n]){vv[n]=renamed[n];ch=true;}});
+    if(ch)patchWorkspaceSettings({vendors:vv}).catch(function(){});
     renderRevenueAnalytics();
     toast('Expenses saved','ok');
   }).catch(function(e){alert('Save failed: '+e.message);});
@@ -5358,7 +5367,13 @@ function rsOCR(cv,headerOnly){
     });
   });
 }
-function rsVendorFor(nif){var v=(workspace&&workspace.settings&&workspace.settings.vendors)||{};return nif&&v[nif]||'';}
+function rsVendorFor(nif){
+  if(!nif)return '';
+  var ex=getFinExpenses(),i;
+  for(i=ex.length-1;i>=0;i--){if(ex[i]&&ex[i].nif===nif&&ex[i].name)return ex[i].name;}
+  var v=(workspace&&workspace.settings&&workspace.settings.vendors)||{};
+  return v[nif]||'';
+}
 function rsSetField(id,val){var e=document.getElementById(id);e.classList.remove('rs-sk');e.disabled=false;if(val!==undefined&&val!==null&&val!=='')e.value=val;}
 function rsRun(cv,token){
   return rsReadQR(cv).then(function(qr){
@@ -5369,8 +5384,10 @@ function rsRun(cv,token){
       rsSetField('rsAmount',qr.amount.toFixed(2));rsSetField('rsDate',qr.date);
       rsBadge('ok',RT('qrOk'));
       var known=rsVendorFor(qr.nif);
-      if(known){rsSetField('rsName',known);needOCR=false;}
-      rsCheckDup();
+      var dupRec=rsCheckDup();
+      // same receipt added before: reuse that expense's name, it is the most recent correction
+      if(dupRec&&dupRec.name){rsSetField('rsName',dupRec.name);needOCR=false;}
+      else if(known){rsSetField('rsName',known);needOCR=false;}
     }else{
       rsBadge('wait',RT('reading'));
     }
@@ -5410,9 +5427,10 @@ function rsRun(cv,token){
 }
 function rsCheckDup(){
   var amt=parseFloat(document.getElementById('rsAmount').value)||0,date=document.getElementById('rsDate').value;
-  var dup=false;
-  if(amt&&date){dup=getFinExpenses().some(function(x){return x.freq==='once'&&x.startDate===date&&Math.abs((parseFloat(x.amount)||0)-amt)<0.005;});}
+  var dup=null;
+  if(amt&&date){getFinExpenses().forEach(function(x){if(x.freq==='once'&&x.startDate===date&&Math.abs((parseFloat(x.amount)||0)-amt)<0.005)dup=x;});}
   document.getElementById('rsDup').style.display=dup?'':'none';
+  return dup;
 }
 function addScannedExpense(){
   var name=document.getElementById('rsName').value.trim();
@@ -5425,6 +5443,7 @@ function addScannedExpense(){
   var expenses=getFinExpenses();
   var rec={name:name,amount:amount,amounts:{},apt:apt,freq:'once',startDate:date};
   if(_rsAtcud)rec.atcud=_rsAtcud;
+  if(_rsNif)rec.nif=_rsNif;
   expenses.push(rec);
   var nif=_rsNif;
   saveFinExpenses(expenses).then(function(){
