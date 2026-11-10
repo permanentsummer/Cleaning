@@ -891,6 +891,108 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 .occ-bar{height:100%;border-radius:999px;transition:width .4s ease;background:var(--accent)}
 .occ-pct{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:var(--accent);flex-shrink:0}
 
+/* ── Receipt scanner ── */
+.rs-opt{display:flex;align-items:center;gap:14px;width:100%;background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;text-align:left;font-family:inherit;color:var(--text)}
+.rs-opt:hover{border-color:var(--accent)}
+.rs-oi{width:42px;height:42px;border-radius:12px;background:var(--bg);display:grid;place-items:center;color:var(--accent);flex:none}
+.rs-oi svg.i,.rs-opt svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rs-ot{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rs-ot b{font-size:14px;font-weight:700;color:var(--primary)}
+.rs-ot em{font-style:normal;font-size:12px;color:var(--muted)}
+.rs-thumb{width:64px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:var(--bg);flex:none}
+.rs-badge{font-size:12px;line-height:1.4;border-radius:10px;padding:9px 12px;flex:1;min-width:0}
+.rs-badge.ok{background:var(--green-bg);color:var(--green)}
+.rs-badge.warn{background:var(--yellow-bg);color:var(--primary)}
+.rs-badge.wait{background:var(--bg);color:var(--muted)}
+.rs-sk{color:transparent!important;border-color:transparent!important;background:linear-gradient(90deg,var(--border) 25%,var(--bg) 50%,var(--border) 75%)!important;background-size:200% 100%;animation:rsSh 1.2s linear infinite}
+.rs-sk::placeholder{color:transparent}
+@keyframes rsSh{from{background-position:200% 0}to{background-position:-200% 0}}
+
+/* ── New home ── */
+.hm{display:flex;flex-direction:column;gap:16px;max-width:1040px}
+.hm>*{animation:hmRise .45s cubic-bezier(.2,.7,.2,1) both}
+.hm>*:nth-child(2){animation-delay:.05s}.hm>*:nth-child(3){animation-delay:.1s}.hm>*:nth-child(4){animation-delay:.15s}.hm>*:nth-child(5){animation-delay:.2s}.hm>*:nth-child(6){animation-delay:.25s}
+@keyframes hmRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.hm.noanim>*,.hm.noanim .hm-avatar::after{animation:none}
+@media (prefers-reduced-motion:reduce){.hm>*,.hm-avatar::after{animation:none}}
+.hm-hello{background:var(--primary);color:#fff;border-radius:20px;padding:22px 22px 20px}
+.hm-who{display:flex;align-items:center;gap:16px}
+.hm-avatar{width:60px;height:60px;border-radius:50%;flex:none;position:relative;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px;border:0;padding:0;cursor:pointer;font-family:inherit}
+.hm-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.hm-avatar::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(255,255,255,.35);animation:hmPulse 3.2s ease-out infinite;pointer-events:none}
+@keyframes hmPulse{0%{transform:scale(.92);opacity:.9}70%,100%{transform:scale(1.22);opacity:0}}
+.hm-txt{flex:1;min-width:0}
+.hm-txt h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.015em;line-height:1.2;color:#fff;overflow-wrap:anywhere}
+.hm-date{font-size:12.5px;color:rgba(255,255,255,.7);margin-top:3px}
+.hm-cust{background:rgba(255,255,255,.12);border:0;border-radius:11px;width:38px;height:38px;display:grid;place-items:center;color:#fff;cursor:pointer;flex:none}
+.hm-cust:hover{background:rgba(255,255,255,.2)}
+.hm-msg{margin:14px 0 0;font-size:14px;line-height:1.5;color:rgba(255,255,255,.88);max-width:46ch}
+.hm-msg strong{color:#fff}
+.hm-qa{display:grid;gap:10px;grid-template-columns:repeat(var(--n,3),minmax(0,1fr))}
+.hm-qa button{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:inherit;font-size:12px;font-weight:700;color:var(--text);text-align:center;line-height:1.25;cursor:pointer;transition:transform .15s,border-color .15s}
+.hm-qa button:hover{transform:translateY(-2px);border-color:var(--accent)}
+.hm-qa .ic{width:40px;height:40px;border-radius:12px;background:var(--bg);display:grid;place-items:center;color:var(--accent)}
+.hm-qa button:first-child .ic{background:var(--accent);color:#fff}
+.hm svg.i,.hc svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hm-metrics{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:900px){.hm-metrics{grid-template-columns:repeat(var(--n,4),minmax(0,1fr))}}
+.hm-metric{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:14px 16px;cursor:pointer;text-align:left;font-family:inherit;color:var(--text)}
+.hm-metric:hover{border-color:var(--accent)}
+@media (max-width:899px){.hm-metric.wide{grid-column:1/-1}}
+.hm-metric .l{font-size:12px;color:var(--muted);font-weight:600}
+.hm-metric .v{font-size:25px;font-weight:800;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
+.hm-pending{display:none;align-items:center;gap:12px;background:var(--yellow-bg);border:1px solid var(--border);border-radius:16px;padding:13px 16px;cursor:pointer}
+.hm-pending .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 4px rgba(193,99,59,.18)}
+.hm-pending b{flex:1;font-size:13.5px;font-weight:700;color:var(--primary)}
+.hm-pending .go{font-size:12px;font-weight:700;color:var(--accent)}
+.hm-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.hm-grid.two{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}}
+.hm-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:16px 18px;min-width:0}
+.hm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.hm-head h3{margin:0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hm-link{background:none;border:0;color:var(--accent);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;padding:0}
+.hm-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border)}
+.hm-row:first-of-type{border-top:0;padding-top:2px}
+.hm-tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 9px;flex:none}
+.hm-tag.in{background:var(--green-bg);color:var(--green)}
+.hm-tag.out{background:var(--yellow-bg);color:var(--accent)}
+.hm-row .t{flex:1;min-width:0}
+.hm-row .t b{display:block;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--primary)}
+.hm-row .t span{font-size:11.5px;color:var(--muted)}
+.hm-row .d{font-size:12px;font-weight:700;color:var(--text);flex:none}
+.hm-empty{color:var(--muted);font-size:12.5px;padding:6px 0}
+.hm-bar{height:7px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:10px}
+.hm-bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+.hm-clean-t{font-size:14px;font-weight:700;color:var(--primary)}
+.hm-clean-s{font-size:12px;color:var(--muted);margin-top:3px}
+/* customise modal */
+.hc .grp{display:flex;flex-direction:column;gap:10px;padding:14px 0;border-top:1px solid var(--border)}
+.hc .grp:first-of-type{border-top:0;padding-top:4px}
+.hc h4{margin:0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hc .fld{display:flex;flex-direction:column;gap:5px}
+.hc .fld label{font-size:12px;font-weight:700;color:var(--primary)}
+.hc .fld input[type=text]{font:inherit;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px 12px;width:100%;min-width:0}
+.hc .ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hc .ph .hm-avatar{width:48px;height:48px;font-size:17px;cursor:default}
+.hc .ph .hm-avatar::after{display:none}
+.hc .pb{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-weight:700;font-size:12.5px;font-family:inherit;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.hc .pb:hover{border-color:var(--accent)}
+.hc .sw{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
+.hc .sw .n{font-weight:600;font-size:13px;color:var(--primary)}
+.hc .sw.sub{padding-left:14px}
+.hc .tg{position:relative;width:42px;height:24px;flex:none;display:block}
+.hc .tg input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%;z-index:1}
+.hc .tg i{position:absolute;inset:0;border-radius:99px;background:var(--border);transition:background .2s}
+.hc .tg i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.hc .tg input:checked+i{background:var(--accent)}
+.hc .tg input:checked+i::after{transform:translateX(18px)}
+.hc .chips{display:flex;flex-wrap:wrap;gap:8px}
+.hc .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--bg);border-radius:12px;padding:8px 12px;font-weight:700;font-size:12.5px;font-family:inherit;color:var(--text);cursor:pointer}
+.hc .chip[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.hc .chip svg.i{width:16px;height:16px}
+.hc .chip:disabled{opacity:.45;cursor:not-allowed}
+.hc .hint{font-size:12px;color:var(--muted)}
+
 /* Quick actions */
 .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px}
 .qa-btn{
@@ -990,10 +1092,10 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <div id="resetPanel" style="display:none">
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Choose a new password for your account.</p>
-      <div class="afield"><label>New password</label><div class="pwd-wrap"><input type="password" id="rpPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd',this)" aria-label="Show password">👁</button></div></div>
-      <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="rpPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd2',this)" aria-label="Show password">👁</button></div></div>
+      <div class="afield"><label>New password</label><div class="pwd-wrap"><input type="password" id="rpPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="rpPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('rpPwd2',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div class="aerr" id="rpErr"></div>
-      <div id="rpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">✅ Password updated! You can now sign in.</div>
+      <div id="rpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">Password updated! You can now sign in.</div>
       <button class="abtn" id="rpBtn" onclick="doPasswordReset()">Set new password</button>
     </div>
 
@@ -1001,7 +1103,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Enter your email and we'll send a password reset link.</p>
       <div class="afield"><label>Email</label><input type="email" id="fpEmail" placeholder="you@example.com" autocomplete="email"></div>
       <div class="aerr" id="fpErr"></div>
-      <div id="fpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">✅ Reset link sent — check your inbox.</div>
+      <div id="fpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">Reset link sent — check your inbox.</div>
       <button class="abtn" id="fpBtn" onclick="sendPasswordReset()">Send reset link</button>
       <p style="text-align:center;margin-top:14px"><a href="#" onclick="showSignIn(event)" style="font-size:12px;color:var(--muted);text-decoration:none;font-weight:600">← Back to sign in</a></p>
     </div>
@@ -1034,7 +1136,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div class="auth-split-title">Welcome back</div>
         <div class="auth-split-sub">Sign in to your account.</div>
         <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
-        <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('lPwd',this)" aria-label="Show password">👁</button></div></div>
+        <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('lPwd',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
         <div class="aerr" id="lErr"></div>
         <button class="abtn" id="lBtn">Sign in →</button>
         <p style="text-align:center;margin-top:14px"><a href="#" onclick="showForgotPassword(event)" style="font-size:12px;color:#9aa5b5;text-decoration:none;font-weight:600">Forgot password?</a></p>
@@ -1046,8 +1148,8 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div class="auth-split-sub">Takes less than a minute.</div>
         <div class="afield"><label>Business / your name</label><input type="text" id="suName" placeholder="e.g. Casa Sol Algarve" autocomplete="organization"></div>
         <div class="afield"><label>Email</label><input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"></div>
-        <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="suPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd',this)" aria-label="Show password">👁</button></div></div>
-        <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="suPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd2',this)" aria-label="Show password">👁</button></div></div>
+        <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="suPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+        <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="suPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd2',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
         <div class="aerr" id="suErr"></div>
         <div id="suSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px"></div>
         <button class="abtn" id="suBtn" onclick="doSignUp()">Next →</button>
@@ -1062,13 +1164,13 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
           <label>Phone number <span style="color:#dc2626">*</span></label>
           <div style="display:flex;gap:8px">
             <select id="pfCountryCode" style="width:100px;flex-shrink:0;padding:12px 8px;border:1.5px solid #e5e1d8;border-radius:10px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;color:#0A2540;background:#fff">
-              <option value="+351">🇵🇹 +351</option>
-              <option value="+1">🇺🇸 +1</option>
-              <option value="+44">🇬🇧 +44</option>
-              <option value="+33">🇫🇷 +33</option>
-              <option value="+34">🇪🇸 +34</option>
-              <option value="+49">🇩🇪 +49</option>
-              <option value="other">🌍 Other</option>
+              <option value="+351">PT +351</option>
+              <option value="+1">US +1</option>
+              <option value="+44">GB +44</option>
+              <option value="+33">FR +33</option>
+              <option value="+34">ES +34</option>
+              <option value="+49">DE +49</option>
+              <option value="other">Other</option>
             </select>
             <input type="tel" id="pfPhone" placeholder="912 345 678" style="flex:1">
           </div>
@@ -1108,13 +1210,13 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
           <div class="auth-hero-headline">HOSPITALITY,<br>SIMPLIFIED.</div>
           <div class="auth-hero-sub">Bookings, cleaning, and finance for independent hosts — all in one place.</div>
         </div>
-        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#F9A800;font-size:14px">📄</div>Import bookings from Airbnb &amp; Booking.com</div>
-        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#00C7B1;font-size:14px">🧹</div>Cleaning scheduled automatically</div>
+        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#F9A800;font-size:14px;color:#fff"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;margin:0"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><polyline points="14 3 14 8 19 8"/></svg></div>Import bookings from Airbnb &amp; Booking.com</div>
+        <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#00C7B1;font-size:14px;color:#fff"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;margin:0"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/></svg></div>Cleaning scheduled automatically</div>
         <div class="auth-hero-cal">
           <div class="auth-hero-cal-row"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-          <div class="auth-hero-booking">🏠 J. Silva — €450 — 2 guests</div>
-          <div class="auth-hero-booking">🏠 A. Costa — €610 — 3 guests</div>
-          <div class="auth-hero-booking">🏠 M. Dubois — €380 — 1 guest</div>
+          <div class="auth-hero-booking">J. Silva — €450 — 2 guests</div>
+          <div class="auth-hero-booking">A. Costa — €610 — 3 guests</div>
+          <div class="auth-hero-booking">M. Dubois — €380 — 1 guest</div>
         </div>
       </div>
 
@@ -1127,9 +1229,9 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div class="auth-hero-card"><div class="auth-hero-dot" style="background:#2563eb">€</div>Payment received — €610</div>
         <div class="auth-hero-cal">
           <div class="auth-hero-cal-row"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-          <div class="auth-hero-booking">✅ Jose Saramago — cleaned &amp; ready</div>
-          <div class="auth-hero-booking">🧹 Al-Paranaguá — cleaning today</div>
-          <div class="auth-hero-booking">💶 3 payments recorded this week</div>
+          <div class="auth-hero-booking">Jose Saramago — cleaned &amp; ready</div>
+          <div class="auth-hero-booking">Al-Paranaguá — cleaning today</div>
+          <div class="auth-hero-booking">3 payments recorded this week</div>
         </div>
       </div>
     </div>
@@ -1237,38 +1339,26 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
   <!-- OVERVIEW / HOME -->
   <div id="page-home" class="page">
-    <!-- Top greeting bar -->
-    <div class="ov-greeting" id="ovGreeting">
-      <div>
-        <div class="ov-greeting-title" id="ovGreetingTitle">Good morning</div>
-        <div class="ov-greeting-sub" id="ovGreetingDate">Here's what's happening at your properties today.</div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-primary" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          View reservations
-        </button>
-        <button class="btn-outline" onclick="switchTab('requests')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72"/></svg>
-          View requests
+   <div class="hm" id="hm">
+    <div class="hm-hello">
+      <div class="hm-who">
+        <button class="hm-avatar" id="hmAvatar" type="button" onclick="openHomeCustomize()" aria-label="Customise home"></button>
+        <div class="hm-txt">
+          <h2 id="ovGreetingTitle">Good morning</h2>
+          <div class="hm-date" id="ovGreetingDate"></div>
+        </div>
+        <button class="hm-cust" type="button" onclick="openHomeCustomize()" aria-label="Customise home" title="Customise">
+          <svg class="i" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="var(--primary)"/><circle cx="15" cy="12" r="2.2" fill="var(--primary)"/><circle cx="8" cy="18" r="2.2" fill="var(--primary)"/></svg>
         </button>
       </div>
-    </div>
-
-    <!-- Pending requests — only shows when there's something to act on -->
-    <div id="ovPendingBanner" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:var(--yellow-bg);border:1px solid var(--honey);border-radius:14px;padding:14px 18px;margin-bottom:20px;cursor:pointer" onclick="switchTab('requests');filterReqs('pending',null)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--honey)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="ovPendingText" style="font-size:13.5px;font-weight:700;color:var(--primary)"></span>
-      </div>
-      <span style="font-size:12px;font-weight:700;color:var(--honey)">Review →</span>
+      <p class="hm-msg" id="hmMsg"></p>
     </div>
 
     <!-- Getting Started checklist (new accounts only) -->
-    <div id="gettingStartedPanel" class="card" style="display:none;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(249,195,50,.1),rgba(249,195,50,.02));margin-bottom:20px">
+    <div id="gettingStartedPanel" class="card" style="display:none;border:2px solid var(--accent);background:linear-gradient(135deg,rgba(193,99,59,.1),rgba(193,99,59,.02))">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px">
-        <div style="font-size:15px;font-weight:800;color:var(--primary)">👋 Let's get SummerFlow set up</div>
-        <button onclick="dismissOnboarding()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;flex-shrink:0">Skip intro ✕</button>
+        <div style="font-size:15px;font-weight:800;color:var(--primary)">Let's get SummerFlow set up</div>
+        <button onclick="dismissOnboarding()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;flex-shrink:0">Skip intro</button>
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px">A few quick steps and you'll be ready to run things on your own.</div>
       <div style="background:var(--bg);border-radius:999px;height:8px;overflow:hidden;margin-bottom:16px">
@@ -1277,95 +1367,30 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div id="gsChecklist" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
-    <!-- KPI row: the 4 things you actually want to know -->
-    <div class="kpi-row" id="ovKpi">
-      <div class="kpi-card kpi-green" onclick="switchTab('calendar')">
-        <div class="kpi-lbl">Who's in</div>
-        <div class="kpi-val" id="ov-occupied">—</div>
-        <div class="kpi-action">View calendar →</div>
-      </div>
-      <div class="kpi-card kpi-blue" onclick="switchTab('calendar');setResView('list')">
-        <div class="kpi-lbl">Who's out today</div>
-        <div class="kpi-val" id="ov-checkouts">—</div>
-        <div class="kpi-action">See guests →</div>
-      </div>
-      <div class="kpi-card kpi-purple" onclick="switchTab('payments')">
-        <div class="kpi-lbl">How much I earn — this month</div>
-        <div class="kpi-val" id="ov-revenue">—</div>
-        <div class="kpi-action">See payments →</div>
-      </div>
-      <div class="kpi-card kpi-yellow" onclick="switchTab('cleaning')">
-        <div class="kpi-lbl">How much I owe cleaners</div>
-        <div class="kpi-val" id="ov-owed">—</div>
-        <div class="kpi-action">See cleaning →</div>
-      </div>
+    <div class="hm-qa" id="hmQA"></div>
+
+    <div class="hm-metrics" id="hmMetrics">
+      <button class="hm-metric" type="button" data-m="revenue" onclick="switchTab('payments')"><div class="l" data-t="m_revenue">Earned this month</div><div class="v" id="ov-revenue">—</div></button>
+      <button class="hm-metric" type="button" data-m="owed" onclick="switchTab('cleaning')"><div class="l" data-t="m_owed">Owed to cleaners</div><div class="v" id="ov-owed">—</div></button>
+      <button class="hm-metric" type="button" data-m="occupied" onclick="switchTab('calendar')"><div class="l" data-t="m_occupied">Properties occupied</div><div class="v" id="ov-occupied">—</div></button>
+      <button class="hm-metric" type="button" data-m="checkouts" onclick="switchTab('calendar');setResView('list')"><div class="l" data-t="m_checkouts">Leaving today</div><div class="v" id="ov-checkouts">—</div></button>
     </div>
 
-    <!-- Two columns: Arrivals/Departures + Cleaning/Occupancy/Quick actions -->
-    <div class="ov-cols">
-      <!-- Arrivals & Departures, clearly separated -->
-      <div class="ov-panel">
-        <div class="ov-panel-head">
-          <div class="ov-panel-title">Arrivals &amp; departures</div>
-          <button class="ov-panel-link" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)">View all</button>
-        </div>
-        <div class="ov-inout-grid">
-          <div class="ov-inout-col">
-            <div class="ov-inout-lbl in">Arriving</div>
-            <div id="ovArriving"><div class="spinner" style="margin:20px auto"></div></div>
-          </div>
-          <div class="ov-inout-col">
-            <div class="ov-inout-lbl out">Departing</div>
-            <div id="ovDeparting"><div class="spinner" style="margin:20px auto"></div></div>
-          </div>
-        </div>
+    <div class="hm-pending" id="ovPendingBanner" onclick="switchTab('requests');filterReqs('pending',null)">
+      <span class="dot"></span><b id="ovPendingText"></b><span class="go" data-t="review">Review</span>
+    </div>
+
+    <div class="hm-grid two" id="hmGrid">
+      <div class="hm-card" id="hmStaysCard">
+        <div class="hm-head"><h3 data-t="stays_title">Arrivals and departures</h3><button class="hm-link" type="button" onclick="switchTab('calendar');setResView('list');filterList('upcoming',null)" data-t="view_all">View all</button></div>
+        <div id="hmStays"><div class="spinner" style="margin:20px auto"></div></div>
       </div>
-
-      <!-- Right column -->
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <!-- Cleaning at a glance -->
-        <div class="ov-panel">
-          <div class="ov-panel-head">
-            <div class="ov-panel-title">Cleaning</div>
-            <button class="ov-panel-link" onclick="switchTab('cleaning')">Open →</button>
-          </div>
-          <div id="ovCleaning" style="padding:16px 20px"></div>
-        </div>
-
-        <!-- Occupancy by property -->
-        <div class="ov-panel">
-          <div class="ov-panel-head">
-            <div class="ov-panel-title">Occupancy — next 30 days</div>
-          </div>
-          <div id="ovOccupancy" style="padding:4px 0"></div>
-        </div>
-
-        <!-- Quick actions -->
-        <div class="ov-panel">
-          <div class="ov-panel-head">
-            <div class="ov-panel-title" id="ovQuickActionsTitle">Quick actions</div>
-          </div>
-          <div class="qa-grid">
-            <button class="qa-btn" onclick="switchTab('calendar');setTimeout(function(){openNewBooking();},100)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
-              New booking
-            </button>
-            <button class="qa-btn" onclick="switchTab('widget')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Share booking link
-            </button>
-            <button class="qa-btn" onclick="switchTab('properties');setTimeout(openAddProp,100)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
-              Add property
-            </button>
-            <button class="qa-btn" onclick="switchTab('payments')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-              Track payments
-            </button>
-          </div>
-        </div>
+      <div class="hm-card" id="hmCleanCard">
+        <div class="hm-head"><h3 data-t="clean_title">Cleaning</h3><button class="hm-link" type="button" onclick="switchTab('cleaning')" data-t="open">Open</button></div>
+        <div id="ovCleaning"></div>
       </div>
     </div>
+   </div>
   </div>
 
   <!-- REQUESTS -->
@@ -1441,7 +1466,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     </div>
     <!-- Calendar search bar -->
     <div id="calSearchBar" style="padding:0 0 10px;position:relative">
-      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;margin-top:-5px">🔍</span>
+      <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;margin-top:-5px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></span>
       <input type="text" id="calSearch" placeholder="Search guest name..." oninput="calSearchQuery=this.value.trim().toLowerCase();drawCal()" style="width:100%;padding:8px 12px 8px 34px;border:2px solid var(--border);border-radius:10px;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
     </div>
     <!-- Shared top bar for both views -->
@@ -1456,7 +1481,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <!-- Filters (always visible) -->
         <div style="position:relative;flex-shrink:0">
           <button id="filterMenuBtn" onclick="toggleFilterMenu()" style="display:none;padding:8px 12px;border:2px solid var(--border);border-radius:9px;font-size:12px;font-weight:700;background:#fff;cursor:pointer;white-space:nowrap;align-items:center;gap:6px">
-            <span>⚙ Filters</span><span id="filterCount" style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:1px 6px;display:none">0</span>
+            <span>Filters</span><span id="filterCount" style="background:var(--accent);color:#fff;border-radius:999px;font-size:10px;font-weight:800;padding:1px 6px;display:none">0</span>
           </button>
           <div id="filterMenu" style="display:none;position:absolute;left:0;top:calc(100% + 6px);background:#fff;border:2px solid var(--border);border-radius:12px;padding:14px;z-index:200;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.12)">
             <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Period</div>
@@ -1488,11 +1513,11 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         </div>
         <!-- Search (list only) -->
         <div id="listFilterRow" style="display:none;flex:1;min-width:140px;position:relative">
-          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none">🔍</span>
+          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></span>
           <input type="text" id="resSearch" placeholder="Search guest, property, date..." oninput="listSearch=this.value.trim().toLowerCase();renderResList()" style="width:100%;padding:8px 12px 8px 30px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;outline:none;box-sizing:border-box;background:#fff" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         </div>
         <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0" onclick="openNewBooking()">+ New booking</button>
-        <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()">📥 Import CSV/XLS</button>
+        <button class="btn-primary" style="font-size:12px;padding:8px 12px;flex-shrink:0;background:#059669" onclick="openDashImport()"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></svg>Import CSV/XLS</button>
       </div>
     </div>
     <!-- Calendar view -->
@@ -1535,7 +1560,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Step 1: Source + property + file -->
     <div id="diStep1">
-      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Bookings</h3>
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">Import Bookings</h3>
       <div class="fg"><label>Platform / Source</label>
         <select id="diSrc" onchange="onDiSrcChange()">
           <option value="airbnb">Airbnb (CSV)</option>
@@ -1561,11 +1586,11 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Step 2: Field mapping (Direct only) -->
     <div id="diStep2" style="display:none">
-      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Map Columns</h3>
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">Map Columns</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Tell us which column in your file corresponds to each field. Fields marked * are required.</p>
       <div id="diMappingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
       <div id="diStatus2" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedImport()">📥 Import Now</button>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedImport()">Import Now</button>
       <button class="btn-outline" style="width:100%" onclick="diBackToStep1()">← Back</button>
     </div>
   </div>
@@ -1574,7 +1599,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 <div class="overlay" id="importLogOverlay">
   <div class="modal" style="max-height:85vh;overflow-y:auto">
     <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Import Report</h3>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">Import Report</h3>
     <p id="importLogSummary" style="font-size:12px;color:var(--muted);margin-bottom:14px"></p>
     <div id="importLogBody" style="font-size:12px;line-height:1.9;font-family:monospace;background:#f8fafc;border-radius:8px;padding:12px;max-height:400px;overflow-y:auto"></div>
     <button class="btn-primary" style="width:100%;margin-top:14px" onclick="closeModal('importLogOverlay')">Close</button>
@@ -1584,7 +1609,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 <div class="overlay" id="dashCustomizeOverlay">
   <div class="modal" style="max-height:88vh;overflow-y:auto;max-width:460px">
     <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">⚙ Customize dashboard</h3>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">Customize dashboard</h3>
     <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">Drag <strong>⠿</strong> to reorder, toggle to show/hide, click a swatch to recolour. Saved to your account — same on every device.</p>
     <div class="sep" style="margin-top:0">Chart type</div>
     <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -1603,42 +1628,58 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     </div>
   </div>
 </div>
-<!-- MODAL: Scan a receipt photo and extract a one-time expense -->
-<div class="overlay" id="receiptScanOverlay">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+<!-- MODAL: Customise the home screen -->
+<div class="overlay" id="homeCustOverlay">
+  <div class="modal hc" style="max-height:90vh;overflow-y:auto">
     <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📷 Scan receipt</h3>
-    <p style="font-size:11.5px;color:var(--muted);margin-bottom:14px">Take a photo (or upload one) of a receipt. Text is read entirely in your browser — nothing is uploaded anywhere. Always double-check the extracted amount before saving: receipt photos are not always read perfectly.</p>
+    <h3 id="homeCustTitle" style="font-size:16px;font-weight:800;color:var(--primary);margin-bottom:6px">Customise your home</h3>
+    <div id="homeCustBody"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-outline" id="homeCustCancel" style="flex:1" onclick="closeModal('homeCustOverlay')">Cancel</button>
+      <button class="btn-primary" id="homeCustSave" style="flex:1" onclick="saveHomeCustomize()">Save</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL: Add a receipt (photo -> exact amount/date from the fiscal QR code, name from text) -->
+<div class="overlay" id="receiptScanOverlay">
+  <div class="modal" style="max-height:92vh;overflow-y:auto">
+    <div class="modal-handle"></div>
 
-    <div id="rsStep1">
-      <div class="fg" style="margin-bottom:12px"><label>Property</label>
-        <select id="rsApt"></select>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button class="btn-primary" style="flex:1" onclick="document.getElementById('rsCameraInput').click()">📷 Scan receipt</button>
-        <button class="btn-outline" style="flex:1" onclick="document.getElementById('rsGalleryInput').click()">🖼️ Upload a photo</button>
-      </div>
-      <!-- capture="environment" opens the camera directly (no gallery option) on
-           mobile — this input is never shown; the buttons above trigger it. -->
+    <div id="rsPick">
+      <h3 data-rt="title" style="font-size:17px;font-weight:800;color:var(--primary);margin-bottom:4px">Add receipt</h3>
+      <p data-rt="sub" style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5"></p>
+      <button type="button" class="rs-opt" onclick="document.getElementById('rsCameraInput').click()">
+        <span class="rs-oi"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+        <span class="rs-ot"><b data-rt="cam">Camera</b><em data-rt="camS"></em></span>
+      </button>
+      <button type="button" class="rs-opt" onclick="document.getElementById('rsGalleryInput').click()">
+        <span class="rs-oi"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg></span>
+        <span class="rs-ot"><b data-rt="lib">Photo library</b><em data-rt="libS"></em></span>
+      </button>
+      <!-- capture="environment" opens the camera directly on mobile -->
       <input type="file" id="rsCameraInput" accept="image/*" capture="environment" style="display:none" onchange="rsFileChosen(this)">
-      <!-- No capture attribute here, so this always opens the photo gallery / file browser. -->
       <input type="file" id="rsGalleryInput" accept="image/*" style="display:none" onchange="rsFileChosen(this)">
-      <img id="rsPreviewImg" style="display:none;max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--border);margin-bottom:12px;object-fit:contain">
-      <div id="rsStatus" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
     </div>
 
-    <div id="rsStep2" style="display:none">
-      <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11.5px;color:#92400e">⚠️ Auto-read from the photo — please check these are correct before saving.</div>
-      <div class="fg" style="margin-bottom:12px"><label>Name / vendor</label><input type="text" id="rsName" placeholder="e.g. Ikea"></div>
-      <div class="fg" style="margin-bottom:12px"><label>Amount (€)</label><input type="number" step="0.01" min="0" id="rsAmount" placeholder="0.00"></div>
-      <div class="fg" style="margin-bottom:12px"><label>Date</label><input type="date" id="rsDate"></div>
+    <div id="rsReview" style="display:none">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">
+        <img id="rsPreviewImg" alt="" class="rs-thumb">
+        <div id="rsBadge" class="rs-badge" style="display:none"></div>
+      </div>
+      <div id="rsDup" style="display:none;background:var(--yellow-bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--primary)" data-rt="dup"></div>
+      <div class="fg" style="margin-bottom:12px"><label data-rt="vendor">Name / vendor</label><input type="text" id="rsName" oninput="_rsNameTouched=true"></div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div class="fg" style="flex:1;min-width:0"><label data-rt="amount">Amount (€)</label><input type="number" inputmode="decimal" step="0.01" min="0" id="rsAmount" placeholder="0.00" oninput="rsCheckDup()"></div>
+        <div class="fg" style="flex:1;min-width:0"><label data-rt="date">Date</label><input type="date" id="rsDate" onchange="rsCheckDup()"></div>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label data-rt="prop">Property</label><select id="rsApt"></select></div>
       <details style="margin-bottom:14px">
-        <summary style="font-size:11.5px;color:var(--muted);cursor:pointer">Show raw extracted text</summary>
+        <summary data-rt="raw" style="font-size:11.5px;color:var(--muted);cursor:pointer">Show raw extracted text</summary>
         <pre id="rsRawText" style="font-size:10.5px;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px;max-height:150px;overflow:auto;white-space:pre-wrap;margin-top:8px"></pre>
       </details>
       <div style="display:flex;gap:8px">
-        <button class="btn-outline" style="flex:1" onclick="rsBackToStep1()">← Rescan</button>
-        <button class="btn-primary" style="flex:1" onclick="addScannedExpense()">Add as one-time expense</button>
+        <button class="btn-outline" style="flex:1" onclick="rsBackToStep1()" data-rt="rescan">Rescan</button>
+        <button class="btn-primary" style="flex:2" onclick="addScannedExpense()" data-rt="add">Add as one-time expense</button>
       </div>
     </div>
   </div>
@@ -1650,7 +1691,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Step 1: Property + frequency/date + file -->
     <div id="eiStep1">
-      <h3 id="eiTitle" style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📥 Import Expenses</h3>
+      <h3 id="eiTitle" style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">Import Expenses</h3>
       <div class="fg"><label>Property</label>
         <select id="eiApt"></select>
       </div>
@@ -1688,7 +1729,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Step 1b: Sheet picker (xls/xlsx with multiple tabs only) -->
     <div id="eiStepSheet" style="display:none">
-      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📑 Choose Sheet</h3>
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">Choose Sheet</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">This file has several tabs. Pick the one with your expense data.</p>
       <div class="fg"><label>Sheet / tab</label>
         <select id="eiSheet"></select>
@@ -1700,12 +1741,12 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Step 2: Field mapping -->
     <div id="eiStep2" style="display:none">
-      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 Map Columns</h3>
+      <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">Map Columns</h3>
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Tell us which column in your file is the item name and which is the amount. Fields marked * are required.</p>
       <div id="eiMappingGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
       <div id="eiPreview" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
       <div id="eiStatus2" style="display:none;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:10px"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedExpImport()">📥 Import Now</button>
+      <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="doMappedExpImport()">Import Now</button>
       <button class="btn-outline" style="width:100%" onclick="eiBackToStep1()">← Back</button>
     </div>
   </div>
@@ -1716,7 +1757,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 <div class="overlay" id="editBookingOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">✏️ Edit Reservation</h3>
+    <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">Edit Reservation</h3>
     <input type="hidden" id="ebId">
     <input type="hidden" id="ebOrigin">
     <div class="fg"><label>Guest name</label><input type="text" id="ebGuest" placeholder="Guest name"></div>
@@ -1762,9 +1803,9 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div class="fg" style="margin-bottom:10px">
         <label style="font-size:11px">Payment status</label>
         <select id="ebPayStatus" onchange="ebUpdatePayStatus()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
-          <option value="unpaid">❌ Unpaid</option>
-          <option value="partial">⏳ Partially paid</option>
-          <option value="paid">✅ Fully paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="partial">Partially paid</option>
+          <option value="paid">Fully paid</option>
         </select>
       </div>
       <!-- Transactions list -->
@@ -1779,7 +1820,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="saveEditBooking()">&#128190; Save changes</button>
     <div style="display:flex;gap:8px">
       <button class="btn-outline" style="flex:1" onclick="closeModal('editBookingOverlay')">Cancel</button>
-      <button class="btn-red" style="flex:1" onclick="deleteFromEditModal()">🗑️ Delete</button>
+      <button class="btn-red" style="flex:1" onclick="deleteFromEditModal()">Delete</button>
     </div>
   </div>
 </div>
@@ -1788,8 +1829,8 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
   <div class="modal">
     <div class="modal-handle"></div>
     <div style="display:flex;gap:6px;margin-bottom:16px">
-      <button class="vtab on" id="nbTabBook" onclick="setNbTab('booking')" style="flex:1;padding:10px">📋 New Booking</button>
-      <button class="vtab" id="nbTabBlock" onclick="setNbTab('block')" style="flex:1;padding:10px">🚫 Block Dates</button>
+      <button class="vtab on" id="nbTabBook" onclick="setNbTab('booking')" style="flex:1;padding:10px">New Booking</button>
+      <button class="vtab" id="nbTabBlock" onclick="setNbTab('block')" style="flex:1;padding:10px">Block Dates</button>
     </div>
 
     <!-- Booking form -->
@@ -1799,19 +1840,19 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <!-- PDF auto-fill -->
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:12px;font-weight:700;color:#1d4ed8">⚡ Auto-fill from PDF or Screenshot</div>
+          <div style="font-size:12px;font-weight:700;color:#1d4ed8">Auto-fill from PDF or Screenshot</div>
 
         </div>
         <!-- Tab switcher -->
         <div style="display:flex;gap:0;border:1px solid #bfdbfe;border-radius:7px;overflow:hidden;margin-bottom:10px">
-          <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">📎 Upload file</button>
-          <button id="pdfTabPaste" onclick="setPdfTab('paste')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#fff;color:#1d4ed8;border:none;cursor:pointer">📋 Paste text</button>
+          <button id="pdfTabUpload" onclick="setPdfTab('upload')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#1d4ed8;color:#fff;border:none;cursor:pointer">Upload file</button>
+          <button id="pdfTabPaste" onclick="setPdfTab('paste')" style="flex:1;padding:7px;font-size:12px;font-weight:600;background:#fff;color:#1d4ed8;border:none;cursor:pointer">Paste text</button>
         </div>
         <!-- Upload panel -->
         <div id="pdfPanelUpload">
           <div style="font-size:11px;color:#3b82f6;margin-bottom:8px">On your phone: open the PDF → tap Share → select this app. Or tap below to pick the file.</div>
           <label style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1d4ed8;color:#fff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
-            📎 Upload file (PDF or image)
+            Upload file (PDF or image)
             <input type="file" id="nbPdfFile" accept=".pdf,application/pdf,image/*" style="display:none" onchange="handleUploadFile(this)">
           </label>
           <div id="nbPdfFileStatus" style="display:none;font-size:11px;font-weight:700;margin-top:8px;text-align:center"></div>
@@ -1863,7 +1904,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;cursor:pointer" onclick="document.getElementById('nbComp').click()">
         <input type="checkbox" id="nbComp" onclick="event.stopPropagation();toggleNbComp()" style="width:16px;height:16px;accent-color:var(--green);cursor:pointer">
         <div>
-          <div style="font-size:13px;font-weight:600;color:#15803d">🎁 Complimentary (Friends &amp; Family)</div>
+          <div style="font-size:13px;font-weight:600;color:#15803d">Complimentary (Friends &amp; Family)</div>
           <div style="font-size:11px;color:var(--muted)">Revenue = €0. Excluded from financial reports.</div>
         </div>
       </div>
@@ -1879,17 +1920,17 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       </div>
       <div class="fg"><label>Reason</label>
         <select id="nbBlockReason">
-          <option value="maintenance">🔧 Maintenance</option>
-          <option value="personal">🏠 Personal use</option>
-          <option value="renovation">🪚 Renovation</option>
-          <option value="other">📌 Other</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="personal">Personal use</option>
+          <option value="renovation">Renovation</option>
+          <option value="other">Other</option>
         </select>
       </div>
       <div class="fg"><label>Notes</label><input type="text" id="nbBlockNotes" placeholder="Optional details"></div>
     </div>
 
     <div class="aerr" id="nbErr" style="margin-bottom:8px"></div>
-    <button class="btn-primary" style="width:100%" id="nbSaveBtn" onclick="saveNewBooking()">💾 Save</button>
+    <button class="btn-primary" style="width:100%" id="nbSaveBtn" onclick="saveNewBooking()">Save</button>
     <button class="btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('newBookingOverlay')">Cancel</button>
   </div>
 </div>
@@ -1936,7 +1977,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <div class="acct-grid">
       <div class="card" style="border:2px solid var(--border)">
-        <div class="sep" style="margin-top:0" id="acctSecProfileLbl">🏢 Business profile</div>
+        <div class="sep" style="margin-top:0" id="acctSecProfileLbl">Business profile</div>
         <div class="acct-fields-grid">
           <div class="fg"><label id="acctBizNameLbl">Business / your name</label><input type="text" id="acctBusinessName" placeholder="e.g. Casa Sol Algarve"></div>
           <div class="fg"><label id="acctContactEmailLbl">Contact email</label><input type="email" id="acctEmail" placeholder="you@example.com"></div>
@@ -1952,19 +1993,19 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
           <div class="fg" style="margin-bottom:0"><label><span id="acctWebsiteLbl">Website</span> <span id="acctWebsiteOptLbl" style="color:var(--muted);font-weight:500">(optional)</span></label><input type="text" id="acctWebsite" placeholder="https://..."></div>
         </div>
         <div style="display:flex;gap:12px;align-items:center;margin-top:18px">
-          <button class="btn-primary" id="acctSaveBtn" onclick="saveAccountProfile()">💾 Save profile</button>
+          <button class="btn-primary" id="acctSaveBtn" onclick="saveAccountProfile()">Save profile</button>
           <span id="acctSaveMsg" style="font-size:12px;font-weight:700"></span>
         </div>
       </div>
 
       <div class="card" style="border:2px solid var(--border)">
-        <div class="sep" style="margin-top:0" id="acctSecLoginLbl">🔐 Login</div>
+        <div class="sep" style="margin-top:0" id="acctSecLoginLbl">Login</div>
         <div style="font-size:12px;color:var(--muted)"><span id="acctSignedInAsLbl">You're signed in as</span> <strong id="acctLoginEmail">—</strong></div>
         <p style="font-size:11px;color:var(--muted);margin-top:8px" id="acctChangePwdLbl">To change your password, sign out and use "Forgot password?" on the sign-in screen.</p>
       </div>
 
       <div class="card" style="border:2px solid #fecaca">
-        <div class="sep" style="margin-top:0;color:#b91c1c">⚠️ Delete my account</div>
+        <div class="sep" style="margin-top:0;color:#b91c1c">Delete my account</div>
         <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Permanently deletes your login, properties, reservations, requests and settings. This cannot be undone. Your data is only ever visible to you.</p>
         <button class="btn-outline" style="border-color:#fca5a5;color:#b91c1c;font-size:12px" onclick="deleteMyAccount()">Delete my account and all data</button>
       </div>
@@ -1979,7 +2020,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Share View Link -->
     <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:18px;margin-bottom:20px">
-      <div style="font-weight:800;font-size:14px;color:#0369a1;margin-bottom:6px">🔗 Share View Link</div>
+      <div style="font-weight:800;font-size:14px;color:#0369a1;margin-bottom:6px">Share View Link</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:12px">Give this read-only link to staff, co-hosts or partners. They can see the reservations calendar only — no editing, no sensitive data.</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input type="text" id="viewLinkField" readonly style="flex:1;padding:9px 12px;border:2px solid #bae6fd;border-radius:9px;font-size:12px;font-family:monospace;background:#fff;min-width:200px" placeholder="Click Generate to create link">
@@ -1990,53 +2031,53 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <!-- Horizontal tab nav -->
     <div style="display:flex;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto">
-      <button id="stab-email" onclick="showSettingsTab('email')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--primary);color:var(--primary);white-space:nowrap;margin-bottom:-2px">📧 Email &amp; WhatsApp</button>
-      <button id="stab-cleaning" onclick="showSettingsTab('cleaning')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);white-space:nowrap;margin-bottom:-2px">🧹 Cleaning &amp; Cleaners</button>
+      <button id="stab-email" onclick="showSettingsTab('email')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--primary);color:var(--primary);white-space:nowrap;margin-bottom:-2px">Email &amp; WhatsApp</button>
+      <button id="stab-cleaning" onclick="showSettingsTab('cleaning')" style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--muted);white-space:nowrap;margin-bottom:-2px">Cleaning &amp; Cleaners</button>
     </div>
 
     <!-- TAB: Email & WhatsApp -->
     <div id="stab-panel-email">
       <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-        <div class="sep" style="margin-top:0">📧 Email Templates</div>
+        <div class="sep" style="margin-top:0">Email Templates</div>
         <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:14px;line-height:1.6">Variables: <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{guest_name}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{property}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkin}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{checkout}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{nights}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{total}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{deposit}</code> <code style="background:var(--bg);padding:2px 5px;border-radius:4px;font-size:11px">{iban}</code></p>
         <div style="margin-bottom:18px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span></div>
-          <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed! 🎉"></div>
-          <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplConfirmedBody" rows="7" placeholder="Hi {guest_name},&#10;&#10;Great news — your booking is confirmed! 🎉&#10;&#10;📍 {property}&#10;📅 {checkin} → {checkout}&#10;🌙 {nights} nights&#10;&#10;..."></textarea></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Confirmed</span></div>
+          <div class="fg"><label>Subject line</label><input type="text" id="tmplConfirmedSubject" placeholder="Your booking is confirmed!"></div>
+          <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplConfirmedBody" rows="7" placeholder="Hi {guest_name},&#10;&#10;Great news — your booking is confirmed!&#10;&#10;{property}&#10;{checkin} → {checkout}&#10;{nights} nights&#10;&#10;..."></textarea></div>
         </div>
         <div style="margin-bottom:18px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Declined</span></div>
           <div class="fg"><label>Subject line</label><input type="text" id="tmplDeclinedSubject" placeholder="About your booking request"></div>
           <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplDeclinedBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Unfortunately those dates are not available..."></textarea></div>
         </div>
         <div style="margin-bottom:18px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending / Info</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Pending / Info</span></div>
           <div class="fg"><label>Subject line</label><input type="text" id="tmplPendingSubject" placeholder="Your booking request — update"></div>
           <div class="fg" style="margin-bottom:0"><label>Email body</label><textarea id="tmplPendingBody" rows="5" placeholder="Hi {guest_name},&#10;&#10;Thank you for your request. I'll confirm within 24 hours..."></textarea></div>
         </div>
-        <button class="btn-primary" onclick="saveEmailTemplates()">💾 Save templates</button>
+        <button class="btn-primary" onclick="saveEmailTemplates()">Save templates</button>
       </div>
       <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-        <div class="sep" style="margin-top:0">📬 Email Sender</div>
+        <div class="sep" style="margin-top:0">Email Sender</div>
         <p style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px">Currently sending from: <strong id="currentFromEmail"></strong></p>
-        <button class="btn-outline" style="font-size:12px" onclick="testEmail()">🧪 Send test email to yourself</button>
+        <button class="btn-outline" style="font-size:12px" onclick="testEmail()">Send test email to yourself</button>
         <div id="testEmailResult" style="font-size:12px;font-weight:700;margin-top:8px"></div>
       </div>
       <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
-        <div class="sep" style="margin-top:0">💬 WhatsApp Templates</div>
+        <div class="sep" style="margin-top:0">WhatsApp Templates</div>
         <div style="margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">✅ Confirmed</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailConfirmed"> Same as email</label></div>
-          <div class="fg" style="margin-bottom:0"><textarea id="tmplWaConfirmed" rows="4" placeholder="Hi {guest_name} ✅ Confirmed!&#10;📍 {property} | {checkin} → {checkout}&#10;💶 Total: €{total} | Deposit: €{deposit}"></textarea></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--green-bg);color:#15803d;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Confirmed</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailConfirmed"> Same as email</label></div>
+          <div class="fg" style="margin-bottom:0"><textarea id="tmplWaConfirmed" rows="4" placeholder="Hi {guest_name} Confirmed!&#10;{property} | {checkin} → {checkout}&#10;Total: €{total} | Deposit: €{deposit}"></textarea></div>
         </div>
         <div style="margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">❌ Declined</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailDeclined"> Same as email</label></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--red-bg);color:#dc2626;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Declined</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailDeclined"> Same as email</label></div>
           <div class="fg" style="margin-bottom:0"><textarea id="tmplWaDeclined" rows="3" placeholder="Hi {guest_name}, unfortunately {property} is not available for those dates."></textarea></div>
         </div>
         <div style="margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">⏳ Pending</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailPending"> Same as email</label></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="background:var(--yellow-bg);color:#92400e;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px">Pending</span><label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer"><input type="checkbox" id="waUseEmailPending"> Same as email</label></div>
           <div class="fg" style="margin-bottom:0"><textarea id="tmplWaPending" rows="3" placeholder="Hi {guest_name}, thanks for your request for {property}. I'll confirm within 24 hours!"></textarea></div>
         </div>
-        <button class="btn-primary" onclick="saveWaTemplates()">💾 Save WhatsApp templates</button>
+        <button class="btn-primary" onclick="saveWaTemplates()">Save WhatsApp templates</button>
       </div>
     </div>
 
@@ -2044,12 +2085,12 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div id="stab-panel-cleaning" style="display:none">
       <div class="card" style="border:2px solid var(--border);margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div class="sep" style="margin:0">🧹 Cleaners</div>
+          <div class="sep" style="margin:0">Cleaners</div>
           <button class="btn-primary" style="font-size:12px;padding:7px 12px" onclick="addCleanerRow()">+ Add cleaner</button>
         </div>
         <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Assign a cleaner per property. The WhatsApp button in the Cleaning tab uses the assigned cleaner's number automatically.</p>
         <div id="cleanersList"></div>
-        <button class="btn-primary" style="margin-top:14px" onclick="saveCleaningSettings()">💾 Save cleaners</button>
+        <button class="btn-primary" style="margin-top:14px" onclick="saveCleaningSettings()">Save cleaners</button>
       </div>
     </div>
   </div>
@@ -2065,10 +2106,10 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 
     <div class="sep">Action</div>
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-      <button class="btn-green" id="actionConfirm" onclick="doAction('confirmed')">✅ Confirm booking</button>
-      <button class="btn-red" id="actionDecline" onclick="doAction('declined')">❌ Decline</button>
-      <button class="btn-yellow" id="actionWaitlist" onclick="doAction('pending')">⏳ Keep pending</button>
-      <button class="btn-outline" style="color:var(--red);border-color:var(--red-bg);margin-left:auto" onclick="deleteRequest()">🗑️ Delete</button>
+      <button class="btn-green" id="actionConfirm" onclick="doAction('confirmed')">Confirm booking</button>
+      <button class="btn-red" id="actionDecline" onclick="doAction('declined')">Decline</button>
+      <button class="btn-yellow" id="actionWaitlist" onclick="doAction('pending')">Keep pending</button>
+      <button class="btn-outline" style="color:var(--red);border-color:var(--red-bg);margin-left:auto" onclick="deleteRequest()">Delete</button>
     </div>
 
     <div class="sep">Message to guest</div>
@@ -2077,8 +2118,8 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       <textarea id="replyMsg" rows="6"></textarea>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-primary" style="flex:1" onclick="sendReply()">📧 Send email & update</button>
-      <button class="btn-outline" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendWaFromRespond()">💬 WhatsApp</button>
+      <button class="btn-primary" style="flex:1" onclick="sendReply()">Send email & update</button>
+      <button class="btn-outline" style="background:#25d366;color:#fff;border-color:#25d366" onclick="sendWaFromRespond()">WhatsApp</button>
       <button class="btn-outline" onclick="closeModal('respondOverlay')">Cancel</button>
     </div>
   </div>
@@ -2087,15 +2128,15 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 <!-- MODAL: Payment management -->
 <div class="overlay" id="paymentOverlay">
   <div class="modal" style="max-width:380px">
-    <div class="modal-header"><h3>💳 Payment</h3><button class="close-btn" onclick="closeModal('paymentOverlay')">✕</button></div>
+    <div class="modal-header"><h3>Payment</h3><button class="close-btn" onclick="closeModal('paymentOverlay')">✕</button></div>
     <div style="padding:16px 20px">
       <div id="pmDetails" style="margin-bottom:14px;padding:12px;background:var(--bg);border-radius:8px"></div>
       <div class="fg">
         <label>Payment status</label>
         <select id="pmStatus" onchange="updatePmCalc()" style="border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;box-sizing:border-box">
-          <option value="unpaid">❌ Unpaid</option>
-          <option value="deposit">⏳ Deposit paid</option>
-          <option value="paid">✅ Fully paid</option>
+          <option value="unpaid">Unpaid</option>
+          <option value="deposit">Deposit paid</option>
+          <option value="paid">Fully paid</option>
         </select>
       </div>
       <div class="fg" id="pmDepositRow" style="display:none">
@@ -2104,7 +2145,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       </div>
       <div id="pmCalc" style="background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap"></div>
       <div class="aerr" id="pmErr"></div>
-      <button class="btn-primary" style="width:100%" onclick="savePaymentStatus()">💾 Save payment</button>
+      <button class="btn-primary" style="width:100%" onclick="savePaymentStatus()">Save payment</button>
     </div>
   </div>
 </div>
@@ -2203,7 +2244,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
       ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
       ondrop="handlePhotoDrop(event)">
       <input type="file" id="photoFileInput" multiple accept="image/*,.heic,.heif" style="display:none" onchange="handlePhotoFiles(this.files)">
-      <div style="font-size:28px;margin-bottom:6px">📸</div>
+      <div style="margin-bottom:6px;color:var(--muted);display:flex;justify-content:center"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
       <div style="font-size:13px;font-weight:800;color:var(--text)">Drag photos here or tap to select</div>
       <div style="font-size:11px;color:var(--muted);font-weight:600;margin-top:3px">JPG, PNG, WEBP · Max 5 photos · 5MB each</div>
       <div id="photoUploadProgress" style="display:none;margin-top:10px">
@@ -2225,7 +2266,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <button onclick="addPhotoByUrl()" style="background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer;font-size:13px">Add</button>
       </div>
     </div>
-    <button class="btn-primary" style="width:100%" onclick="saveProp()">💾 Save property</button>
+    <button class="btn-primary" style="width:100%" onclick="saveProp()">Save property</button>
     <button class="btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('propOverlay')">Cancel</button>
   </div>
 </div>
@@ -2432,12 +2473,13 @@ function showSignUp(e){
   if(suE){suE.value=document.getElementById('lEmail').value||'';}
 }
 // Show/hide a password field's plain text; shared by every password input on the auth screen
+var EYE_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',EYEOFF_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a18.5 18.5 0 0 1 5.1-5.9M9.9 4.2A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.2 3.2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 function togglePwd(id,btn){
   var inp=document.getElementById(id);
   if(!inp)return;
   var showing=inp.type==='text';
   inp.type=showing?'password':'text';
-  btn.textContent=showing?'👁':'🙈';
+  btn.innerHTML=showing?EYE_ICON:EYEOFF_ICON;
   btn.setAttribute('aria-label',showing?'Show password':'Hide password');
 }
 function doSignUp(){
@@ -2464,7 +2506,7 @@ function doSignUp(){
     }
     // Supabase projects with email confirmation ON return a user but no session here.
     if(!data.access_token||!data.user){
-      document.getElementById('suSuccess').textContent='✅ Account created! Check your email to confirm, then sign in.';
+      document.getElementById('suSuccess').textContent='Account created! Check your email to confirm, then sign in.';
       document.getElementById('suSuccess').style.display='';
       btn.disabled=false;btn.textContent='Next →';
       return;
@@ -2724,7 +2766,7 @@ function openViewBooking(id,origin){
   var modal=ov.querySelector('.modal');
   modal.innerHTML=
     '<div class="modal-handle"></div>'+
-    '<h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">📋 Reservation Details</h3>'+
+    '<h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px">Reservation Details</h3>'+
     '<div style="display:flex;flex-direction:column;gap:12px">'+
       '<div><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Guest</div>'+
       '<div style="font-size:15px;font-weight:700">'+esc(guest||'—')+'</div></div>'+
@@ -2813,16 +2855,16 @@ function loadRequests(){
       if(!tableNotFound){
         var rl=document.getElementById('reqList');
         if(rl)rl.innerHTML=
-          '<div class="empty-state"><div class="ico">⚠️</div>'+
+          '<div class="empty-state"><div class="ico"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17.5" x2="12" y2="17.6"/></svg></div>'+
           '<h3>Could not load requests</h3>'+
           '<p style="font-size:12px;color:#dc2626;font-family:monospace;text-align:left;background:#fee2e2;padding:10px;border-radius:8px;margin:12px 0">'+esc(msg)+'</p>'+
-          '<button class="btn-primary" onclick="loadRequests()">🔄 Retry</button>'+
+          '<button class="btn-primary" onclick="loadRequests()">Retry</button>'+
           '</div>';
         return Promise.resolve();
       }
       // Table doesn't exist yet — show setup prompt
       document.getElementById('reqList').innerHTML=
-        '<div class="empty-state"><div class="ico">🗄️</div>'+
+        '<div class="empty-state"><div class="ico"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>'+
         '<h3>One-time setup needed</h3>'+
         '<p>Run the SQL below in your Supabase dashboard to create the <code>direct_requests</code> table.</p>'+
         '<div style="background:#0f172a;border-radius:10px;padding:14px;font-size:11px;color:#a5f3fc;text-align:left;margin:16px 0;line-height:1.7;font-family:monospace">'+
@@ -2855,7 +2897,7 @@ function loadRequests(){
         'USING (workspace_id IN (SELECT id FROM workspaces WHERE user_id = auth.uid()))\n'+
         'WITH CHECK (workspace_id IN (SELECT id FROM workspaces WHERE user_id = auth.uid()));'+
         '</div>'+
-        '<button class="btn-primary" onclick="loadRequests()">🔄 Retry after setup</button>'+
+        '<button class="btn-primary" onclick="loadRequests()">Retry after setup</button>'+
         '</div>';
       return Promise.resolve();
     });
@@ -2917,7 +2959,7 @@ function renderRequests(){
   });
   var filtered=reqFilter==='all'?genuineRequests:genuineRequests.filter(function(r){return r.status===reqFilter;});
   if(!filtered.length){
-    list.innerHTML='<div class="empty-state"><div class="ico">'+(reqFilter==='pending'?'⏳':'📭')+'</div>'+
+    list.innerHTML='<div class="empty-state"><div class="ico">'+(reqFilter==='pending'?'<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>':'<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l3-8h12l3 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1 3h6l1-3h5"/></svg>')+'</div>'+
       '<h3>'+(reqFilter==='pending'?'No pending requests':'No requests yet')+'</h3>'+
       '<p>'+(reqFilter==='pending'?'You\'re all caught up.':'Share your widget link to start receiving direct bookings.')+'</p></div>';
     return;
@@ -2942,20 +2984,20 @@ function renderRequests(){
         '<div class="rdb r"><div class="rdlbl">Check-out</div><div class="rdval">'+fmtShort(req.checkout)+'</div><div class="rdday">'+fmtDay(req.checkout)+'</div></div>'+
       '</div>'+
       '<div class="req-info">'+
-        '<span class="chip">🏡 '+(esc(req.apt_name)||'—')+'</span>'+
-        '<span class="chip">👥 '+req.guests+' guest'+(req.guests>1?'s':'')+'</span>'+
-        '<span class="chip">🌙 '+nights+' night'+(nights!==1?'s':'')+'</span>'+
-        (req.rate_per_night?'<span class="chip">💶 €'+req.rate_per_night+'/nt</span>':'')+
+        '<span class="chip">'+(esc(req.apt_name)||'—')+'</span>'+
+        '<span class="chip">'+req.guests+' guest'+(req.guests>1?'s':'')+'</span>'+
+        '<span class="chip">'+nights+' night'+(nights!==1?'s':'')+'</span>'+
+        (req.rate_per_night?'<span class="chip">€'+req.rate_per_night+'/nt</span>':'')+
         (req.total_amount?'<span class="chip" style="font-weight:900">Total: €'+req.total_amount+'</span>':'')+
       '</div>'+
-      (req.notes?'<div class="req-note">💬 '+esc(cleanNotesDisplay(req.notes))+'</div>':'')+
+      (req.notes?'<div class="req-note">'+esc(cleanNotesDisplay(req.notes))+'</div>':'')+
       '<div class="req-actions">'+
         (req.status==='pending'?
-          '<button class="btn-green" onclick="openRespond(\''+req.id+'\',\'confirmed\')">✅ Confirm</button>'+
-          '<button class="btn-red" onclick="openRespond(\''+req.id+'\',\'declined\')">❌ Decline</button>':
-          '<button class="btn-outline" onclick="openRespond(\''+req.id+'\',\''+req.status+'\')">✏️ Update</button>')+
-        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">📧 Email</button>'+
-        (req.guest_phone?'<button class="btn-outline" onclick="whatsApp(\''+esc(req.guest_phone)+'\')">💬 WhatsApp</button>':'')+
+          '<button class="btn-green" onclick="openRespond(\''+req.id+'\',\'confirmed\')">Confirm</button>'+
+          '<button class="btn-red" onclick="openRespond(\''+req.id+'\',\'declined\')">Decline</button>':
+          '<button class="btn-outline" onclick="openRespond(\''+req.id+'\',\''+req.status+'\')">Update</button>')+
+        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">Email</button>'+
+        (req.guest_phone?'<button class="btn-outline" onclick="whatsApp(\''+esc(req.guest_phone)+'\')">WhatsApp</button>':'')+
         '<span style="flex:1"></span>'+
         '<span style="font-size:10px;color:var(--muted);font-weight:700">'+fmtAgo(req.created_at)+'</span>'+
       '</div>';
@@ -2978,7 +3020,7 @@ function renderImportedBookings(list){
   section.innerHTML=
     '<div style="margin-top:24px;margin-bottom:10px;display:flex;align-items:center;gap:10px">'+
       '<div style="font-size:10px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'+
-        '📋 Imported bookings ('+visible.length+' booking'+(visible.length!==1?'s':'')+')</div>'+
+        'Imported bookings ('+visible.length+' booking'+(visible.length!==1?'s':'')+')</div>'+
       '<div style="flex:1;height:1px;background:var(--border)"></div>'+
       '<span style="font-size:10px;font-weight:700;color:var(--muted)">Imported · read-only</span>'+
     '</div>';
@@ -3001,9 +3043,9 @@ function renderImportedBookings(list){
         '</div>'+
         '<div style="display:flex;gap:6px;align-items:center">'+
           '<span class="status-badge" style="background:#'+(b.source==='airbnb'?'fee2e2;color:#9f1239':b.source==='booking'?'dbeafe;color:#1e40af':'dcfce7;color:#15803d')+'">'+
-            (b.source==='airbnb'?'🏠 Airbnb':b.source==='booking'?'📋 Booking.com':'🤝 Direct')+
+            (b.source==='airbnb'?'Airbnb':b.source==='booking'?'Booking.com':'Direct')+
           '</span>'+
-          (isActive?'<span class="status-badge" style="background:#fef3c7;color:#92400e">🟡 Active</span>':'')+
+          (isActive?'<span class="status-badge" style="background:#fef3c7;color:#92400e">Active</span>':'')+
         '</div>'+
       '</div>'+
       '<div class="req-dates">'+
@@ -3012,10 +3054,10 @@ function renderImportedBookings(list){
         '<div class="rdb r"><div class="rdlbl">Check-out</div><div class="rdval">'+fmtShort(b.checkout)+'</div><div class="rdday">'+fmtDay(b.checkout)+'</div></div>'+
       '</div>'+
       '<div class="req-info">'+
-        '<span class="chip" style="background:'+apt.color+'22;color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</span>'+
-        '<span class="chip">🌙 '+nights+' night'+(nights!==1?'s':'')+'</span>'+
-        '<span class="chip '+(b.cleaned==='yes'?'':'')+'">🧹 '+(b.cleaned==='yes'?'Cleaned':'Not cleaned')+'</span>'+
-        '<span class="chip '+(b.paid==='paid'?'':'')+'">💶 '+(b.paid==='paid'?'Paid':'Unpaid')+'</span>'+
+        '<span class="chip" style="background:'+apt.color+'22;color:'+apt.color+'">'+esc(apt.name||b.apt)+'</span>'+
+        '<span class="chip">'+nights+' night'+(nights!==1?'s':'')+'</span>'+
+        '<span class="chip '+(b.cleaned==='yes'?'':'')+'">'+(b.cleaned==='yes'?'Cleaned':'Not cleaned')+'</span>'+
+        '<span class="chip '+(b.paid==='paid'?'':'')+'">'+(b.paid==='paid'?'Paid':'Unpaid')+'</span>'+
       '</div>'+
       '<div class="req-actions" style="justify-content:flex-end">'+
         
@@ -3073,7 +3115,7 @@ function setReplyTemplate(action){
         var reqDep=prop2&&prop2.requireDeposit!==false;
         var dep=Math.round((activeRequest.total_amount||0)/2);
         var iban=prop2&&prop2.iban?prop2.iban:'[YOUR IBAN / WISE / REVOLUT]';
-        return 'Hi '+name+',\n\nGreat news — your booking is confirmed! 🎉\n\n📍 '+apt+'\n📅 '+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n🌙 '+nights+' nights\n\n'+(reqDep?'Deposit (50%): €'+dep+'\n':'')+'Total: €'+(activeRequest.total_amount||'TBD')+'\n\nPayment: '+iban+'\n\nBest,\n'+hostBizName();
+        return 'Hi '+name+',\n\nGreat news — your booking is confirmed!\n\n'+apt+'\n'+fmtFull(activeRequest.checkin)+' → '+fmtFull(activeRequest.checkout)+'\n'+nights+' nights\n\n'+(reqDep?'Deposit (50%): €'+dep+'\n':'')+'Total: €'+(activeRequest.total_amount||'TBD')+'\n\nPayment: '+iban+'\n\nBest,\n'+hostBizName();
       })():
     action==='declined'?
       'Hi '+name+',\n\nThank you for your interest in '+apt+'.\n\nUnfortunately those dates are not available.\n\nBest,\n'+hostBizName():
@@ -3120,13 +3162,13 @@ function sendReply(){
     // Send email to guest
     return sendGuestEmail(activeRequest.guest_email,activeRequest.guest_name,msg,action);
   }).then(function(){
-    toast(action==='confirmed'?'✅ Booking confirmed!':
-          action==='declined'?'❌ Request declined.':'⏳ Status updated.','ok');
+    toast(action==='confirmed'?'Booking confirmed!':
+          action==='declined'?'Request declined.':'Status updated.','ok');
     closeModal('respondOverlay');
     loadRequests();
   }).catch(function(e){
     toast('Error: '+e.message,'err');
-  }).finally(function(){btn.disabled=false;btn.textContent='📧 Send & update';});
+  }).finally(function(){btn.disabled=false;btn.textContent='Send & update';});
 }
 
 function confirmToBookings(req){
@@ -3163,13 +3205,13 @@ function removeRequestBooking(req){
 
 function sendGuestEmail(email,name,message,action){
   var subjects={
-    confirmed:'Your booking is confirmed! 🎉',
+    confirmed:'Your booking is confirmed!',
     declined:'About your booking request',
     pending:'Your booking request — update'
   };
   var html='<div style="font-family:monospace;max-width:600px;background:#f8fafc;padding:32px;border-radius:8px;color:#1e293b">'+
     '<p style="font-size:22px;font-family:Georgia,serif;font-weight:300;margin:0 0 20px">'+
-    (action==='confirmed'?'Your booking is confirmed 🎉':action==='declined'?'Booking update':'Update on your request')+
+    (action==='confirmed'?'Your booking is confirmed':action==='declined'?'Booking update':'Update on your request')+
     '</p>'+
     '<div style="background:#fff;border-radius:8px;padding:20px;font-size:13px;line-height:1.8;border:1px solid #e2e8f0">'+
     esc(message).replace(/\n/g,'<br>')+'</div>'+
@@ -3663,7 +3705,7 @@ function bpInput(){
 }
 function bpUpBtn(id,kind){
   return '<div style="margin:-4px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-    '<button type="button" class="copy-btn" onclick="bpUpload(\''+id+'\',\''+kind+'\')">📷 Upload from my device</button>'+
+    '<button type="button" class="copy-btn" onclick="bpUpload(\''+id+'\',\''+kind+'\')"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Upload from my device</button>'+
     '<button type="button" class="copy-btn" style="opacity:.8" onclick="document.getElementById(\''+id+'\').value=\'\';bpInput()">Remove</button>'+
     '<em id="'+id+'St" style="font-style:normal;font-size:12px;color:var(--muted)"></em></div>';
 }
@@ -3743,7 +3785,7 @@ function bpRefreshShare(){
   if(wa){
     var d=bpDigits();
     var url=d?'https://wa.me/'+d+'?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.':'';
-    wa.innerHTML=d?'<div class="link-box" onclick="copyText(\''+url+'\',this)">'+url+'</div><button class="copy-btn" onclick="copyText(\''+url+'\',this)">📋 Copy WhatsApp link</button>':
+    wa.innerHTML=d?'<div class="link-box" onclick="copyText(\''+url+'\',this)">'+url+'</div><button class="copy-btn" onclick="copyText(\''+url+'\',this)">Copy WhatsApp link</button>':
       '<div style="font-size:12.5px;color:var(--muted)">Add your WhatsApp number in step 1 to get a quick link.</div>';
   }
   var ec=document.getElementById('embedCode');
@@ -3814,7 +3856,7 @@ function renderWidget(){
     // link + save bar
     '<div class="bpx-card bpx-link">'+
       '<div class="lk" onclick="copyText(\''+bookingUrl+'\',this)" title="Click to copy">'+bookingUrl+'</div>'+
-      '<button class="copy-btn" onclick="copyText(\''+bookingUrl+'\',this)">📋 Copy</button>'+
+      '<button class="copy-btn" onclick="copyText(\''+bookingUrl+'\',this)">Copy</button>'+
       '<button class="copy-btn" onclick="window.open(\''+bookingUrl+'\',\'_blank\')">↗ Open</button>'+
       '<button class="copy-btn" onclick="genQR(\''+bookingUrl+'\');bpTab(\'share\')">QR</button>'+
       '<button class="btn-primary" style="font-size:13px;padding:9px 16px" onclick="saveBookingPage()">Save changes</button>'+
@@ -3870,10 +3912,10 @@ function renderWidget(){
       // SHARE
       '<div class="bpx-pane" data-p="share">'+
         '<div class="bp-lab" style="margin-top:0">QR code</div>'+
-        '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><button class="copy-btn" onclick="genQR(\''+bookingUrl+'\')">📱 Show QR code</button><div id="qrArea" class="qr-wrap"></div></div>'+
+        '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><button class="copy-btn" onclick="genQR(\''+bookingUrl+'\')">Show QR code</button><div id="qrArea" class="qr-wrap"></div></div>'+
         '<div class="bp-lab" style="margin-top:14px">“Book Direct” button for your website</div>'+
         '<div class="code-box" id="embedCode">'+esc(embedCode)+'</div>'+
-        '<button class="copy-btn" onclick="copyText(window._embedCode,this)">📋 Copy embed code</button>'+
+        '<button class="copy-btn" onclick="copyText(window._embedCode,this)">Copy embed code</button>'+
         '<div class="bp-lab" style="margin-top:14px">WhatsApp quick link</div><div id="bpWaLink"></div>'+
       '</div>'+
     '</div>'+
@@ -3920,7 +3962,7 @@ function renderWidgetPropList(){
         'background:'+(hidden?'var(--bg)':'var(--green-bg)')+';'+
         'color:'+(hidden?'var(--muted)':'#15803d')+';'+
         'border-radius:8px;padding:5px 11px;font-family:\'Inter\',sans-serif;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">'+
-        (hidden?'👁 Show':'✓ Visible')+
+        (hidden?'Show':'✓ Visible')+
       '</button>';
     container.appendChild(row);
   });
@@ -3936,7 +3978,7 @@ function copyText(text,btn){
   var t=text===document.getElementById('embedCode')?window._embedCode:text;
   navigator.clipboard.writeText(t).then(function(){
     var orig=btn.textContent;
-    btn.textContent='✅ Copied!';
+    btn.textContent='Copied!';
     setTimeout(function(){btn.textContent=orig;},1500);
     toast('Copied to clipboard','ok');
   }).catch(function(){toast('Copy failed — select manually','err');});
@@ -3947,7 +3989,7 @@ function genQR(url){
   // Use a free QR API
   var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(url);
   area.innerHTML='<img src="'+qrUrl+'" alt="QR Code" style="border-radius:8px;box-shadow:var(--shadow)" width="200" height="200">'+
-    '<div style="text-align:center;margin-top:8px"><a href="'+qrUrl+'" download="booking-qr.png"><button class="copy-btn">⬇️ Download QR</button></a></div>';
+    '<div style="text-align:center;margin-top:8px"><a href="'+qrUrl+'" download="booking-qr.png"><button class="copy-btn">Download QR</button></a></div>';
 }
 
 // ── PAYMENTS ────────────────────────────────────────────────────────────────
@@ -4501,7 +4543,7 @@ function renderRevenueAnalytics(){
     '<div class="fin-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">'+
       visibleKpis.map(function(id){var v=KPI_VALUES[id];return kpiCard(kpiDefLabel(id),v.val,v.sub,v.color);}).join('')+
     '</div>':
-    '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12.5px;margin-bottom:20px">All KPI cards are hidden — click "⚙ Customize" to show some.</div>';
+    '<div style="text-align:center;padding:14px;color:var(--muted);font-size:12.5px;margin-bottom:20px">All KPI cards are hidden — click "Customize" to show some.</div>';
 
   // ── Data quality warning ──────────────────────────────────────────────────
   function stayLine(s){
@@ -4513,30 +4555,30 @@ function renderRevenueAnalytics(){
   var qualityWarning='';
   if(F.missingFin.length){
     qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
-      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.missingFin.length+' Booking.com/Airbnb booking'+(F.missingFin.length>1?'s':'')+' have no revenue data</div>'+
+      '<div style="font-weight:700;margin-bottom:6px">'+F.missingFin.length+' Booking.com/Airbnb booking'+(F.missingFin.length>1?'s':'')+' have no revenue data</div>'+
       '<div style="margin-bottom:8px;line-height:1.8">'+F.missingFin.map(stayLine).join('<br>')+'</div>'+
       '<div>→ Re-import your Booking.com/Airbnb file to fix this. Revenue totals below are understated.</div></div>';
   }
   if(F.missingDirect.length){
     qualityWarning+='<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#991b1b">'+
-      '<div style="font-weight:700;margin-bottom:6px">🔴 '+F.missingDirect.length+' direct booking'+(F.missingDirect.length>1?'s':'')+' have €0 gross revenue</div>'+
+      '<div style="font-weight:700;margin-bottom:6px">'+F.missingDirect.length+' direct booking'+(F.missingDirect.length>1?'s':'')+' have €0 gross revenue</div>'+
       '<div style="margin-bottom:8px;line-height:1.8">'+F.missingDirect.map(stayLine).join('<br>')+'</div>'+
       '<div>→ Set the price in the Reservations tab (or mark it complimentary if it was free).</div></div>';
   }
   if(F.overlaps.length){
     qualityWarning+='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#9a3412">'+
-      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.overlaps.length+' overlapping stay'+(F.overlaps.length>1?'s':'')+' on the same property (double booking or duplicate import)</div>'+
+      '<div style="font-weight:700;margin-bottom:6px">'+F.overlaps.length+' overlapping stay'+(F.overlaps.length>1?'s':'')+' on the same property (double booking or duplicate import)</div>'+
       '<div style="margin-bottom:8px;line-height:1.8">'+F.overlaps.map(function(o){return stayLine(o.a)+'  ⟷  '+stayLine(o.b).slice(2);}).join('<br>')+'</div>'+
       '<div>→ Revenue is counted for both, and occupancy may exceed 100%. Delete the duplicate in Reservations if it is an import duplicate.</div></div>';
   }
   if(F.undatedOnce.length){
     qualityWarning+='<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'+
-      '<div style="font-weight:700;margin-bottom:6px">⚠️ '+F.undatedOnce.length+' one-time expense'+(F.undatedOnce.length>1?'s have':' has')+' no date and is NOT counted in any year</div>'+
+      '<div style="font-weight:700;margin-bottom:6px">'+F.undatedOnce.length+' one-time expense'+(F.undatedOnce.length>1?'s have':' has')+' no date and is NOT counted in any year</div>'+
       '<div>'+F.undatedOnce.map(function(e){return'• '+esc(e.name||'(unnamed)')+' — €'+(e.amount||0);}).join('<br>')+'</div>'+
       '<div style="margin-top:6px">→ Open the Expenses panel below and give each a date.</div></div>';
   }
   if(F.occRaw>100){
-    qualityWarning+='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#9a3412">⚠️ Occupied nights exceed available nights ('+F.occNights+' vs '+F.availNights+'). Occupancy is capped at 100% — check overlapping bookings or the listing start date.</div>';
+    qualityWarning+='<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#9a3412">Occupied nights exceed available nights ('+F.occNights+' vs '+F.availNights+'). Occupancy is capped at 100% — check overlapping bookings or the listing start date.</div>';
   }
 
   container.innerHTML=
@@ -4544,7 +4586,7 @@ function renderRevenueAnalytics(){
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">'+
       '<select onchange="setFinYear(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+yearOpts+'</select>'+
       '<select onchange="_finApt=this.value;renderRevenueAnalytics()" style="border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;color:var(--text);background:var(--card-bg,#fff)">'+aptOpts+'</select>'+
-      '<button class="btn-outline" style="font-size:12px;padding:7px 12px" onclick="openDashCustomize()">⚙ Customize</button>'+
+      '<button class="btn-outline" style="font-size:12px;padding:7px 12px" onclick="openDashCustomize()"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>Customize</button>'+
       '<div style="margin-left:auto;font-size:11px;color:var(--muted)">'+totalBks+' bookings · '+totalOccNights+' nights occupied of '+totalAvailableNights+' available · '+numProps+' unit'+(numProps>1?'s':'')+'</div>'+
     '</div>'+
     qualityWarning+
@@ -4588,14 +4630,14 @@ function renderRevenueAnalytics(){
           '<select id="expFilterApt" onchange="renderExpensesList()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+expAptOptsForPanel+
           '</select>'+
           '<div style="width:1px;height:22px;background:var(--border)"></div>'+
-          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openReceiptScan()">📷 Scan receipt</button>'+
+          '<button class="btn-outline" style="font-size:12px;padding:6px 12px" onclick="openReceiptScan()"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Scan receipt</button>'+
           '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px">+ Add ▾</summary>'+
             '<div class="exp-menu-list">'+
               '<button onclick="closeExpMenus();addExpenseRow(&apos;recurring&apos;)">Recurring expense</button>'+
               '<button onclick="closeExpMenus();addExpenseRow(&apos;once&apos;)">One-time expense</button>'+
             '</div>'+
           '</details>'+
-          '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px">📥 Import ▾</summary>'+
+          '<details class="exp-menu"><summary class="btn-outline" style="font-size:12px;padding:6px 12px"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></svg>Import ▾</summary>'+
             '<div class="exp-menu-list">'+
               '<button onclick="closeExpMenus();openExpImport(&apos;recurring&apos;)">Recurring, from file</button>'+
               '<button onclick="closeExpMenus();openExpImport(&apos;once&apos;)">One-time, from file</button>'+
@@ -4788,7 +4830,7 @@ function closeExpensesManager(){
 function closeExpMenus(){
   document.querySelectorAll('.exp-menu[open]').forEach(function(d){d.removeAttribute('open');});
 }
-// Only one "+ Add" / "📥 Import" dropdown open at a time, and click-outside closes them.
+// Only one "+ Add" / "Import" dropdown open at a time, and click-outside closes them.
 document.addEventListener('click',function(ev){
   if(!ev.target.closest('.exp-menu'))closeExpMenus();
 });
@@ -5022,42 +5064,251 @@ function saveExpenses(){
   }).catch(function(e){alert('Save failed: '+e.message);});
 }
 
+// ── Pure parsing helpers (no DOM) ────────────────────────────────────────────
+// Portuguese fiscal QR (Portaria 195/2020): fields separated by '*', each "K:value".
+// A = seller NIF, F = date YYYYMMDD, O = document total (VAT included), H = ATCUD.
+function rsParseAT(t){
+  if(!t||t.indexOf('*')<0)return null;
+  var o={};
+  String(t).split('*').forEach(function(p){var i=p.indexOf(':');if(i>0)o[p.slice(0,i)]=p.slice(i+1);});
+  if(!/^\d{9}$/.test(o.A||'')||!/^\d{8}$/.test(o.F||'')||o.O==null)return null;
+  var amt=parseFloat(String(o.O).replace(',','.'));
+  if(!(amt>0))return null;
+  var y=+o.F.slice(0,4),m=+o.F.slice(4,6),d=+o.F.slice(6,8);
+  if(y<2000||y>2100||m<1||m>12||d<1||d>31)return null;
+  return{nif:o.A,amount:Math.round(amt*100)/100,date:o.F.slice(0,4)+'-'+o.F.slice(4,6)+'-'+o.F.slice(6,8),doc:o.G||'',atcud:o.H||''};
+}
+function rsAmt(s){
+  s=String(s).replace(/\s/g,'');
+  var m=/^(\d{1,3}(?:[.,]\d{3})*|\d+)[.,](\d{2})$/.exec(s);
+  if(!m)return 0;
+  return parseFloat(m[1].replace(/[.,]/g,'')+'.'+m[2]);
+}
+function rsMoneyIn(line){
+  var out=[],re=/(\d{1,3}(?:[.,]\d{3})*[.,]\d{2}|\d+[.,]\d{2})(?!\d)(?!\s*%)/g,m;
+  while((m=re.exec(line))){
+    var v=rsAmt(m[1]);
+    if(v>0&&v<100000)out.push(v);
+  }
+  return out;
+}
+// Free-text fallback for receipts without a readable QR.
+function rsParseText(text,nowISO){
+  text=String(text||'').replace(/\r/g,'');
+  var lines=text.split('\n').map(function(l){return l.replace(/[|_~]/g,' ').trim();}).filter(function(l){return l.length>0;});
+  var res={name:'',amount:0,date:'',nif:''};
+
+  // NIF of the seller: the one following "NIF" (not the customer's "Cont.")
+  var nm=/\bN\.?I\.?F\.?\s*[:.]?\s*(\d{9})\b/i.exec(text);
+  if(nm)res.nif=nm[1];
+
+  // Amount — score candidates; a number that appears on a "total" line, on a
+  // payment line (Multibanco, numerário…) and again elsewhere is almost surely the total.
+  var totalRe=/\b(total|a pagar|amount due|montant|importe|valor a pagar|pagar)\b/i;
+  var payRe=/\b(multibanco|numer[aá]rio|dinheiro|cart[aã]o|mbway|mb way|visa|mastercard|pago|entregue|cash|card)\b/i;
+  var skipRe=/\b(iva|taxa|sujeito|incid|troco|change|desconto|poupan|pre[cç]o|un\s*x|qtd)\b/i;
+  var score={};
+  function bump(v,w){var k=v.toFixed(2);score[k]=(score[k]||0)+w;}
+  lines.forEach(function(l,i){
+    var vals=rsMoneyIn(l);
+    if(!vals.length)return;
+    if(skipRe.test(l)&&!totalRe.test(l))return;
+    var w=1;
+    if(totalRe.test(l))w=4;else if(payRe.test(l))w=3;
+    vals.forEach(function(v){bump(v,w);});
+    // value printed on the line below a bare "TOTAL" label
+    if(totalRe.test(l)&&!vals.length&&lines[i+1])rsMoneyIn(lines[i+1]).forEach(function(v){bump(v,3);});
+  });
+  // "TOTAL:" alone on its line → look at the next two lines
+  lines.forEach(function(l,i){
+    if(/^\W*(total|a pagar)\W*$/i.test(l)){for(var j=1;j<=2;j++){if(lines[i+j])rsMoneyIn(lines[i+j]).forEach(function(v){bump(v,3);});}}
+  });
+  var best=0,bs=-1;
+  Object.keys(score).forEach(function(k){var v=parseFloat(k);if(score[k]>bs||(score[k]===bs&&v>best)){bs=score[k];best=v;}});
+  res.amount=best;
+
+  // Date — year first (2026/11/09) or day first (09/11/2026), 2-digit years last.
+  var cands=[];
+  var re1=/\b(20\d{2})\s*[-\/.]\s*(\d{1,2})\s*[-\/.]\s*(\d{1,2})\b/g,re2=/\b(\d{1,2})\s*[-\/.]\s*(\d{1,2})\s*[-\/.]\s*(20\d{2})\b/g,re3=/\b(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2})\b/g,m;
+  while((m=re1.exec(text)))cands.push([+m[1],+m[2],+m[3]]);
+  while((m=re2.exec(text)))cands.push([+m[3],+m[2],+m[1]]);
+  while((m=re3.exec(text)))cands.push([2000+(+m[3]),+m[2],+m[1]]);
+  var now=nowISO?new Date(nowISO):new Date();
+  for(var c=0;c<cands.length;c++){
+    var y=cands[c][0],mo=cands[c][1],d=cands[c][2];
+    if(mo<1||mo>12||d<1||d>31||y<2015)continue;
+    var dt=new Date(Date.UTC(y,mo-1,d));
+    if(dt.getTime()>now.getTime()+2*86400000)continue;
+    res.date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');break;
+  }
+
+  // Vendor — first strong header line near the top.
+  var noise=/\b(de:|nif|contribuinte|cont\.?|fatura|factura|recibo|invoice|receipt|original|duplicado|data|hora|cliente|morada|rua|av\.|avenida|tel|www|\.com|\.pt|iva|total|obrigado|ordem|pst|n[ºo°])\b/i;
+  function clean(l){return l.replace(/[^A-Za-zÀ-ÿ0-9&'.\- ]/g,' ').replace(/\s+/g,' ').trim();}
+  for(var k=0;k<Math.min(lines.length,8)&&!res.name;k++){
+    var cl=clean(lines[k]);
+    var letters=cl.replace(/[^A-Za-zÀ-ÿ]/g,'');
+    if(letters.length<3||cl.length>38)continue;
+    if(noise.test(lines[k]))continue;
+    var up=letters.replace(/[^A-ZÀ-Þ]/g,'').length;
+    if(up/letters.length>=0.7)res.name=cl;
+  }
+  if(!res.name){
+    var dm=/\bDE\s*:\s*(.{3,40})/i.exec(text);
+    if(dm)res.name=clean(dm[1]);
+  }
+  if(!res.name){
+    var dom=/\b(?:www\.)?([a-z0-9][a-z0-9-]{1,24})\.(com|pt|net|shop|store|eu|es|fr)\b/i.exec(text);
+    if(dom)res.name=dom[1].charAt(0).toUpperCase()+dom[1].slice(1).toLowerCase();
+  }
+  if(res.name.length>40)res.name=res.name.slice(0,40);
+  return res;
+}
+
 // ── Scan a receipt photo → one-time expense ──────────────────────────────────
-// Entirely client-side (Tesseract.js, lazy-loaded like the XLSX library below):
-// the photo never leaves the browser. OCR text is then parsed with simple
-// heuristics (amount, date, vendor) — same "best effort, human reviews before
-// saving" pattern as the CSV/XLS importer, because receipt OCR is never 100%
-// reliable and this data feeds payroll, so nothing is auto-saved without the
-// user seeing and confirming the extracted fields first.
-var _rsFile=null,_rsRawText='';
+// Everything runs in the browser; the photo is never uploaded.
+// 1) The fiscal QR code printed on Portuguese receipts holds the exact total, the
+//    date and the seller's NIF. It is read first, takes under a second, and is
+//    exact, so amount and date no longer depend on text recognition.
+// 2) Text recognition (Tesseract) then reads the shop name, and also the amount and
+//    date when no QR code is found. The shop name is remembered per NIF, so the
+//    next receipt from the same shop is named instantly.
+// Nothing is saved before the user has seen and confirmed the three fields.
+var _rsFile=null,_rsRawText='',_rsNif='',_rsAtcud='',_rsToken=0,_rsThumb='',_rsNameTouched=false;
+var RS_T={
+  en:{title:'Add receipt',sub:'Take a photo or choose one. On Portuguese receipts the fiscal QR code gives the exact total and date.',cam:'Camera',camS:'Snap a photo of the receipt',lib:'Photo library',libS:'Choose an existing photo',
+    qrOk:'Fiscal QR code read. Total and date are exact.',txt:'Read from the text. Please check the three fields.',none:'Nothing could be read. Fill in the fields below.',
+    vendor:'Name / vendor',amount:'Amount (€)',date:'Date',prop:'Property',noProp:'No specific property',raw:'Show raw extracted text',rescan:'Rescan',add:'Add as one-time expense',
+    reading:'Reading the receipt…',dup:'An expense of this amount and date already exists. Check you are not adding the same receipt twice.',nameReq:'Name is required',amtReq:'Amount must be greater than 0',dateReq:'Date is required',added:'Expense added from receipt',libErr:'Could not load the scanning library. Check your connection and try again.',imgErr:'This photo could not be opened. Try a JPG or PNG.'},
+  fr:{title:'Ajouter un reçu',sub:'Prenez une photo ou choisissez-en une. Sur les reçus portugais, le QR code fiscal donne le total et la date exacts.',cam:'Appareil photo',camS:'Photographier le reçu',lib:'Photothèque',libS:'Choisir une photo existante',
+    qrOk:'QR code fiscal lu. Total et date exacts.',txt:'Lu depuis le texte. Vérifiez les trois champs.',none:'Rien n\'a pu être lu. Remplissez les champs.',
+    vendor:'Nom / fournisseur',amount:'Montant (€)',date:'Date',prop:'Bien',noProp:'Aucun bien précis',raw:'Afficher le texte brut',rescan:'Rescanner',add:'Ajouter comme dépense ponctuelle',
+    reading:'Lecture du reçu…',dup:'Une dépense de ce montant et de cette date existe déjà. Vérifiez que ce n\'est pas le même reçu.',nameReq:'Le nom est requis',amtReq:'Le montant doit être supérieur à 0',dateReq:'La date est requise',added:'Dépense ajoutée depuis le reçu',libErr:'Impossible de charger la bibliothèque de lecture. Vérifiez votre connexion.',imgErr:'Cette photo n\'a pas pu être ouverte. Essayez un JPG ou PNG.'},
+  pt:{title:'Adicionar recibo',sub:'Tire uma foto ou escolha uma. Nos recibos portugueses, o QR code fiscal dá o total e a data exatos.',cam:'Câmara',camS:'Fotografar o recibo',lib:'Fototeca',libS:'Escolher uma foto existente',
+    qrOk:'QR code fiscal lido. Total e data exatos.',txt:'Lido a partir do texto. Verifique os três campos.',none:'Não foi possível ler nada. Preencha os campos.',
+    vendor:'Nome / fornecedor',amount:'Montante (€)',date:'Data',prop:'Propriedade',noProp:'Nenhuma propriedade específica',raw:'Mostrar texto lido',rescan:'Digitalizar de novo',add:'Adicionar como despesa pontual',
+    reading:'A ler o recibo…',dup:'Já existe uma despesa com este montante e data. Verifique que não é o mesmo recibo.',nameReq:'O nome é obrigatório',amtReq:'O montante deve ser maior que 0',dateReq:'A data é obrigatória',added:'Despesa adicionada a partir do recibo',libErr:'Não foi possível carregar a biblioteca de leitura. Verifique a ligação.',imgErr:'Não foi possível abrir esta foto. Tente JPG ou PNG.'}
+};
+function RT(k){var d=RS_T[cleanLang]||RS_T.en;return d[k]!=null?d[k]:RS_T.en[k];}
+function rsApplyLabels(){
+  document.querySelectorAll('#receiptScanOverlay [data-rt]').forEach(function(e){e.textContent=RT(e.getAttribute('data-rt'));});
+}
+function rsShow(step){
+  document.getElementById('rsPick').style.display=step==='pick'?'':'none';
+  document.getElementById('rsReview').style.display=step==='review'?'':'none';
+}
 function openReceiptScan(){
   var sel=document.getElementById('rsApt');
-  sel.innerHTML='<option value="all">No specific property</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
-  document.getElementById('rsCameraInput').value='';
-  document.getElementById('rsGalleryInput').value='';
-  document.getElementById('rsPreviewImg').style.display='none';
-  document.getElementById('rsStatus').textContent='';
-  document.getElementById('rsStep1').style.display='';
-  document.getElementById('rsStep2').style.display='none';
-  _rsFile=null;_rsRawText='';
+  sel.innerHTML='<option value="all">'+RT('noProp')+'</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
+  rsReset();
+  rsApplyLabels();
+  rsShow('pick');
   document.getElementById('receiptScanOverlay').classList.add('show');
 }
-function rsBackToStep1(){
-  document.getElementById('rsStep1').style.display='';
-  document.getElementById('rsStep2').style.display='none';
+function rsReset(){
+  _rsToken++;_rsFile=null;_rsRawText='';_rsNif='';_rsAtcud='';_rsNameTouched=false;
+  document.getElementById('rsCameraInput').value='';
+  document.getElementById('rsGalleryInput').value='';
+  if(_rsThumb){try{URL.revokeObjectURL(_rsThumb);}catch(e){}_rsThumb='';}
+  var img=document.getElementById('rsPreviewImg');img.removeAttribute('src');
+  ['rsName','rsAmount','rsDate'].forEach(function(id){var e=document.getElementById(id);e.value='';e.classList.remove('rs-sk');e.disabled=false;});
+  document.getElementById('rsRawText').textContent='';
+  document.getElementById('rsDup').style.display='none';
+  rsBadge('','');
 }
-// Fired by either the camera input or the gallery input — whichever the user
-// used, a file was picked, so preview it and start OCR right away (no extra
-// "confirm" click; the review step before saving is the confirmation).
+function rsBackToStep1(){rsReset();rsShow('pick');}
+function rsBadge(kind,text){
+  var b=document.getElementById('rsBadge');
+  b.className='rs-badge'+(kind?' '+kind:'');b.textContent=text||'';b.style.display=text?'':'none';
+}
+function rsSkeleton(ids,on){ids.forEach(function(id){var e=document.getElementById(id);e.classList.toggle('rs-sk',on);e.disabled=on;});}
+
+// Fired by the camera or library input.
 function rsFileChosen(inputEl){
   var f=inputEl.files[0];
   if(!f)return;
+  rsReset();
   _rsFile=f;
-  var img=document.getElementById('rsPreviewImg');
-  var reader=new FileReader();
-  reader.onload=function(e){img.src=e.target.result;img.style.display='block';};
-  reader.readAsDataURL(f);
-  scanReceipt();
+  var token=_rsToken;
+  rsShow('review');
+  rsApplyLabels();
+  rsSkeleton(['rsName','rsAmount','rsDate'],true);
+  rsBadge('wait',RT('reading'));
+  photoToJpeg(f).then(function(jf){
+    if(token!==_rsToken)return;
+    if(!jf)throw new Error(RT('imgErr'));
+    _rsThumb=URL.createObjectURL(jf);
+    document.getElementById('rsPreviewImg').src=_rsThumb;
+    return rsLoadCanvas(jf);
+  }).then(function(cv){
+    if(token!==_rsToken||!cv)return;
+    return rsRun(cv,token);
+  }).catch(function(e){
+    if(token!==_rsToken)return;
+    rsSkeleton(['rsName','rsAmount','rsDate'],false);
+    rsBadge('warn',(e&&e.message)||RT('none'));
+  });
+}
+function rsLoadCanvas(file){
+  return new Promise(function(res,rej){
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){
+      URL.revokeObjectURL(url);
+      var M=2400,k=Math.min(1,M/Math.max(im.naturalWidth,im.naturalHeight));
+      var c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      res(c);
+    };
+    im.onerror=function(){URL.revokeObjectURL(url);rej(new Error(RT('imgErr')));};
+    im.src=url;
+  });
+}
+var _jsqrP=null;
+function rsLoadJsQR(){
+  if(window.jsQR)return Promise.resolve(window.jsQR);
+  if(_jsqrP)return _jsqrP;
+  _jsqrP=new Promise(function(res,rej){
+    var urls=['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js','https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'],i=0;
+    (function next(){
+      if(i>=urls.length){_jsqrP=null;rej(new Error('jsqr'));return;}
+      var s=document.createElement('script');s.src=urls[i++];
+      s.onload=function(){window.jsQR?res(window.jsQR):next();};s.onerror=next;
+      document.head.appendChild(s);
+    })();
+  });
+  return _jsqrP;
+}
+// Try the whole photo at a few sizes, then the lower half (where receipts print the QR).
+function rsReadQR(cv){
+  return rsLoadJsQR().then(function(jsQR){
+    function scan(src,sx,sy,sw,sh,w){
+      var k=Math.min(1,w/sw),c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(sw*k));c.height=Math.max(1,Math.round(sh*k));
+      var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);
+      var d=x.getImageData(0,0,c.width,c.height);
+      var r=jsQR(d.data,d.width,d.height,{inversionAttempts:'attemptBoth'});
+      return r&&r.data?rsParseAT(r.data):null;
+    }
+    var W=cv.width,H=cv.height,found=null;
+    [1400,2200,900].some(function(w){found=scan(cv,0,0,W,H,w);return !!found;});
+    if(!found)[[0,H*0.4,W,H*0.6],[0,H*0.55,W,H*0.45]].some(function(r){found=scan(cv,r[0],r[1],r[2],r[3],2200);return !!found;});
+    return found;
+  }).catch(function(){return null;});
+}
+// Gray + stretched contrast: receipts are low-contrast grey on grey.
+function rsPrepOCR(cv){
+  var k=Math.min(1,1700/cv.width),c=document.createElement('canvas');
+  c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);
+  var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(cv,0,0,c.width,c.height);
+  var d=x.getImageData(0,0,c.width,c.height),p=d.data,n=p.length/4,hist=new Array(256).fill(0),i;
+  for(i=0;i<p.length;i+=4){var g=(p[i]*0.3+p[i+1]*0.59+p[i+2]*0.11)|0;p[i]=g;hist[g]++;}
+  var lo=0,hi=255,acc=0;
+  for(i=0;i<256;i++){acc+=hist[i];if(acc>n*0.02){lo=i;break;}}
+  acc=0;for(i=255;i>=0;i--){acc+=hist[i];if(acc>n*0.02){hi=i;break;}}
+  var rng=Math.max(30,hi-lo);
+  for(i=0;i<p.length;i+=4){var v=Math.max(0,Math.min(255,((p[i]-lo)*255/rng)|0));p[i]=p[i+1]=p[i+2]=v;}
+  x.putImageData(d,0,0);
+  return c;
 }
 var _tesseractLoaded=false;
 function _loadTesseract(){
@@ -5066,153 +5317,96 @@ function _loadTesseract(){
     var s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js';
     s.onload=function(){_tesseractLoaded=true;resolve();};
-    s.onerror=function(){reject(new Error('Could not load the text-recognition library — check your internet connection and try again.'));};
+    s.onerror=function(){reject(new Error(RT('libErr')));};
     document.head.appendChild(s);
   });
 }
-function scanReceipt(){
-  if(!_rsFile)return;
-  var status=document.getElementById('rsStatus');
-  status.textContent='Loading text recognition…';
-  _loadTesseract().then(function(){
-    status.textContent='Reading receipt… (this can take 10–30s)';
-    return Tesseract.recognize(_rsFile,'eng',{
-      logger:function(m){
-        if(m.status==='recognizing text'&&m.progress!=null){
-          status.textContent='Reading receipt… '+Math.round(m.progress*100)+'%';
-        }
-      }
-    });
-  }).then(function(result){
-    var text=(result&&result.data&&result.data.text)||'';
-    _rsRawText=text;
-    var parsed=parseReceiptText(text);
-    document.getElementById('rsName').value=parsed.name;
-    document.getElementById('rsAmount').value=parsed.amount||'';
-    document.getElementById('rsDate').value=parsed.date;
-    document.getElementById('rsRawText').textContent=text.trim()||'(no text detected — the photo may be too blurry or dark)';
-    document.getElementById('rsStep1').style.display='none';
-    document.getElementById('rsStep2').style.display='';
-  }).catch(function(e){
-    status.textContent='Error: '+e.message;
+function rsOCR(cv){
+  return _loadTesseract().then(function(){
+    var prep=rsPrepOCR(cv);
+    function run(lang){
+      var w=Tesseract.createWorker({logger:function(){}});
+      return w.load().then(function(){return w.loadLanguage(lang);}).then(function(){return w.initialize(lang);})
+        .then(function(){return w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});})
+        .then(function(){return w.recognize(prep);})
+        .then(function(r){return w.terminate().then(function(){return (r&&r.data&&r.data.text)||'';},function(){return (r&&r.data&&r.data.text)||'';});});
+    }
+    return run('por').catch(function(){return run('eng');});
   });
 }
-// Heuristic extraction from raw OCR text — same spirit as the booking-import
-// field auto-detection elsewhere in this file: best guess, always shown to
-// the user to correct before anything is saved.
-function parseReceiptText(text){
-  var lines=text.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;});
-
-  // ── Amount: prefer a line explicitly labelled total/amount due, else the
-  // largest currency-looking number on the receipt (sub-totals are smaller
-  // than the final total in the overwhelming majority of receipts).
-  var amount=0;
-  var totalLineRe=/\b(total|amount due|total due|montant|importe|valor a pagar|grand total|balance due)\b/i;
-  var moneyRe=/(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})|\d+[.,]\d{2})/g;
-  var bestFromTotalLine=0;
-  lines.forEach(function(l){
-    if(totalLineRe.test(l)){
-      var m=l.match(moneyRe);
-      if(m){
-        var v=_parseAmt(m[m.length-1]);
-        if(v>bestFromTotalLine)bestFromTotalLine=v;
-      }
+function rsVendorFor(nif){var v=(workspace&&workspace.settings&&workspace.settings.vendors)||{};return nif&&v[nif]||'';}
+function rsSetField(id,val){var e=document.getElementById(id);e.classList.remove('rs-sk');e.disabled=false;if(val!==undefined&&val!==null&&val!=='')e.value=val;}
+function rsRun(cv,token){
+  return rsReadQR(cv).then(function(qr){
+    if(token!==_rsToken)return;
+    var needOCR=true;
+    if(qr){
+      _rsNif=qr.nif;_rsAtcud=qr.atcud;
+      rsSetField('rsAmount',qr.amount.toFixed(2));rsSetField('rsDate',qr.date);
+      rsBadge('ok',RT('qrOk'));
+      var known=rsVendorFor(qr.nif);
+      if(known){rsSetField('rsName',known);needOCR=false;}
+      rsCheckDup();
+    }else{
+      rsBadge('wait',RT('reading'));
     }
+    if(!needOCR){rsSkeleton(['rsName','rsAmount','rsDate'],false);return;}
+    if(qr){
+      rsSkeleton(['rsAmount','rsDate'],false);
+      // keep the name field usable while the shop name is being read
+      var nmEl=document.getElementById('rsName');nmEl.classList.remove('rs-sk');nmEl.disabled=false;nmEl.placeholder=RT('reading');
+    }
+    return Promise.race([rsOCR(cv),new Promise(function(_,rej){setTimeout(function(){rej(new Error(RT('none')));},60000);})]).then(function(text){
+      if(token!==_rsToken)return;
+      _rsRawText=text;
+      document.getElementById('rsRawText').textContent=text.trim()||'(no text detected)';
+      var p=rsParseText(text);
+      if(!_rsNameTouched&&p.name)rsSetField('rsName',p.name);
+      if(!qr){
+        if(p.nif)_rsNif=p.nif;
+        rsSetField('rsAmount',p.amount?p.amount.toFixed(2):'');
+        rsSetField('rsDate',p.date||new Date().toISOString().slice(0,10));
+        rsBadge(p.amount?'warn':'warn',p.amount||p.date?RT('txt'):RT('none'));
+        rsCheckDup();
+      }
+      rsSkeleton(['rsName','rsAmount','rsDate'],false);
+      document.getElementById('rsName').placeholder='';
+    }).catch(function(e){
+      if(token!==_rsToken)return;
+      rsSkeleton(['rsName','rsAmount','rsDate'],false);
+      document.getElementById('rsName').placeholder='';
+      if(!qr)rsBadge('warn',(e&&e.message)||RT('none'));
+    });
   });
-  if(bestFromTotalLine>0){
-    amount=bestFromTotalLine;
-  }else{
-    // Fallback: largest money-looking number anywhere on the receipt.
-    var all=text.match(moneyRe)||[];
-    all.forEach(function(m){var v=_parseAmt(m);if(v>amount)amount=v;});
-  }
-
-  // ── Date: try several common receipt formats, normalize to YYYY-MM-DD.
-  var date='';
-  var datePatterns=[
-    {re:/\b(\d{4})-(\d{2})-(\d{2})\b/,order:[1,2,3]},                    // 2026-04-15
-    {re:/\b(\d{2})[.\/-](\d{2})[.\/-](\d{4})\b/,order:[3,2,1]},          // 15/04/2026 or 15.04.2026 (day-month-year, EU default)
-    {re:/\b(\d{2})[.\/-](\d{2})[.\/-](\d{2})\b/,order:[3,2,1],y2:true}   // 15/04/26
-  ];
-  for(var i=0;i<datePatterns.length&&!date;i++){
-    var dp=datePatterns[i],m2=text.match(dp.re);
-    if(m2){
-      var y=m2[dp.order[0]],mo=m2[dp.order[1]],d=m2[dp.order[2]];
-      if(dp.y2)y='20'+y;
-      var mn=parseInt(mo,10),dn=parseInt(d,10);
-      if(mn>=1&&mn<=12&&dn>=1&&dn<=31){
-        date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-      }
-    }
-  }
-  if(!date)date=new Date().toISOString().slice(0,10); // fallback: today — user can correct
-
-  // ── Vendor name — three signals, strongest first. A store's actual logo
-  // (the clearest signal) is a graphic, not text, so OCR usually can't read
-  // it directly — "IKEA" printed as a stylised logo often doesn't come
-  // through as the word "IKEA" at all. The website domain and an ALL-CAPS
-  // header line both survive OCR far more reliably than the logo does.
-  var skipRe=/\b(total|date|time|hora|nif|vat|tax|iva|receipt|invoice|fatura|rua|street|av\.|avenida|tel|phone|www\.|\.com|\.pt|obrigado|thank you|troco|change|cash|card|visa|mastercard|mbway)\b/i;
-  var name='';
-
-  // 1) A website domain anywhere in the text (header or footer) — e.g.
-  // "www.IKEA.com", "ikea.pt" — the brand is almost always the domain's
-  // main word, and this survives OCR even when the logo graphic doesn't.
-  var domainM=text.match(/\b(?:www\.)?([a-z0-9][a-z0-9-]{1,24})\.(com|pt|net|store|shop|eu|es|fr|co)\b/i);
-  if(domainM&&domainM[1].toLowerCase()!=='www'){
-    name=domainM[1].charAt(0).toUpperCase()+domainM[1].slice(1).toLowerCase();
-  }
-
-  // 2) An ALL-CAPS (or mostly-caps) short line near the top — store names
-  // are almost always printed in capitals in a larger font just below the
-  // logo, so they OCR as a distinct caps line even when the logo itself
-  // isn't readable as text.
-  if(!name){
-    for(var k=0;k<Math.min(lines.length,10);k++){
-      var lc=lines[k];
-      if(lc.length<2||lc.length>30)continue;
-      if(skipRe.test(lc))continue;
-      if(/^[\d\s.,€$£\-\/:]+$/.test(lc))continue; // mostly digits/punctuation
-      var letters=lc.replace(/[^a-zA-ZÀ-ÿ]/g,'');
-      if(letters.length<2)continue;
-      var upper=letters.replace(/[^A-ZÀ-Þ]/g,'');
-      if(upper.length/letters.length>=0.8){ // mostly uppercase letters
-        name=lc;
-        break;
-      }
-    }
-  }
-
-  // 3) Fallback: first substantial line that isn't obviously a total/date/
-  // address/tax/payment line.
-  if(!name){
-    for(var j=0;j<Math.min(lines.length,6);j++){
-      var l=lines[j];
-      if(l.length<2)continue;
-      if(/^[\d\s.,€$£\-\/:]+$/.test(l))continue; // mostly digits/punctuation
-      if(skipRe.test(l))continue;
-      name=l;
-      break;
-    }
-  }
-  if(name.length>40)name=name.slice(0,40);
-
-  return{name:name,amount:amount,date:date};
+}
+function rsCheckDup(){
+  var amt=parseFloat(document.getElementById('rsAmount').value)||0,date=document.getElementById('rsDate').value;
+  var dup=false;
+  if(amt&&date){dup=getFinExpenses().some(function(x){return x.freq==='once'&&x.startDate===date&&Math.abs((parseFloat(x.amount)||0)-amt)<0.005;});}
+  document.getElementById('rsDup').style.display=dup?'':'none';
 }
 function addScannedExpense(){
   var name=document.getElementById('rsName').value.trim();
   var amount=parseFloat(document.getElementById('rsAmount').value)||0;
   var date=document.getElementById('rsDate').value;
-  if(!name){toast('Name is required','err');return;}
-  if(!amount){toast('Amount must be greater than 0','err');return;}
-  if(!date){toast('Date is required','err');return;}
+  if(!name){toast(RT('nameReq'),'err');return;}
+  if(!amount){toast(RT('amtReq'),'err');return;}
+  if(!date){toast(RT('dateReq'),'err');return;}
   var apt=document.getElementById('rsApt').value;
   var expenses=getFinExpenses();
-  expenses.push({name:name,amount:amount,amounts:{},apt:apt,freq:'once',startDate:date});
+  var rec={name:name,amount:amount,amounts:{},apt:apt,freq:'once',startDate:date};
+  if(_rsAtcud)rec.atcud=_rsAtcud;
+  expenses.push(rec);
+  var nif=_rsNif;
   saveFinExpenses(expenses).then(function(){
-    toast('Expense added from receipt ✓','ok');
+    toast(RT('added'),'ok');
     closeModal('receiptScanOverlay');
-    renderRevenueAnalytics();
+    try{renderRevenueAnalytics();}catch(e){}
+    // Remember who this NIF is, so the next receipt from the same shop is named at once.
+    if(nif&&name&&workspace){
+      var v=Object.assign({},(workspace.settings&&workspace.settings.vendors)||{});
+      if(v[nif]!==name){v[nif]=name;patchWorkspaceSettings({vendors:v}).catch(function(){});}
+    }
   }).catch(function(e){toast('Save failed: '+e.message,'err');});
 }
 
@@ -5235,7 +5429,7 @@ function openExpImport(type){
   document.getElementById('eiFreq').value='monthly';
   document.getElementById('eiOnceFields').style.display=_eiType==='once'?'':'none';
   document.getElementById('eiRecurFields').style.display=_eiType==='recurring'?'':'none';
-  document.getElementById('eiTitle').textContent=_eiType==='recurring'?'📥 Import Recurring Expenses':'📥 Import One-Time Expenses';
+  document.getElementById('eiTitle').textContent=_eiType==='recurring'?'Import Recurring Expenses':'Import One-Time Expenses';
   setEIS('','');
   setEIS2('','');
   setEISS('','');
@@ -5443,7 +5637,7 @@ function renderPayments(){
   var list=document.getElementById('payList');
   if(!list)return; // payList removed from Finance tab — skip
   if(!confirmed.length){
-    list.innerHTML='<div class="empty-state"><div class="ico">💰</div>'+
+    list.innerHTML='<div class="empty-state"><div class="ico"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5a4.5 4.5 0 1 0 0 7"/><line x1="7.5" y1="11" x2="13" y2="11"/><line x1="7.5" y1="13.5" x2="13" y2="13.5"/></svg></div>'+
       '<h3>No confirmed bookings yet</h3><p>Confirmed bookings will appear here for payment tracking.</p></div>';
     return;
   }
@@ -5463,7 +5657,7 @@ function renderPayments(){
           '<div class="pay-apt">'+esc(req.apt_name||'')+'  ·  '+fmtShort(req.checkin)+' → '+fmtShort(req.checkout)+' ('+nights+'n)</div>'+
         '</div>'+
         '<span class="status-badge '+(req.balance_paid?'status-confirmed':req.deposit_paid?'status-pending':'status-declined')+'">'+
-          (req.balance_paid?'✅ Fully paid':req.deposit_paid?'⏳ Deposit paid':'❌ Unpaid')+
+          (req.balance_paid?'Fully paid':req.deposit_paid?'Deposit paid':'Unpaid')+
         '</span>'+
       '</div>'+
       '<div class="pay-body">'+
@@ -5484,9 +5678,9 @@ function renderPayments(){
         '</div>'+
       '</div>'+
       '<div class="pay-actions">'+
-        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'✅ Mark deposit paid')+'</button>'+
-        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'✅ Mark balance paid')+'</button>'+
-        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">📧 Send reminder</button>'+
+        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'Mark deposit paid')+'</button>'+
+        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'Mark balance paid')+'</button>'+
+        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">Send reminder</button>'+
       '</div>';
     list.appendChild(card);
   });
@@ -5625,7 +5819,7 @@ function renderResList(){
   }
 
   if(!items.length){
-    container.innerHTML='<div class="empty-state"><div class="ico">📅</div><h3>No reservations yet</h3><p>Confirmed bookings will appear here.</p></div>';
+    container.innerHTML='<div class="empty-state"><div class="ico"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><h3>No reservations yet</h3><p>Confirmed bookings will appear here.</p></div>';
     return;
   }
 
@@ -5649,10 +5843,10 @@ function renderResList(){
     var isActive=item.checkin&&item.checkout&&item.checkin<=today&&item.checkout>today;
 
     var srcClass='src-'+(item.source==='airbnb'?'airbnb':item.source==='booking'?'booking':'direct')+'-card';
-    var srcLabel=item.source==='airbnb'?'🏠 Airbnb':item.source==='booking'?'📋 Booking.com':'🤝 Direct';
+    var srcLabel=item.source==='airbnb'?'Airbnb':item.source==='booking'?'Booking.com':'Direct';
     var srcBg=item.source==='airbnb'?'#fee2e2;color:#9f1239':item.source==='booking'?'#dbeafe;color:#1e40af':'#dcfce7;color:#15803d';
 
-    var paidLabel=item.paid==='paid'?'✅ Paid':item.paid==='deposit'?'⏳ Deposit paid':'❌ Unpaid';
+    var paidLabel=item.paid==='paid'?'Paid':item.paid==='deposit'?'Deposit paid':'Unpaid';
     var paidColor=item.paid==='paid'?'#15803d':item.paid==='deposit'?'#92400e':'#dc2626';
 
     var card=document.createElement('div');
@@ -5674,14 +5868,14 @@ function renderResList(){
         '<span class="arrow">→</span>'+
         '<span>'+fmtShort(item.checkout)+'</span>'+
         '<span class="chip">'+item.nights+'n</span>'+
-        (item.isComp?'<span style="margin-left:auto;font-size:13px;font-weight:700;color:#15803d">🎁 Complimentary</span>':(item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':''))+
+        (item.isComp?'<span style="margin-left:auto;font-size:13px;font-weight:700;color:#15803d">Complimentary</span>':(item.total?'<span style="margin-left:auto;font-size:14px;font-weight:800;color:var(--primary)">€'+item.total+'</span>':''))+
       '</div>';
     // Payment row
     var isOTA=(item.source==='booking'||item.source==='airbnb');
     if(!item.isComp&&item.total>0){
       if(isOTA){
         card.innerHTML+='<div style="padding:8px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;background:'+(document.body.classList.contains('dark')?'#0a2218':'#f0fdf4')+'">'+
-          '<span style="font-size:12px;font-weight:700;color:#15803d">✅ Paid via platform</span>'+
+          '<span style="font-size:12px;font-weight:700;color:#15803d">Paid via platform</span>'+
           '<span style="font-size:12px;color:var(--muted);margin-left:auto">€'+item.total+'</span>'+
         '</div>';
       } else if(!VIEW_MODE){
@@ -5694,17 +5888,17 @@ function renderResList(){
           '<div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">'+
             '<span>Total: <strong>€'+item.total+'</strong></span>'+
             (amtPaid>0?'<span style="color:#15803d">Paid: <strong>€'+amtPaid+'</strong></span>':'')+
-            (amtDue>0?'<span style="color:#dc2626">Due: <strong>€'+amtDue+'</strong></span>':'<span style="color:#15803d;font-weight:700">✅ Fully paid</span>')+
+            (amtDue>0?'<span style="color:#dc2626">Due: <strong>€'+amtDue+'</strong></span>':'<span style="color:#15803d;font-weight:700">Fully paid</span>')+
           '</div>'+
         '</div>';
       }
     }
     card.innerHTML+=
-      (VIEW_MODE?'<div class="res-list-actions"><button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openViewBooking(\''+item.id+'\',\''+item.origin+'\');">👁 View</button></div>':
+      (VIEW_MODE?'<div class="res-list-actions"><button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openViewBooking(\''+item.id+'\',\''+item.origin+'\');">View</button></div>':
       '<div class="res-list-actions">'+
-        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">✏️ Edit</button>'+
+        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">Edit</button>'+
         '<span style="flex:1"></span>'+
-        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">🗑️ Delete</button>'+
+        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">Delete</button>'+
       '</div>');
     container.appendChild(card);
   });
@@ -5748,7 +5942,7 @@ function updatePmCalc(){
   el.innerHTML='<span>Total: <strong>€'+_pmTotal+'</strong></span>'+
     (paid>0?'<span style="color:#15803d">Paid: <strong>€'+paid.toFixed(2)+'</strong></span>':'')+
     (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':
-      '<span style="color:#15803d;font-weight:700">✅ Fully paid</span>');
+      '<span style="color:#15803d;font-weight:700">Fully paid</span>');
 }
 function savePaymentStatus(){
   var status=document.getElementById('pmStatus').value;
@@ -5809,7 +6003,7 @@ function ebRenderPayments(){
     '<span>Total: <strong>€'+total.toFixed(2)+'</strong></span>'+
     (paid>0?'<span style="color:#15803d">Paid: <strong>€'+paid.toFixed(2)+'</strong></span>':'')+
     (due>0?'<span style="color:#dc2626">Due: <strong>€'+due.toFixed(2)+'</strong></span>':
-      '<span style="color:#15803d;font-weight:700">✅ Fully paid</span>');
+      '<span style="color:#15803d;font-weight:700">Fully paid</span>');
   // Transactions
   var txEl=document.getElementById('ebPayTransactions');
   if(!txEl)return;
@@ -5877,11 +6071,11 @@ var CLEAN_T={
     cleanTitle:'Cleaning Schedule',cleanSub:'Manage cleaning tasks across all your properties',
     // Account tab
     sbAccount:'Account',accountTitle:'Account',accountSub:'Your business profile and login details',
-    acctSecProfile:'🏢 Business profile',acctBizName:'Business / your name',acctBizNamePh:'e.g. Casa Sol Algarve',
+    acctSecProfile:'Business profile',acctBizName:'Business / your name',acctBizNamePh:'e.g. Casa Sol Algarve',
     acctPrefLang:'Preferred language',acctContactEmail:'Contact email',acctEmailPh:'you@example.com',
     acctPhone:'Phone number',acctOptional:'(optional)',acctPhonePh:'+351 ...',
-    acctWebsite:'Website',acctWebsitePh:'https://...',acctSaveBtn:'💾 Save profile',
-    acctSecLogin:'🔐 Login',acctSignedInAs:"You're signed in as",
+    acctWebsite:'Website',acctWebsitePh:'https://...',acctSaveBtn:'Save profile',
+    acctSecLogin:'Login',acctSignedInAs:"You're signed in as",
     acctChangePwd:'To change your password, sign out and use "Forgot password?" on the sign-in screen.'
   },
   pt:{
@@ -5906,11 +6100,11 @@ var CLEAN_T={
     settingsTitle:'Definicoes',settingsSub:'Configurar o seu espaco de trabalho',
     cleanTitle:'Calendario de Limpeza',cleanSub:'Gerir tarefas de limpeza em todas as propriedades',
     sbAccount:'Conta',accountTitle:'Conta',accountSub:'O seu perfil de negocio e dados de acesso',
-    acctSecProfile:'🏢 Perfil do negocio',acctBizName:'Negocio / o seu nome',acctBizNamePh:'ex. Casa Sol Algarve',
+    acctSecProfile:'Perfil do negocio',acctBizName:'Negocio / o seu nome',acctBizNamePh:'ex. Casa Sol Algarve',
     acctPrefLang:'Idioma preferido',acctContactEmail:'Email de contacto',acctEmailPh:'voce@exemplo.com',
     acctPhone:'Numero de telefone',acctOptional:'(opcional)',acctPhonePh:'+351 ...',
-    acctWebsite:'Website',acctWebsitePh:'https://...',acctSaveBtn:'💾 Guardar perfil',
-    acctSecLogin:'🔐 Acesso',acctSignedInAs:'Sessao iniciada como',
+    acctWebsite:'Website',acctWebsitePh:'https://...',acctSaveBtn:'Guardar perfil',
+    acctSecLogin:'Acesso',acctSignedInAs:'Sessao iniciada como',
     acctChangePwd:'Para alterar a password, saia e use "Esqueceu a password?" no ecra de login.'
   },
   fr:{
@@ -5935,11 +6129,11 @@ var CLEAN_T={
     settingsTitle:'Parametres',settingsSub:'Configurer votre espace de travail',
     cleanTitle:'Planning Menage',cleanSub:'Gerer les taches de menage sur toutes les proprietes',
     sbAccount:'Compte',accountTitle:'Compte',accountSub:'Votre profil professionnel et vos identifiants',
-    acctSecProfile:'🏢 Profil professionnel',acctBizName:'Entreprise / votre nom',acctBizNamePh:'ex. Casa Sol Algarve',
+    acctSecProfile:'Profil professionnel',acctBizName:'Entreprise / votre nom',acctBizNamePh:'ex. Casa Sol Algarve',
     acctPrefLang:'Langue preferee',acctContactEmail:'Email de contact',acctEmailPh:'vous@exemple.com',
     acctPhone:'Numero de telephone',acctOptional:'(facultatif)',acctPhonePh:'+351 ...',
-    acctWebsite:'Site web',acctWebsitePh:'https://...',acctSaveBtn:'💾 Enregistrer le profil',
-    acctSecLogin:'🔐 Connexion',acctSignedInAs:'Connecte en tant que',
+    acctWebsite:'Site web',acctWebsitePh:'https://...',acctSaveBtn:'Enregistrer le profil',
+    acctSecLogin:'Connexion',acctSignedInAs:'Connecte en tant que',
     acctChangePwd:"Pour changer votre mot de passe, deconnectez-vous et utilisez 'Mot de passe oublie ?' sur l'ecran de connexion."
   }
 };
@@ -6346,7 +6540,7 @@ function mkCleanCard(b,tod){
   tr.className='ctable-row';
   tr.style.setProperty('--bar-color',barColor);
 
-  var b2bTag=isBackToBack?'<span class="ctable-b2b" title="Check-out 12:00 → Check-in 15:00">⚡ B2B</span>':'';
+  var b2bTag=isBackToBack?'<span class="ctable-b2b" title="Check-out 12:00 → Check-in 15:00">B2B</span>':'';
 
   tr.innerHTML=
     '<td class="ctable-bar" style="background:'+barColor+'"></td>'+
@@ -6665,7 +6859,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
   parsed=parsed.filter(function(nb){return nb.checkin&&nb.checkout&&nb.checkin<nb.checkout;});
   fileSkipped.forEach(function(s){
     var guestIn=cleanNotesDisplay(s.nb.notes)||'?';
-    importLog.push('🔴 INVALID ROW: '+guestIn+' — '+s.reason+' — SKIPPED. Fix in your file and re-import.');
+    importLog.push('INVALID ROW: '+guestIn+' — '+s.reason+' — SKIPPED. Fix in your file and re-import.');
     conflictSkipped++;
   });
 
@@ -6692,7 +6886,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
       if(toDelete.indexOf(toReplace.id)===-1)toDelete.push(toReplace.id);
       var fin=parseFin(nb);
       var matchType=exactMatch?'dates':'name+checkin';
-      importLog.push('🔄 UPDATING ('+matchType+'): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':''):''));
+      importLog.push('UPDATING ('+matchType+'): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':''):''));
       toInsert.push(nb);
       return;
     }
@@ -6704,7 +6898,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
     if(inFileConflict){
       conflictSkipped++;
       var guestEx2=cleanNotesDisplay(inFileConflict.notes)||'?';
-      importLog.push('🔴 SKIPPED (file overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps "'+guestEx2+'" ('+inFileConflict.checkin+'→'+inFileConflict.checkout+') already in this import batch — two bookings in your file cover the same dates.');
+      importLog.push('SKIPPED (file overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps "'+guestEx2+'" ('+inFileConflict.checkin+'→'+inFileConflict.checkout+') already in this import batch — two bookings in your file cover the same dates.');
       return;
     }
 
@@ -6716,7 +6910,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
     if(overlapConflict){
       conflictSkipped++;
       var guestEx3=cleanNotesDisplay(overlapConflict.notes)||overlapConflict.guests||'?';
-      importLog.push('🔴 SKIPPED (overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps existing booking of "'+guestEx3+'" ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+'. Edit or delete the existing booking first.');
+      importLog.push('SKIPPED (overlap): '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') overlaps existing booking of "'+guestEx3+'" ('+overlapConflict.checkin+'→'+overlapConflict.checkout+') on '+aptName+'. Edit or delete the existing booking first.');
       return;
     }
 
@@ -6728,7 +6922,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
       }
     });
     var fin=parseFin(nb);
-    importLog.push('✅ IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.isComp?' | 🎁 Complimentary':(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean':''):'| no revenue data')));
+    importLog.push('IMPORTING: '+guestIn+' ('+nb.checkin+'→'+nb.checkout+') on '+aptName+(fin.isComp?' | Complimentary':(fin.gross?' | €'+fin.gross+' gross'+(fin.commission?' − €'+fin.commission+' comm':'')+(fin.cleanfee?' + €'+fin.cleanfee+' clean':''):'| no revenue data')));
     toInsert.push(nb);
   });
 
@@ -6769,7 +6963,7 @@ function _doMappedConflict(parsed,skipped,apt,source){
       var exName=cleanNotesDisplay(ex.notes)||ex.guests||'?';
       var aptN=(properties||[]).reduce(function(a,p){return p.id===ex.apt?p.name||p.short:a;},'Apt '+ex.apt);
       toDelete.push(ex.id);
-      importLog.push('🗑️ CANCELLED: '+exName+' ('+ex.checkin+'→'+ex.checkout+') on '+aptN+' — not in new file, removed as cancelled');
+      importLog.push('CANCELLED: '+exName+' ('+ex.checkin+'→'+ex.checkout+') on '+aptN+' — not in new file, removed as cancelled');
       cancelledCount++;
     });
   }
@@ -6940,7 +7134,7 @@ function dashProcessImport(text,source,apt){
         var gIn=cleanNotesDisplay(nb.notes)||nb.guests||'?';
         var gEx=cleanNotesDisplay(blocker.notes)||blocker.guests||'?';
         var aptN=(properties||[]).reduce(function(a,p){return p.id===nb.apt?p.name||p.short:a;},'Apt '+nb.apt);
-        conflictLog.push('🔴 OVERLAP on '+aptN+': "'+gIn+'" ('+nb.checkin+'→'+nb.checkout+') vs "'+gEx+'" ('+blocker.checkin+'→'+blocker.checkout+'). NEITHER imported — fix in your file or delete one booking first.');
+        conflictLog.push('OVERLAP on '+aptN+': "'+gIn+'" ('+nb.checkin+'→'+nb.checkout+') vs "'+gEx+'" ('+blocker.checkin+'→'+blocker.checkout+'). NEITHER imported — fix in your file or delete one booking first.');
         conflictSkipped++;
         return;
       }
@@ -6982,11 +7176,11 @@ function dashProcessImport(text,source,apt){
     var fin=parseFin(nb);
     var aptName=(properties||[]).reduce(function(acc,p){return p.id===nb.apt?p.name||p.short:acc;},'Apt '+nb.apt);
     var name=cleanNotesDisplay(nb.notes)||nb.guests||'?';
-    otaLog.push('✅ '+name+' | '+nb.checkin+'→'+nb.checkout+' @ '+aptName+(fin.gross?' | €'+fin.gross+' gross − €'+fin.commission+' comm':'| ⚠️ no revenue data'));
+    otaLog.push(''+name+' | '+nb.checkin+'→'+nb.checkout+' @ '+aptName+(fin.gross?' | €'+fin.gross+' gross − €'+fin.commission+' comm':'| no revenue data'));
   });
-  toDelete.forEach(function(id){otaLog.push('🔄 REMOVED superseded booking id:'+id);});
-  if(skipped)otaLog.push('⚠️ '+skipped+' rows skipped (cancelled or invalid dates)');
-  if(conflictSkipped)otaLog.push('ℹ️ '+conflictSkipped+' rows skipped (already covered by other OTA booking)');
+  toDelete.forEach(function(id){otaLog.push('REMOVED superseded booking id:'+id);});
+  if(skipped)otaLog.push(''+skipped+' rows skipped (cancelled or invalid dates)');
+  if(conflictSkipped)otaLog.push(''+conflictSkipped+' rows skipped (already covered by other OTA booking)');
 
   var delPromises=toDelete.map(function(id){return sbF('DELETE','bookings?id=eq.'+id);});
   Promise.all(delPromises).then(function(){
@@ -7233,7 +7427,7 @@ function scanBookingScreenshot(input){
     statusEl.style.cssText='font-size:12px;font-weight:700;margin-top:8px;padding:8px;border-radius:7px;background:#eff6ff;color:#1d4ed8';
     input.closest('div[style]').appendChild(statusEl);
   }
-  statusEl.textContent='🔍 Scanning image...';
+  statusEl.textContent='Scanning image...';
 
   var reader=new FileReader();
   reader.onload=function(e){
@@ -7295,11 +7489,11 @@ function scanBookingScreenshot(input){
       if(info.total_price)filled.push('Total: €'+info.total_price);
       if(info.commission)filled.push('Commission: €'+info.commission);
       statusEl.style.background='#f0fdf4';statusEl.style.color='#15803d';
-      statusEl.textContent='✅ Filled: '+filled.join(' · ')+' — please select the apartment and verify.';
+      statusEl.textContent='Filled: '+filled.join(' · ')+' — please select the apartment and verify.';
     })
     .catch(function(e){
       statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
-      statusEl.textContent='❌ Could not read image: '+e.message;
+      statusEl.textContent='Could not read image: '+e.message;
     });
   };
   reader.readAsDataURL(file);
@@ -7361,7 +7555,7 @@ function setNbTab(tab){
   document.getElementById('nbTabBlock').classList.toggle('on',tab==='block');
   document.getElementById('nbBookingForm').style.display=tab==='booking'?'':'none';
   document.getElementById('nbBlockForm').style.display=tab==='block'?'':'none';
-  document.getElementById('nbSaveBtn').textContent=tab==='booking'?'💾 Save booking':'🚫 Block dates';
+  document.getElementById('nbSaveBtn').textContent=tab==='booking'?'Save booking':'Block dates';
   document.getElementById('nbSaveBtn').setAttribute('data-tab',tab);
 }
 
@@ -7421,7 +7615,7 @@ function saveNewBooking(){
     var to=document.getElementById('nbBlockTo').value;
     var reason=document.getElementById('nbBlockReason').value;
     var bnotes=document.getElementById('nbBlockNotes').value;
-    if(!aptId||!from||!to){err.textContent='Please fill in property and dates.';btn.disabled=false;btn.textContent='🚫 Block dates';return;}
+    if(!aptId||!from||!to){err.textContent='Please fill in property and dates.';btn.disabled=false;btn.textContent='Block dates';return;}
     var apt=aptById(aptId);
     var booking={
       id:uid(),workspace_id:workspace.id,
@@ -7438,10 +7632,10 @@ function saveNewBooking(){
       body:JSON.stringify({bookings_data:[booking]})
     }).then(function(r){
       if(!r.ok&&r.status!==204)return r.text().then(function(t){throw new Error(t);});
-      toast('📌 Dates blocked','ok');
+      toast('Dates blocked','ok');
       closeModal('newBookingOverlay');
       loadAllBookings().then(function(){renderCalendar();renderPayments();renderProps();});
-    }).catch(function(e){err.textContent='Error: '+e.message;}).finally(function(){btn.disabled=false;btn.textContent='🚫 Block dates';});
+    }).catch(function(e){err.textContent='Error: '+e.message;}).finally(function(){btn.disabled=false;btn.textContent='Block dates';});
     return;
   }
 
@@ -7461,9 +7655,9 @@ function saveNewBooking(){
   var paid=document.getElementById('nbPaid').value;
   var notes=document.getElementById('nbNotes').value.trim();
 
-  if(!aptId||!guest||!ci||!co){err.textContent='Property, guest name and dates are required.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
+  if(!aptId||!guest||!ci||!co){err.textContent='Property, guest name and dates are required.';btn.disabled=false;btn.textContent='Save booking';return;}
   var nights=Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);
-  if(nights<1){err.textContent='Check-out must be after check-in.';btn.disabled=false;btn.textContent='💾 Save booking';return;}
+  if(nights<1){err.textContent='Check-out must be after check-in.';btn.disabled=false;btn.textContent='Save booking';return;}
   // Use gross if provided (e.g. from PDF import), otherwise compute from rate×nights+clean
   var total=gross>0?gross:(nights*rate+clean);
 
@@ -7481,13 +7675,13 @@ function saveNewBooking(){
     rate_per_night:isComp?null:(rate?Math.round(rate):null),total_amount:isComp?null:(actualTotal?Math.round(actualTotal):null),
     status:'confirmed',deposit_paid:paid==='paid',balance_paid:paid==='paid'
   }).then(function(){
-    toast('✅ Booking saved','ok');
+    toast('Booking saved','ok');
     closeModal('newBookingOverlay');
     return Promise.all([loadRequests(),loadAllBookings()]);
   }).then(function(){
     renderCalendar();renderResList();renderPayments();renderOverview();
   }).catch(function(e){err.textContent='Error: '+e.message;
-  }).finally(function(){btn.disabled=false;btn.textContent='💾 Save booking';});
+  }).finally(function(){btn.disabled=false;btn.textContent='Save booking';});
 }
 
 // ── CALENDAR ─────────────────────────────────────────────────────────────────
@@ -7708,12 +7902,12 @@ function renderBarForDay(bookings,ds,aptColor){
       label=_g;
     }
     if(!label)label='Guest';
-    if(_isComp)label='\uD83C\uDF81 '+label; // 🎁 prefix for complimentary
+    if(_isComp)label='Comp. '+label; // prefix for complimentary
     if(label.length>18)label=label.slice(0,17)+'\u2026';
 
     var showFull=isStart||posClass==='bar-solo';
     var titleTip=(_n||_g)||'';
-    if(_isComp)titleTip='🎁 Complimentary · '+titleTip;
+    if(_isComp)titleTip='Complimentary · '+titleTip;
     // Dates sub-line for start bar
     var datesLine='';
     if(showFull&&b.checkin&&b.checkout){
@@ -7733,7 +7927,7 @@ function showCalPopup(b,e){
   popup.className='cal-popup';
   popup.innerHTML=
     '<button class="cal-popup-close" onclick="hideCalPopup()">✕</button>'+
-    '<h4 style="color:'+apt.color+'">🏡 '+esc(apt.name||b.apt)+'</h4>'+
+    '<h4 style="color:'+apt.color+'">'+esc(apt.name||b.apt)+'</h4>'+
     '<div class="cal-popup-row"><span class="lbl">Guest</span><span>'+esc(cleanNotesDisplay(b.notes)||b.guests||'—')+'</span></div>'+
     (function(){var c=parseContact(b.notes);return c.email?'<div class="cal-popup-row"><span class="lbl">Email</span><span style="font-size:11px">'+esc(c.email)+'</span></div>':'';})()+
     (function(){var c=parseContact(b.notes);return c.phone?'<div class="cal-popup-row"><span class="lbl">Phone</span><span style="font-size:11px">'+esc(c.phone)+'</span></div>':'';})()+
@@ -7742,7 +7936,7 @@ function showCalPopup(b,e){
     '<div class="cal-popup-row"><span class="lbl">Nights</span><span>'+nights+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Source</span><span>'+(b.source||'direct')+'</span></div>'+
     '<div class="cal-popup-row"><span class="lbl">Payment</span><span>'+(b.paid||'unpaid')+'</span></div>'+
-    '<div class="cal-popup-row"><span class="lbl">Cleaned</span><span>'+(b.cleaned==='yes'?'✅ Yes':'❌ No')+'</span></div>'+
+    '<div class="cal-popup-row"><span class="lbl">Cleaned</span><span>'+(b.cleaned==='yes'?'Yes':'No')+'</span></div>'+
     (cleanNotesDisplay(b.notes)?'<div class="cal-popup-row" style="flex-direction:column;gap:4px"><span class="lbl">Notes</span><span style="font-size:11px">'+esc(cleanNotesDisplay(b.notes))+'</span></div>':'')+
     '';
   // Position near click
@@ -7765,7 +7959,7 @@ function togglePropVisibility(i){
   properties[i].hiddenFromGuests=!properties[i].hiddenFromGuests;
   var label=properties[i].hiddenFromGuests?'Hidden from guests':'Visible to guests';
   savePropsToWorkspace().then(function(){
-    toast((properties[i].hiddenFromGuests?'🙈 ':'👁 ')+properties[i].name+' — '+label,'ok');
+    toast((properties[i].hiddenFromGuests?'':'')+properties[i].name+' — '+label,'ok');
     renderWidgetPropList();
     renderProps(); // refresh property cards too
   }).catch(function(e){toast('Error: '+e.message,'err');});
@@ -7900,10 +8094,10 @@ function handleImageFile(file){
   st.style.background='#fef3c7';
   st.style.padding='10px';
   st.style.borderRadius='8px';
-  st.innerHTML='📋 <strong>For screenshots:</strong> Images cannot be read automatically. Instead: open the Booking.com page, Select All text, Copy, then use Paste mode below.';
+  st.innerHTML='<strong>For screenshots:</strong> Images cannot be read automatically. Instead: open the Booking.com page, Select All text, Copy, then use Paste mode below.';
   st.style.marginBottom='8px';
   var switchBtn=document.createElement('button');
-  switchBtn.textContent='📋 Switch to Paste mode';
+  switchBtn.textContent='Switch to Paste mode';
   switchBtn.style.cssText='display:block;margin-top:8px;background:#1d4ed8;color:#fff;border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer';
   switchBtn.onclick=function(){setPdfTab('paste');document.getElementById('nbPdfPaste').focus();};
   st.appendChild(switchBtn);
@@ -7962,10 +8156,10 @@ function handlePdfFile(input){
         var result=parsePdfPasteRaw(fullText);
         if(result>0){
           st.style.color='#15803d';
-          st.textContent='✅ PDF read — '+result+' fields auto-filled';
+          st.textContent='PDF read — '+result+' fields auto-filled';
         } else {
           st.style.color='#f59e0b';
-          st.textContent='⚠️ PDF read but could not detect booking fields. Try paste mode.';
+          st.textContent='PDF read but could not detect booking fields. Try paste mode.';
         }
       }).catch(function(err){
         st.style.color='#dc2626';
@@ -8129,10 +8323,10 @@ function parsePdfPasteRaw(raw){
   if(status){
     if(found.length){
       status.style.display='block';status.style.color='#15803d';status.style.background='transparent';
-      status.textContent='✅ Auto-filled: '+found.join(', ')+(gross&&comm?' | Net: €'+(gross-comm).toFixed(2):'');
+      status.textContent='Auto-filled: '+found.join(', ')+(gross&&comm?' | Net: €'+(gross-comm).toFixed(2):'');
     } else {
       status.style.display='block';status.style.color='#dc2626';
-      status.textContent='⚠️ Could not detect booking details — try paste mode or fill manually.';
+      status.textContent='Could not detect booking details — try paste mode or fill manually.';
     }
   }
   return found.length;
@@ -8217,7 +8411,7 @@ function saveAccountProfile(){
       cleanLang=_accountLangSelected;
       ['en','pt','fr'].forEach(function(lg){var b=document.getElementById('dLang-'+lg);if(b)b.classList.toggle('on',lg===cleanLang);});
       applyTranslations();
-      msg.style.color='#15803d';msg.textContent='✅ Saved';
+      msg.style.color='#15803d';msg.textContent='Saved';
       renderGettingStarted();
       renderTodayDate();
     })
@@ -8488,7 +8682,7 @@ function sendCleaningReminder(b){
   // Check back-to-back
   var allForApt=(allBookings||[]).concat((requests||[]).filter(function(r){return r.status==='confirmed';}).map(function(r){return{apt:r.apt_id||r.apt_name,checkin:r.checkin,checkout:r.checkout};}));
   var nextBk=allForApt.find(function(x){return(x.apt===b.apt)&&x.checkin===b.checkout;});
-  var b2bMsg=nextBk?'\n⚡ ATENÇÃO: Reserva seguida! Check-out às 12:00 e próximo check-in às 15:00. Tens apenas 3 horas para limpar.':'';
+  var b2bMsg=nextBk?'\nATENÇÃO: Reserva seguida! Check-out às 12:00 e próximo check-in às 15:00. Tens apenas 3 horas para limpar.':'';
   var nextGuests='';
   if(nextBk){
     var nextFull=allBookings.find(function(x){return x.apt===b.apt&&x.checkin===b.checkout;})||(requests||[]).find(function(r){return(r.apt_id===b.apt||r.apt_name===b.apt)&&r.checkin===b.checkout;});
@@ -8587,26 +8781,143 @@ document.addEventListener('DOMContentLoaded',function(){
   if(VIEW_MODE){initViewMode();return;}checkMobileLayout();});
 
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────────
+// Welcome screen. What is shown is the host's own choice, stored in
+// workspace.settings.home (see openHomeCustomize). The figures themselves come
+// from the same helpers as before (renderKPIs, computeCleanerPayoutTotal), so
+// Home, Finance and Cleaning keep agreeing with each other.
+var HOME_DEF={name:'',photo:'',msg:true,anim:true,qa:['booking','expense','link'],metrics:true,
+  m:{revenue:true,owed:true,occupied:false,checkouts:false},pending:true,stays:true,cleaning:true};
+var HOME_IC={
+  booking:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>',
+  expense:'<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/>',
+  property:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>',
+  block:'<circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/>',
+  payments:'<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>',
+  cleaning:'<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  up:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>'
+};
+var HOME_QA_KEYS=['booking','expense','link','scan','property','block','payments','cleaning'];
+var HOME_T={
+  en:{qa_booking:'New booking',qa_expense:'New expense',qa_link:'Share booking link',qa_scan:'Scan receipt',qa_property:'Add property',qa_block:'Block dates',qa_payments:'Track payments',qa_cleaning:'Cleaning',
+    m_revenue:'Earned this month',m_owed:'Owed to cleaners',m_occupied:'Properties occupied',m_checkouts:'Leaving today',
+    stays_title:'Arrivals and departures',clean_title:'Cleaning',view_all:'View all',open:'Open',review:'Review',
+    arrives:'Arrives',leaves:'Leaves',today:'Today',tomorrow:'Tomorrow',nothing:'No arrivals or departures today or tomorrow.',
+    arr1:'1 guest arrives today',arrN:'{n} guests arrive today',dep1:'1 guest leaves today',depN:'{n} guests leave today',quiet:'No arrivals or departures today. A quiet day.',
+    allClean:'Everything is clean and ready.',toClean:'{n} to clean',cleanNone:'Nothing to clean right now',cleanSome:'{n} to clean',cleanDone:'{n} cleaned today',cleanOwed:'{x} owed to cleaners',
+    pend1:'1 request awaiting your response',pendN:'{n} requests awaiting your response',
+    c_title:'Customise your home',c_welcome:'Welcome',c_name:'First name',c_photo:'Upload photo',c_remove:'Remove',c_msg:'Welcome message',c_anim:'Animations',c_qa:'Quick actions',c_qa_hint:'Choose up to 4. The first one is highlighted.',
+    c_show:'What to show',c_metrics:'Key numbers',c_pending:'Pending requests',c_stays:'Arrivals and departures',c_clean:'Cleaning',c_save:'Save',c_cancel:'Cancel',c_saved:'Home saved',linkCopied:'Booking link copied',hi:'Hello'},
+  fr:{qa_booking:'Nouvelle réservation',qa_expense:'Nouvelle dépense',qa_link:'Partager le lien',qa_scan:'Scanner un reçu',qa_property:'Ajouter un bien',qa_block:'Bloquer des dates',qa_payments:'Suivre les paiements',qa_cleaning:'Ménage',
+    m_revenue:'Gagné ce mois-ci',m_owed:'Dû aux femmes de ménage',m_occupied:'Biens occupés',m_checkouts:'Départs aujourd\'hui',
+    stays_title:'Arrivées et départs',clean_title:'Ménage',view_all:'Tout voir',open:'Ouvrir',review:'Voir',
+    arrives:'Arrive',leaves:'Part',today:'Aujourd\'hui',tomorrow:'Demain',nothing:'Aucune arrivée ni départ aujourd\'hui ou demain.',
+    arr1:'1 voyageur arrive aujourd\'hui',arrN:'{n} voyageurs arrivent aujourd\'hui',dep1:'1 voyageur part aujourd\'hui',depN:'{n} voyageurs partent aujourd\'hui',quiet:'Aucune arrivée ni départ aujourd\'hui. Journée calme.',
+    allClean:'Tout est propre et prêt.',toClean:'{n} à nettoyer',cleanNone:'Rien à nettoyer pour le moment',cleanSome:'{n} à nettoyer',cleanDone:'{n} nettoyés aujourd\'hui',cleanOwed:'{x} dus au ménage',
+    pend1:'1 demande en attente de votre réponse',pendN:'{n} demandes en attente de votre réponse',
+    c_title:'Personnaliser votre accueil',c_welcome:'Bienvenue',c_name:'Prénom',c_photo:'Ajouter une photo',c_remove:'Retirer',c_msg:'Message de bienvenue',c_anim:'Animations',c_qa:'Actions rapides',c_qa_hint:'4 maximum. La première est mise en avant.',
+    c_show:'À afficher',c_metrics:'Chiffres clés',c_pending:'Demandes en attente',c_stays:'Arrivées et départs',c_clean:'Ménage',c_save:'Enregistrer',c_cancel:'Annuler',c_saved:'Accueil enregistré',linkCopied:'Lien de réservation copié',hi:'Bonjour'},
+  pt:{qa_booking:'Nova reserva',qa_expense:'Nova despesa',qa_link:'Partilhar link',qa_scan:'Digitalizar recibo',qa_property:'Adicionar propriedade',qa_block:'Bloquear datas',qa_payments:'Ver pagamentos',qa_cleaning:'Limpeza',
+    m_revenue:'Ganho este mês',m_owed:'Devido à limpeza',m_occupied:'Propriedades ocupadas',m_checkouts:'Saídas hoje',
+    stays_title:'Chegadas e saídas',clean_title:'Limpeza',view_all:'Ver tudo',open:'Abrir',review:'Ver',
+    arrives:'Chega',leaves:'Sai',today:'Hoje',tomorrow:'Amanhã',nothing:'Sem chegadas nem saídas hoje ou amanhã.',
+    arr1:'1 hóspede chega hoje',arrN:'{n} hóspedes chegam hoje',dep1:'1 hóspede sai hoje',depN:'{n} hóspedes saem hoje',quiet:'Sem chegadas nem saídas hoje. Dia tranquilo.',
+    allClean:'Tudo limpo e pronto.',toClean:'{n} para limpar',cleanNone:'Nada para limpar de momento',cleanSome:'{n} para limpar',cleanDone:'{n} limpas hoje',cleanOwed:'{x} devidos à limpeza',
+    pend1:'1 pedido a aguardar a sua resposta',pendN:'{n} pedidos a aguardar a sua resposta',
+    c_title:'Personalizar o início',c_welcome:'Boas-vindas',c_name:'Primeiro nome',c_photo:'Carregar foto',c_remove:'Remover',c_msg:'Mensagem de boas-vindas',c_anim:'Animações',c_qa:'Ações rápidas',c_qa_hint:'Máximo 4. A primeira fica em destaque.',
+    c_show:'O que mostrar',c_metrics:'Números principais',c_pending:'Pedidos pendentes',c_stays:'Chegadas e saídas',c_clean:'Limpeza',c_save:'Guardar',c_cancel:'Cancelar',c_saved:'Início guardado',linkCopied:'Link de reserva copiado',hi:'Olá'}
+};
+function HT(k,v){
+  var d=HOME_T[cleanLang]||HOME_T.en,s=d[k];if(s==null)s=HOME_T.en[k];if(s==null)return k;
+  if(v)Object.keys(v).forEach(function(x){s=s.replace('{'+x+'}',v[x]);});
+  return s;
+}
+function homeCfg(){
+  var s=(workspace&&workspace.settings&&workspace.settings.home)||{};
+  var o=JSON.parse(JSON.stringify(HOME_DEF));
+  Object.keys(s).forEach(function(k){if(k==='m'){Object.keys(s.m||{}).forEach(function(j){o.m[j]=!!s.m[j];});}else o[k]=s[k];});
+  if(!Array.isArray(o.qa))o.qa=HOME_DEF.qa.slice();
+  o.qa=o.qa.filter(function(k){return HOME_QA_KEYS.indexOf(k)>-1;}).slice(0,4);
+  return o;
+}
+function homeIcon(n){return '<svg class="i" viewBox="0 0 24 24">'+HOME_IC[n]+'</svg>';}
+function homeAvatarHtml(cfg){
+  if(cfg.photo&&/^data:image\//.test(cfg.photo))return '<img alt="" src="'+cfg.photo+'">';
+  var n=(cfg.name||'').trim();
+  return n?esc(n.charAt(0).toUpperCase()):homeIcon('user');
+}
 function renderOverview(){
+  var cfg=homeCfg();
+  var hm=document.getElementById('hm');
+  if(hm)hm.classList.toggle('noanim',!cfg.anim);
   renderGreeting();
   renderKPIs();
   renderUpcoming();
-  renderOccupancy();
   renderOvCleaning();
   renderGettingStarted();
+  renderHomeLayout(cfg);
+}
+// Shows or hides each block and builds the quick-action row.
+function renderHomeLayout(cfg){
+  function show(id,on,disp){var e=document.getElementById(id);if(e)e.style.display=on?(disp||''):'none';}
+  var av=document.getElementById('hmAvatar');if(av)av.innerHTML=homeAvatarHtml(cfg);
+  document.querySelectorAll('[data-t]').forEach(function(e){e.textContent=HT(e.getAttribute('data-t'));});
+  var qa=document.getElementById('hmQA');
+  if(qa){
+    qa.style.setProperty('--n',cfg.qa.length||1);
+    qa.innerHTML=cfg.qa.map(function(k){return '<button type="button" onclick="homeDo(\''+k+'\')"><span class="ic">'+homeIcon(k)+'</span>'+HT('qa_'+k)+'</button>';}).join('');
+    qa.style.display=cfg.qa.length?'':'none';
+  }
+  var keys=['revenue','owed','occupied','checkouts'],n=0;
+  keys.forEach(function(k){var b=document.querySelector('.hm-metric[data-m="'+k+'"]');if(!b)return;var on=cfg.metrics&&cfg.m[k];b.style.display=on?'':'none';if(on)n++;});
+  var vis=keys.filter(function(k){return cfg.metrics&&cfg.m[k];});keys.forEach(function(k){var b=document.querySelector('.hm-metric[data-m="'+k+'"]');if(b)b.classList.toggle('wide',vis.length%2===1&&vis.length>1&&k===vis[vis.length-1]);});
+  var mw=document.getElementById('hmMetrics');if(mw){mw.style.setProperty('--n',n||1);mw.style.display=n?'':'none';}
+  if(!cfg.pending){show('ovPendingBanner',false);}
+  show('hmStaysCard',cfg.stays);show('hmCleanCard',cfg.cleaning);
+  var g=document.getElementById('hmGrid');
+  if(g){g.style.display=(cfg.stays||cfg.cleaning)?'':'none';g.classList.toggle('two',!!(cfg.stays&&cfg.cleaning));}
+  var msg=document.getElementById('hmMsg');if(msg)msg.style.display=cfg.msg?'':'none';
+}
+function homeDo(k){
+  var wait=function(fn,ms){setTimeout(fn,ms||120);};
+  if(k==='booking'){switchTab('calendar');wait(function(){openNewBooking();});}
+  else if(k==='block'){switchTab('calendar');wait(function(){openNewBooking();setNbTab('block');});}
+  else if(k==='expense'){
+    switchTab('payments');
+    var tries=0;(function go(){
+      if(document.getElementById('expensesList')&&typeof addExpenseRow==='function'){addExpenseRow('once');return;}
+      if(++tries<20)setTimeout(go,150);
+    })();
+  }
+  else if(k==='link'){
+    var url=BOOKING_PAGE_URL+'?ws='+workspace.id;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){toast(HT('linkCopied'),'ok');}).catch(function(){switchTab('widget');});
+    }else switchTab('widget');
+  }
+  else if(k==='scan'){openReceiptScan();}
+  else if(k==='property'){switchTab('properties');wait(openAddProp);}
+  else if(k==='payments'){switchTab('payments');}
+  else if(k==='cleaning'){switchTab('cleaning');}
 }
 function renderOvCleaning(){
-  var container=document.getElementById('ovCleaning');
-  if(!container)return;
+  var c=document.getElementById('ovCleaning');
+  if(!c)return;
   var tod=today0();
-  var cleanAll=(typeof buildCleanAllList==='function')?buildCleanAllList():[];
-  var needsCleaning=cleanAll.filter(function(b){return b.checkout<=tod&&b.cleaned!=='yes';}).length;
-  var cleanedToday=cleanAll.filter(function(b){return b.checkout===tod&&b.cleaned==='yes';}).length;
+  var all=(typeof buildCleanAllList==='function')?buildCleanAllList():[];
+  var needs=all.filter(function(b){return b.checkout<=tod&&b.cleaned!=='yes';}).length;
+  var doneToday=all.filter(function(b){return b.checkout===tod&&b.cleaned==='yes';}).length;
   var owed=computeCleanerPayoutTotal();
-  container.innerHTML=
-    '<div class="ov-clean-row"><div class="ov-clean-lbl">Needs cleaning</div><div class="ov-clean-val'+(needsCleaning>0?' red':' green')+'">'+needsCleaning+'</div></div>'+
-    '<div class="ov-clean-row"><div class="ov-clean-lbl">Cleaned today</div><div class="ov-clean-val green">'+cleanedToday+'</div></div>'+
-    '<div class="ov-clean-row"><div class="ov-clean-lbl">Owed to cleaners</div><div class="ov-clean-val'+(owed>0?' red':' green')+'">€'+Math.round(owed).toLocaleString()+'</div></div>';
+  var total=needs+doneToday;
+  var pct=total?Math.round(doneToday/total*100):100;
+  var line=needs>0?HT('cleanSome',{n:needs}):(doneToday>0?HT('cleanDone',{n:doneToday}):HT('cleanNone'));
+  c.innerHTML='<div class="hm-clean-t">'+line+'</div>'+
+    '<div class="hm-bar"><i id="hmCleanBar"></i></div>'+
+    '<div class="hm-clean-s">'+HT('cleanOwed',{x:'€'+Math.round(owed).toLocaleString()})+'</div>';
+  var bar=document.getElementById('hmCleanBar');
+  if(bar)requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width=pct+'%';});});
 }
 
 // ── GETTING STARTED (onboarding checklist, step 2) ────────────────────────────
@@ -8655,10 +8966,11 @@ function dismissOnboarding(){
 }
 
 function renderGreeting(){
+  var cfg=homeCfg();
   var h=new Date().getHours();
   var greet=h<12?CT('greeting_morning'):h<18?CT('greeting_afternoon'):CT('greeting_evening');
   var el=document.getElementById('ovGreetingTitle');
-  if(el)el.textContent=greet;
+  if(el)el.textContent=greet+(cfg.name?', '+cfg.name:'');
   renderTodayDate();
 }
 // Formats and displays today's date in the top-right corner (desktop) and under the greeting (all screens)
@@ -8760,65 +9072,131 @@ function today0(){return new Date().toISOString().slice(0,10);}
 function renderPendingBanner(pending){
   var el=document.getElementById('ovPendingBanner');
   if(!el)return;
-  if(pending>0){
+  if(pending>0&&homeCfg().pending){
     el.style.display='flex';
-    document.getElementById('ovPendingText').textContent=
-      pending+' request'+(pending===1?'':'s')+' awaiting your response';
+    document.getElementById('ovPendingText').textContent=HT(pending===1?'pend1':'pendN',{n:pending});
   } else {
     el.style.display='none';
   }
 }
 
+// Arrivals and departures for today and tomorrow, plus the one-line welcome message.
 function renderUpcoming(){
-  var arriveEl=document.getElementById('ovArriving');
-  var departEl=document.getElementById('ovDeparting');
-  if(!arriveEl||!departEl)return;
+  var box=document.getElementById('hmStays');
+  var msg=document.getElementById('hmMsg');
   var today=new Date().toISOString().slice(0,10);
-  var cutoff=new Date();cutoff.setDate(cutoff.getDate()+7);
-  var cutoffStr=cutoff.toISOString().slice(0,10);
+  var tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
 
-  // Same canonical merge as renderKPIs — a confirmed direct_request already mirrored
+  // Same canonical merge as renderKPIs: a confirmed direct_request already mirrored
   // into allBookings must not be listed twice.
   var allBks=allBookings||[];
   var confirmedDirect=(requests||[]).filter(function(r){return r.status==='confirmed';});
   function reqMatchesBooking(r,b){
     return(b.apt===r.apt_id||b.apt===r.apt_name)&&b.checkin===r.checkin&&b.checkout===r.checkout;
   }
-
-  var arrivals=[],departures=[];
+  var rows=[];
+  function add(kind,date,name,apt){if(date===today||date===tomorrow)rows.push({kind:kind,date:date,name:name,apt:apt});}
   allBks.forEach(function(b){
     var apt=aptById(b.apt);
     var gName=cleanNotesDisplay(b.notes||b.guest_name||'').replace(/–.*/,'').trim()||'Guest';
-    if(b.checkin>=today&&b.checkin<=cutoffStr)arrivals.push({date:b.checkin,name:gName,apt:apt.name||b.apt,color:apt.color});
-    if(b.checkout>=today&&b.checkout<=cutoffStr)departures.push({date:b.checkout,name:gName,apt:apt.name||b.apt,color:apt.color});
+    add('in',b.checkin,gName,apt.name||b.apt);
+    add('out',b.checkout,gName,apt.name||b.apt);
   });
   confirmedDirect.forEach(function(r){
     if(allBks.some(function(b){return reqMatchesBooking(r,b);}))return;
     var apt=aptById(r.apt_id||r.apt_name);
     var gName=(r.guest_name||'Guest').trim();
-    if(r.checkin>=today&&r.checkin<=cutoffStr)arrivals.push({date:r.checkin,name:gName,apt:apt.name||r.apt_id,color:apt.color});
-    if(r.checkout>=today&&r.checkout<=cutoffStr)departures.push({date:r.checkout,name:gName,apt:apt.name||r.apt_id,color:apt.color});
+    add('in',r.checkin,gName,apt.name||r.apt_id);
+    add('out',r.checkout,gName,apt.name||r.apt_id);
   });
-  arrivals.sort(function(a,b){return a.date.localeCompare(b.date);});
-  departures.sort(function(a,b){return a.date.localeCompare(b.date);});
-  arrivals=arrivals.slice(0,5);departures=departures.slice(0,5);
+  rows.sort(function(a,b){return a.date.localeCompare(b.date)||(a.kind==='in'?-1:1)-(b.kind==='in'?-1:1);});
+  var aToday=rows.filter(function(r){return r.kind==='in'&&r.date===today;}).length;
+  var dToday=rows.filter(function(r){return r.kind==='out'&&r.date===today;}).length;
 
-  function relDate(d){
-    var tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
-    return d===today?'Today':d===tomorrow?'Tomorrow':fmtShort(d);
+  if(box){
+    box.innerHTML=rows.length?rows.slice(0,6).map(function(r){
+      return '<div class="hm-row"><span class="hm-tag '+r.kind+'">'+HT(r.kind==='in'?'arrives':'leaves')+'</span>'+
+        '<div class="t"><b>'+esc(r.name)+'</b><span>'+esc(r.apt)+'</span></div>'+
+        '<span class="d">'+HT(r.date===today?'today':'tomorrow')+'</span></div>';
+    }).join(''):'<div class="hm-empty">'+HT('nothing')+'</div>';
   }
-  function mkRow(item){
-    return '<div class="ov-inout-row">'+
-      '<div class="ov-stay-dot" style="background:'+item.color+'"></div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div class="ov-stay-name">'+esc(item.name)+'</div>'+
-        '<div class="ov-stay-meta">'+esc(item.apt)+'</div>'+
-      '</div>'+
-      '<div class="ov-stay-day">'+relDate(item.date)+'</div>'+
-    '</div>';
+  if(msg){
+    var parts=[];
+    if(aToday)parts.push('<strong>'+HT(aToday===1?'arr1':'arrN',{n:aToday})+'</strong>');
+    if(dToday)parts.push(HT(dToday===1?'dep1':'depN',{n:dToday}));
+    if(!parts.length)parts.push(HT('quiet'));
+    var tod=today0();
+    var cl=(typeof buildCleanAllList==='function')?buildCleanAllList():[];
+    var needs=cl.filter(function(b){return b.checkout<=tod&&b.cleaned!=='yes';}).length;
+    parts.push(needs>0?HT('toClean',{n:needs}):HT('allClean'));
+    msg.innerHTML=parts.join('. ').replace(/\.\s*$/,'')+'.';
   }
-  arriveEl.innerHTML=arrivals.length?arrivals.map(mkRow).join(''):'<div class="ov-inout-empty">No arrivals in the next 7 days</div>';
-  departEl.innerHTML=departures.length?departures.map(mkRow).join(''):'<div class="ov-inout-empty">No departures in the next 7 days</div>';
+}
+
+// ── Customise the home screen ────────────────────────────────────────────────
+var _hc=null;
+function openHomeCustomize(){
+  _hc=homeCfg();
+  renderHomeCust();
+  document.getElementById('homeCustOverlay').classList.add('show');
+}
+function hcSw(label,on,attr,sub){
+  return '<div class="sw'+(sub?' sub':'')+'"><span class="n">'+label+'</span><label class="tg"><input type="checkbox" '+attr+(on?' checked':'')+'><i></i></label></div>';
+}
+function renderHomeCust(){
+  var c=_hc,full=c.qa.length>=4;
+  var h='<div class="grp"><h4>'+HT('c_welcome')+'</h4>'+
+    '<div class="fld"><label for="hcName">'+HT('c_name')+'</label><input type="text" id="hcName" maxlength="24" value="'+esc(c.name||'')+'" oninput="_hc.name=this.value;hcAvatar()"></div>'+
+    '<div class="ph"><div class="hm-avatar" id="hcAvatar">'+homeAvatarHtml(c)+'</div>'+
+      '<button type="button" class="pb" onclick="document.getElementById(\'hcFile\').click()">'+homeIcon('up').replace('class="i"','class="i" style="width:16px;height:16px"')+HT('c_photo')+'</button>'+
+      '<button type="button" class="pb" onclick="_hc.photo=\'\';hcAvatar()">'+HT('c_remove')+'</button>'+
+      '<input type="file" id="hcFile" accept="image/*" style="display:none" onchange="hcPhoto(this)"></div>'+
+    hcSw(HT('c_msg'),c.msg,'onchange="_hc.msg=this.checked"')+
+    hcSw(HT('c_anim'),c.anim,'onchange="_hc.anim=this.checked"')+
+  '</div>'+
+  '<div class="grp"><h4>'+HT('c_qa')+'</h4><div class="hint">'+HT('c_qa_hint')+'</div><div class="chips">'+
+    HOME_QA_KEYS.map(function(k){var on=c.qa.indexOf(k)>-1;
+      return '<button type="button" class="chip" aria-pressed="'+on+'"'+(!on&&full?' disabled':'')+' onclick="hcToggleQA(\''+k+'\')">'+homeIcon(k)+HT('qa_'+k)+'</button>';}).join('')+
+  '</div></div>'+
+  '<div class="grp"><h4>'+HT('c_show')+'</h4>'+
+    hcSw(HT('c_metrics'),c.metrics,'onchange="_hc.metrics=this.checked"')+
+    ['revenue','owed','occupied','checkouts'].map(function(k){return hcSw(HT('m_'+k),c.m[k],'onchange="_hc.m.'+k+'=this.checked"',true);}).join('')+
+    hcSw(HT('c_stays'),c.stays,'onchange="_hc.stays=this.checked"')+
+    hcSw(HT('c_clean'),c.cleaning,'onchange="_hc.cleaning=this.checked"')+
+    hcSw(HT('c_pending'),c.pending,'onchange="_hc.pending=this.checked"')+
+  '</div>';
+  document.getElementById('homeCustBody').innerHTML=h;
+  document.getElementById('homeCustTitle').textContent=HT('c_title');
+  document.getElementById('homeCustSave').textContent=HT('c_save');
+  document.getElementById('homeCustCancel').textContent=HT('c_cancel');
+}
+function hcAvatar(){var e=document.getElementById('hcAvatar');if(e)e.innerHTML=homeAvatarHtml(_hc);}
+function hcToggleQA(k){
+  var i=_hc.qa.indexOf(k);
+  if(i>-1)_hc.qa.splice(i,1);else if(_hc.qa.length<4)_hc.qa.push(k);
+  renderHomeCust();
+}
+function hcPhoto(inp){
+  var f=inp.files&&inp.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(){
+    var im=new Image();
+    im.onload=function(){
+      var s=160,m=Math.min(im.width,im.height),cv=document.createElement('canvas');
+      cv.width=cv.height=s;
+      cv.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,s,s);
+      _hc.photo=cv.toDataURL('image/jpeg',.82);hcAvatar();
+    };
+    im.onerror=function(){toast('Could not read this image (try a JPG or PNG)','err');};
+    im.src=r.result;
+  };
+  r.readAsDataURL(f);
+}
+function saveHomeCustomize(){
+  var btn=document.getElementById('homeCustSave');btn.disabled=true;
+  patchWorkspaceSettings({home:_hc}).then(function(){
+    closeModal('homeCustOverlay');renderOverview();toast(HT('c_saved'),'ok');
+  }).catch(function(e){toast('Save failed: '+e.message,'err');}).finally(function(){btn.disabled=false;});
 }
 
 function renderOccupancy(){
@@ -8872,7 +9250,7 @@ function saveWaTemplates(){
     return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s});
   }).then(function(rows){
     if(rows&&rows.length)workspace=rows[0];
-    toast('✅ WhatsApp templates saved','ok');
+    toast('WhatsApp templates saved','ok');
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
@@ -8914,11 +9292,11 @@ function loadEmailTemplates(){
   var cfg=workspace&&workspace.settings||{};
   var t=cfg.emailTemplates||{};
   // Default confirmed template
-  var defConfirmed='Hi {guest_name},\n\nGreat news — your booking is confirmed! 🎉\n\n📍 {property}\n📅 {checkin} → {checkout}\n🌙 {nights} nights\n\nTo confirm your reservation, please transfer the deposit:\n• Total: €{total}\n• Deposit (50%): €{deposit}\n• Payment details: {iban}\n\nLooking forward to welcoming you!\n\nBest,\n'+hostBizName();
+  var defConfirmed='Hi {guest_name},\n\nGreat news — your booking is confirmed!\n\n{property}\n{checkin} → {checkout}\n{nights} nights\n\nTo confirm your reservation, please transfer the deposit:\n• Total: €{total}\n• Deposit (50%): €{deposit}\n• Payment details: {iban}\n\nLooking forward to welcoming you!\n\nBest,\n'+hostBizName();
   var defDeclined='Hi {guest_name},\n\nThank you for your interest in {property}.\n\nUnfortunately those dates are not available. Feel free to send a new request for different dates — I\'d love to host you.\n\nApologies for the inconvenience.\n\nBest,\n'+hostBizName();
   var defPending='Hi {guest_name},\n\nThank you for your booking request for {property} ({checkin} – {checkout}).\n\nI\'m reviewing your request and will confirm within 24 hours.\n\nBest,\n'+hostBizName();
   var el=function(id){return document.getElementById(id);};
-  if(el('tmplConfirmedSubject'))el('tmplConfirmedSubject').value=t.confirmedSubject||'Your booking is confirmed! 🎉';
+  if(el('tmplConfirmedSubject'))el('tmplConfirmedSubject').value=t.confirmedSubject||'Your booking is confirmed!';
   if(el('tmplConfirmedBody'))el('tmplConfirmedBody').value=t.confirmedBody||defConfirmed;
   if(el('tmplDeclinedSubject'))el('tmplDeclinedSubject').value=t.declinedSubject||'About your booking request';
   if(el('tmplDeclinedBody'))el('tmplDeclinedBody').value=t.declinedBody||defDeclined;
@@ -8941,7 +9319,7 @@ function saveEmailTemplates(){
     return sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s});
   }).then(function(rows){
     if(rows&&rows.length)workspace=rows[0];
-    toast('✅ Email templates saved','ok');
+    toast('Email templates saved','ok');
   }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
@@ -9023,7 +9401,7 @@ function fmtShort(d){if(!d)return'—';var dt=new Date(d+'T12:00:00');return Str
 function fmtFull(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function fmtDay(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short'});}
 function fmtAgo(d){if(!d)return'';var diff=Date.now()-new Date(d).getTime();var h=Math.floor(diff/3600000);if(h<1)return'just now';if(h<24)return h+'h ago';var days=Math.floor(h/24);return days+'d ago';}
-function statusLabel(s){return{pending:'⏳ Pending',confirmed:'✅ Confirmed',declined:'❌ Declined',cancelled:'🚫 Cancelled'}[s]||s;}
+function statusLabel(s){return{pending:'Pending',confirmed:'Confirmed',declined:'Declined',cancelled:'Cancelled'}[s]||s;}
 function mailGuest(email){window.open('mailto:'+email);}
 function whatsApp(phone){var p=phone.replace(/\D/g,'');if(!p.startsWith('351')&&!p.startsWith('+'))p='351'+p;window.open('https://wa.me/'+p);}
 
@@ -9095,7 +9473,7 @@ function sfDailyCheck(){
     checkoutsToday.forEach(function(b){
       var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
       sfSend('clean_'+b.id+'_'+tod,
-        '🧹 Cleaning needed today',
+        'Cleaning needed today',
         (nm||'Guest')+' checks out · '+aptName(b.apt),
         null,
         function(){switchTab('cleaning');}
@@ -9107,7 +9485,7 @@ function sfDailyCheck(){
     checkinsToday.forEach(function(b){
       var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
       sfSend('checkin_'+b.id+'_'+tod,
-        '🔑 Check-in today',
+        'Check-in today',
         (nm||'Guest')+' · '+aptName(b.apt),
         null,
         function(){switchTab('calendar');}
@@ -9121,7 +9499,7 @@ function sfDailyCheck(){
     }).forEach(function(b){
       var nm=cleanNotesDisplay(b.notes)||b.guests||'Guest';
       sfSend('unpaid_'+b.id+'_'+tod,
-        '💶 Unpaid booking arriving soon',
+        'Unpaid booking arriving soon',
         (nm||'Guest')+' · '+aptName(b.apt)+' · '+fmtShort(b.checkin),
         null,
         function(){switchTab('calendar');}
@@ -9150,7 +9528,7 @@ function sfStartRealtime(){
           var aptId=row.apt_id||row.apt_name||'';
           var apt2=(properties||[]).find(function(a){return a.id===aptId||a.name===aptId;});
           var aptLabel=apt2?apt2.name:aptId;
-          sfSend('new_req_'+row.id,'📬 New booking request',
+          sfSend('new_req_'+row.id,'New booking request',
             (row.guest_name||'A guest')+(aptLabel?' · '+aptLabel:'')+(row.checkin?' · '+fmtShort(row.checkin):''),
             null,function(){switchTab('requests');});
         });
@@ -9177,7 +9555,7 @@ function sfToggleNotifications(){
         // Option B failed silently — Option A still works
       });
     }
-    toast('🔔 Notifications enabled!','ok');
+    toast('Notifications enabled!','ok');
   });
 }
 // ── Option B: True Push Notifications (Service Worker + Web Push) ────────────
@@ -9214,7 +9592,7 @@ function sfSubscribePush(){
     });
   }).then(function(){
     localStorage.setItem('sf_push_enabled','1');
-    toast('🔔 Push notifications enabled!','ok');
+    toast('Push notifications enabled!','ok');
   });
 }
 
@@ -9226,7 +9604,7 @@ function sfInitPushB(){
     if(!granted){toast('Permission denied','err');return;}
     // Check if already subscribed
     if(localStorage.getItem('sf_push_enabled')==='1'){
-      toast('Push notifications already active ✅','ok');return;
+      toast('Push notifications already active','ok');return;
     }
     sfSubscribePush().catch(function(e){toast('Push setup failed: '+e.message,'err');});
   });
