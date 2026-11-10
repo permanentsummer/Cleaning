@@ -1667,7 +1667,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div id="rsBadge" class="rs-badge" style="display:none"></div>
       </div>
       <div id="rsDup" style="display:none;background:var(--yellow-bg);border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--primary)" data-rt="dup"></div>
-      <div class="fg" style="margin-bottom:12px"><label data-rt="vendor">Name / vendor</label><input type="text" id="rsName" oninput="_rsNameTouched=true"></div>
+      <div class="fg" style="margin-bottom:12px"><label data-rt="vendor">Name / vendor</label><input type="text" id="rsName" list="rsNames" autocomplete="off" oninput="_rsNameTouched=true"><datalist id="rsNames"></datalist></div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div class="fg" style="flex:1;min-width:0"><label data-rt="amount">Amount (€)</label><input type="number" inputmode="decimal" step="0.01" min="0" id="rsAmount" placeholder="0.00" oninput="rsCheckDup()"></div>
         <div class="fg" style="flex:1;min-width:0"><label data-rt="date">Date</label><input type="date" id="rsDate" onchange="rsCheckDup()"></div>
@@ -5142,20 +5142,35 @@ function rsParseText(text,nowISO){
     res.date=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');break;
   }
 
-  // Vendor — first strong header line near the top.
+  // Vendor — first strong header line near the top. OCR output on a photographed
+  // thermal receipt is noisy ("soL_LUCOES LUMI] NOSAS"), so lines are cleaned and
+  // judged on how much of them is letters, not on a perfect match.
   var noise=/\b(de:|nif|contribuinte|cont\.?|fatura|factura|recibo|invoice|receipt|original|duplicado|data|hora|cliente|morada|rua|av\.|avenida|tel|www|\.com|\.pt|iva|total|obrigado|ordem|pst|n[ºo°])\b/i;
   function clean(l){return l.replace(/[^A-Za-zÀ-ÿ0-9&'.\- ]/g,' ').replace(/\s+/g,' ').trim();}
-  for(var k=0;k<Math.min(lines.length,8)&&!res.name;k++){
-    var cl=clean(lines[k]);
-    var letters=cl.replace(/[^A-Za-zÀ-ÿ]/g,'');
-    if(letters.length<3||cl.length>38)continue;
+  function fixCase(l){
+    return l.split(' ').filter(function(t){return t.length>1||t==='&';}).map(function(t){
+      var L=t.replace(/[^A-Za-zÀ-ÿ]/g,''),U=L.replace(/[^A-ZÀ-Þ]/g,'');
+      return (L.length>=3&&U.length/L.length>=0.5)?t.toUpperCase():t;
+    }).join(' ');
+  }
+  function title(l){
+    var L=l.replace(/[^A-Za-zÀ-ÿ]/g,''),U=L.replace(/[^A-ZÀ-Þ]/g,'');
+    if(!L.length||U.length/L.length<0.8)return l;
+    return l.toLowerCase().replace(/(^|[\s\-'])([a-zà-ÿ])/g,function(m,p,c){return p+c.toUpperCase();});
+  }
+  for(var k=0;k<Math.min(lines.length,12)&&!res.name;k++){
     if(noise.test(lines[k]))continue;
+    var junk=(lines[k].match(/[\]\[{}_=<>\\^~`]/g)||[]).length;
+    var cl=fixCase(clean(lines[k]));
+    var letters=cl.replace(/[^A-Za-zÀ-ÿ]/g,'');
+    if(letters.length<4||cl.length>38||junk>3)continue;
+    if(letters.length/cl.replace(/ /g,'').length<0.8)continue;
     var up=letters.replace(/[^A-ZÀ-Þ]/g,'').length;
-    if(up/letters.length>=0.7)res.name=cl;
+    if(up/letters.length>=0.6)res.name=title(cl);
   }
   if(!res.name){
     var dm=/\bDE\s*:\s*(.{3,40})/i.exec(text);
-    if(dm)res.name=clean(dm[1]);
+    if(dm)res.name=title(fixCase(clean(dm[1])));
   }
   if(!res.name){
     var dom=/\b(?:www\.)?([a-z0-9][a-z0-9-]{1,24})\.(com|pt|net|shop|store|eu|es|fr)\b/i.exec(text);
@@ -5179,15 +5194,15 @@ var RS_T={
   en:{title:'Add receipt',sub:'Take a photo or choose one. On Portuguese receipts the fiscal QR code gives the exact total and date.',cam:'Camera',camS:'Snap a photo of the receipt',lib:'Photo library',libS:'Choose an existing photo',
     qrOk:'Fiscal QR code read. Total and date are exact.',txt:'Read from the text. Please check the three fields.',none:'Nothing could be read. Fill in the fields below.',
     vendor:'Name / vendor',amount:'Amount (€)',date:'Date',prop:'Property',noProp:'No specific property',raw:'Show raw extracted text',rescan:'Rescan',add:'Add as one-time expense',
-    reading:'Reading the receipt…',dup:'An expense of this amount and date already exists. Check you are not adding the same receipt twice.',nameReq:'Name is required',amtReq:'Amount must be greater than 0',dateReq:'Date is required',added:'Expense added from receipt',libErr:'Could not load the scanning library. Check your connection and try again.',imgErr:'This photo could not be opened. Try a JPG or PNG.'},
+    reading:'Reading the receipt…',typeName:'Type the shop name once. It will be remembered.',dup:'An expense of this amount and date already exists. Check you are not adding the same receipt twice.',nameReq:'Name is required',amtReq:'Amount must be greater than 0',dateReq:'Date is required',added:'Expense added from receipt',libErr:'Could not load the scanning library. Check your connection and try again.',imgErr:'This photo could not be opened. Try a JPG or PNG.'},
   fr:{title:'Ajouter un reçu',sub:'Prenez une photo ou choisissez-en une. Sur les reçus portugais, le QR code fiscal donne le total et la date exacts.',cam:'Appareil photo',camS:'Photographier le reçu',lib:'Photothèque',libS:'Choisir une photo existante',
     qrOk:'QR code fiscal lu. Total et date exacts.',txt:'Lu depuis le texte. Vérifiez les trois champs.',none:'Rien n\'a pu être lu. Remplissez les champs.',
     vendor:'Nom / fournisseur',amount:'Montant (€)',date:'Date',prop:'Bien',noProp:'Aucun bien précis',raw:'Afficher le texte brut',rescan:'Rescanner',add:'Ajouter comme dépense ponctuelle',
-    reading:'Lecture du reçu…',dup:'Une dépense de ce montant et de cette date existe déjà. Vérifiez que ce n\'est pas le même reçu.',nameReq:'Le nom est requis',amtReq:'Le montant doit être supérieur à 0',dateReq:'La date est requise',added:'Dépense ajoutée depuis le reçu',libErr:'Impossible de charger la bibliothèque de lecture. Vérifiez votre connexion.',imgErr:'Cette photo n\'a pas pu être ouverte. Essayez un JPG ou PNG.'},
+    reading:'Lecture du reçu…',typeName:'Saisissez le nom du magasin une fois. Il sera mémorisé.',dup:'Une dépense de ce montant et de cette date existe déjà. Vérifiez que ce n\'est pas le même reçu.',nameReq:'Le nom est requis',amtReq:'Le montant doit être supérieur à 0',dateReq:'La date est requise',added:'Dépense ajoutée depuis le reçu',libErr:'Impossible de charger la bibliothèque de lecture. Vérifiez votre connexion.',imgErr:'Cette photo n\'a pas pu être ouverte. Essayez un JPG ou PNG.'},
   pt:{title:'Adicionar recibo',sub:'Tire uma foto ou escolha uma. Nos recibos portugueses, o QR code fiscal dá o total e a data exatos.',cam:'Câmara',camS:'Fotografar o recibo',lib:'Fototeca',libS:'Escolher uma foto existente',
     qrOk:'QR code fiscal lido. Total e data exatos.',txt:'Lido a partir do texto. Verifique os três campos.',none:'Não foi possível ler nada. Preencha os campos.',
     vendor:'Nome / fornecedor',amount:'Montante (€)',date:'Data',prop:'Propriedade',noProp:'Nenhuma propriedade específica',raw:'Mostrar texto lido',rescan:'Digitalizar de novo',add:'Adicionar como despesa pontual',
-    reading:'A ler o recibo…',dup:'Já existe uma despesa com este montante e data. Verifique que não é o mesmo recibo.',nameReq:'O nome é obrigatório',amtReq:'O montante deve ser maior que 0',dateReq:'A data é obrigatória',added:'Despesa adicionada a partir do recibo',libErr:'Não foi possível carregar a biblioteca de leitura. Verifique a ligação.',imgErr:'Não foi possível abrir esta foto. Tente JPG ou PNG.'}
+    reading:'A ler o recibo…',typeName:'Escreva o nome da loja uma vez. Ficará memorizado.',dup:'Já existe uma despesa com este montante e data. Verifique que não é o mesmo recibo.',nameReq:'O nome é obrigatório',amtReq:'O montante deve ser maior que 0',dateReq:'A data é obrigatória',added:'Despesa adicionada a partir do recibo',libErr:'Não foi possível carregar a biblioteca de leitura. Verifique a ligação.',imgErr:'Não foi possível abrir esta foto. Tente JPG ou PNG.'}
 };
 function RT(k){var d=RS_T[cleanLang]||RS_T.en;return d[k]!=null?d[k]:RS_T.en[k];}
 function rsApplyLabels(){
@@ -5202,6 +5217,9 @@ function openReceiptScan(){
   sel.innerHTML='<option value="all">'+RT('noProp')+'</option>'+(properties||[]).map(function(p){return'<option value="'+p.id+'">'+esc(p.name||p.short)+'</option>';}).join('');
   rsReset();
   rsApplyLabels();
+  var known={};Object.keys((workspace&&workspace.settings&&workspace.settings.vendors)||{}).forEach(function(k){known[workspace.settings.vendors[k]]=1;});
+  getFinExpenses().forEach(function(x){if(x&&x.name)known[x.name]=1;});
+  document.getElementById('rsNames').innerHTML=Object.keys(known).slice(0,60).map(function(n){return '<option value="'+esc(n)+'">';}).join('');
   rsShow('pick');
   document.getElementById('receiptScanOverlay').classList.add('show');
 }
@@ -5296,8 +5314,8 @@ function rsReadQR(cv){
   }).catch(function(){return null;});
 }
 // Gray + stretched contrast: receipts are low-contrast grey on grey.
-function rsPrepOCR(cv){
-  var k=Math.min(1,1700/cv.width),c=document.createElement('canvas');
+function rsPrepOCR(cv,width){
+  var k=Math.min(1,(width||1700)/cv.width),c=document.createElement('canvas');
   c.width=Math.round(cv.width*k);c.height=Math.round(cv.height*k);
   var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(cv,0,0,c.width,c.height);
   var d=x.getImageData(0,0,c.width,c.height),p=d.data,n=p.length/4,hist=new Array(256).fill(0),i;
@@ -5321,17 +5339,23 @@ function _loadTesseract(){
     document.head.appendChild(s);
   });
 }
-function rsOCR(cv){
+// headerOnly: read just the top of the photo at higher resolution, where the shop name is.
+function rsOCR(cv,headerOnly){
   return _loadTesseract().then(function(){
-    var prep=rsPrepOCR(cv);
-    function run(lang){
-      var w=Tesseract.createWorker({logger:function(){}});
-      return w.load().then(function(){return w.loadLanguage(lang);}).then(function(){return w.initialize(lang);})
+    var src=cv;
+    if(headerOnly){
+      var h=Math.round(cv.height*0.42),c=document.createElement('canvas');
+      c.width=cv.width;c.height=h;c.getContext('2d').drawImage(cv,0,0,cv.width,h,0,0,cv.width,h);src=c;
+    }
+    var prep=rsPrepOCR(src,headerOnly?2000:1700);
+    // tesseract.js v4: createWorker() returns a promise of an already-loaded worker.
+    return Promise.resolve(Tesseract.createWorker({logger:function(){}})).then(function(w){
+      return w.loadLanguage('eng').then(function(){return w.initialize('eng');})
         .then(function(){return w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});})
         .then(function(){return w.recognize(prep);})
-        .then(function(r){return w.terminate().then(function(){return (r&&r.data&&r.data.text)||'';},function(){return (r&&r.data&&r.data.text)||'';});});
-    }
-    return run('por').catch(function(){return run('eng');});
+        .then(function(r){var t=(r&&r.data&&r.data.text)||'';return Promise.resolve(w.terminate()).then(function(){return t;},function(){return t;});},
+              function(e){try{w.terminate();}catch(x){}throw e;});
+    });
   });
 }
 function rsVendorFor(nif){var v=(workspace&&workspace.settings&&workspace.settings.vendors)||{};return nif&&v[nif]||'';}
@@ -5356,7 +5380,11 @@ function rsRun(cv,token){
       // keep the name field usable while the shop name is being read
       var nmEl=document.getElementById('rsName');nmEl.classList.remove('rs-sk');nmEl.disabled=false;nmEl.placeholder=RT('reading');
     }
-    return Promise.race([rsOCR(cv),new Promise(function(_,rej){setTimeout(function(){rej(new Error(RT('none')));},60000);})]).then(function(text){
+    var ocrP=rsOCR(cv,!!qr).then(function(t){
+      if(qr&&!rsParseText(t).name)return rsOCR(cv,false).then(function(t2){return t+'\n'+t2;});
+      return t;
+    });
+    return Promise.race([ocrP,new Promise(function(_,rej){setTimeout(function(){rej(new Error(RT('none')));},60000);})]).then(function(text){
       if(token!==_rsToken)return;
       _rsRawText=text;
       document.getElementById('rsRawText').textContent=text.trim()||'(no text detected)';
@@ -5370,11 +5398,12 @@ function rsRun(cv,token){
         rsCheckDup();
       }
       rsSkeleton(['rsName','rsAmount','rsDate'],false);
-      document.getElementById('rsName').placeholder='';
+      document.getElementById('rsName').placeholder=RT('typeName');
     }).catch(function(e){
       if(token!==_rsToken)return;
       rsSkeleton(['rsName','rsAmount','rsDate'],false);
-      document.getElementById('rsName').placeholder='';
+      document.getElementById('rsName').placeholder=RT('typeName');
+      document.getElementById('rsRawText').textContent='OCR error: '+((e&&e.message)||e);
       if(!qr)rsBadge('warn',(e&&e.message)||RT('none'));
     });
   });
