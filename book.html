@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://qdldvqnvowyiwhfpdobs.supabase.co wss://qdldvqnvowyiwhfpdobs.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Book Direct</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -517,6 +519,7 @@ function applyBranding(bp){
 }
 // Live preview from the SummerFlow Direct Booking tab
 if(PREVIEW){window.addEventListener('message',function(ev){
+  if(ev.source!==window.parent)return;
   var d=ev.data;if(d&&d.sf==='success'){BP=d.bp||BP;['step1','step2','step3'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});var sb=document.getElementById('stepsBar');if(sb)sb.style.display='none';document.getElementById('sBox').innerHTML=sr(T('checkin'),'Fri, 12 June 2027')+sr(T('checkout'),'Mon, 15 June 2027')+sr('3 '+T('nightsp'),'Your property')+sr(T('guests'),'2')+sr('Total','\u20ac450');document.getElementById('successSection').style.display='block';applyThanks();return;}
   if(!d||d.sf!=='theme'||!d.bp)return;
   BP=d.bp;if(d.host){HOST_NAME=d.host;}
@@ -787,7 +790,7 @@ function goStep2(){
   var chip=T('checkin')+': '+fmtS(checkIn)+'  \u2013  '+T('checkout')+': '+fmtS(checkOut)+'  \u00b7  '+n+'n';
   document.getElementById('chipTxt').textContent=chip;
   document.getElementById('availSub').textContent=
-    n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+guests+' '+T('guests').toLowerCase();
+    n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+esc(guests)+' '+T('guests').toLowerCase();
 }
 
 function goStep3(propIdx){
@@ -802,7 +805,7 @@ function goStep3(propIdx){
   document.getElementById('fSummary').innerHTML=
     '<h3>'+esc(selProp.name)+'</h3>'+
     '<p>'+T('checkin')+': <strong>'+fmtF(checkIn)+'</strong>  \u2192  '+T('checkout')+': <strong>'+fmtF(checkOut)+'</strong>'+
-    '<br>'+n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+guests+' '+T('guests').toLowerCase()+
+    '<br>'+n+' '+(n===1?T('nights'):T('nightsp'))+' \u00b7 '+esc(guests)+' '+T('guests').toLowerCase()+
     '</p>';
   var rate=getSeasonalRate(selProp,checkIn)||selProp.ratePerNight||0;
   var bk='';
@@ -893,7 +896,7 @@ function renderProps(){
       var allPhotos=photos.map(fixPhotoUrl);
       photoHtml=
         '<div class="prop-photo" id="pp_'+propIdx+'">'+ 
-          '<img src="'+allPhotos[0]+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'">'+
+          '<img src="'+esc(allPhotos[0])+'" id="pimg_'+propIdx+'" alt="'+esc(prop.name)+'">'+
           (photos.length>1?
             '<div class="ph-nav">'+
               '<button class="ph-btn" onclick="phPrev('+propIdx+','+photos.length+')">&#8249;</button>'+
@@ -1129,7 +1132,7 @@ function showErr(msg){
 function nights(ci,co){if(!ci||!co)return 0;return Math.round((new Date(co+'T12:00:00')-new Date(ci+'T12:00:00'))/86400000);}
 function fmtS(d){if(!d)return'';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
 function fmtF(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString(lang==='fr'?'fr-FR':lang==='pt'?'pt-PT':'en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/`/g,'&#96;');}
 
 function fixPhotoUrl(url){
   if(!url)return '';
@@ -1142,7 +1145,8 @@ function fixPhotoUrl(url){
   if(gdUc)return 'https://lh3.googleusercontent.com/d/'+gdUc[1];
   var gdThumb=url.match(/drive\.google\.com\/thumbnail\?.*id=([a-zA-Z0-9_-]+)/);
   if(gdThumb)return 'https://lh3.googleusercontent.com/d/'+gdThumb[1];
-  return url;
+  url=String(url).trim();
+  return /^(https?:\/\/|data:image\/)/i.test(url)?url:'';
 }
 function sr(l,v){return v?'<div class="srow"><span class="l">'+esc(l)+'</span><span class="v">'+esc(v)+'</span></div>':'';}
 function tr2(l,v){return'<tr><td style="padding:7px 0;color:#64748b;border-bottom:1px solid #e2e8f0;width:38%">'+l+'</td><td style="padding:7px 0;border-bottom:1px solid #e2e8f0;font-weight:700">'+esc(v)+'</td></tr>';}
