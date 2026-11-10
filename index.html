@@ -3826,7 +3826,7 @@ function renderWidget(){
     '.bp-frame iframe{width:100%;height:600px;border:0;display:block}'+
     '.bp-save{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}'+
     '.bp-note{font-size:12px;color:var(--muted);line-height:1.5;background:var(--bg);border-radius:9px;padding:10px 12px;margin-top:10px}'+
-    '.bpx{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}@media(max-width:1080px){.bpx{grid-template-columns:1fr}.bpx-side{order:-1}}'+
+    '.bpx{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;align-items:start}@media(max-width:1080px){.bpx{grid-template-columns:minmax(0,1fr)}.bpx-side{order:-1}}.bpx>*{min-width:0}.bpx-prevbtn,.bpx-savebar{display:none}'+
     '.bpx-card{background:var(--card-bg,#fff);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}'+
     '.bpx-link{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;margin-bottom:14px}'+
     '.bpx-link .lk{flex:1;min-width:200px;font-family:monospace;font-size:12.5px;background:var(--bg);border-radius:8px;padding:9px 11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}'+
@@ -3847,6 +3847,19 @@ function renderWidget(){
     '.bpx-screen iframe{position:absolute;top:34px;left:0;width:390px;height:752px;border:0;transform:scale(.7538);transform-origin:0 0;background:#fff}'+
     '.bpx-home{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:100px;height:4px;border-radius:3px;background:#15151a;opacity:.85;z-index:3}'+
     '.bpx-hint{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.5}'+
+    // phone layout: nothing wider than the screen, preview folded away, Save always reachable
+    '@media(max-width:700px){'+
+      '.bpx{gap:12px}'+
+      '.bpx-link{padding:12px;gap:8px}.bpx-link .lk{flex:1 1 100%;min-width:0}.bpx-link .copy-btn{flex:1}.bpx-link .btn-primary{display:none}'+
+      '.bpx-tabs{padding:4px 6px 0;scrollbar-width:none}.bpx-tabs::-webkit-scrollbar{display:none}.bpx-tab{padding:10px 12px}'+
+      '.bpx-pane{padding:14px}.bpx-pane .bp-f input,.bpx-pane .bp-f select,.bpx-pane textarea,.bpx-pane input[type=text],.bpx-pane input[type=url],.bpx-pane input[type=email]{font-size:16px}'+
+      '.bpx-side{position:static}'+
+      '.bpx-prevbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--r);background:var(--card-bg,#fff);font-family:inherit;font-size:13.5px;font-weight:700;color:var(--primary);cursor:pointer}'+
+      '.bpx-side:not(.open) .bpx-ctl,.bpx-side:not(.open) .bpx-phone,.bpx-side:not(.open) .bpx-hint{display:none}'+
+      '.bpx-side.open .bpx-prevbtn{margin-bottom:12px}'+
+      '.bpx-savebar{display:block;position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);margin-top:12px;z-index:5}'+
+      '.bpx-savebar .btn-primary{width:100%;padding:14px;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.18)}'+
+    '}'+
   '</style>';
   var presets=Object.keys(BP_PRESETS).map(function(k){var p=BP_PRESETS[k];
     return'<button type="button" class="bp-preset'+(_bp.theme===k?' on':'')+'" data-k="'+k+'" onclick="bpPreset(\''+k+'\')"><i><b style="background:'+p.accent+'"></b><b style="background:'+p.bg+';border:1px solid var(--border)"></b></i><span>'+p.label+'</span></button>';}).join('');
@@ -3919,9 +3932,11 @@ function renderWidget(){
         '<div class="bp-lab" style="margin-top:14px">WhatsApp quick link</div><div id="bpWaLink"></div>'+
       '</div>'+
     '</div>'+
+    '<div class="bpx-savebar"><button class="btn-primary" onclick="saveBookingPage()">Save changes</button></div>'+
    '</div>'+
    // preview column
-   '<div class="bpx-side">'+
+   '<div class="bpx-side" id="bpxSide">'+
+     '<button type="button" class="bpx-prevbtn" onclick="var sd=document.getElementById(\'bpxSide\');sd.classList.toggle(\'open\');this.querySelector(\'em\').textContent=sd.classList.contains(\'open\')?\'Hide preview\':\'Show live preview\'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg><em style="font-style:normal">Show live preview</em></button>'+
      '<div class="bpx-ctl">'+seg('_view',[['booking','Booking page'],['thanks','Confirmation']],'booking')+'</div>'+
      '<div class="bpx-phone"><div class="bpx-screen">'+
        '<div class="bpx-island"></div>'+
