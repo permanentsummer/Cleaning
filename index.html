@@ -2432,6 +2432,52 @@ function doPasswordReset(){
   }catch(e){}
 })();
 
+// Email links (token_hash flow): ?token_hash=...&type=recovery|signup. The token is only consumed when the person
+// presses the button, so email scanners / link previews that merely open the URL cannot use it up.
+(function handleTokenHashLink(){
+  var q;try{q=new URLSearchParams(window.location.search);}catch(e){return;}
+  var th=q.get('token_hash'),ty=q.get('type');
+  if(!th||(ty!=='recovery'&&ty!=='signup'&&ty!=='email'))return;
+  var isRec=ty==='recovery';
+  function show(){
+    var ov=document.createElement('div');
+    ov.id='thOverlay';
+    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#f8f1ea;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,Arial,sans-serif';
+    ov.innerHTML='<div style="background:#fff;max-width:420px;width:100%;border-radius:16px;padding:32px 28px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.08)">'+
+      '<div style="font-size:20px;font-weight:700;color:#1b2a41;margin-bottom:14px">SummerFlow</div>'+
+      '<div style="font-size:15px;color:#475569;line-height:1.6;margin-bottom:22px">'+(isRec?'Continue to choose your new password.<br><span style="font-size:13px;color:#64748b">Continuez pour choisir votre nouveau mot de passe.</span>':'Continue to confirm your email.<br><span style="font-size:13px;color:#64748b">Continuez pour confirmer votre email.</span>')+'</div>'+
+      '<button id="thBtn" style="background:#b8663f;color:#fff;border:none;border-radius:10px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer;width:100%">Continue · Continuer</button>'+
+      '<div id="thErr" style="color:#dc2626;font-size:13px;margin-top:12px"></div></div>';
+    document.body.appendChild(ov);
+    document.getElementById('thBtn').onclick=function(){
+      var b=this;b.disabled=true;b.textContent='…';
+      fetch(SB_URL+'/auth/v1/verify',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({type:ty,token_hash:th})})
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d||!d.access_token){
+          document.getElementById('thErr').textContent='This link has expired or was already used. Please request a new one. · Ce lien a expiré ou a déjà été utilisé.';
+          b.disabled=false;b.textContent='Continue · Continuer';return;
+        }
+        var clean=window.location.pathname;
+        if(isRec){
+          session={access_token:d.access_token,refresh_token:d.refresh_token||''};
+          history.replaceState(null,'',clean);
+          ov.remove();
+          document.getElementById('authWrap').classList.add('show');
+          document.getElementById('appWrap').classList.remove('show');
+          setAuthMode('centered');
+          document.getElementById('signInPanel').style.display='none';
+          document.getElementById('forgotPanel').style.display='none';
+          document.getElementById('resetPanel').style.display='';
+        }else{
+          try{localStorage.setItem('sb_session',JSON.stringify(d));}catch(e){}
+          window.location.replace(clean);
+        }
+      }).catch(function(){document.getElementById('thErr').textContent='Network error. Please try again.';b.disabled=false;b.textContent='Continue · Continuer';});
+    };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',show);else show();
+})();
+
 // Toggles between the centered card (sign in / forgot / reset) and the split-screen layout (sign up / profile setup)
 function setAuthMode(mode,subMode){
   var wrap=document.getElementById('authWrap');
