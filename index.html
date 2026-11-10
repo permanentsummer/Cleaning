@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://qdldvqnvowyiwhfpdobs.supabase.co wss://qdldvqnvowyiwhfpdobs.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://tessdata.projectnaptha.com https://challenges.cloudflare.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<script>if(window.top!==window.self){try{window.top.location.href=window.self.location.href;}catch(e){}document.documentElement.style.display='none';}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Direct Bookings — Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1076,6 +1079,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
 /* Customize-dashboard drag list: prevent the browser's native text-selection
    highlight from sticking on a row after it's dragged. */
 .dash-kpi-row,.dash-kpi-row *{user-select:none;-webkit-user-select:none;-moz-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.ts-box:empty{display:none}.ts-box{margin:8px 0}
 </style>
 
 </head>
@@ -1102,6 +1106,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
     <div id="forgotPanel" style="display:none">
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;text-align:center;line-height:1.5">Enter your email and we'll send a password reset link.</p>
       <div class="afield"><label>Email</label><input type="email" id="fpEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div id="tsRecover" class="ts-box"></div>
       <div class="aerr" id="fpErr"></div>
       <div id="fpSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px">Reset link sent — check your inbox.</div>
       <button class="abtn" id="fpBtn" onclick="sendPasswordReset()">Send reset link</button>
@@ -1137,6 +1142,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div class="auth-split-sub">Sign in to your account.</div>
         <div class="afield"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"></div>
         <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="lPwd" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pwd-eye" onclick="togglePwd('lPwd',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+        <div id="tsLogin" class="ts-box"></div>
         <div class="aerr" id="lErr"></div>
         <button class="abtn" id="lBtn">Sign in →</button>
         <p style="text-align:center;margin-top:14px"><a href="#" onclick="showForgotPassword(event)" style="font-size:12px;color:#9aa5b5;text-decoration:none;font-weight:600">Forgot password?</a></p>
@@ -1150,6 +1156,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <div class="afield"><label>Email</label><input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"></div>
         <div class="afield"><label>Password</label><div class="pwd-wrap"><input type="password" id="suPwd" placeholder="Min. 8 characters" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
         <div class="afield"><label>Confirm password</label><div class="pwd-wrap"><input type="password" id="suPwd2" placeholder="Repeat password" autocomplete="new-password"><button type="button" class="pwd-eye" onclick="togglePwd('suPwd2',this)" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+        <div id="tsSignup" class="ts-box"></div>
         <div class="aerr" id="suErr"></div>
         <div id="suSuccess" style="display:none;background:#d1fae5;color:#065f46;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;margin-bottom:10px"></div>
         <button class="abtn" id="suBtn" onclick="doSignUp()">Next →</button>
@@ -2026,6 +2033,7 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <input type="text" id="viewLinkField" readonly style="flex:1;padding:9px 12px;border:2px solid #bae6fd;border-radius:9px;font-size:12px;font-family:monospace;background:#fff;min-width:200px" placeholder="Click Generate to create link">
         <button onclick="generateViewToken()" style="background:#0369a1;color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Generate new link</button>
         <button onclick="copyViewLink()" style="background:#fff;color:#0369a1;border:2px solid #bae6fd;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Copy</button>
+        <button onclick="revokeViewLink()" style="background:#fff;color:#dc2626;border:2px solid #fecaca;border-radius:9px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer">Revoke</button>
       </div>
     </div>
 
@@ -2296,6 +2304,22 @@ var allBookings=[];
 var calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calAptFilter='all',calSearchQuery='';
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
+// ── Anti-bot (Cloudflare Turnstile). Leave TURNSTILE_SITEKEY empty to disable. ──
+var TURNSTILE_SITEKEY='';
+var _tsW={};
+function tsInit(){
+  if(!TURNSTILE_SITEKEY)return;
+  var s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;
+  s.onload=function(){['tsLogin','tsSignup','tsRecover'].forEach(function(id){
+    var el=document.getElementById(id);if(!el||!window.turnstile)return;
+    try{_tsW[id]=window.turnstile.render(el,{sitekey:TURNSTILE_SITEKEY,theme:'auto'});}catch(e){}
+  });};
+  document.head.appendChild(s);
+}
+function tsToken(id){return(TURNSTILE_SITEKEY&&window.turnstile&&_tsW[id]!==undefined)?(window.turnstile.getResponse(_tsW[id])||''):'';}
+function tsReset(id){try{if(window.turnstile&&_tsW[id]!==undefined)window.turnstile.reset(_tsW[id]);}catch(e){}}
+function tsMissing(id){return !!TURNSTILE_SITEKEY&&!tsToken(id);}
+function capBody(body,id){var t=tsToken(id);if(t)body.gotrue_meta_security={captcha_token:t};return body;}
 function sbAuth(path,body){
   return fetch(SB_URL+'/auth/v1/'+path,{method:'POST',
     headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
@@ -2339,7 +2363,7 @@ function sl(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function ll(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
 function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className=type||'ok';el.style.display='block';clearTimeout(el._t);el._t=setTimeout(function(){el.style.display='none';},3500);}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function uid(){return Date.now().toString(36)+secRand(10);}
 
 // ── LOGIN ───────────────────────────────────────────────────────────────────
 function doPasswordReset(){
@@ -2493,13 +2517,16 @@ function doSignUp(){
   if(!email||!pwd){err.textContent='Please fill in email and password.';return;}
   if(pwd.length<8){err.textContent='Password must be at least 8 characters.';return;}
   if(pwd!==pwd2){err.textContent='Passwords do not match.';return;}
+  if(!/[A-Za-z]/.test(pwd)||!/[0-9]/.test(pwd)||/^(.)\1+$/.test(pwd)){err.textContent='Use at least one letter and one number.';return;}
+  if(tsMissing('tsSignup')){err.textContent='Please complete the security check.';return;}
   btn.disabled=true;btn.textContent='Creating account…';
   fetch(SB_URL+'/auth/v1/signup',{
     method:'POST',
     headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({email:email,password:pwd,data:{full_name:name}})
+    body:JSON.stringify(capBody({email:email,password:pwd,data:{full_name:name}},'tsSignup'))
   }).then(function(r){return r.json();}).then(function(data){
     if(data.error||data.error_description||data.msg){
+      tsReset('tsSignup');
       err.textContent=data.error_description||data.msg||data.error||'Could not create account.';
       btn.disabled=false;btn.textContent='Next →';
       return;
@@ -2592,12 +2619,14 @@ function sendPasswordReset(){
   var err=document.getElementById('fpErr');
   var btn=document.getElementById('fpBtn');
   if(!email){err.textContent='Please enter your email.';return;}
+  if(tsMissing('tsRecover')){err.textContent='Please complete the security check.';return;}
   btn.disabled=true;btn.textContent='Sending…';err.textContent='';
   fetch(SB_URL+'/auth/v1/recover',{
     method:'POST',
     headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({email:email})
+    body:JSON.stringify(capBody({email:email},'tsRecover'))
   }).then(function(r){
+    tsReset('tsRecover');
     btn.disabled=false;btn.textContent='Send reset link';
     document.getElementById('fpSuccess').style.display='';
   }).catch(function(e){
@@ -2611,13 +2640,15 @@ document.getElementById('lBtn').addEventListener('click',function(){
   var pwd=document.getElementById('lPwd').value;
   var err=document.getElementById('lErr');
   if(!email||!pwd){err.textContent='Please fill in both fields.';return;}
+  if(tsMissing('tsLogin')){err.textContent='Please complete the security check.';return;}
   var btn=this;btn.disabled=true;btn.textContent='Signing in...';err.textContent='';
-  sbAuth('token?grant_type=password',{email:email,password:pwd}).then(function(data){
-    if(data.error){err.textContent=data.error_description||data.error;btn.disabled=false;btn.textContent='Sign in →';return;}
+  sbAuth('token?grant_type=password',capBody({email:email,password:pwd},'tsLogin')).then(function(data){
+    if(data.error||data.error_code){tsReset('tsLogin');err.textContent=data.error_description||data.msg||data.error;btn.disabled=false;btn.textContent='Sign in →';return;}
     session=data;sl('sb_session',data);
     loadWorkspace();
   }).catch(function(e){err.textContent='Error: '+e.message;btn.disabled=false;btn.textContent='Sign in →';});
 });
+tsInit();
 document.getElementById('lEmail').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lPwd').focus();});
 document.getElementById('lPwd').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('lBtn').click();});
 
@@ -2717,15 +2748,22 @@ function loadAllBookings(){
 
 // ── TABS ────────────────────────────────────────────────────────────────────
 function generateViewToken(){
-  var tok=Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
-  var s=workspace.settings||{};
-  s.view_token=tok;
-  workspace.settings=s;
-  sbF('PATCH','workspaces?id=eq.'+workspace.id,{settings:s})
-    .then(function(){
+  // Token is created by the server (secure random); the browser can no longer choose it
+  sbF('POST','rpc/rotate_view_token',{p_revoke:false})
+    .then(function(tok){
+      if(!tok||typeof tok!=='string')throw new Error('no token');
+      var s=workspace.settings||{};s.view_token=tok;workspace.settings=s;
       var link=window.location.origin+window.location.pathname+'?view='+tok;
       document.getElementById('viewLinkField').value=link;
       toast('View link generated!','ok');
+    }).catch(function(e){toast('Error: '+e.message,'err');});
+}
+function revokeViewLink(){
+  sbF('POST','rpc/rotate_view_token',{p_revoke:true})
+    .then(function(){
+      var s=workspace.settings||{};delete s.view_token;workspace.settings=s;
+      document.getElementById('viewLinkField').value='';
+      toast('View link revoked','ok');
     }).catch(function(e){toast('Error: '+e.message,'err');});
 }
 
@@ -2969,14 +3007,14 @@ function renderRequests(){
     var nights=0;
     if(req.checkin&&req.checkout)nights=Math.round((new Date(req.checkout+'T12:00:00')-new Date(req.checkin+'T12:00:00'))/86400000);
     var div=document.createElement('div');
-    div.className='req-card '+(req.status||'pending');
+    div.className='req-card '+String(req.status||'pending').replace(/[^a-z_-]/gi,'');
     div.innerHTML=
       '<div class="req-top">'+
         '<div>'+
           '<div class="req-guest">'+esc(req.guest_name||'Guest')+'</div>'+
           '<div class="req-email">'+esc(req.guest_email||'')+(req.guest_phone?' · '+esc(req.guest_phone):'')+'</div>'+
         '</div>'+
-        '<span class="status-badge status-'+(req.status||'pending')+'">'+statusLabel(req.status)+'</span>'+
+        '<span class="status-badge status-'+String(req.status||'pending').replace(/[^a-z_-]/gi,'')+'">'+statusLabel(req.status)+'</span>'+
       '</div>'+
       '<div class="req-dates">'+
         '<div class="rdb"><div class="rdlbl">Check-in</div><div class="rdval">'+fmtShort(req.checkin)+'</div><div class="rdday">'+fmtDay(req.checkin)+'</div></div>'+
@@ -2985,19 +3023,19 @@ function renderRequests(){
       '</div>'+
       '<div class="req-info">'+
         '<span class="chip">'+(esc(req.apt_name)||'—')+'</span>'+
-        '<span class="chip">'+req.guests+' guest'+(req.guests>1?'s':'')+'</span>'+
+        '<span class="chip">'+esc(req.guests)+' guest'+(req.guests>1?'s':'')+'</span>'+
         '<span class="chip">'+nights+' night'+(nights!==1?'s':'')+'</span>'+
-        (req.rate_per_night?'<span class="chip">€'+req.rate_per_night+'/nt</span>':'')+
-        (req.total_amount?'<span class="chip" style="font-weight:900">Total: €'+req.total_amount+'</span>':'')+
+        (req.rate_per_night?'<span class="chip">€'+esc(req.rate_per_night)+'/nt</span>':'')+
+        (req.total_amount?'<span class="chip" style="font-weight:900">Total: €'+esc(req.total_amount)+'</span>':'')+
       '</div>'+
       (req.notes?'<div class="req-note">'+esc(cleanNotesDisplay(req.notes))+'</div>':'')+
       '<div class="req-actions">'+
         (req.status==='pending'?
-          '<button class="btn-green" onclick="openRespond(\''+req.id+'\',\'confirmed\')">Confirm</button>'+
-          '<button class="btn-red" onclick="openRespond(\''+req.id+'\',\'declined\')">Decline</button>':
-          '<button class="btn-outline" onclick="openRespond(\''+req.id+'\',\''+req.status+'\')">Update</button>')+
-        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">Email</button>'+
-        (req.guest_phone?'<button class="btn-outline" onclick="whatsApp(\''+esc(req.guest_phone)+'\')">WhatsApp</button>':'')+
+          '<button class="btn-green" onclick="openRespond('+jsq(req.id)+',\'confirmed\')">Confirm</button>'+
+          '<button class="btn-red" onclick="openRespond('+jsq(req.id)+',\'declined\')">Decline</button>':
+          '<button class="btn-outline" onclick="openRespond('+jsq(req.id)+','+jsq(req.status)+')">Update</button>')+
+        '<button class="btn-outline" onclick="mailGuest('+jsq(req.guest_email)+')">Email</button>'+
+        (req.guest_phone?'<button class="btn-outline" onclick="whatsApp('+jsq(req.guest_phone)+')">WhatsApp</button>':'')+
         '<span style="flex:1"></span>'+
         '<span style="font-size:10px;color:var(--muted);font-weight:700">'+fmtAgo(req.created_at)+'</span>'+
       '</div>';
@@ -3038,7 +3076,7 @@ function renderImportedBookings(list){
     div.innerHTML=
       '<div class="req-top">'+
         '<div>'+
-          '<div class="req-guest">'+(b.guests||'Guest')+'</div>'+
+          '<div class="req-guest">'+esc(b.guests||'Guest')+'</div>'+
           '<div class="req-email">'+esc(b.notes||'')+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:6px;align-items:center">'+
@@ -3081,7 +3119,7 @@ function openRespond(id,defaultAction){
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
       '<div class="chip" style="padding:8px 12px;flex-direction:column;align-items:flex-start">'+
         '<span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Property</span>'+
-        '<span style="font-size:13px;font-weight:800;margin-top:2px">'+(activeRequest.apt_name||'—')+'</span></div>'+
+        '<span style="font-size:13px;font-weight:800;margin-top:2px">'+esc(activeRequest.apt_name||'—')+'</span></div>'+
       '<div class="chip" style="padding:8px 12px;flex-direction:column;align-items:flex-start">'+
         '<span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Dates</span>'+
         '<span style="font-size:13px;font-weight:800;margin-top:2px">'+fmtShort(activeRequest.checkin)+' → '+fmtShort(activeRequest.checkout)+'</span></div>'+
@@ -3090,7 +3128,7 @@ function openRespond(id,defaultAction){
         '<span style="font-size:13px;font-weight:800;margin-top:2px">'+nights+' nights</span></div>'+
       '<div class="chip" style="padding:8px 12px;flex-direction:column;align-items:flex-start">'+
         '<span style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Guests</span>'+
-        '<span style="font-size:13px;font-weight:800;margin-top:2px">'+activeRequest.guests+'</span></div>'+
+        '<span style="font-size:13px;font-weight:800;margin-top:2px">'+esc(activeRequest.guests)+'</span></div>'+
     '</div>';
 
   setReplyTemplate(defaultAction||'confirmed');
@@ -3537,7 +3575,7 @@ function uploadPhotosToSupabase(files,propId){
   files.forEach(function(file){
     // Unique filename: workspace/propId/timestamp_filename
     var ext=file.name.split('.').pop().toLowerCase()||'jpg';
-    var fname=workspace.id+'/'+propId+'/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+    var fname=workspace.id+'/'+propId+'/'+Date.now()+'_'+secRand(10)+'.'+ext;
 
     var formData=new FormData();
     formData.append('',file,fname);
@@ -3705,8 +3743,8 @@ function bpInput(){
 }
 function bpUpBtn(id,kind){
   return '<div style="margin:-4px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-    '<button type="button" class="copy-btn" onclick="bpUpload(\''+id+'\',\''+kind+'\')"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Upload from my device</button>'+
-    '<button type="button" class="copy-btn" style="opacity:.8" onclick="document.getElementById(\''+id+'\').value=\'\';bpInput()">Remove</button>'+
+    '<button type="button" class="copy-btn" onclick="bpUpload('+jsq(id)+','+jsq(kind)+')"><svg class="i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Upload from my device</button>'+
+    '<button type="button" class="copy-btn" style="opacity:.8" onclick="document.getElementById('+jsq(id)+').value=\'\';bpInput()">Remove</button>'+
     '<em id="'+id+'St" style="font-style:normal;font-size:12px;color:var(--muted)"></em></div>';
 }
 function bpPrepImage(file,kind){
@@ -3785,7 +3823,7 @@ function bpRefreshShare(){
   if(wa){
     var d=bpDigits();
     var url=d?'https://wa.me/'+d+'?text=Hi+I+found+you+on+your+website+and+would+like+to+book+directly.':'';
-    wa.innerHTML=d?'<div class="link-box" onclick="copyText(\''+url+'\',this)">'+url+'</div><button class="copy-btn" onclick="copyText(\''+url+'\',this)">Copy WhatsApp link</button>':
+    wa.innerHTML=d?'<div class="link-box" onclick="copyText('+jsq(url)+',this)">'+url+'</div><button class="copy-btn" onclick="copyText('+jsq(url)+',this)">Copy WhatsApp link</button>':
       '<div style="font-size:12.5px;color:var(--muted)">Add your WhatsApp number in step 1 to get a quick link.</div>';
   }
   var ec=document.getElementById('embedCode');
@@ -3802,7 +3840,7 @@ function renderWidget(){
   var embedCode=bpEmbedCode();
   var flow=document.getElementById('widgetFlow');
   function seg(k,opts,cur){
-    return'<div class="bp-seg" data-k="'+k+'">'+opts.map(function(o){return'<button type="button" data-v="'+o[0]+'" class="'+(cur===o[0]?'on':'')+'" onclick="'+(k==='_view'?'bpView':k==='_dev'?'bpDevice':'bpSet(\''+k+'\',')+((k==='_dev'||k==='_view')?'(\''+o[0]+'\')':'\''+o[0]+'\',this)')+'">'+o[1]+'</button>';}).join('')+'</div>';
+    return'<div class="bp-seg" data-k="'+k+'">'+opts.map(function(o){return'<button type="button" data-v="'+o[0]+'" class="'+(cur===o[0]?'on':'')+'" onclick="'+(k==='_view'?'bpView':k==='_dev'?'bpDevice':'bpSet('+jsq(k)+',')+((k==='_dev'||k==='_view')?'('+jsq(o[0])+')':''+jsq(o[0])+',this)')+'">'+o[1]+'</button>';}).join('')+'</div>';
   }
   function field(label,id,val,ph,type,hint){
     return'<label class="bp-f"><span>'+label+'</span><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'" oninput="bpInput()">'+(hint?'<small>'+hint+'</small>':'')+'</label>';
@@ -3862,16 +3900,16 @@ function renderWidget(){
     '}'+
   '</style>';
   var presets=Object.keys(BP_PRESETS).map(function(k){var p=BP_PRESETS[k];
-    return'<button type="button" class="bp-preset'+(_bp.theme===k?' on':'')+'" data-k="'+k+'" onclick="bpPreset(\''+k+'\')"><i><b style="background:'+p.accent+'"></b><b style="background:'+p.bg+';border:1px solid var(--border)"></b></i><span>'+p.label+'</span></button>';}).join('');
+    return'<button type="button" class="bp-preset'+(_bp.theme===k?' on':'')+'" data-k="'+k+'" onclick="bpPreset('+jsq(k)+')"><i><b style="background:'+p.accent+'"></b><b style="background:'+p.bg+';border:1px solid var(--border)"></b></i><span>'+p.label+'</span></button>';}).join('');
   flow.innerHTML=css+
   '<div class="bpx">'+
    '<div class="bpx-main">'+
     // link + save bar
     '<div class="bpx-card bpx-link">'+
-      '<div class="lk" onclick="copyText(\''+bookingUrl+'\',this)" title="Click to copy">'+bookingUrl+'</div>'+
-      '<button class="copy-btn" onclick="copyText(\''+bookingUrl+'\',this)">Copy</button>'+
-      '<button class="copy-btn" onclick="window.open(\''+bookingUrl+'\',\'_blank\')">↗ Open</button>'+
-      '<button class="copy-btn" onclick="genQR(\''+bookingUrl+'\');bpTab(\'share\')">QR</button>'+
+      '<div class="lk" onclick="copyText('+jsq(bookingUrl)+',this)" title="Click to copy">'+bookingUrl+'</div>'+
+      '<button class="copy-btn" onclick="copyText('+jsq(bookingUrl)+',this)">Copy</button>'+
+      '<button class="copy-btn" onclick="window.open('+jsq(bookingUrl)+',\'_blank\')">↗ Open</button>'+
+      '<button class="copy-btn" onclick="genQR('+jsq(bookingUrl)+');bpTab(\'share\')">QR</button>'+
       '<button class="btn-primary" style="font-size:13px;padding:9px 16px" onclick="saveBookingPage()">Save changes</button>'+
     '</div>'+
     '<div class="bpx-card">'+
@@ -3925,7 +3963,7 @@ function renderWidget(){
       // SHARE
       '<div class="bpx-pane" data-p="share">'+
         '<div class="bp-lab" style="margin-top:0">QR code</div>'+
-        '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><button class="copy-btn" onclick="genQR(\''+bookingUrl+'\')">Show QR code</button><div id="qrArea" class="qr-wrap"></div></div>'+
+        '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><button class="copy-btn" onclick="genQR('+jsq(bookingUrl)+')">Show QR code</button><div id="qrArea" class="qr-wrap"></div></div>'+
         '<div class="bp-lab" style="margin-top:14px">“Book Direct” button for your website</div>'+
         '<div class="code-box" id="embedCode">'+esc(embedCode)+'</div>'+
         '<button class="copy-btn" onclick="copyText(window._embedCode,this)">Copy embed code</button>'+
@@ -4693,7 +4731,7 @@ function finPnlModeToggle(){
   return'<div style="display:flex;gap:4px;background:var(--bg);border-radius:9px;padding:3px">'+
     ['net','operating'].map(function(m){
       var active=m===_finPnlMode;
-      return'<button onclick="setFinPnlMode(\''+m+'\')" style="border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;'+
+      return'<button onclick="setFinPnlMode('+jsq(m)+')" style="border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap;'+
         (active?'background:var(--card-bg,#fff);color:var(--primary);box-shadow:var(--shadow)':'background:transparent;color:var(--muted)')+'">'+(m==='net'?'Net':'Operating')+'</button>';
     }).join('')+
   '</div>';
@@ -4795,7 +4833,7 @@ function finChartTabs(){
   return'<div class="fin-chart-tabs" style="display:flex;gap:4px;background:var(--bg);border-radius:9px;padding:3px;max-width:100%">'+
     FIN_CHART_VIEWS.map(function(v){
       var active=v.id===_finChartView;
-      return'<button onclick="setFinChartView(\''+v.id+'\')" style="border:none;border-radius:7px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all .15s;flex-shrink:0;white-space:nowrap;'+
+      return'<button onclick="setFinChartView('+jsq(v.id)+')" style="border:none;border-radius:7px;padding:6px 12px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;transition:all .15s;flex-shrink:0;white-space:nowrap;'+
         (active?'background:var(--card-bg,#fff);color:var(--primary);box-shadow:var(--shadow)':'background:transparent;color:var(--muted)')+'">'+v.label+'</button>';
     }).join('')+
   '</div>';
@@ -5741,9 +5779,9 @@ function renderPayments(){
         '</div>'+
       '</div>'+
       '<div class="pay-actions">'+
-        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'Mark deposit paid')+'</button>'+
-        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid(\''+req.id+'\',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'Mark balance paid')+'</button>'+
-        '<button class="btn-outline" onclick="mailGuest(\''+esc(req.guest_email)+'\')">Send reminder</button>'+
+        '<button class="'+(req.deposit_paid?'btn-yellow':'btn-green')+'" onclick="markPaid('+jsq(req.id)+',\'deposit\')">'+(req.deposit_paid?'↩ Unmark deposit':'Mark deposit paid')+'</button>'+
+        '<button class="'+(req.balance_paid?'btn-yellow':'btn-green')+'" onclick="markPaid('+jsq(req.id)+',\'balance\')">'+(req.balance_paid?'↩ Unmark balance':'Mark balance paid')+'</button>'+
+        '<button class="btn-outline" onclick="mailGuest('+jsq(req.guest_email)+')">Send reminder</button>'+
       '</div>';
     list.appendChild(card);
   });
@@ -5957,11 +5995,11 @@ function renderResList(){
       }
     }
     card.innerHTML+=
-      (VIEW_MODE?'<div class="res-list-actions"><button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openViewBooking(\''+item.id+'\',\''+item.origin+'\');">View</button></div>':
+      (VIEW_MODE?'<div class="res-list-actions"><button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openViewBooking('+jsq(item.id)+','+jsq(item.origin)+');">View</button></div>':
       '<div class="res-list-actions">'+
-        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking(\''+item.id+'\',\''+item.origin+'\')">Edit</button>'+
+        '<button class="btn-outline" style="font-size:11px;padding:6px 10px" onclick="openEditBooking('+jsq(item.id)+','+jsq(item.origin)+')">Edit</button>'+
         '<span style="flex:1"></span>'+
-        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation(\''+item.id+'\',\''+item.origin+'\',\''+esc(item.guest)+'\')">Delete</button>'+
+        '<button class="btn-red" style="font-size:11px;padding:6px 10px" onclick="deleteReservation('+jsq(item.id)+','+jsq(item.origin)+','+jsq(item.guest)+')">Delete</button>'+
       '</div>');
     container.appendChild(card);
   });
@@ -6469,7 +6507,7 @@ function buildCleanFilters(){
     var b=document.createElement('button');
     b.className='fbtn'+(cleanFilter===f.k?' on':'');
     if(f.color&&cleanFilter===f.k)b.style.background=f.color;
-    b.innerHTML=(f.color?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+f.color+';margin-right:5px;vertical-align:middle"></span>':'')+f.label;
+    b.innerHTML=(f.color?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+esc(f.color)+';margin-right:5px;vertical-align:middle"></span>':'')+esc(f.label);
     b.onclick=function(){cleanFilter=f.k;buildCleanFilters();renderCleaningList();};
     row.appendChild(b);
   });
@@ -7073,7 +7111,7 @@ function _parseAmt(raw){
 function _dfc(h){var keys=Array.prototype.slice.call(arguments,1);for(var ki=0;ki<keys.length;ki++){var kn=_dsa(keys[ki]).toLowerCase().replace(/[^a-z0-9]/g,'');for(var i=0;i<h.length;i++){var hn=_dsa(h[i]).toLowerCase().replace(/[^a-z0-9]/g,'');if(hn.indexOf(kn)!==-1||kn.indexOf(hn)!==-1)return i;}}return -1;}
 function _dpCSV(text){var lines=text.replace(/\r/g,'').split('\n'),sep=lines[0].split(';').length>lines[0].split(',').length?';':',',rows=[];for(var li=0;li<lines.length;li++){var line=lines[li];if(!line.trim())continue;var cols=[],cur='',inQ=false;for(var ci=0;ci<line.length;ci++){var c=line[ci];if(c==='"')inQ=!inQ;else if(c===sep&&!inQ){cols.push(cur.trim());cur='';}else cur+=c;}cols.push(cur.trim());rows.push(cols);}return rows;}
 function _dISO(s){if(!s)return'';s=String(s).trim().replace(/\u00a0/g,'').replace(/^["']|["']$/g,'').trim();if(!s||s.length<6)return'';if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');var n=parseInt(s);if(!isNaN(n)&&/^\d+$/.test(s)&&n>40000&&n<60000){var d=new Date((n-25569)*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}try{var d2=new Date(s);if(!isNaN(d2.getTime())&&d2.getFullYear()>2020)return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');}catch(e){}return'';}
-function _duid(){return Math.random().toString(36).slice(2,10);}
+function _duid(){return secRand(8);}
 function dashProcessImport(text,source,apt){
   var rows=_dpCSV(text);if(rows.length<2){setDIS('File appears empty.','err');return;}
   var h=rows[0],parsed=[],skipped=0;
@@ -7480,88 +7518,7 @@ function deleteReservation(id, origin, guestName){
 }
 
 // ── NEW BOOKING / BLOCK DATES ─────────────────────────────────────────────────
-function scanBookingScreenshot(input){
-  var file=input.files[0];
-  if(!file)return;
-  var statusEl=document.getElementById('nbScanStatus');
-  if(!statusEl){
-    statusEl=document.createElement('div');
-    statusEl.id='nbScanStatus';
-    statusEl.style.cssText='font-size:12px;font-weight:700;margin-top:8px;padding:8px;border-radius:7px;background:#eff6ff;color:#1d4ed8';
-    input.closest('div[style]').appendChild(statusEl);
-  }
-  statusEl.textContent='Scanning image...';
 
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var b64=e.target.result.split(',')[1];
-    var mime=file.type||'image/jpeg';
-
-    fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:500,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-            {type:'text',text:'Extract booking details from this screenshot. Return ONLY a JSON object with these exact keys: guest_name, checkin (YYYY-MM-DD), checkout (YYYY-MM-DD), guests (number), total_price (number, no currency symbol), commission (number, no currency symbol), booking_number, source (airbnb/booking/direct). If a field is not visible write null. No explanation, just JSON.'}
-          ]
-        }]
-      })
-    })
-    .then(function(r){return r.json();})
-    .then(function(data){
-      var text=data.content&&data.content[0]?data.content[0].text:'';
-      var clean=text.replace(/```json|```/g,'').trim();
-      var info=JSON.parse(clean);
-
-      // Fill form fields
-      if(info.guest_name)document.getElementById('nbGuest').value=info.guest_name;
-      if(info.checkin)document.getElementById('nbIn').value=info.checkin;
-      if(info.checkout)document.getElementById('nbOut').value=info.checkout;
-      if(info.guests)document.getElementById('nbGuests').value=info.guests;
-      if(info.total_price)document.getElementById('nbGross').value=info.total_price;
-      if(info.commission)document.getElementById('nbComm').value=info.commission;
-      if(info.source){
-        var sel=document.getElementById('nbSource');
-        if(sel){
-          var opts=Array.from(sel.options).map(function(o){return o.value;});
-          var src=info.source.toLowerCase();
-          if(src.indexOf('airbnb')!==-1&&opts.indexOf('airbnb')!==-1)sel.value='airbnb';
-          else if(src.indexOf('booking')!==-1&&opts.indexOf('booking')!==-1)sel.value='booking';
-          else sel.value='direct';
-          togglePricingFields();
-        }
-      }
-      if(info.booking_number){
-        var notesEl=document.getElementById('nbNotes');
-        if(notesEl&&!notesEl.value)notesEl.value='Booking.com ref: '+info.booking_number;
-      }
-      // Trigger total recalc
-      if(typeof calcNbTotal==='function')calcNbTotal();
-      if(typeof updateNbCheckout==='function')updateNbCheckout();
-
-      // Summary
-      var filled=[];
-      if(info.guest_name)filled.push('Guest: '+info.guest_name);
-      if(info.checkin)filled.push('Check-in: '+info.checkin);
-      if(info.checkout)filled.push('Check-out: '+info.checkout);
-      if(info.total_price)filled.push('Total: €'+info.total_price);
-      if(info.commission)filled.push('Commission: €'+info.commission);
-      statusEl.style.background='#f0fdf4';statusEl.style.color='#15803d';
-      statusEl.textContent='Filled: '+filled.join(' · ')+' — please select the apartment and verify.';
-    })
-    .catch(function(e){
-      statusEl.style.background='#fef2f2';statusEl.style.color='#dc2626';
-      statusEl.textContent='Could not read image: '+e.message;
-    });
-  };
-  reader.readAsDataURL(file);
-  input.value=''; // allow re-upload same file
-}
 
 function openNewBooking(){
   // Populate apartment selects
@@ -7899,7 +7856,7 @@ function drawCal(){
           var gn=cleanNotesDisplay(bk.notes||'').trim()||'Guest';
           if(gn.indexOf('\u2013')!==-1)gn=gn.split('\u2013')[1].trim();
           var lbl=atStart?(gn.length>16?gn.slice(0,15)+'\u2026':gn):'';
-          html+='<span class="mbar '+pc+'" style="background:'+bg+'" data-id="'+bk.id+'\" title="'+esc(gn)+'">'+esc(lbl)+'</span>';
+          html+='<span class="mbar '+pc+'" style="background:'+bg+'" data-id="'+esc(bk.id)+'" title="'+esc(gn)+'">'+esc(lbl)+'</span>';
         }
       }
       html+='</td>';
@@ -7976,7 +7933,7 @@ function renderBarForDay(bookings,ds,aptColor){
     if(showFull&&b.checkin&&b.checkout){
       datesLine='<span style="font-size:9px;opacity:.8;font-weight:500;margin-top:1px;overflow:hidden;text-overflow:ellipsis">'+fmtShort(b.checkin)+' → '+fmtShort(b.checkout)+'</span>';
     }
-    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+b.id+'" title="'+esc(titleTip)+'"'+(_isComp?' style="opacity:.8"':'')+'>'+
+    return '<div class="cal-bar '+posClass+' '+srcClass+'" data-id="'+esc(b.id)+'" title="'+esc(titleTip)+'"'+(_isComp?' style="opacity:.8"':'')+'>'+
       (showFull?'<span style="overflow:hidden;text-overflow:ellipsis">'+esc(label)+'</span>'+datesLine:'<span style="opacity:.65;font-size:10px;overflow:hidden;text-overflow:ellipsis">'+esc(label)+'</span>')+
       '</div>';
   }).join('');
@@ -8930,7 +8887,7 @@ function renderHomeLayout(cfg){
   var qa=document.getElementById('hmQA');
   if(qa){
     qa.style.setProperty('--n',cfg.qa.length||1);
-    qa.innerHTML=cfg.qa.map(function(k){return '<button type="button" onclick="homeDo(\''+k+'\')"><span class="ic">'+homeIcon(k)+'</span>'+HT('qa_'+k)+'</button>';}).join('');
+    qa.innerHTML=cfg.qa.map(function(k){return '<button type="button" onclick="homeDo('+jsq(k)+')"><span class="ic">'+homeIcon(k)+'</span>'+HT('qa_'+k)+'</button>';}).join('');
     qa.style.display=cfg.qa.length?'':'none';
   }
   var keys=['revenue','owed','occupied','checkouts'],n=0;
@@ -9219,7 +9176,7 @@ function renderHomeCust(){
   '</div>'+
   '<div class="grp"><h4>'+HT('c_qa')+'</h4><div class="hint">'+HT('c_qa_hint')+'</div><div class="chips">'+
     HOME_QA_KEYS.map(function(k){var on=c.qa.indexOf(k)>-1;
-      return '<button type="button" class="chip" aria-pressed="'+on+'"'+(!on&&full?' disabled':'')+' onclick="hcToggleQA(\''+k+'\')">'+homeIcon(k)+HT('qa_'+k)+'</button>';}).join('')+
+      return '<button type="button" class="chip" aria-pressed="'+on+'"'+(!on&&full?' disabled':'')+' onclick="hcToggleQA('+jsq(k)+')">'+homeIcon(k)+HT('qa_'+k)+'</button>';}).join('')+
   '</div></div>'+
   '<div class="grp"><h4>'+HT('c_show')+'</h4>'+
     hcSw(HT('c_metrics'),c.metrics,'onchange="_hc.metrics=this.checked"')+
@@ -9459,12 +9416,16 @@ function setDepositToggle(on){
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s){if(s===0)return'0';if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/`/g,'&#96;');}
+// Safe JS string literal for use inside an inline onclick="..." attribute
+function jsq(s){return esc(JSON.stringify(String(s==null?'':s)));}
+// Cryptographically secure random string
+function secRand(n){var a=new Uint8Array(n||12);(window.crypto||window.msCrypto).getRandomValues(a);var o='';for(var i=0;i<a.length;i++)o+=(a[i]%36).toString(36);return o;}
 function fmtShort(d){if(!d)return'—';var dt=new Date(d+'T12:00:00');return String(dt.getDate()).padStart(2,'0')+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];}
 function fmtFull(d){if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function fmtDay(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short'});}
 function fmtAgo(d){if(!d)return'';var diff=Date.now()-new Date(d).getTime();var h=Math.floor(diff/3600000);if(h<1)return'just now';if(h<24)return h+'h ago';var days=Math.floor(h/24);return days+'d ago';}
-function statusLabel(s){return{pending:'Pending',confirmed:'Confirmed',declined:'Declined',cancelled:'Cancelled'}[s]||s;}
+function statusLabel(s){return{pending:'Pending',confirmed:'Confirmed',declined:'Declined',cancelled:'Cancelled'}[s]||esc(s);}
 function mailGuest(email){window.open('mailto:'+email);}
 function whatsApp(phone){var p=phone.replace(/\D/g,'');if(!p.startsWith('351')&&!p.startsWith('+'))p='351'+p;window.open('https://wa.me/'+p);}
 
