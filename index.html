@@ -2389,9 +2389,10 @@ function doPasswordReset(){
     setTimeout(function(){
       session=null;localStorage.removeItem('sb_session');
       document.getElementById('resetPanel').style.display='none';
-      document.getElementById('signInPanel').style.display='';
       document.getElementById('rpSuccess').style.display='none';
-    },2500);
+      try{hideMobileAuthSplash();}catch(e){}
+      showSignIn();
+    },1800);
   }).catch(function(e){btn.disabled=false;btn.textContent='Set new password';err.textContent='Error: '+e.message;});
 }
 
