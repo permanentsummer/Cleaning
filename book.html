@@ -772,7 +772,7 @@ function applyAltDates(ci,co){
   checkIn=ci;checkOut=co;
   // Update display
   var el=document.getElementById('datesChip');
-  if(el)el.textContent='Check-in: '+fmtS(ci)+' – Check-out: '+fmtS(co)+' · '+nights(ci,co)+'n ✏';
+  if(el)el.textContent='Check-in: '+fmtS(ci)+' – Check-out: '+fmtS(co)+' · '+nights(ci,co)+'n';
   goStep2();
 }
 
@@ -861,7 +861,7 @@ function renderProps(){
         '<h3>Not available for these dates</h3>'+
         '<p style="color:var(--muted);font-size:13px">No properties available for '+fmtS(checkIn)+' → '+fmtS(checkOut)+'.</p>'+
         (suggestions.length?
-          '<div style="margin-top:16px;text-align:left"><div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">✨ Next available dates</div>'+sugHtml+'</div>':
+          '<div style="margin-top:16px;text-align:left"><div style="font-size:12px;font-weight:800;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Next available dates</div>'+sugHtml+'</div>':
           hostContactBtn())+
       '</div>';
     // Wire clicks after DOM is updated
