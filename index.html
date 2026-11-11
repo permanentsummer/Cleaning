@@ -2648,6 +2648,16 @@ function saveProfileSetup(){
     });
 }
 // Generic GET-merge-PATCH helper for workspace.settings, reused by profile/account/onboarding
+// New accounts: if no notification email was ever saved, use the login email so booking requests always reach the host.
+function ensureHostEmail(){
+  try{
+    var st=(workspace&&workspace.settings)||{},p=st.profile||{},bp=st.bookingPage||{};
+    var em=(session&&session.user&&session.user.email)||'';
+    if(!em||p.email||bp.email||VIEW_MODE)return;
+    var np=Object.assign({},p,{email:em});
+    patchWorkspaceSettings({profile:np}).catch(function(){});
+  }catch(e){}
+}
 function patchWorkspaceSettings(partial){
   if(!workspace)return Promise.reject(new Error('No workspace loaded yet'));
   return sbF('GET','workspaces?select=settings&id=eq.'+workspace.id).then(function(rows){
@@ -2777,6 +2787,7 @@ function loadWorkspace(){
       loadWaTemplates();
       loadCleaningSettings();
       applyTranslations();
+      ensureHostEmail();
       // Start on Overview tab
       switchTab('home');
       // Start notification system
