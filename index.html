@@ -2011,6 +2011,16 @@ body.dark [style*="color:#1d4ed8"]{color:#7ab8d6!important}
         <p style="font-size:11px;color:var(--muted);margin-top:8px" id="acctChangePwdLbl">To change your password, sign out and use "Forgot password?" on the sign-in screen.</p>
       </div>
 
+      <div class="card" style="border:2px solid var(--border)">
+        <div class="sep" style="margin-top:0">Export my data</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Download a full backup of your properties, settings, reservations and booking requests. Keep the file somewhere safe: it contains your guests' details.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-outline" style="font-size:12px" onclick="exportMyData('json')">Full backup (JSON)</button>
+          <button class="btn-outline" style="font-size:12px" onclick="exportMyData('csv')">Reservations (CSV)</button>
+        </div>
+        <div id="exportMsg" style="font-size:12px;margin-top:8px;min-height:16px"></div>
+      </div>
+
       <div class="card" style="border:2px solid #fecaca">
         <div class="sep" style="margin-top:0;color:#b91c1c">Delete my account</div>
         <p style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Permanently deletes your login, properties, reservations, requests and settings. This cannot be undone. Your data is only ever visible to you.</p>
@@ -8446,6 +8456,43 @@ function getCleanerForApt(aptId){
          cleaners[0]||null;
 }
 function loadCleaningSettings(){renderCleanersList();}
+
+
+// ── EXPORT MY DATA ──────────────────────────────────────────────────────────
+function _dl(name,mime,text){
+  var blob=new Blob([text],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},500);
+}
+function _csvCell(v){
+  if(v==null)v='';v=String(v);
+  if(/^[=+\-@\t\r]/.test(v))v="'"+v; // neutralise spreadsheet formulas
+  return /[",\n\r;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+}
+function exportMyData(kind){
+  var msg=document.getElementById('exportMsg');if(!workspace)return;
+  msg.style.color='var(--muted)';msg.textContent='Preparing…';
+  var wid=workspace.id;
+  Promise.all([
+    sbF('GET','workspaces?select=*&id=eq.'+wid),
+    sbF('GET','bookings?select=*&workspace_id=eq.'+wid+'&order=checkin.asc'),
+    sbF('GET','direct_requests?select=*&workspace_id=eq.'+wid+'&order=created_at.asc')
+  ]).then(function(r){
+    var ws=(r[0]&&r[0][0])||{},bk=r[1]||[],rq=r[2]||[];
+    var st=Object.assign({},ws.settings||{});delete st.view_token;
+    var day=new Date().toISOString().slice(0,10);
+    if(kind==='csv'){
+      var cols=['id','apt','source','checkin','checkout','clean','guests','paid','cleaned','notes'];
+      var apts={};((st.apts)||[]).forEach(function(a){apts[a.id]=a.name;});
+      var lines=[['property'].concat(cols).map(_csvCell).join(',')];
+      bk.forEach(function(b){lines.push([apts[b.apt]||''].concat(cols.map(function(c){return b[c];})).map(_csvCell).join(','));});
+      _dl('summerflow-reservations-'+day+'.csv','text/csv;charset=utf-8','﻿'+lines.join('\r\n'));
+    }else{
+      _dl('summerflow-backup-'+day+'.json','application/json',JSON.stringify({exported_at:new Date().toISOString(),version:1,workspace:{id:ws.id,created_at:ws.created_at,settings:st},bookings:bk,direct_requests:rq},null,2));
+    }
+    msg.style.color='#15803d';msg.textContent='Downloaded ('+bk.length+' reservations, '+rq.length+' requests).';
+  }).catch(function(e){msg.style.color='#dc2626';msg.textContent='Error: '+e.message;});
+}
 
 function deleteMyAccount(){
   var t=prompt('This permanently deletes your account and ALL your data.\nType DELETE to confirm:');
